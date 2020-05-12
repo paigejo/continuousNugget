@@ -65,7 +65,28 @@ getLogitNormalApproximation = function(u=-1, sigmaEpsilon=0.1, n=10, qs = expit(
   browser()
 }
 
-# 
+# test the CPBL model using the SPDE fit
+testCPBL = function(fit=NULL) {
+  # load SPDE UC model (fit it if necessary)
+  if(is.null(fit)) {
+    fitFile = paste0(outputDirectory, "test/spdeMortFitUC.RData")
+    if(file.exists(fitFile)) {
+      out = load(fitFile)
+    } else {
+      fit = fitSPDEKenyaDat()
+      save(fit, file=fitFile)
+    }
+  }
+  
+  uDraws = fit$uDraws
+  sigmaEpsilonDraws = fit$sigmaEpsilonDraws
+  
+  # aggregate using CPBL model
+  out = modCPBL(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empiricalDistributions=NULL, 
+                includeUrban=TRUE, maxEmptyFraction=1)
+  
+  browser()
+}
 
 
 

@@ -19,7 +19,7 @@ popGrid = makeInterpPopGrid(kmRes=5, adjustPopSurface=TRUE, "women")
 save(popGrid, file=paste0(globalDirectory, "popGridAdjustedWomen.RData"))
 
 # empirical distributions
-empiricalDistributions = getSurveyEmpiricalDistributions2(maxAge=0)
+empiricalDistributions = getSurveyEmpiricalDistributions2(maxAge=4) # maxAge is 4 years old because we want number of children in the 5 year period
 empiricalDistributions = c(empiricalDistributions, getSurveyEmpiricalDistributionsWomen())
 save(empiricalDistributions, file=paste0(globalDirectory, "empiricalDistributions.RData"))
 
@@ -48,8 +48,16 @@ northLim = tmp[,2]
 save(eastLim, northLim, file=paste0(globalDirectory, "lims.RData"))
 load(paste0(globalDirectory, "lims.RData"))
 
+# simulate 1000 draws of N at each EA:
+# out = simNsFull(1, includeUrban=TRUE)
+out = simNsFull(1000, includeUrban=TRUE)
+NcsUrban = out$NcsUrban
+NcsRural = out$NcsRural
+save(NcsUrban, NcsRural, file=paste0(globalDirectory, "NcsUrbanRural.RData"))
 
-
+# Ncs = simNsFull(1, includeUrban=FALSE)
+Ncs = simNsFull(1000, includeUrban=FALSE)
+save(Ncs, file=paste0(globalDirectory, "Ncs.RData"))
 
 
 

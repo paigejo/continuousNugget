@@ -408,10 +408,13 @@ LKSimulator2 = function(coords, nsim=1, NC=5, effRange=(max(coords[,1])-min(coor
   fieldSims
 }
 
-simSPDE = function(coords, nsim=1, mesh=NULL, effRange=(max(coords[,1])-min(coords[,1]))/3, margVar=1) {
+simSPDE = function(coords, nsim=1, mesh=NULL, effRange=(max(coords[,1])-min(coords[,1]))/3, margVar=1, kenya=FALSE) {
   # generate mesh grid if necessary
   if(is.null(mesh)) {
-    mesh = getSPDEMeshGrid(coords, doPlot = FALSE)
+    if(kenya)
+      mesh = getSPDEMeshKenya(coords, doPlot = FALSE)
+    else
+      mesh = getSPDEMesh(doPlot = FALSE)
   }
   
   # calculate SPDE model parameters based on Lindgren Rue (2015) "Bayesian Spatial Modelling with R-INLA"
@@ -2234,9 +2237,63 @@ rELK = function(nsim=1, x, alpha, effectiveRange=NULL, sigmaEpsilon, rho=1, grid
   A %*% simCoefficients
 }
 
+# draw random numbers from an ecdf object
+recdf = function(n, distribution) {
+  probs = runif(n)
+  # quantile(distribution, probs, type=1) # type=1 signifies inverse ecdf
+  if(!("function" %in% class(distribution)) && !is.null(distribution$rfun))
+    distribution$rfun(n)
+  else
+    ecdfQuantile(probs, distribution)
+}
 
+# draw random numbers from a composition of ecdf objects. I.e. we want children per EA and 
+# we have households/EA, mothers/household, and children/mother
+recdfComposed = function(n, distributions) {
+  results = rep(1, n)
+  for(i in 1:length(distributions)) {
+    results = sapply(results, function(x) {sum(recdf(x, distributions[[i]]))})
+  }
+  
+  results
+}
 
+# draw random numbers from an ecdf object (this could be implemented efficiently)
+decdf = function(x, distribution) {
+  distributionKnots = knots(distribution)
+  masses = diff(c(0, evalq(y, environment(distribution))))
+  i = match(x, distributionKnots)
+  if(length(i) == 1 && is.na(i))
+    return(0)
+  else {
+    out = masses[i]
+    out[is.na(i)] = 0
+    return(0)
+  }
+}
 
+# get expectation of an ecdf object
+ecdfExpectation = function(distribution) {
+  distributionKnots = knots(distribution)
+  distributionKnots = c(distributionKnots[1] - 1, distributionKnots)
+  probs = distribution(distributionKnots[2:length(distributionKnots)]) - distribution(distributionKnots[1:(length(distributionKnots) - 1)])
+  sum(distributionKnots[2:length(distributionKnots)] * probs)
+}
+# ecdfExpectation(empiricalDistributions$households) * ecdfExpectation(empiricalDistributions$mothers) * ecdfExpectation(empiricalDistributions$children)
 
+# Becuase stats:::quantile.ecdf is terribly inefficient...
+ecdfQuantile = function(p, distribution) {
+  distributionKnots = knots(distribution)
+  cumulativeMass = evalq(y, environment(distribution))
+  indices= sapply(p, function(x) {match(TRUE, x <= cumulativeMass)})
+  distributionKnots[indices]
+}
+
+ecdf2edfun = function(distribution) {
+  samples = evalq(rep.int(x, diff(c(0, round(nobs * y)))), environment(distribution))
+  edfun(samples)
+}
+
+ 
 
 

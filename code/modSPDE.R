@@ -75,11 +75,9 @@ fitSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
   dataType = match.arg(dataType)
   if(is.null(dat)) {
     if(dataType == "mort") {
-      out = load("../U5MR/kenyaData.RData")
       dat = mort
     }
     else {
-      out = load("../U5MR/kenyaDataEd.RData")
       dat = ed
     }
   }
@@ -104,39 +102,8 @@ fitSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
     dat = dat[!leaveOutI,]
   } else {
     # make prediction coordinates on a fine grid for plotting, and add coarser grid of testing points
-    out = load(paste0("dataPointsKenya.RData"))
-    xRangeDat = dataPointsKenya$xRange
-    yRangeDat = dataPointsKenya$yRange
-    
-    # mx = 100
-    # my = 100
-    # predPts = make.surface.grid(list(x=seq(xRangeDat[1], xRangeDat[2], l=mx), y=seq(yRangeDat[1], yRangeDat[2], l=my)))
-    
-    # # remove grid points outside of Kenya national boundaries
-    # load("../U5MR/adminMapData.RData")
-    # polys = adm0@polygons
-    # kenyaPoly = polys[[1]]@Polygons[[77]]@coords
-    # kenyaPolyProj = projKenya(kenyaPoly)
-    # inKenya = in.poly(predPts, kenyaPolyProj)
-    # predPts = predPts[inKenya,]
-    
-    # get prediction locations from population grid (population density adjustment 
-    # for target population doesn't matter here, since we only need the prediction 
-    # grid at this point)
-    if(kmres == 5) {
-      load("../U5MR/popGrid.RData")
-    }
-    else
-      popGrid = makeInterpPopGrid(kmres, FALSE)
-    
     predPts = cbind(popGrid$east, popGrid$north)
     predsUrban = popGrid$urban
-    
-    # # add other testing locations to matrix of prediction locations and remember which 
-    # plotGridI = 1:sum(inKenya)
-    # gridTestI = (max(plotGridI) + 1):(max(plotGridI) + length(simulationData$xGrid))
-    # predPts = rbind(predPts, cbind(simulationData$xGrid, simulationData$yGrid))
-    
     predClusterI = rep(FALSE, nrow(predPts))
   }
   xPred = matrix(rep(1, nrow(predPts)), ncol=1)
@@ -831,15 +798,15 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
     # get cluster effect variance
     clusterVars = nuggetVars
     rhos = NULL
-    predMatClustEffect = predMat + sweep(matrix(rnorm(length(predMat), sd=rep(sqrt(clusterVars), each=nrow(predMat))), nrow=nrow(predMat)), 1, predClusterI, "*")
+    # predMatClustEffect = predMat + sweep(matrix(rnorm(length(predMat), sd=rep(sqrt(clusterVars), each=nrow(predMat))), nrow=nrow(predMat)), 1, predClusterI, "*")
     obsMatClustEffect = obsMat + matrix(rnorm(length(obsMat), sd=rep(sqrt(clusterVars), each=nrow(obsMat))), nrow=nrow(obsMat))
   } else if(family == "betabinomial") {
     # get cluster induced overdispersion
     rhos = overdispersions
     predMat = expit(predMat)
-    as = sweep(predMat, 2, 1/rhos-1, "*")
-    bs = sweep(1-predMat, 2, 1/rhos-1, "*")
-    predMatClustEffect = matrix(rbeta(length(predMat), c(as.matrix(as)), c(as.matrix(bs))), nrow=nrow(predMat))
+    # as = sweep(predMat, 2, 1/rhos-1, "*")
+    # bs = sweep(1-predMat, 2, 1/rhos-1, "*")
+    # predMatClustEffect = matrix(rbeta(length(predMat), c(as.matrix(as)), c(as.matrix(bs))), nrow=nrow(predMat))
     obsMat = expit(obsMat)
     as = sweep(obsMat, 2, 1/rhos-1, "*")
     bs = sweep(1-obsMat, 2, 1/rhos-1, "*")
@@ -848,24 +815,23 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
   } else {
     clusterVars = NULL
     rhos = NULL
-    predMatClustEffect = predMat
     obsMatClustEffect = obsMat
   }
   
   # transform predictions from logit to probability scale
   if(family == "binomial") {
     predMat = expit(predMat)
-    predMatClustEffect = expit(predMatClustEffect)
+    # predMatClustEffect = expit(predMatClustEffect)
     obsMat = expit(obsMat)
     obsMatClustEffect = expit(obsMatClustEffect)
   }
   
   # get summary statistics
-  preds = rowMeans(predMatClustEffect)
-  predSDs = apply(predMatClustEffect, 1, sd)
-  lower = apply(predMatClustEffect, 1, quantile, probs=(1-significanceCI)/2)
-  medians = apply(predMatClustEffect, 1, median)
-  upper = apply(predMatClustEffect, 1, quantile, probs=1-(1-significanceCI)/2)
+  # preds = rowMeans(predMatClustEffect)
+  # predSDs = apply(predMatClustEffect, 1, sd)
+  # lower = apply(predMatClustEffect, 1, quantile, probs=(1-significanceCI)/2)
+  # medians = apply(predMatClustEffect, 1, median)
+  # upper = apply(predMatClustEffect, 1, quantile, probs=1-(1-significanceCI)/2)
   obsPreds = rowMeans(obsMat)
   obsSDs = apply(obsMatClustEffect, 1, sd)
   obsLower = apply(obsMatClustEffect, 1, quantile, probs=(1-significanceCI)/2)
@@ -960,13 +926,13 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
   timings$posteriorSamplingTimePct = timings$posteriorSamplingTime / timings$totalTime
   timings$otherTimePct = timings$otherTime / timings$totalTime
   
-  list(mod=mod, preds=preds, sigmas=predSDs, lower=lower, median=medians, upper=upper, 
+  list(mod=mod, 
        obsPreds=obsPreds, obsSDs=obsSDs, obsLower=obsLower, obsMedian=obsMedian, obsUpper=obsUpper, 
        mesh=mesh, prior=prior, stack=stack.full, 
        interceptSummary=interceptSummary, fixedEffectSummary=fixedEffectSummary, rangeSummary=rangeSummary, 
        sdSummary=sdSummary, varSummary=varSummary, overdispersionSummary=overdispersionSummary, 
        parameterSummaryTable=parameterSummaryTable, 
-       predMat=predMatClustEffect, obsMat=obsMatClustEffect, hyperMat=hyperMat, timings=timings, clusterVars=clusterVars, rhos=rhos)
+       uDraws=predMat, obsMat=obsMatClustEffect, hyperMat=hyperMat, timings=timings, sigmaEpsilonDraws=clusterVars, rhos=rhos)
 }
 
 # this function generates results for the simulation study for the SPDE model

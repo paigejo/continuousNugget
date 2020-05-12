@@ -14,6 +14,10 @@ library(raster)
 library(MCMCpack)
 library(numDeriv)
 library(INLA)
+library(edfun) # for drawing from empirical distributions quickly
+library(data.table)
+library(sampling)
+library(haven)
 
 codeDirectory <<- "~/git/continuousNugget/code/"
 figDirectory <<- "~/git/continuousNugget/figures/"
@@ -46,11 +50,13 @@ setwd("~/git/continuousNugget")
 source(paste0(elkDirectory, 'LKinla.R'))
 source(paste0(elkDirectory, 'LKinla_rgeneric.R'))
 source('code/modSPDE.R')
-source('code/modLKinla.R')
+source('code/modELK.R')
+source('code/modAgg.R')
 source("code/scores.R")
 source('code/compareModels.R')
 source("code/utilityFuns.R")
 source('code/getSimulationDataSets.R')
+source('code/generateSimDataSets.R')
 source('code/simStudy.R')
 # source('code/plotGenerator.R')
 
@@ -90,11 +96,15 @@ load(paste0(globalDirectory, "clustpr.RData"))
 load(paste0(globalDirectory, "poppc.RData"))
 load(paste0(globalDirectory, "poppr.RData"))
 
-# set enumeration areas
+# load enumeration areas and neonatal mortality data
 load(paste0(globalDirectory, "kenyaEAs.RData"))
+load(paste0(globalDirectory, "kenyaData.RData"))
 
 # load 5km population density grid (of neonatals) over Kenya
 load(paste0(globalDirectory, "popGridAdjusted.RData"))
+
+# load limits
+load(paste0(globalDirectory, "lims.RData"))
 
 # parallelization
 if(!exists("doParallel") || (exists("doParallel") && doParallel == FALSE)) {

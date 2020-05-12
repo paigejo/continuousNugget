@@ -154,12 +154,17 @@ getSurveyEmpiricalDistributions = function(data=NULL, yearOfBirth = 2010) {
 
 # get empirical mothers and children distribution per cluster
 # maxAge: the maximum age of the children being included in the distribution rounded down
-getSurveyEmpiricalDistributions2 = function(data=NULL, dataDHS=NULL, maxAge=4) {
+# doNeonatal: if TRUE and maxAge == 0, randomly remove 11/12 of births
+getSurveyEmpiricalDistributions2 = function(data=NULL, dataDHS=NULL, maxAge=0, doNeonatal=FALSE) {
+  
+  # check if inputs make sense
+  if(doNeonatal && maxAge != 0)
+    stop("If doNeonatal is set to TRUE, maxAge must be 0")
   
   # read in DHS data for the estimate of the number of households within each cluster
   print("reading in DHS data")
   if(is.null(dataDHS))
-    dataDHS <- data.frame(read_dta("Kenya2014BirthRecode/KEBR70FL.DTA"))
+    dataDHS <- data.frame(read_dta("../U5MR/Kenya2014BirthRecode/KEBR70FL.DTA"))
 
   # initialize lists of numbers for the empirical distributions
   print("calculating households per cluster empirical distribution")
@@ -176,29 +181,47 @@ getSurveyEmpiricalDistributions2 = function(data=NULL, dataDHS=NULL, maxAge=4) {
   # read in census data for the other empirical distributions
   print("reading and census data if necessary")
   if(is.null(data))
-    data <- data.frame(read_dta("popSurvey2009/Population_2009KPHC_10PCT_STATA.dta"))
+    data <- data.frame(read_dta("~/Google Drive/UW/Wakefield/WakefieldShared/U5MR/popSurvey2009/Population_2009KPHC_10PCT_STATA.dta"))
   data = data[, c("PROVINCE", "DISTRICT", "DIVISION", "LOCATION", "SUBLOC", "COUNTY", 
-                  "RecreatedEANO", "HHNO", "EATYPE", "BARCODE", "P12", "P13")]
+                  "RecreatedEANO", "HHNO", "EATYPE", "BARCODE", "TIF", "P12", "P13")]
+  # data2 = data[, c(1:16, 19, 20)]
   
   print("beginning data table operations")
   dat = as.data.table(data)
+  # dat2 = as.data.table(data2)
   print(system.time(outMothers <- dat[, {
     .("nMothers"=uniqueN(P13[P13 != 0 & P12 <= maxAge]), "urban"=any(EATYPE != 1))
   }
   , by = .(PROVINCE, DISTRICT, DIVISION, LOCATION, SUBLOC, COUNTY, RecreatedEANO, HHNO, BARCODE)]))
+  # print(system.time(outMothers2 <- dat2[, {
+  #   .("nMothers"=uniqueN(P13[P13 != 0 & P12 <= maxAge]), "urban"=any(EATYPE != 1))
+  # }
+  # , by = .(REC_TYPE, PROVINCE, DISTRICT, DIVISION, LOCATION, SUBLOC, COUNTY, RecreatedEANO, HHNO, 
+  #          BARCODE, HHTYPE, EASTATUS, EATYPE, CONST, TIF)]))
   
   dat0 = dat[P13 != 0 & P12 <= maxAge,]
+  # dat02 = dat2[P13 != 0 & P12 <= maxAge,]
   print(system.time(outChildren <- dat0[, {
     if(any(unlist(tapply(P13, P13, length, simplify = FALSE))) >= 15)
       print(.SD)
     .("nChildren"=unlist(tapply(P13, P13, length, simplify = FALSE)), "urban"=rep(any(EATYPE != 1), uniqueN(P13)))
   }
   , by = .(PROVINCE, DISTRICT, DIVISION, LOCATION, SUBLOC, COUNTY, RecreatedEANO, HHNO, BARCODE)]))
+  # print(system.time(outChildren2 <- dat02[, {
+  #   if(any(unlist(tapply(P13, P13, length, simplify = FALSE))) >= 15)
+  #     print(.SD)
+  #   .("nChildren"=unlist(tapply(P13, P13, length, simplify = FALSE)), "urban"=rep(any(EATYPE != 1), uniqueN(P13)))
+  # }
+  # , by = .(REC_TYPE, PROVINCE, DISTRICT, DIVISION, LOCATION, SUBLOC, COUNTY, RecreatedEANO, HHNO, 
+  #          BARCODE, HHTYPE, EASTATUS, EATYPE, CONST, TIF)]))
   
   nMothers = outMothers[["nMothers"]]
   nMothersUrban = outMothers[urban == TRUE, nMothers]
   nMothersRural = outMothers[urban == FALSE, nMothers]
   nChildren = outChildren[["nChildren"]]
+  if(doNeonatal) {
+    nChildren = rbinom(length(nChildren), size=nChildren, prob=1/12)
+  }
   nChildrenUrban = outChildren[urban == TRUE, nChildren]
   nChildrenRural = outChildren[urban == FALSE, nChildren]
   
@@ -636,7 +659,7 @@ simClustersEmpirical = function(eaDat, eaDatLong, nsim=1, seed=NULL, urbanOverSa
     # thisclustpc$clustUrb[thisclustpc$clustUrb >= thisclustpc$clustTotal] = thisclustpc$clustTotal[thisclustpc$clustUrb >= thisclustpc$clustTotal]
     # thisclustpc$clustRur = thisclustpc$clustTotal - thisclustpc$clustUrb
     thisclustpc = clustpc
-    thisclustpc$clustRur = round(thisclustpc$clustRur * (1 - urbanOverSamplefrac))
+    thisclustpc$clustRur = round(thisclustpc$clustRur)
     thisclustpc$clustRur[thisclustpc$clustRur < 0] = 0
     thisclustpc$clustUrb = thisclustpc$clustTotal - thisclustpc$clustRur
     
@@ -1178,11 +1201,18 @@ simDatEmpirical = function(empiricalDistributions, eaDat, clustDat=NULL, nsim=1,
   if(!is.null(seed))
     set.seed(seed)
   
+  # make edfun versions of the ecdfs for speed considerations
+  fastDistributions = list()
+  for(i in 1:length(empiricalDistributions)) {
+    fastDistributions = c(fastDistributions, list(ecdf2edfun(empiricalDistributions[[i]])))
+  }
+  names(fastDistributions) = names(empiricalDistributions)
+  
   ### simulate binomial data for each enumeration area
   # first generate the number of households
   numHouseholds = rep(0, nrow(eaDat))
-  numHouseholds[eaDat$urban] = recdf(sum(eaDat$urban), empiricalDistributions$householdsUrban)
-  numHouseholds[!eaDat$urban] = recdf(sum(!eaDat$urban), empiricalDistributions$householdsRural)
+  numHouseholds[eaDat$urban] = recdf(sum(eaDat$urban), fastDistributions$householdsUrban)
+  numHouseholds[!eaDat$urban] = recdf(sum(!eaDat$urban), fastDistributions$householdsRural)
   eaDat$nHH = numHouseholds
   
   # now expand the eaDat table to be in the long format, were each row is a house
@@ -1193,8 +1223,8 @@ simDatEmpirical = function(empiricalDistributions, eaDat, clustDat=NULL, nsim=1,
   
   # generate how many women and childen are in each cluster
   numWomenLong = rep(0, length(eaUrbanLong))
-  numWomenLong[eaUrbanLong] = recdf(sum(eaUrbanLong), empiricalDistributions$mothersUrban)
-  numWomenLong[!eaUrbanLong] = recdf(sum(!eaUrbanLong), empiricalDistributions$mothersRural)
+  numWomenLong[eaUrbanLong] = recdf(sum(eaUrbanLong), fastDistributions$mothersUrban)
+  numWomenLong[!eaUrbanLong] = recdf(sum(!eaUrbanLong), fastDistributions$mothersRural)
   eaDatLong$numWomen = numWomenLong
   
   # now expand the eaDat table to be in the extra long format, were each row is a mother
@@ -1203,8 +1233,8 @@ simDatEmpirical = function(empiricalDistributions, eaDat, clustDat=NULL, nsim=1,
   
   # generate the number of children per mother
   numChildrenExtraLong = rep(0, length(eaUrbanExtraLong))
-  numChildrenExtraLong[eaUrbanExtraLong] = recdf(sum(eaUrbanExtraLong), empiricalDistributions$childrenUrban)
-  numChildrenExtraLong[!eaUrbanExtraLong] = recdf(sum(!eaUrbanExtraLong), empiricalDistributions$childrenRural)
+  numChildrenExtraLong[eaUrbanExtraLong] = recdf(sum(eaUrbanExtraLong), fastDistributions$childrenUrban)
+  numChildrenExtraLong[!eaUrbanExtraLong] = recdf(sum(!eaUrbanExtraLong), fastDistributions$childrenRural)
   
   # aggregate up from mother to household level
   numChildrenLong = rep(0, length(eaUrbanLong))
@@ -1212,11 +1242,11 @@ simDatEmpirical = function(empiricalDistributions, eaDat, clustDat=NULL, nsim=1,
   eaDatLong$numChildren = numChildrenLong
   
   ### generate Binomial probabilities from transformed logit scale GP
-  # generate Lattice Krig simulations
+  # generate SPDE simulations
   eaCoords = cbind(eaDat$east, eaDat$north)
   print("Simulating nationwide mortality rates and data")
   if(margVar != 0) {
-    SPDEArgs = list(coords=eaCoords, nsim=1, margVar=margVar, effRange=effRange)
+    SPDEArgs = list(coords=eaCoords, nsim=1, margVar=margVar, effRange=effRange, kenya=TRUE)
     simVals = do.call("simSPDE", SPDEArgs)
   } else {
     simVals = matrix(rep(0, nrow(eaCoords)), ncol=1)
@@ -1283,35 +1313,49 @@ simDatEmpirical = function(empiricalDistributions, eaDat, clustDat=NULL, nsim=1,
   list(eaDat=eaDat, clustDat=clustList)
 }
 
-##### generate predictions for UM5R in counties (regions?), EAs
-# datForDirect: 
-fitMercerMod = function(datForDirect) {
-  ### the following code that is commented out will theoretically run the modified 
-  ### version of SUMMER in order to get the direct estimates
-  # # Use SUMMER package.  See vignette("summer-vignette", "SUMMER")
-  # require("SUMMER")
-  # 
-  # # We need: 
-  # # clustid
-  # # id
-  # # region
-  # # time (a factor)
-  # # age (this will be 0 for each observations)
-  # # weights
-  # # strata (region * urban)
-  # 
-  # # NOTE: only use ageMonth as timeVar because it's the same for each row
-  # datIn = datForDirect
-  # datIn$ageMonth="0"
-  # datIn$strata = datIn$regionRural
-  # datIn$died = datIn$died.x
-  # dat = myCountrySummary(births=datIn, years = "0", 
-  #                        regionVar="admin1", timeVar="ageMonth", weightsVar="weight")
+simNsFull = function(n=1, includeUrban=TRUE, easpa=makeDefaultEASPA(), empiricalDistributions=NULL) {
+  if(is.null(empiricalDistributions)) {
+    out = load(paste0(globalDirectory, "empiricalDistributions.RData"))
+    # list(households=householdDistribution, mothers=motherDistribution, children=childrenDistribution,
+    #      householdsUrban=householdDistributionUrban, mothersUrban=motherDistributionUrban, childrenUrban=childrenDistributionUrban,
+    #      householdsRural=householdDistributionRural, mothersRural=motherDistributionRural, childrenRural=childrenDistributionRural)
+    # May also have popUrban, popRural, and popTotal, in which case they are used
+    
+    # make edfun versions of the ecdfs
+    fastDistributions = list()
+    for(i in 1:length(empiricalDistributions)) {
+      fastDistributions = c(fastDistributions, list(ecdf2edfun(empiricalDistributions[[i]])))
+    }
+    names(fastDistributions) = names(empiricalDistributions)
+  }
   
-  
-  # instead of using SUMMER, use Andrea's precomputed direct estimates and Mercer et al. code:
-  load("resultsDirect.RData")
-  
+  # NOTE1: we assume the values for each EA within urban/rural boundaries are iid
+  if(includeUrban) {
+    if(!is.null(fastDistributions$popUrban)) {
+      NcsUrban = matrix(recdf(sum(easpa$EAUrb)*n, fastDistributions$popUrban), ncol=n)
+      NcsRural = matrix(recdf(sum(easpa$EARur)*n, fastDistributions$popRural), ncol=n)
+    } else {
+      NcsUrban = matrix(recdfComposed(sum(easpa$EAUrb)*n, list(fastDistributions$householdsUrban, 
+                                                               fastDistributions$mothersUrban, 
+                                                               fastDistributions$childrenUrban)), 
+                        ncol=n)
+      NcsRural = matrix(recdfComposed(sum(easpa$EARur)*n, list(fastDistributions$householdsRural, 
+                                                               fastDistributions$mothersRural, 
+                                                               fastDistributions$childrenRural)), 
+                        ncol=n)
+    }
+    list(NcsUrban=NcsUrban, NcsRural=NcsRural)
+  } else {
+    if(!is.null(fastDistributions$popTotal)) {
+      Ncs = matrix(recdf(sum(easpa$EATotal)*n, fastDistributions$popTotal), ncol=n)
+    } else {
+      Ncs = matrix(recdfComposed(sum(easpa$EATotal)*n, list(fastDistributions$households, 
+                                                             fastDistributions$mothers, 
+                                                             fastDistributions$children)), 
+                   ncol=n)
+    }
+    Ncs
+  }
 }
 
 # Same as simDatLK, but uses SPDE model to simulate data set instead of LatticeKrig.
