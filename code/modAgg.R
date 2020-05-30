@@ -192,7 +192,7 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     mug[!is.finite(mug)] = NA
     
     # this takes a veeeeery long time. Just use the logistic approximation instead
-    cpbl = matrix(logitNormMean(cbind(logit(c(as.matrix(uDraws))), rep(sigmaEpsilonDraws, each=nrow(uDraws)))), nrow=nrow(uDraws))
+    cpbl = matrix(logitNormMean(cbind(c(as.matrix(uDraws)), rep(sigmaEpsilonDraws, each=nrow(uDraws)))), nrow=nrow(uDraws))
     
     # load shape files for plotting
     require(maptools)

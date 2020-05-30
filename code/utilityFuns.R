@@ -1388,9 +1388,9 @@ aggregatePixelPredictions = function(Zg, Ng, popGrid=NULL, useDensity=FALSE,
     warning("Since popGrid and predsRegion were not both specified, aggregation assumes country is Kenya")
   }
   
-  # set NAs to 0
-  Zg[is.na(Ng)] = 0
+  # set NAs and pixels without any sample size to 0
   Ng[is.na(Ng)] = 0
+  Zg[Ng == 0] = 0
   
   # From here onwards, we will need to aggregate predictions over the 
   # population density grid. Use the following function to get numerical 
