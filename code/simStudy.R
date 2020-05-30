@@ -1350,8 +1350,8 @@ simNsFull = function(n=1, includeUrban=TRUE, easpa=makeDefaultEASPA(), empirical
       Ncs = matrix(recdf(sum(easpa$EATotal)*n, fastDistributions$popTotal), ncol=n)
     } else {
       Ncs = matrix(recdfComposed(sum(easpa$EATotal)*n, list(fastDistributions$households, 
-                                                             fastDistributions$mothers, 
-                                                             fastDistributions$children)), 
+                                                            fastDistributions$mothers, 
+                                                            fastDistributions$children)), 
                    ncol=n)
     }
     Ncs

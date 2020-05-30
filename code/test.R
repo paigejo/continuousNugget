@@ -78,7 +78,7 @@ testCPBL = function(fit=NULL) {
     }
   }
   
-  uDraws = fit$uDraws
+  uDraws = logit(fit$uDraws)
   sigmaEpsilonDraws = fit$sigmaEpsilonDraws
   
   # aggregate using CPBL model

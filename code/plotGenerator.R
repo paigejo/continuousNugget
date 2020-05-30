@@ -2267,13 +2267,13 @@ makeGreenBlueSequentialColors = function(n, ggplot=FALSE) {
     scale_colour_continuous_sequential(h1=128, h2=250, c1=117, cmax=74, c2=107, l1=71, l2=55, p1=2, p2=2, n_interp=n)
 }
 
-makePurpleYellowSequentialColors = function(n, ggplot=FALSE) {
+makePurpleYellowSequentialColors = function(n, rev=FALSE, ggplot=FALSE) {
   # library("colorspace")
   # pal <-choose_palette()
   if(!ggplot)
-    sequential_hcl(n, h1=-100, h2=100, c1=60, cmax=74, c2=100, l1=15, l2=95, p1=2, p2=0.9)
+    sequential_hcl(n, h1=-100, h2=100, c1=60, cmax=74, c2=100, l1=15, l2=95, p1=2, p2=0.9, rev=rev)
   else
-    scale_colour_continuous_sequential(h1=-100, h2=100, c1=60, cmax=74, c2=100, l1=15, l2=95, p1=2, p2=0.9, n_interp=n)
+    scale_colour_continuous_sequential(h1=-100, h2=100, c1=60, cmax=74, c2=100, l1=15, l2=95, p1=2, p2=0.9, rev=rev, n_interp=n)
 }
 
 makeRedBlueDivergingColors = function(n, valRange=NULL, center=NULL, rev=FALSE, ggplot=FALSE) {

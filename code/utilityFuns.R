@@ -1222,6 +1222,672 @@ makeNumericalIntegralMat = function(predPts, xRange=c(-1, 1), yRange=c(-1, 1), m
   A
 }
 
+# given model output, aggregates predictions to the requested levels
+# NOTE: for validation, all "obs____" variables must be modified to include the left out cluster 
+#       predictions in the correct order, 
+aggregateModelResultsKenya = function(dat, results, popGrid, clusterLevel=TRUE, pixelLevel=TRUE, countyLevel=TRUE, 
+                                      regionLevel=TRUE) {
+  stop("aggregateModelResultsKenya function is incomplete")
+  # obsValues = dat$y/dat$n
+  # obsCoords = cbind(dat$east, dat$north)
+  # obsNs = dat$n
+  # xObs = matrix(rep(1, length(obsValues)), ncol=1)
+  obsUrban = dat$urban
+  
+  predPts = cbind(popGrid$east, popGrid$north)
+  predsUrban = popGrid$urban
+  predsCounty = popGrid$admin1
+  predsRegion = countyToRegion(predsCounty)
+  
+  # Cluster level predictions (no aggregation required)
+  if(clusterLevel) {
+    clusterPredictions = data.frame(areaName=1:length(results$obsPreds), 
+                                    urban=results$obsUrban, 
+                                    preds=results$obsPreds, 
+                                    SDs=results$obsSDs, 
+                                    Q10=results$obsLower, 
+                                    Q50=results$obsMedian, 
+                                    Q90=results$obsUpper)
+  } else {
+    clusterPredictions = NULL
+  }
+  
+  # Pixel level predictions (no aggregation required)
+  if(pixelLevel) {
+    pixelPredictions = data.frame(areaName=1:length(results$preds), 
+                                  urban=predsUrban, 
+                                  preds=results$preds, 
+                                  SDs=results$sigmas, 
+                                  Q10=results$lower, 
+                                  Q50=results$median, 
+                                  Q90=results$upper)
+  } else {
+    pixelPredictions = NULL
+  }
+  
+  # From here onwards, we will need to aggregate predictions over the 
+  # population density grid. Use the following function to get  numerical 
+  # integration matrix for a given level of areal aggregation
+  getIntegrationMatrix = function(areaNames) {
+    densities = popGrid$popOrig
+    uniqueNames = sort(unique(areaNames))
+    
+    integrationMatrix = sapply(1:length(uniqueNames), function(i) {
+      areaI = areaNames == uniqueNames[i]
+      theseDensities = densities
+      theseDensities[!areaI] = 0
+      theseDensities * (1/sum(theseDensities))
+    })
+    
+    matrix(integrationMatrix, nrow=length(uniqueNames))
+  }
+  
+  # Use the following function to perform the
+  # aggregations
+  getIntegratedPredictions = function(areaNames, urbanProportions) {
+    # get numerical integration matrix
+    A = getIntegrationMatrix(areaNames)
+    
+    # aggregate the prediction matrix
+    newPredMat = t(A) %*% results$predMat
+    
+    # calculate relevant summary statistics
+    data.frame(areaName=sort(unique(areaNames)), 
+               urban=urbanProportions, 
+               preds=rowMeans(newPredMat), 
+               SDs=apply(newPredMat, 1, sd), 
+               Q10=apply(newPredMat, 1, quantile, probs=.1), 
+               Q50=apply(newPredMat, 1, quantile, probs=.5), 
+               Q90=apply(newPredMat, 1, quantile, probs=.9))
+  }
+  
+  # County level predictions
+  if(countyLevel) {
+    load(paste0(globalDirectory, "poppc.RData"))
+    urbanProportions = poppc$popUrb / poppc$popTotal
+    sortI = sort(poppc$County, index.return=TRUE)$ix
+    urbanProportions = urbanProportions[sortI]
+    
+    countyPredictions = getIntegratedPredictions(predsCounty, urbanProportions)
+  } else {
+    countyPredictions = NULL
+  }
+  
+  # Region level predictions
+  if(regionLevel) {
+    load(paste0(globalDirectory, "poppr.RData"))
+    urbanProportions = poppr$popUrb / poppr$popTotal
+    sortI = sort(as.character(poppr$Region), index.return=TRUE)$ix
+    urbanProportions = urbanProportions[sortI]
+    
+    regionPredictions = getIntegratedPredictions(predsRegion, urbanProportions)
+  } else {
+    regionPredictions = NULL
+  }
+  
+  # combine fixed effects and hyperparameter summary tables into one single table
+  names(results$fixedEffectSummary) = colnames(results$parameterSummaryTable)
+  parameterSummary = rbind(results$fixedEffectSummary, 
+                           results$parameterSummaryTable)
+  
+  # return results
+  list(predictions = list(clusterPredictions=clusterPredictions, 
+                          pixelPredictions=pixelPredictions, 
+                          countyPredictions=countyPredictions, 
+                          regionPredictions=regionPredictions), 
+       parameterSummary = parameterSummary)
+}
+
+# aggregates pixel predictions to the requested levels
+# pg: matrix of empirical proportion draws at the pixel level
+# Ng: matrix of population denominator draws at the pixel level
+# popGrid: of similar format to that returned by makeDefaultPopMat() (the default)
+# useDensity: whether to use population density weighting from popGrid 
+#             or even weighting within the strata
+# separateUrbanRural: whether or not to produce estimates in urban and 
+#                     rural parts of areas separately
+# popRegionNames: vector of region names with same length as nrow(popGrid)
+# countyLevel, regionLevel, nationalLevel: whether or not to aggregate to the 
+#                                          given levels
+# countyPopTotal: the total population in the county
+# normalize: whether or not to normalize the rowSums of the aggregation matrices. 
+#            If set to TRUE, calculates average of Zg and Ng over the areas for any single draw, and 
+#            pg is calculated as average of Zg over average of Ng
+aggregatePixelPredictions = function(Zg, Ng, popGrid=NULL, useDensity=FALSE, 
+                                     separateUrbanRural=TRUE, popRegionNames=NULL, 
+                                     countyLevel=TRUE, regionLevel=TRUE, nationalLevel=TRUE, 
+                                     countyPopTotal=NULL, regionPopTotal=NULL, nationalPopTotal=NULL, 
+                                     countyPopUrban=NULL, regionPopUrban=NULL, nationalPopUrban=NULL, 
+                                     country="Kenya", normalize=FALSE) {
+  
+  if(is.null(popGrid)) {
+    popGrid = makeDefaultPopMat()
+    # lon: longitude
+    # lat: latitude
+    # east: easting (km)
+    # north: northing (km)
+    # pop: proportional to population density for each grid cell
+    # area: an id or area name in which the grid cell corresponding to each row resides
+    # urban: whether the grid cell is urban or rural
+    
+    assumeKenya = TRUE
+  }
+  
+  predPts = cbind(popGrid$east, popGrid$north)
+  predsUrban = popGrid$urban
+  predsCounty = popGrid$area
+  predsCountry = rep(country, length(predsCounty))
+  if(is.null(popRegionNames) && regionLevel) {
+    predsRegion = countyToRegion(predsCounty)
+    assumeKenya = TRUE
+  } else if(!is.null(popRegionNames) && regionLevel) {
+    predsRegion = popRegionNames
+  }
+  
+  if(assumeKenya) {
+    warning("Since popGrid and predsRegion were not both specified, aggregation assumes country is Kenya")
+  }
+  
+  # set NAs to 0
+  Zg[is.na(Ng)] = 0
+  Ng[is.na(Ng)] = 0
+  
+  # From here onwards, we will need to aggregate predictions over the 
+  # population density grid. Use the following function to get numerical 
+  # integration matrix for a given level of areal aggregation. returned 
+  # matrices have dimension length(unique(areaNames)) x length(areaNames)
+  # areaNames: 
+  # urbanProportions: vector giving proportion of population urban for each unique area in areaNames. 
+  #                   If specified, ensure that urban and rural parts of the full integration 
+  #                   matrix have the appropriate relative weights for each area
+  # normalize: whether or not to normalize the rows of the matrices to sum to 1 or to instead 
+  #            contain only binary values (or non-binary values based on the binary values if 
+  #            urbanProportions is not NULL)
+  getIntegrationMatrix = function(areaNames, urbanProportions=NULL, normalize=FALSE) {
+    if(useDensity && normalize) {
+      densities = popGrid$pop
+    } else if(!useDensity) {
+      densities = rep(1, nrow(popGrid))
+    } else
+      stop("case when useDensity == TRUE and normalize == FALSE is not currently supported")
+    
+    uniqueNames = sort(unique(areaNames))
+    getMatrixHelper = function(i, thisUrban=NULL) {
+      areaI = areaNames == uniqueNames[i]
+      theseDensities = densities
+      
+      # make sure we only include pixels in the given area and, if necessary, with the given urbanicity
+      theseDensities[!areaI] = 0
+      if(!is.null(thisUrban))
+        theseDensities[predsUrban == thisUrban] = 0
+      thisSum = sum(theseDensities)
+      if(thisSum != 0 && normalize)
+        theseDensities * (1/thisSum)
+      else if(thisSum == 0)
+        rep(0, length(theseDensities))
+      else
+        theseDensities
+    }
+    
+    if(!separateUrbanRural) {
+      integrationMatrix = t(matrix(sapply(1:length(uniqueNames), getMatrixHelper), ncol=length(uniqueNames)))
+      
+      integrationMatrix
+    } else {
+      integrationMatrixUrban = t(matrix(sapply(1:length(uniqueNames), getMatrixHelper, thisUrban=TRUE), ncol=length(uniqueNames)))
+      integrationMatrixRural = t(matrix(sapply(1:length(uniqueNames), getMatrixHelper, thisUrban=FALSE), ncol=length(uniqueNames)))
+      if(!is.null(urbanProportions)) {
+        integrationMatrix = sweep(integrationMatrixUrban, 1, urbanProportions, "*") + sweep(integrationMatrixRural, 1, 1-urbanProportions, "*")
+      } else {
+        integrationMatrix = t(matrix(sapply(1:length(uniqueNames), getMatrixHelper), ncol=length(uniqueNames)))
+      }
+      
+      list(integrationMatrix=integrationMatrix, 
+           integrationMatrixUrban=integrationMatrixUrban, 
+           integrationMatrixRural=integrationMatrixRural)
+    }
+  }
+  
+  # Use the following function to perform the
+  # aggregations
+  getIntegratedPredictions = function(areaNames) {
+    # get numerical integration matrix
+    A = getIntegrationMatrix(areaNames, normalize=normalize)
+    
+    # aggregate the prediction and denominator matrices (for whole areas and also urban/rural strata if necessary)
+    if(!separateUrbanRural) {
+      ZAggregated = A %*% Zg
+      NAggregated = A %*% Ng
+      pAggregated = ZAggregated / NAggregated
+      pAggregated[ZAggregated == 0] = 0
+      
+      list(p=pAggregated, Z=ZAggregated, N=NAggregated, A=A)
+    } else {
+      AUrban = A$integrationMatrixUrban
+      ARural = A$integrationMatrixRural
+      A = A$integrationMatrix
+      
+      ZAggregated = A %*% Zg
+      NAggregated = A %*% Ng
+      pAggregated = ZAggregated / NAggregated
+      pAggregated[NAggregated == 0] = 0
+      
+      ZAggregatedUrban = AUrban %*% Zg
+      NAggregatedUrban = AUrban %*% Ng
+      pAggregatedUrban = ZAggregatedUrban / NAggregatedUrban
+      pAggregatedUrban[NAggregatedUrban == 0] = 0
+      
+      ZAggregatedRural = ARural %*% Zg
+      NAggregatedRural = ARural %*% Ng
+      pAggregatedRural = ZAggregatedRural / NAggregatedRural
+      pAggregatedRural[NAggregatedRural == 0] = 0
+      
+      list(p=pAggregated, Z=ZAggregated, N=NAggregated, 
+           pUrban=pAggregatedUrban, ZUrban=ZAggregatedUrban, NUrban=NAggregatedUrban, 
+           pRural=pAggregatedRural, ZRural=ZAggregatedRural, NRural=NAggregatedRural, 
+           A=A, AUrban=AUrban, ARural=ARural)
+    }
+  }
+  
+  # County level predictions
+  if(countyLevel) {
+    # load(paste0(globalDirectory, "poppc.RData"))
+    # urbanProportions = poppc$popUrb / poppc$popTotal
+    # sortI = sort(poppc$County, index.return=TRUE)$ix
+    # urbanProportions = urbanProportions[sortI]
+    
+    countyMatrices = getIntegratedPredictions(predsCounty)
+  } else {
+    countyMatrices = NULL
+  }
+  
+  # Region level predictions
+  if(regionLevel) {
+    # load(paste0(globalDirectory, "poppr.RData"))
+    # urbanProportions = poppr$popUrb / poppr$popTotal
+    # sortI = sort(as.character(poppr$Region), index.return=TRUE)$ix
+    # urbanProportions = urbanProportions[sortI]
+    
+    regionMatrices = getIntegratedPredictions(predsRegion)
+  } else {
+    regionMatrices = NULL
+  }
+  
+  # National level predictions
+  if(nationalLevel) {
+    nationalMatrices = getIntegratedPredictions(predsCountry)
+  } else {
+    nationalMatrices = NULL
+  }
+  
+  # return results
+  list(countyMatrices=countyMatrices, regionMatrices=regionMatrices, nationalMatrices=nationalMatrices)
+}
+
+# aggregates EA predictions to the requested levels
+# pg: matrix of empirical proportion draws at the EA level
+# Ng: matrix of population denominator draws at the EA level
+# easpa: of similar format to that returned by makeDefaultEASPA() (the default)
+# uniqueRegions: vector of length nrow(easpa) of region names associated with the areas easpa
+# areaMat: a matrix of area names for each draw and each EA
+# urbanMat: a matrix of urbanicity classifications for each draw and each EA
+# separateUrbanRural: whether or not to produce estimates in urban and 
+#                     rural parts of areas separately
+# popRegionNames: vector of region names with same length as nrow(popGrid)
+# countyLevel, regionLevel, nationalLevel: whether or not to aggregate to the 
+#                                          given levels
+# countyPopTotal: the total population in the county
+# normalize: if TRUE, calculates areal means rather than areal totals
+aggregateEAPredictions = function(Zc, Nc, areaMat, urbanMat, easpa=NULL, uniqueRegions=NULL, 
+                                  separateUrbanRural=TRUE, 
+                                  countyLevel=TRUE, regionLevel=TRUE, nationalLevel=TRUE, 
+                                  countyPopTotal=NULL, regionPopTotal=NULL, nationalPopTotal=NULL, 
+                                  countyPopUrban=NULL, regionPopUrban=NULL, nationalPopUrban=NULL, 
+                                  country="Kenya", normalize=FALSE) {
+  
+  if(is.null(easpa) || (is.null(uniqueRegions) && regionLevel)) {
+    warning("Since easpa or uniqueRegions were not both specified, regional aggregation assumes country is Kenya")
+  }
+  
+  if(is.null(easpa)) {
+    easpa = makeDefaultEASPA()
+    # Area: the name or id of the area
+    # EAUrb: the number of EAs in the urban part of the area
+    # EARur: the number of EAs in the rural part of the area
+    # EATotal: the number of EAs in the the area
+    # HHUrb: the number of households in the urban part of the area
+    # HHRur: the number of households in the rural part of the area
+    # HHTotal: the number of households in the the area
+    # popUrb: the number of people in the urban part of the area
+    # popRur: the number of people in the rural part of the area
+    # popTotal: the number of people in the the area
+  }
+  
+  # set NAs to 0
+  Zc[is.na(Zc)] = 0
+  Nc[is.na(Nc)] = 0
+  
+  ##### 
+  # We need to sort the nEA x nDraws matrices so that strata will always contain EAs in the 
+  # same index range in the matrices. They are currently ordered by the pixel index instead.
+  
+  # this function sorts fromMat to be in the given stratum ordering
+  sortMatrix = function(fromMat, fromAreaUrbanMat=NULL, toAreaUrbanMat=NULL) {
+    toMat = fromMat
+    uniqueStrata = sort(unique(fromAreaUrbanMat[,1]))
+    totalPerStratum = table(fromAreaUrbanMat[,1])
+    sortI = sort(names(totalPerStratum))
+    totalPerStratum = totalPerStratum[sortI]
+    
+    # set toAreaUrbanMat if necessary
+    if(is.null(toAreaUrbanMat) && is.null(fromAreaUrbanMat)) {
+      stop("must either set toAreaUrbanMat or fromAreaUrbanMat")
+    }
+    if(is.null(toAreaUrbanMat)) {
+      toAreaUrbanMat = matrix(rep(uniqueStrata, times=totalPerStratum), nc=ncol(fromMat), nr=nrow(fromMat))
+    }
+    if(is.null(fromAreaUrbanMat)) {
+      fromAreaUrbanMat = matrix(rep(uniqueStrata, times=totalPerStratum), nc=ncol(fromMat), nr=nrow(fromMat))
+    }
+    
+    # set relevant parts of the output matrix
+    for(i in 1:length(uniqueStrata)) {
+      thisStratum = uniqueStrata[i]
+      fromI = which(fromAreaUrbanMat == thisStratum)
+      toI = which(toAreaUrbanMat == thisStratum)
+      toMat[toI] = fromMat[fromI]
+    }
+    
+    toMat
+  }
+  
+  # construct the stratum ordering matrices (nEA x nDraws)
+  nDraws = ncol(Nc)
+  urbanStringMat = matrix(sapply(urbanMat, function(x) {ifelse(x, "u", "r")}), ncol=nDraws)
+  fromAreaUrbanMat = matrix(paste(areaMat, urbanStringMat, sep=","), ncol=nDraws)
+  uniqueStrata = sort(unique(fromAreaUrbanMat[,1]))
+  totalPerStratum = table(fromAreaUrbanMat[,1])
+  sortI = sort(names(totalPerStratum))
+  totalPerStratum = totalPerStratum[sortI]
+  toAreaUrbanMat = matrix(rep(uniqueStrata, times=totalPerStratum), nc=ncol(fromAreaUrbanMat), nr=nrow(fromAreaUrbanMat))
+  
+  # get the (now consistent) ordering of area names and urbanicity classifications for integration
+  predsArea = sapply(toAreaUrbanMat[,1], function(x) {strsplit(x, ",")[[1]][1]})
+  predsUrban = sapply(toAreaUrbanMat[,1], function(x) {strsplit(x, ",")[[1]][2]}) == "u"
+  predsCountry = rep(country, length(predsArea))
+  
+  # get the region names if necessary
+  if(regionLevel && !is.null(uniqueRegions)) {
+    predsRegion = predsArea
+    for(i in 1:nrow(easpa)) {
+      predsRegion[predsArea == easpa$area[i]] = uniqueRegions[i]
+    }
+  } else if(regionLevel) {
+    predsRegion = countyToRegion(predsArea)
+  }
+  
+  # reorder the input matrices
+  Zc = sortMatrix(Zc, fromAreaUrbanMat, toAreaUrbanMat)
+  Nc = sortMatrix(Nc, fromAreaUrbanMat, toAreaUrbanMat)
+  
+  # From here onwards, we will need to aggregate predictions over the 
+  # areas. Use the following function to get numerical 
+  # integration matrix for a given level of areal aggregation. returned 
+  # matrices have dimension length(unique(areaNames)) x length(areaNames)
+  # areaNames: a vector of area names with length equal to nEAs
+  # urbanProportions: vector giving proportion of population urban for each unique area in areaNames. 
+  #                   If specified, ensure that urban and rural parts of the full integration 
+  #                   matrix have the appropriate relative weights for each area
+  # normalize: whether or not to normalize the rows of the matrices to sum to 1 or to instead 
+  #            contain only binary values (or non-binary values based on the binary values if 
+  #            urbanProportions is not NULL)
+  getIntegrationMatrix = function(areaNames, urbanProportions=NULL, normalize=FALSE) {
+    densities = rep(1, nrow(Zc))
+    
+    uniqueNames = sort(unique(areaNames))
+    getMatrixHelper = function(i, thisUrban=NULL) {
+      areaI = areaNames == uniqueNames[i]
+      theseDensities = densities
+      
+      # make sure we only include pixels in the given area and, if necessary, with the given urbanicity
+      theseDensities[!areaI] = 0
+      if(!is.null(thisUrban))
+        theseDensities[predsUrban == thisUrban] = 0
+      thisSum = sum(theseDensities)
+      if(thisSum != 0 && normalize)
+        theseDensities * (1/thisSum)
+      else if(thisSum == 0)
+        rep(0, length(theseDensities))
+      else
+        theseDensities
+    }
+    
+    if(!separateUrbanRural) {
+      integrationMatrix = t(matrix(sapply(1:length(uniqueNames), getMatrixHelper), ncol=length(uniqueNames)))
+      
+      integrationMatrix
+    } else {
+      integrationMatrixUrban = t(matrix(sapply(1:length(uniqueNames), getMatrixHelper, thisUrban=TRUE), ncol=length(uniqueNames)))
+      integrationMatrixRural = t(matrix(sapply(1:length(uniqueNames), getMatrixHelper, thisUrban=FALSE), ncol=length(uniqueNames)))
+      if(!is.null(urbanProportions)) {
+        integrationMatrix = sweep(integrationMatrixUrban, 1, urbanProportions, "*") + sweep(integrationMatrixRural, 1, 1-urbanProportions, "*")
+      } else {
+        integrationMatrix = t(matrix(sapply(1:length(uniqueNames), getMatrixHelper), ncol=length(uniqueNames)))
+      }
+      
+      list(integrationMatrix=integrationMatrix, 
+           integrationMatrixUrban=integrationMatrixUrban, 
+           integrationMatrixRural=integrationMatrixRural)
+    }
+  }
+  
+  # Use the following function to perform the
+  # aggregations
+  getIntegratedPredictions = function(areaNames) {
+    # get numerical integration matrix
+    A = getIntegrationMatrix(areaNames, normalize=normalize)
+    
+    # aggregate the prediction and denominator matrices (for whole areas and also urban/rural strata if necessary)
+    if(!separateUrbanRural) {
+      ZAggregated = A %*% Zc
+      NAggregated = A %*% Nc
+      pAggregated = ZAggregated / NAggregated
+      pAggregated[ZAggregated == 0] = 0
+      
+      list(p=pAggregated, Z=ZAggregated, N=NAggregated)
+    } else {
+      AUrban = A$integrationMatrixUrban
+      ARural = A$integrationMatrixRural
+      A = A$integrationMatrix
+      
+      ZAggregated = A %*% Zc
+      NAggregated = A %*% Nc
+      pAggregated = ZAggregated / NAggregated
+      pAggregated[NAggregated == 0] = 0
+      
+      ZAggregatedUrban = AUrban %*% Zc
+      NAggregatedUrban = AUrban %*% Nc
+      pAggregatedUrban = ZAggregatedUrban / NAggregatedUrban
+      pAggregatedUrban[NAggregatedUrban == 0] = 0
+      
+      ZAggregatedRural = ARural %*% Zc
+      NAggregatedRural = ARural %*% Nc
+      pAggregatedRural = ZAggregatedRural / NAggregatedRural
+      pAggregatedRural[NAggregatedRural == 0] = 0
+      
+      list(p=pAggregated, Z=ZAggregated, N=NAggregated, 
+           pUrban=pAggregatedUrban, ZUrban=ZAggregatedUrban, NUrban=NAggregatedUrban, 
+           pRural=pAggregatedRural, ZRural=ZAggregatedRural, NRural=NAggregatedRural)
+    }
+  }
+  
+  # County level predictions
+  if(countyLevel) {
+    # load(paste0(globalDirectory, "poppc.RData"))
+    # urbanProportions = poppc$popUrb / poppc$popTotal
+    # sortI = sort(poppc$County, index.return=TRUE)$ix
+    # urbanProportions = urbanProportions[sortI]
+    
+    countyResults = getIntegratedPredictions(predsArea)
+  } else {
+    countyResults = NULL
+  }
+  
+  # Region level predictions
+  if(regionLevel) {
+    # load(paste0(globalDirectory, "poppr.RData"))
+    # urbanProportions = poppr$popUrb / poppr$popTotal
+    # sortI = sort(as.character(poppr$Region), index.return=TRUE)$ix
+    # urbanProportions = urbanProportions[sortI]
+    
+    regionResults = getIntegratedPredictions(predsRegion)
+  } else {
+    regionResults = NULL
+  }
+  
+  # National level predictions
+  if(nationalLevel) {
+    nationalResults = getIntegratedPredictions(predsCountry)
+  } else {
+    nationalResults = NULL
+  }
+  
+  # return results
+  list(countyResults=countyResults, regionResults=regionResults, nationalResults=nationalResults)
+}
+
+# aggregates values at EA level to the requested levels
+# pg: matrix of empirical proportion draws at the pixel level
+# Ng: matrix of population denominator draws at the pixel level
+aggregateEAsKenya = function(Zg, Ng, popGrid=NULL, pixelLevel=TRUE, countyLevel=TRUE, 
+                                          regionLevel=TRUE, separateUrbanRural=TRUE) {
+  
+  if(is.null(popGrid)) {
+    popGrid = makeDefaultPopMat()
+    # lon: longitude
+    # lat: latitude
+    # east: easting (km)
+    # north: northing (km)
+    # pop: proportional to population density for each grid cell
+    # area: an id or area name in which the grid cell corresponding to each row resides
+    # urban: whether the grid cell is urban or rural
+  }
+  
+  predPts = cbind(popGrid$east, popGrid$north)
+  predsUrban = popGrid$urban
+  predsCounty = popGrid$area
+  predsRegion = countyToRegion(predsCounty)
+  
+  # From here onwards, we will need to aggregate predictions over the 
+  # population density grid. Use the following function to get  numerical 
+  # integration matrix for a given level of areal aggregation
+  
+  getIntegrationMatrix = function(areaNames) {
+    if(useDensity) {
+      densities = popGrid$popOrig
+    } else {
+      densities = rep(1, nrow(popGrid))
+    }
+    
+    uniqueNames = sort(unique(areaNames))
+    getMatrixHelper = function(i, thisUrban=NULL) {
+      areaI = areaNames == uniqueNames[i]
+      theseDensities = densities
+      
+      # make sure we only include pixels in the given area and, if necessary, with the given urbanicity
+      theseDensities[!areaI] = 0
+      if(!is.null(thisUrban))
+        theseDensities[predsUrban == thisUrban] = 0
+      thisSum = sum(theseDensities)
+      if(thisSum != 0)
+        theseDensities * (1/thisSum)
+      else
+        rep(0, length(theseDensities))
+    }
+    
+    if(!separateUrbanRural) {
+      integrationMatrix = sapply(1:length(uniqueNames), getMatrixHelper)
+      
+      integrationMatrix
+    } else {
+      integrationMatrix = sapply(1:length(uniqueNames), getMatrixHelper)
+      integrationMatrixUrban = sapply(1:length(uniqueNames), getMatrixHelper, thisUrban=TRUE)
+      integrationMatrixRural = sapply(1:length(uniqueNames), getMatrixHelper, thisUrban=FALSE)
+      
+      list(integrationMatrix=integrationMatrix, 
+           integrationMatrixUrban=integrationMatrixUrban, 
+           integrationMatrixRural=integrationMatrixRural)
+    }
+  }
+  
+  # Use the following function to perform the
+  # aggregations
+  getIntegratedPredictions = function(areaNames) {
+    # get numerical integration matrix
+    A = getIntegrationMatrix(areaNames)
+    
+    # aggregate the prediction and denominator matrices (for whole areas and also urban/rural strata if necessary)
+    if(!separateUrbanRural) {
+      ZAggregated = t(A) %*% Zg
+      NAggregated = t(A) %*% Ng
+      pAggregated = ZAggregated / NAggregated
+      pAggregated[ZAggregated == 0] = 0
+      
+      list(p=pAggregated, Z=ZAggregated, N=NAggregated)
+    } else {
+      A = A$integrationMatrix
+      AUrban = A$integrationMatrixUrban
+      ARural = A$integrationMatrixRural
+      
+      ZAggregated = t(A) %*% Zg
+      NAggregated = t(A) %*% Ng
+      pAggregated = ZAggregated / NAggregated
+      pAggregated[ZAggregated == 0] = 0
+      
+      ZAggregatedUrban = t(AUrban) %*% Zg
+      NAggregatedUrban = t(AUrban) %*% Ng
+      pAggregatedUrban = ZAggregatedUrban / NAggregatedUrban
+      pAggregatedUrban[ZAggregatedUrban == 0] = 0
+      
+      ZAggregatedRural = t(ARural) %*% Zg
+      NAggregatedRural = t(ARural) %*% Ng
+      pAggregatedRural = ZAggregatedRural / NAggregatedRural
+      pAggregatedRural[ZAggregatedRural == 0] = 0
+      
+      list(p=pAggregated, Z=ZAggregated, N=NAggregated, 
+           pUrban=pAggregatedUrban, ZUrban=ZAggregatedUrban, NUrban=NAggregatedUrban, 
+           pRural=pAggregatedRural, ZRural=ZAggregatedRural, NRural=NAggregatedRural)
+    }
+  }
+  
+  # County level predictions
+  if(countyLevel) {
+    # load(paste0(globalDirectory, "poppc.RData"))
+    # urbanProportions = poppc$popUrb / poppc$popTotal
+    # sortI = sort(poppc$County, index.return=TRUE)$ix
+    # urbanProportions = urbanProportions[sortI]
+    
+    countyMatrices = getIntegratedPredictions(predsCounty)
+  } else {
+    countyMatrices = NULL
+  }
+  
+  # Region level predictions
+  if(regionLevel) {
+    # load(paste0(globalDirectory, "poppr.RData"))
+    # urbanProportions = poppr$popUrb / poppr$popTotal
+    # sortI = sort(as.character(poppr$Region), index.return=TRUE)$ix
+    # urbanProportions = urbanProportions[sortI]
+    
+    regionMatrices = getIntegratedPredictions(predsRegion, urbanProportions)
+  } else {
+    regionMatrices = NULL
+  }
+  
+  # return results
+  list(countyMatrices=countyMatrices, regionMatrices=regionMatrices)
+}
+
 # Divide the domain into four parts: everything to the left of what's missing, everything to the right, and 
 # the two rectangles above and below what's missing. Randomly draw how many points come from each, and sample 
 # from each independently
@@ -1531,7 +2197,7 @@ getRegion = function(points, project=FALSE) {
 
 # convert county to region
 countyToRegion = function(countyNames) {
-  ctp = read.csv("../U5MR/mapData/kenya-prov-county-map.csv")
+  load(paste0(globalDirectory, "kenya-prov-county-map.RData"))
   regionIs = match(as.character(countyNames), as.character(ctp[,1]))
   as.character(ctp[regionIs,2])
 }
@@ -2294,6 +2960,218 @@ ecdf2edfun = function(distribution) {
   edfun(samples)
 }
 
- 
+# takes the poppc table, containing the proportion of population that is urban and rural in each stratum, and
+# adjusts it to be representative of the children in urban and rural areas per stratum based on census data
+adjustPopulationPerCountyTable = function(dataType=c("children", "women")) {
+  dataType = match.arg(dataType)
+  
+  # calculate the number of childrenor women per stratum using true total eas and empirical children per ea from census data
+  load(paste0(globalDirectory, "empiricalDistributions.RData"))
+  if(dataType == "children") {
+    targetPopPerStratumUrban = easpc$EAUrb * ecdfExpectation(empiricalDistributions$householdsUrban) * ecdfExpectation(empiricalDistributions$mothersUrban) * 
+      ecdfExpectation(empiricalDistributions$childrenUrban)
+    targetPopPerStratumRural = easpc$EARur * ecdfExpectation(empiricalDistributions$householdsRural) * ecdfExpectation(empiricalDistributions$mothersRural) * 
+      ecdfExpectation(empiricalDistributions$childrenRural)
+  }
+  else {
+    targetPopPerStratumUrban = easpc$EAUrb * ecdfExpectation(empiricalDistributions$householdsUrban) * ecdfExpectation(empiricalDistributions$womenUrban)
+    targetPopPerStratumRural = easpc$EARur * ecdfExpectation(empiricalDistributions$householdsRural) * ecdfExpectation(empiricalDistributions$womenRural)
+  }
+  
+  
+  # adjust poppc table to be representative of the number of children per stratum
+  newPopTable = poppc
+  targetPopPerCounty = targetPopPerStratumUrban + targetPopPerStratumRural
+  newPopTable$popUrb = targetPopPerStratumUrban
+  newPopTable$popRur = targetPopPerStratumRural
+  newPopTable$popTotal = targetPopPerCounty
+  newPopTable$pctUrb = newPopTable$popUrb / targetPopPerCounty  * 100
+  newPopTable$pctTotal = newPopTable$popTotal/sum(newPopTable$popTotal) * 100
+  
+  # return results
+  newPopTable
+}
 
+rMyMultinomial = function(n, i, includeUrban=TRUE, urban=TRUE, popMat=NULL, easpa=NULL) {
+  
+  # set default inputs
+  if(is.null(popMat)) {
+    popMat = makeDefaultPopMat()
+    # lon: longitude
+    # lat: latitude
+    # east: easting (km)
+    # north: northing (km)
+    # pop: proportional to population density for each grid cell
+    # area: an id or area name in which the grid cell corresponding to each row resides
+    # urban: whether the grid cell is urban or rural
+  }
+  if(is.null(easpa)) {
+    easpa = makeDefaultEASPA()
+    # Area: the name or id of the area
+    # EAUrb: the number of EAs in the urban part of the area
+    # EARur: the number of EAs in the rural part of the area
+    # EATotal: the number of EAs in the the area
+    # HHUrb: the number of households in the urban part of the area
+    # HHRur: the number of households in the rural part of the area
+    # HHTotal: the number of households in the the area
+    # popUrb: the number of people in the urban part of the area
+    # popRur: the number of people in the rural part of the area
+    # popTotal: the number of people in the the area
+  }
+  
+  # get area names
+  areas = sort(unique(popMat$area))
+  if(any(areas != easpa$area))
+    stop("area names and easpa do not match popMat or are not in the correct order")
+  
+  # determine which pixels and how many EAs are in this stratum
+  if(includeUrban) {
+    includeI = popMat$area == areas[i] & popMat$urban == urban
+    nEA = ifelse(urban, easpa$EAUrb[i], easpa$EARur[i])
+  }
+  else {
+    includeI = popMat$area == areas[i]
+    nEA = ifelse(urban, easpa$EAUrb[i], easpa$EATotal[i])
+  }
+  
+  # sample from the pixels if this stratum exists
+  if(sum(includeI) == 0)
+    return(matrix(nrow=0, ncol=n))
+  thesePixelProbs = popMat$pop[includeI]
+  rmultinom(n, nEA, prob=thesePixelProbs)
+}
+
+# function for determining how to recombine separate multinomials into the draws over all pixels
+getSortIndices = function(i, urban=TRUE, popMat=NULL, includeUrban=TRUE) {
+  
+  # set default inputs
+  if(is.null(popMat)) {
+    popMat = makeDefaultPopMat()
+    # lon: longitude
+    # lat: latitude
+    # east: easting (km)
+    # north: northing (km)
+    # pop: proportional to population density for each grid cell
+    # area: an id or area name in which the grid cell corresponding to each row resides
+    # urban: whether the grid cell is urban or rural
+  }
+  
+  # get area names
+  areas = sort(unique(popMat$area))
+  
+  # determine which pixels and how many EAs are in this stratum
+  if(includeUrban) {
+    includeI = popMat$area == areas[i] & popMat$urban == urban
+  }
+  else {
+    includeI = popMat$area == areas[i]
+  }
+  
+  which(includeI)
+}
+
+# gives nPixels x n matrix of draws from the stratified multinomial with values 
+# corresponding to the value of |C^g| for each pixel, g (the number of EAs/pixel)
+rStratifiedMultnomial = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE) {
+  
+  # set default inputs
+  if(is.null(popMat)) {
+    popMat = makeDefaultPopMat()
+    # lon: longitude
+    # lat: latitude
+    # east: easting (km)
+    # north: northing (km)
+    # pop: proportional to population density for each grid cell
+    # area: an id or area name in which the grid cell corresponding to each row resides
+    # urban: whether the grid cell is urban or rural
+  }
+  if(is.null(easpa)) {
+    easpa = makeDefaultEASPA()
+    # Area: the name or id of the area
+    # EAUrb: the number of EAs in the urban part of the area
+    # EARur: the number of EAs in the rural part of the area
+    # EATotal: the number of EAs in the the area
+    # HHUrb: the number of households in the urban part of the area
+    # HHRur: the number of households in the rural part of the area
+    # HHTotal: the number of households in the the area
+    # popUrb: the number of people in the urban part of the area
+    # popRur: the number of people in the rural part of the area
+    # popTotal: the number of people in the the area
+  }
+  
+  # get area names
+  areas = sort(unique(popMat$area))
+  if(any(areas != easpa$area))
+    stop("area names and easpa do not match popMat or are not in the correct order")
+  
+  # we will need to draw separate multinomial for each stratum. Start by 
+  # creating matrix of all draws of |C^g|
+  eaSamples = matrix(NA, nrow=nrow(popMat), ncol=n)
+  
+  # now draw multinomials
+  if(includeUrban) {
+    # draw for each area crossed with urban/rural
+    urbanSamples = do.call("rbind", lapply(1:length(areas), rMyMultinomial, n=n, urban=TRUE, 
+                                           includeUrban=includeUrban, popMat=popMat, easpa=easpa))
+    ruralSamples = do.call("rbind", lapply(1:length(areas), rMyMultinomial, n=n, urban=FALSE, 
+                                           includeUrban=includeUrban, popMat=popMat, easpa=easpa))
+    
+    # get the indices used to recombine into the full set of draws
+    urbanIndices = unlist(sapply(1:length(areas), getSortIndices, urban=TRUE, popMat=popMat, includeUrban=includeUrban))
+    ruralIndices = unlist(sapply(1:length(areas), getSortIndices, urban=FALSE, popMat=popMat, includeUrban=includeUrban))
+    
+    # recombine into eaSamples
+    eaSamples[urbanIndices,] = urbanSamples
+    eaSamples[ruralIndices,] = ruralSamples
+  } else {
+    # draw for each area
+    stratumSamples = rbind(sapply(1:length(areas), n=n, rMyMultinomial, 
+                                  includeUrban=includeUrban, popMat=popMat, easpa=easpa))
+    
+    # get the indices used to recombine into the full set of draws
+    stratumIndices = c(sapply(1:length(areas), getSortIndices, popMat=popMat, includeUrban=includeUrban))
+    
+    # recombine into eaSamples
+    eaSamples[stratumIndices,] = stratumSamples
+  }
+  
+  # return results
+  eaSamples
+}
+
+# taken from logitnorm package.  Calculates the mean of a distribution whose 
+# logit is Gaussian. Each row of muSigmaMat has a mean and standard deviation 
+# on the logit scale
+logitNormMean = function(muSigmaMat, parClust=NULL, logisticApproximation=TRUE, ...) {
+  if(length(muSigmaMat) > 2) {
+    if(is.null(parClust))
+      apply(muSigmaMat, 1, logitNormMean, ...)
+    else
+      parApply(parClust, muSigmaMat, 1, logitNormMean, ...)
+  }
+  else {
+    mu = muSigmaMat[1]
+    sigma = muSigmaMat[2]
+    if(sigma == 0)
+      expit(mu)
+    else {
+      if(any(is.na(c(mu, sigma))))
+        NA
+      else if(!logisticApproximation) {
+        # numerically calculate the mean
+        fExp <- function(x) exp(plogis(x, log.p=TRUE) + dnorm(x, mean = mu, sd = sigma, log=TRUE))
+        integrate(fExp, mu-10*sigma, mu+10*sigma, abs.tol = 0, ...)$value
+      } else {
+        # use logistic approximation
+        k = 16 * sqrt(3) / (15 * pi)
+        expit(mu / sqrt(1 + k^2 * sigma^2))
+      }
+    }
+  }
+}
+
+# calculate the expected value of a summation under a Poisson distribution
+expectSummationPoisson = function() {
+  1
+}
 

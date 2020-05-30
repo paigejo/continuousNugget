@@ -1,0 +1,536 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{graphicx}
+%\usepackage{enumerate}
+\usepackage{natbib}
+\usepackage{url} % not crucial - just used below for the URL 
+\usepackage{xr-hyper}
+\usepackage{hyperref}
+\usepackage{lscape}
+\usepackage{rotating}
+\usepackage{subfig}
+
+\usepackage{multirow}
+\usepackage{ltablex}
+\usepackage{ragged2e}
+\usepackage{booktabs}
+
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\usepackage{bm}
+\usepackage[mathscr]{eucal}
+
+\externaldocument{ELKsupplement}
+
+\hypersetup{
+    colorlinks = true,
+    citecolor = {black}, 
+    urlcolor = {blue}, 
+    linkcolor = {black}, 
+    filecolor={black}
+}
+%\hypersetup{
+%    colorlinks = false,
+%    allbordercolors = [rgb]{0,1,0}
+%}
+%\hypersetup{
+%    colorlinks = true,
+%    urlbordercolor = [rgb]{0,1,0}
+%}
+
+
+%%%%%%%%%%%%%%%%%%%%
+%\usepackage[top=0.45in, bottom=0.55in, left=0.55in, right=0.5in, noheadfoot]{geometry}
+\usepackage{helvet}
+%\renewcommand{\familydefault}{\sfdefault}
+%\usepackage[dvips]{graphicx}
+\usepackage{color}
+\usepackage{boxedminipage}
+\usepackage{amsfonts}
+\usepackage{verbatim}
+\usepackage{multirow}
+%\usepackage{amsmath,color}
+\usepackage{placeins}
+%\usepackage{url}
+\def\mycaptionsize{\footnotesize}
+\def\mycodesize{\footnotesize}
+\def\myeqnsize{\small}
+\def\sheading#1{{\bf #1:}\ }
+\def\sheading#1{\subsubsection{#1}}
+\long\def\gobble#1{}
+\def\Jigsaw{{\sc Jigsaw}}
+\def\ahelix{\ensuremath{\alpha}-helix}
+\def\ahelices{\ensuremath{\alpha}-helices}
+\def\ahelical{$\alpha$-helical}
+\def\bstrand{\ensuremath{\beta}-strand}
+\def\bstrands{\ensuremath{\beta}-strands}
+\def\bsheet{\ensuremath{\beta}-sheet}
+\def\bsheets{\ensuremath{\beta}-sheets}
+\def\hone{{\ensuremath{^1}\rm{H}}}
+\def\htwo{{$^{2}$H}}
+\def\cthir{{\ensuremath{^{13}}\rm{C}}}
+\def\nfif{{\ensuremath{^{15}}\rm{N}}}
+\def\hn{{\rm{H}\ensuremath{^\mathrm{N}}}}
+\def\hnone{{\textup{H}\ensuremath{^1_\mathrm{N}}}}
+\def\ca{{\rm{C}\ensuremath{^\alpha}}}
+\def\catwel{{\ensuremath{^{12}}\rm{C}\ensuremath{^\alpha}}}
+\def\ha{{\rm{H}\ensuremath{^\alpha}}}
+\def\cb{{\rm{C}\ensuremath{^\beta}}}
+\def\hb{{\rm{H}\ensuremath{^\beta}}}
+\def\hg{{\rm{H}\ensuremath{^\gamma}}}
+\def\dnn{{\ensuremath{d_{\mathrm{NN}}}}}
+\def\dan{{\ensuremath{d_{\alpha \mathrm{N}}}}}
+\def\jconst{{\ensuremath{^{3}\mathrm{J}_{\mathrm{H}^{\mathrm{N}}\mathrm{H}^{\alpha}}}} }
+\def\cbfb{{CBF-$\beta$}}
+
+%\usepackage{subfigure,afterpage,wrapfig} 
+\usepackage{afterpage,wrapfig} 
+%\usepackage[sort&compress,super]{natbib}
+%\usepackage{natbib}
+\def \IR{\hbox{{\rm I}\kern-.2em\hbox{{\rm R}}}}
+\newcommand*{\mc}[1]{\multicolumn{1}{|c|}{#1}}
+\newcommand{\bmX}{\mbox{\boldmath $X$}}
+\newcommand{\bt}{\mbox{\boldmath $t$}}
+\newcommand{\N}{\mbox{$N$}}
+\newcommand{\bmY}{\mbox{\boldmath $Y$}}
+\newcommand{\bmB}{\mbox{\boldmath $B$}}
+\newcommand{\bmc}{\mbox{\boldmath $c$}}
+\newcommand{\bmy}{\mbox{\boldmath $y$}}
+\newcommand{\bmw}{\mbox{\boldmath $w$}}
+\newcommand{\bmZ}{\mbox{\boldmath $Z$}}
+\newcommand{\bZ}{\mbox{\boldmath $Z$}}
+\newcommand{\bmz}{\mbox{\boldmath $z$}}
+\newcommand{\bme}{\mbox{\boldmath $e$}}
+\newcommand{\bmx}{\mbox{\boldmath $x$}}
+\newcommand{\bmQ}{\mbox{\boldmath $Q$}}
+\newcommand{\bD}{\mbox{\boldmath $D$}}
+\newcommand{\bd}{\mbox{\boldmath $d$}}
+\newcommand{\bmU}{\mbox{\boldmath $U$}}
+\newcommand{\bmu}{\mbox{\boldmath $u$}}
+\newcommand{\bu}{\mbox{\boldmath $u$}}
+\newcommand{\bT}{\mbox{\boldmath $T$}}
+\newcommand{\bmV}{\mbox{\boldmath $V$}}
+\newcommand{\bmk}{\mbox{\boldmath $k$}}
+\newcommand{\bmd}{\mbox{\boldmath $d$}}
+\newcommand{\bmt}{\mbox{\boldmath $t$}}
+\newcommand{\bmT}{\mbox{\boldmath $T$}}
+\newcommand{\bmI}{\mbox{\boldmath $I$}}
+\newcommand{\bmR}{\mbox{\boldmath $R$}}
+\newcommand{\bmE}{\mbox{\boldmath $E$}}
+\newcommand{\bmW}{\mbox{\boldmath $W$}}
+\newcommand{\bmD}{\mbox{\boldmath $D$}}
+\newcommand{\bms}{\mbox{\boldmath $s$}}
+\newcommand{\bma}{\mbox{\boldmath $a$}}
+\newcommand{\bmq}{\mbox{\boldmath $q$}}
+\newcommand{\bmf}{\mbox{\boldmath $f$}}
+\newcommand{\bmA}{\mbox{\boldmath $A$}}
+\newcommand{\bmb}{\mbox{\boldmath $b$}}
+\newcommand{\bb}{\mbox{\boldmath $A$}}
+\newcommand{\bmr}{\mbox{\boldmath $r$}}
+\newcommand{\bmS}{\mbox{\boldmath $S$}}
+\newcommand{\bS}{\mbox{\boldmath $S$}}
+\newcommand{\bx}{\mbox{\boldmath $x$}}
+\newcommand{\by}{\mbox{\boldmath $y$}}
+\newcommand{\md}{\mbox{d}}
+\newcommand{\E}{\mbox{E}}
+\newcommand{\V}{\mbox{var}}
+\newcommand{\Prob}{\mbox{Pr}}
+\newcommand{\bmone}{\mbox{\bf 1}}
+\newcommand{\bmzero}{\mbox{\bf 0}}
+\newcommand{\bmbeta}{\mbox{\boldmath $\beta$}}
+\newcommand{\bbeta}{\mbox{\boldmath $\beta$}}
+\newcommand{\balpha}{\mbox{\boldmath $\alpha$}}
+\newcommand{\bmdelta}{\mbox{\boldmath $\delta$}}
+\newcommand{\bmtheta}{\mbox{\boldmath $\theta$}}
+\newcommand{\bmeta}{\mbox{\boldmath $\eta$}}
+\newcommand{\btheta}{\mbox{\boldmath $\theta$}}
+\newcommand{\bmpsi}{\mbox{\boldmath $\psi$}}
+\newcommand{\bmphi}{\mbox{\boldmath $\phi$}}
+\newcommand{\bphi}{\mbox{\boldmath $\phi$}}
+\newcommand{\bmlambda}{\mbox{\boldmath $\lambda$}}
+\newcommand{\blambda}{\mbox{\boldmath $\lambda$}}
+\newcommand{\bmnu}{\mbox{\boldmath $\nu$}}
+\newcommand{\bmgamma}{\mbox{\boldmath $\gamma$}}
+\newcommand{\bgamma}{\mbox{\boldmath $\gamma$}}
+\newcommand{\bmmu}{\mbox{\boldmath $\mu$}}
+\newcommand{\bmepsilon}{\mbox{\boldmath $\epsilon$}}
+\newcommand{\bmSigma}{\mbox{\boldmath $\Sigma$}}
+\newcommand{\bLambda}{\mbox{\boldmath $\Lambda$}}
+\usepackage{tensor}
+\newcommand{\qmonth}{\tensor*[_1]{\mbox{q}}{_m}}
+\newcommand{\oneqzero}{\tensor*[_1]q{_0}}
+\newcommand{\oneqone}{\tensor*[_1]q{_1}}
+\newcommand{\oneqtwo}{\tensor*[_1]q{_2}}
+\newcommand{\aqj}{\tensor*[_a]q{_j}}
+\newcommand{\oneqa}{\tensor*[_1]q{_a}}
+\newcommand{\bigi}{\mathcal{I}}
+
+\newcommand{\paren}[1]{\left(#1\right)}
+\newcommand{\image}[2]{\includegraphics[#1]{#2}}
+\newcommand{\indep}{\rotatebox[origin=c]{90}{$\models$}}
+
+%\usepackage{/Users/johnpaige/myStyleSimple} 
+
+\defcitealias{KDHS2014}{KDHS, 2014}
+\defcitealias{KenyaCensus:2009}{Kenya National Bureau Of Statistics, 2014}
+%%%%%%%%%%%%%%%%%%%%
+
+%\pdfminorversion=4
+% NOTE: To produce blinded version, replace "0" with "1" below.
+\newcommand{\blind}{0}
+
+% DON'T change margins - should be 1 inch all around.
+\addtolength{\oddsidemargin}{-.5in}%
+\addtolength{\evensidemargin}{-.5in}%
+\addtolength{\textwidth}{1in}%
+\addtolength{\textheight}{1.3in}%
+\addtolength{\topmargin}{-.8in}%
+
+%\usepackage{fouriernc}
+
+% Instructions for authors:
+% https://www.tandfonline.com/action/authorSubmission?show=instructions&journalCode=ucgs20#prep
+
+% use math font for fancy Y
+% font links:
+% https://ctan.math.illinois.edu/macros/latex/contrib/unicode-math/unimath-symbols.pdf
+% http://www.gang.umass.edu/~franz/latexmanual.pdf
+\usepackage[T1]{fontenc}
+\usepackage{newpxmath}
+%\usepackage{newpxtext}
+
+\renewcommand{\floatpagefraction}{.9}
+\renewcommand{\arraystretch}{0.75}
+
+\begin{document}
+
+%\bibliographystyle{natbib}
+
+\def\spacingset#1{\renewcommand{\baselinestretch}%
+{#1}\small\normalsize} \spacingset{1}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  \title{Outline for Exploratory Analysis of: \\`\textit{Accounting for Cluster Level Effects in Population Aggregates with Geospatial Models}'}
+  \author{John Paige\\
+    Department of Statistics, University of Washington,\\
+    Geir-Arne Fuglstad \\
+    Department of Mathematical Sciences, NTNU, \\
+    Andrea Riebler \\
+    Department of Mathematical Sciences, NTNU, \\
+    and Jon Wakefield \\
+    Departments of Statistics and Biostatistics, University of Washington}
+  \maketitle
+
+\bigskip
+
+\noindent%
+\vfill
+
+%\newpage
+\spacingset{1.5} % DON'T change the spacing!
+
+\section{Problem Setup}
+
+We assume the following model for neonatal mortality, indexed at the area (usually county), $i$, and the cluster, $c$:
+\begin{eqnarray}
+Z_{ic} | \mu_{ic}& \sim& \mbox{Binomial}(N_{ic}, \mu_{ic}) \label{eq:model1}\\
+\mu_{ic} &=& \mbox{expit}(u(s_{ic}) + \epsilon_{ic}), \label{eq:model2}
+\end{eqnarray}
+where the counts are the number of neonatals that died, and $\epsilon_{ic} \sim N(0,\sigma_\epsilon^2)$ is a cluster level random effect that can allow for dependency between observations in the same cluster. Hence, within the area we have $|C_i|$ distinct prevalences, where $C_i$ is the set of cluster indices in area $i$ and $|\cdot|$ denotes the set cardinality. The count $Z_{ic}$ is the number of neonatals in EA $c$ and area $i$ that died. We will think of the spatial term $u(\cdot)$ as being a function that is continuously indexed in space, and estimated from the data, where $s_{ic}$ is the spatial location of EA $c$ in the area.
+
+The main targets of inference are the proportion of neonatals that died at different aggregation levels.  To begin, we can start be considering inference at the area level, where the number of EAs is known, and a partition of area $i$ into subareas indexed by $g$, where the number of EAs is not known exactly.  In particular, $g$ could be used to denote the grid point index for a fine spatial grid, but it would also be possible to consider a different partitioning of area $i$ where the exact number of EAs in each subarea is not known.  The targets of inference in area $i$ and subarea $g$ will be: 
+\begin{align}
+p_i &= \frac{1}{N_i}\sum_{c \in C_i} Z_{ic} = \sum_{c \in C_i} \frac{N_{ic}}{N_i}  \times \frac{Z_{ic}}{N_{ic}}  =  \sum_{c \in C_i} q_{ic} \times p_{ic} \label{eq:pi} \\
+p_{ig} &= \frac{1}{N_{ig}} \sum_{c \in C^g} Z_{ic} = \sum_{c \in C^g} \frac{N_{ic}}{N_{ig}}  \times \frac{Z_{ic}}{N_{ic}}  =  \sum_{c \in C^g} q_{ic}^g \times p_{ic}, \label{eq:pig}
+\end{align}
+where $N_i \equiv \sum_{c=1}^{C_i} N_{ic}$ and $N_{g} \equiv \sum_{c \in C^g} N_{ic}$ are the number of neonatals in area $i$ and subarea $g$ respectively, and $q_{ic} \equiv \frac{N_{ic}}{N_i}$ and $q_{ic}^g \equiv \frac{N_{ic}}{N_{ig}}$ are the weight of cluster $c$ in the population-weighted average for $p_i$ and $p_{ig}$ respectively. The set $C^g$ gives the indices of the EAs that are in subarea $g$. Note that $p_i$, $p_{ic}$, and $p_{ig}$ are empirical averages rather than parameters.
+
+The main goal of this project will be to explore how best to aggregate from the cluster level to the subarea and area levels in a way that balances quality of the predictive distribution at multiple aggregation levels, and computational feasibility. In order to accomplish this, we will iteratively integrate out parts of \eqref{eq:pi} and \eqref{eq:pig}, each time attempting to reduce the computational difficulty and simplify the model, but possibly introducing undercoverage in the process. An important side goal of this project will be to determine what are the most important sources of uncertainty when conducting inference at both area and subarea (most likely 5km pixel) levels.
+
+\section{Spatial Aggregation Framework and Models}
+In this analysis, we will assume a framework for accounting for different sources of variation when producing areal level results from continuously indexed spatial models.  We consider five variables that respectively lead to different sources of variation: $\boldsymbol{u}_{i:}, \boldsymbol{ \epsilon }_{i:}, \boldsymbol{N}_{i:}$, $\boldsymbol{Z}_{i:}$, and $\boldsymbol{s}_{i:}$, where `$:$' denotes the cluster index $c$ varying over the values in $C_i$ so that each of these five variables are vectors of length $|C_i|$, and where $u_{ic} \equiv u(s_{ic})$.  In order to determine which sources of variation are most important for central predictions and credible intervals at different spatial aggregation levels, one could imagine approximating the targets of inference, $p_i$ and $p_{ig}$, with a series of simplifications, each successive approximation accounting for fewer of the five considered sources of variation as follows: 
+\begin{table}[H]
+\centering
+\begin{tabular}{ccccc}
+\multicolumn{5}{c}{\textbf{Models:}} \\
+\textbf{CPBL}&\textbf{CPBl}&\textbf{CPbl}&\textbf{Cpbl}&\textbf{cpbl} \\
+\hline
+$p_i $&$\approx E_{\boldsymbol{s}_{i:}}  \left [ p_{ic} \right ] $&$\approx E_{\boldsymbol{Z}_{i:},\boldsymbol{s}_{i:}}  \left [ p_{i} \right ] $&$\approx E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}} \left [p_i \right ] $&$\approx E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}, \boldsymbol{ \epsilon }_{i:}} \left [p_{i} \right ]$\\
+$p_{ig} $&$\approx E_{\boldsymbol{s}_{i:}}  \left [ p_{ig} \right ] $&$\approx E_{\boldsymbol{Z}_{i:},\boldsymbol{s}_{i:}}  \left [ p_{ig} \right ] $&$\approx E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}} \left [p_{ig} \right ] $&$\approx E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}, \boldsymbol{ \epsilon }_{i:}} \left [p_{ig} \right ]$\\
+\hline
+\end{tabular}
+\end{table}
+\noindent
+In the CPbl model, for instance, rather than using draws from the posterior of $p_i$, we use draws from the posterior of $E_{\boldsymbol{Z}_{i:},\boldsymbol{s}_{i:}}  \left [ p_{i} \right ]$ to make central predictions and credible intervals for area $i$. The same is true for $p_{ig}$, and with equivalent expectations used as approximations for the other models. The symbols c/C, p/P, b/B, and l/L denote whether variation in cluster effects ($\boldsymbol{ \epsilon }_{i:}$), population denominators ($\boldsymbol{N}_{i:}$), binomial variation ($\boldsymbol{Z}_{i:}$), and EA location uncertainty ($\boldsymbol{s}_{i:}$) is integrated out or not, where by `integrating out' we mean taking expectation over as described above. Lowercase symbols signify integrating out the corresponding sources of variation when making predictions for area $i$ and subarea $g$, as opposed to sampling over that variation instead, which is denoted by uppercase symbols.
+
+Since we never integrate out $\boldsymbol{u}_{i:}$, there are 16 different orders in which we can integrate out sources of variation in the other four terms. However, we chose this hierarchy from a model complexity and computational feasibility standpoint. We integrate out $\boldsymbol{s}_{i:}$ first since it requires the most complex model assumptions. By integrating it out, the result is more robust to assumptions on the joint distribution of $\boldsymbol{s}_{i:}$, instead relying only on its expectation in each area and subarea.
+
+It may seem as though integrating out four of the five considered sources of uncertainty reduces the level of uncertainty by too large an amount. However, this is similar to what is commonly done in practice, and accounting for additional sources of variation can be computationally difficult.  Moreover, when producing estimates for large enough areas, we have found that some of these sources of variation, such as $\boldsymbol{Z}_{i:}$ and $\boldsymbol{ \epsilon}_{i:}$, tend to average out.  However, the required size an area must be for each source of variation to become insignificant is not known.  Assessing the scenarios in which each source of variation becomes significant, their relative importance, and how to integrate them out when necessary in a computationally feasible way is therefore very important.
+
+\medskip
+\noindent
+\textbf{CPBL:} In this case, we attempt to sample over all considered forms of variation. In this case, we must decide on a model for the EA locations, $\boldsymbol{s}_{i:}$. For simplicity, it would be simplest to assume that EA locations are independent of each other. Relaxing this assumption would require a much more complex model that we do not consider here. In addition to assuming independence, it would be justifiable to assume that the probability of an EA being at a certain location within area $i$ is proportional to that location's population density. Under these two assumptions, the EA locations in area $i$ \textit{must} follow a Poisson process with intensity proportional to the continuously indexed population density surface, say $q(s)$ for spatial location $s$, conditioned on the information that there are $|C_i|$ EAs in total in area $i$. This is also known as a binomial process. Note that we are assuming for simplicity that $|C_i|$ is much greater than the number of sampled clusters, so that we can ignore the sampled cluster locations.
+
+We will assume that $\boldsymbol{N}_{i:}$ is independent of $\mathbf{s}_{i:}$, instead entirely dependent on a separate census dataset, say $\mathscr{W}$, used only to determine the distribution of $\boldsymbol{N}_{i:}$.
+
+The number of EAs in $g$, $|C^g|$, is binomial with probability equal to $\frac{q(s_{ig})}{\int_{A_i} q(s) \ ds}$, and has $|C_i|$ trials. Here, $A_i$ is the spatial domain of area $i$.  $|C^g|$ is also roughly Poisson with rate $|C_i| \frac{q(s_{ig})}{\int_{A_i} q(s) \ ds}$ for sufficiently small subareas.
+
+To draw a sample from the posterior of $p_i$, we can draw a sample from the joint distribution of $\boldsymbol{N}_{ig}$ and $p_{ig}$ over all grid cells $g \in A_i$, and then aggregate with the formula, $p_i = \sum_{g \in A_i} \frac{N_{ig}}{N_{i}} \times p_{ig}$. To accomplish this, we can use the following algorithm given the dataset,~$\mathscr{Y}$:
+
+\begin{algorithm}[H]
+\caption{Draw $p_i^{(j)}, \ p_{ig}^{(j)}$ from posterior $p_i, p_{ig} \vert  \mathscr{Y}$}
+\label{alg:main}
+\begin{algorithmic}[1]
+\STATE $\mathbf{s}_{i:}^{(j)}\leftarrow \mathbf{s}_{i:} \vert q( \cdot )$
+\STATE $\boldsymbol{u}_{i:}^{(j)} \leftarrow \boldsymbol{u}_{i:} \vert \mathbf{s}_{i:}, \mathscr{Y}$
+\STATE $\boldsymbol{ \epsilon }_{i:}^{(j)} \leftarrow \boldsymbol{ \epsilon }_{i:}  \vert  \mathscr{Y} $
+\STATE $\mathbf{N}_{i:}^{(j)} \leftarrow \mathbf{N}_{i:} \vert \mathscr{W}$
+\STATE $\mathbf{Z}_{i:}^{(j)} \leftarrow \mathbf{Z}_{i:} \vert \mathbf{N}_{i:}, \boldsymbol{\mu}_{i:}$
+\STATE $N_i^{(j)} \leftarrow \bmone^T \mathbf{N}_{i:}^{(j)}$
+\FORALL{$g \in A_i$ } 
+\STATE{ $N_{ig}^{(j)} \leftarrow \sum_{c\in C^g} N_{ic}^{(j)} $}
+\STATE{ $p_{ig}^{(j)} \leftarrow \sum_{c\in C^g} \frac{N_{ic}^{(j)}}{N_{ig}^{(j)}}  \times \frac{Z_{ic}^{(j)}}{N_{ic}^{(j)}}$ }
+\ENDFOR
+\STATE $p_i^{(j)} \leftarrow  \sum_{g \in A_i} \frac{N_{ig}^{(j)}}{N_{i}^{(j)}} \times p_{ig}^{(j)}$
+\end{algorithmic}
+\end{algorithm}
+
+For sufficiently fine $g$, $u$ will not change significantly over $A^g$, the spatial domain of subarea $g$. In that case, we can simplify the process by considering only the values of $u$ at the centroid of each subarea $g$, and conditioning on those values when drawing $\boldsymbol{Z}_{i:}$.  This would provide a considerable computational advantage if, for instance, $u$ is represented as a linear combination of basis functions, since the basis matrix would not need to be recomputed for each draw of $\boldsymbol{s}_{i:}$:
+
+\begin{algorithm}[H]
+\caption{Draw $p_i^{(j)}, \ p_{ig}^{(j)}$ from posterior $p_i, p_{ig} \vert  \mathscr{Y}$}
+\label{alg:main}
+\begin{algorithmic}[1]
+\STATE $\mathbf{s}_{i:}^{(j)}\leftarrow \mathbf{s}_{i:} \vert q( \cdot )$
+\STATE $\boldsymbol{ \epsilon }_{i:}^{(j)} \leftarrow \boldsymbol{ \epsilon }_{i:}  \vert  \mathscr{Y} $
+\STATE $\mathbf{N}_{i:}^{(j)} \leftarrow \mathbf{N}_{i:} \vert \mathscr{W}$
+\FORALL{$g \in A_i$ } 
+\STATE $u_{ig}^{(j)} \leftarrow u_{i:} \vert s_{ig}, \mathscr{Y}$
+\STATE{ $N_{ig}^{(j)} \leftarrow \sum_{c\in C^g} N_{ic}^{(j)} $}
+\STATE $Z_{ig}^{(j)} \leftarrow Z_{ig} \vert \mathbf{N}_{i:}, \boldsymbol{\mu}_{i:}$
+\STATE{ $p_{ig}^{(j)} \leftarrow \sum_{c\in C^g} \frac{N_{ic}^{(j)}}{N_{ig}^{(j)}} \times \frac{Z_{ic}^{(j)}}{N_{ic}^{(j)}}$ }
+\ENDFOR
+\STATE $N_i^{(j)} \leftarrow \bmone^T \mathbf{N}_{i:}^{(j)}$
+\STATE $p_i^{(j)} \leftarrow  \sum_{g \in A_i} \frac{N_{ig}^{(j)}}{N_{i}^{(j)}} \times p_{ig}^{(j)}$
+\end{algorithmic}
+\end{algorithm}
+
+A disadvantage of this approach, aside from being more computationally intensive than the others, is that subareas with very small population densities will likely get very few EAs drawn in them on average. Hence, many posterior draws would be required in order to get a finer estimate of the posterior distribution. If any such subareas existed, then the posterior $|C^g| \vert \mathscr{Y}$ can be well-approximated by placing probability mass only on a small number of possible values of $|C^g|$, say $K$ values.  Call this approximation $|\tilde{C}^g|$, with probability mass function $P(|\tilde{C}^g|=n) = m_n^g$ for $n=0,...,K_g$. Then one could condition on $|\tilde{C}^g|$ being equal to $0, \ldots, K_g$, averaging over the draws with weights $m_n^g$.  However, we do not need to get into the mathematical details of this until we actually run into this problem.
+
+For the following models, we implicitly condition on the data when drawing samples:
+
+\medskip
+\noindent
+\textbf{CPBl:} In this model, we include all forms of variation except for EA location uncertainty.  Recall \eqref{eq:pi} and \eqref{eq:pig}: 
+\begin{align*}
+p_i &= \frac{1}{N_i}\sum_{c \in C_i} Z_{ic} = \sum_{c \in C_i} \frac{N_{ic}}{N_i}  \times \frac{Z_{ic}}{N_{ic}}  =  \sum_{c \in C_i} q_{ic} \times p_{ic} \\
+p_{ig} &= \frac{1}{N_{ig}} \sum_{c \in C^g} Z_{ic} = \sum_{c \in C^g} \frac{N_{ic}}{N_{ig}}  \times \frac{Z_{ic}}{N_{ic}}  =  \sum_{c \in C^g} q_{ic}^g \times p_{ic}
+\end{align*}
+Our goal is to get an expression for the expectation of these with respect to the EA locations, $\boldsymbol{s}_{i:}$. In order to do so, we must consider the following expectation: 
+\begin{align}
+E_{\boldsymbol{s}_{i:}}  \left [ p_{ic} \right ] &= E_{\boldsymbol{s}_{i:}}  \left [ \frac{Z_{ic}}{N_{ic}}  \right ]  \\
+&= \frac{1}{N_{ic}} E_{\boldsymbol{s}_{i:}}  \left [ Z_{ic}  \right ]  && (N_{ic} \indep \boldsymbol{s}_{i:}). \label{eq:CMBlStartCounty} 
+\end{align}
+At the pixel level, we must evaluate: 
+\begin{align}
+ E_{\boldsymbol{s}_{i:}}  \left [ \sum_{c \in C^g} \frac{N_{ic}}{N_{ig}}  \times \frac{Z_{ic}}{N_{ic}} \right ] & \approx  \sum_{n \in \{0,...,K_g\}} m_n^g  \cdot \sum_{c \in C^g, \ |C^g|=n} \frac{N_{ic}}{N_{ig}} \times  \frac{Z_{ic}}{N_{ic}}. \label{eq:CPBlStartPixel}
+\end{align}
+Although it is possible to use \eqref{eq:CPBlStartPixel} to draw from $ E_{\boldsymbol{s}_{i:}}  \left [ p_{ig} \right ]$ for each $p_{ig}$ individually for subarea level predictions, getting area level predictions by drawing from the joint distribution with any reasonable resolution over all subareas could be unwieldy. It is easier to start from \eqref{eq:CMBlStartCounty} directly.  In order to draw from $E_{\boldsymbol{s}_{i:}}  \left [ p_{ic} \right ]$ one can first draw from $E_{\boldsymbol{s}_{i:}}[Z_{ic}]$ by drawing $\epsilon_{ic}$ and $N_{ic}$, and then from the joint distribution $(\mu_{ic}(s_{ic}), s_{ic}) \ \vert \ \epsilon_{ic}$.  Plugging into \eqref{eq:CMBlStartCounty} yields the resulting posterior sample of $E_{\boldsymbol{s}_{i:}}  \left [ p_{ic} \right ]$.
+
+\medskip
+\noindent
+\textbf{CPbl:} In this model, we include variation in cluster effects ($\boldsymbol{ \epsilon }_{i:}$) and also in the population denominator term ($\boldsymbol{N}_{i:}$), but integrate out binomial and EA location variation. Recall \eqref{eq:pi} and \eqref{eq:pig}: 
+
+\begin{align*}
+p_i &= \frac{1}{N_i}\sum_{c \in C_i} Z_{ic} = \sum_{c \in C_i} \frac{N_{ic}}{N_i}  \times \frac{Z_{ic}}{N_{ic}}  =  \sum_{c \in C_i} q_{ic} \times p_{ic} \\
+p_{ig} &= \frac{1}{N_{ig}} \sum_{c \in C^g} Z_{ic} = \sum_{c \in C^g} \frac{N_{ic}}{N_{ig}}  \times \frac{Z_{ic}}{N_{ic}}  =  \sum_{c \in C^g} q_{ic}^g \times p_{ic}.
+\end{align*}
+
+Taking expectation over $\boldsymbol{Z}_{i:}$ and $\boldsymbol{s}_{i:}$, we get: 
+
+\begin{align*}
+E_{\boldsymbol{Z}_{i:},\boldsymbol{s}_{i:}}  \left [ p_{i} \right ] &= \sum_{c \in C_i} \frac{N_{ic}}{N_i}  \times E_{\boldsymbol{Z}_{i:},\boldsymbol{s}_{i:}}  \left [\frac{Z_{ic}}{N_{ic}}  \right ] \\
+&= \sum_{c \in C_i} \frac{N_{ic}}{N_i}  \times E_{\boldsymbol{s}_{i:}}  \left [\mu_{ic} \right ]
+\end{align*}
+for the area level NMR, resulting in, 
+\begin{align}
+E_{\boldsymbol{Z}_{i:},\boldsymbol{s}_{i:}}  \left [ p_{i} \right ] &= \sum_{c \in C_i} \frac{N_{ic}}{N_i}  \times \int_{A_i} \mbox{expit}(u(s) + \epsilon_{ic}) \cdot \frac{q(s_{ig})}{\int_{A_i} q(s) \ ds} \ d s, \label{eq:CPblCounty}
+\end{align}
+where this integral can be approximated on a numerical grid. Note that this is easier than the integral for the CPBl model, since in this case we are integrating a smooth function over space, whereas in the CPBl model we would need to simulate binomial variation as a function of $\mu(s_{ic})$ depending on the location of $s_{ic}$. Still, since it must be calculated for every EA and every posterior draw, it will require some techniques to simplify.  For instance, if the above integral is calculated for a grid of possible values of $\epsilon_{ic}$, one could make a spline approximation of the integral as a function of $\epsilon_{ic}$, making it much easier to evaluate each of the terms in the summation (1 term for each EA). TODO: explore grid simplifications on grid, approximating the sum over $C_i$ using CLT or other methods.
+
+For the subarea level NMR we get:
+\begin{align*}
+E_{\boldsymbol{Z}_{i:},\boldsymbol{s}_{i:}}  \left [ p_{ig} \right ] &= E_{\boldsymbol{Z}_{i:},\boldsymbol{s}_{i:}}  \left [ \sum_{c \in C^g} \frac{N_{ic}}{N_{ig}}  \times  \frac{Z_{ic}}{N_{ic}}  \right ] \\
+&= E_{\boldsymbol{s}_{i:}}  \left [ \sum_{c \in C^g} \frac{N_{ic}}{N_{ig}}  \times E_{\boldsymbol{Z}_{i:}}  \left [ \frac{Z_{ic}}{N_{ic}} \Big \vert \boldsymbol{s}_{i:} \right ] \right ] \\
+&= E_{\boldsymbol{s}_{i:}}  \left [ \sum_{c \in C^g} \frac{N_{ic}}{N_{ig}}  \times \mu_{ic} \right ] && \text{($\mu_{ic}\approx$ constant for $c \in C^g$)}.
+\end{align*}
+
+To make the above summation feasible, we will need to approximate the distribution of $|C^g|$ with, say, $|\tilde{C}^g|$. If $g$ is sufficiently small or has sufficiently small population density, we could use the approximation in the description of the CPBL model, with $P(|\tilde{C}^g|=n) = m_n^g$ for $n=0,...,K_g$ for some small $K_g$. For somewhat large $g$, however, this might become infeasible. For subareas $g$ that are more likely to contain EAs, another option is to fix a Monte Carlo approximation of the values of $C^g$, taking an equally weighted average over them. For sufficiently large subareas, $C_i$, the variation in the proportion of EAs per subarea $g$ will decrease.  It therefore might not be necessarily to take a very large number of Monte Carlo samples for a sufficient approximation. For any subarea $g$ likely to receive a large number of EAs, binomial variation and EA location variation might matter less due to additional averaging. For such subareas it might even be sufficient to fix the number of EAs in $g$ to their expectation. In this case, however, we will assume that $g$ is small, and that the approximation given in the description of the CPBL model is sufficient. In that case, we have:
+
+\begin{align}
+E_{\boldsymbol{Z}_{i:},\boldsymbol{s}_{i:}}  \left [ p_{ig} \right ] & \approx  \sum_{n \in \{0,...,K_g\}} m_n^g  \cdot \sum_{c \in C^g, \ |C^g|=n} \frac{N_{ic}}{N_{ig}} \times \mu_{ic}. \label{eq:CPblPixel}
+\end{align}
+
+Since it might be possible for areas in the above approximation to accrue with aggregation, using \eqref{eq:CPblCounty} it is preferable for area level inference rather than aggregating posterior draws at the pixel level from \eqref{eq:CPblPixel} unless proven otherwise.
+
+In order to generate posterior draws of these expectations at the area and pixel levels, \eqref{eq:CPblCounty} and \eqref{eq:CPblPixel} can be used after taking draws of $\boldsymbol{N}_{i:} \vert \mathscr{W}$ and $\boldsymbol{ \epsilon }_{i:}$ as follows:
+
+\begin{algorithm}[H]
+\caption{Draw $p_i^{(j)}$ from the posterior $E_{\boldsymbol{Z}_{i:},\boldsymbol{s}_{i:}}[p_i] \vert  \mathscr{Y}$}
+\label{alg:main}
+\begin{algorithmic}[1]
+\STATE $\boldsymbol{u}_{i:}^{(j)} \leftarrow \boldsymbol{u}_{i:} \vert \mathbf{s}_{i:}, \mathscr{Y}$
+\STATE $\boldsymbol{ \epsilon }_{i:}^{(j)} \leftarrow \boldsymbol{ \epsilon }_{i:}  \vert  \mathscr{Y} $
+\STATE $\mathbf{N}_{i:}^{(j)} \leftarrow \mathbf{N}_{i:} \vert \mathscr{W}$
+\STATE $N_i^{(j)} \leftarrow \bmone^T \mathbf{N}_{i:}^{(j)}$
+\FORALL{$c \in C_i$ } 
+\STATE{ Use \eqref{eq:CPblCounty} to draw $p_{ic}^{(j)} \leftarrow E_{\boldsymbol{Z}_{i:},\boldsymbol{s}_{i:}}[p_{ic}]$ }
+\ENDFOR
+\STATE $p_i^{(j)} \leftarrow  \sum_{c \in C_i} \frac{N_{ic}^{(j)}}{N_{i}^{(j)}} \times p_{ic}^{(j)}$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Draw $p_{ig}^{(j)}$ from the posterior $E_{\boldsymbol{Z}_{i:},\boldsymbol{s}_{i:}}[p_{ig}] \vert  \mathscr{Y}$}
+\label{alg:main}
+\begin{algorithmic}[1]
+\STATE $\boldsymbol{u}_{i:}^{(j)} \leftarrow \boldsymbol{u}_{i:} \vert \mathbf{s}_{i:}, \mathscr{Y}$
+\STATE $\boldsymbol{ \epsilon }_{i:}^{(j)} \leftarrow \boldsymbol{ \epsilon }_{i:}  \vert  \mathscr{Y} $
+\STATE $\mathbf{N}_{i:}^{(j)} \leftarrow \mathbf{N}_{i:} \vert \mathscr{W}$
+\STATE{ $N_{ig}^{(j)} \leftarrow \sum_{c\in C^g} N_{ic}^{(j)} $}
+\STATE{ Use \eqref{eq:CPblPixel} to draw $p_{ig}^{(j)} \leftarrow E_{\boldsymbol{Z}_{i:},\boldsymbol{s}_{i:}}[p_{ig}]$ }
+\end{algorithmic}
+\end{algorithm}
+
+\medskip
+\noindent
+\textbf{Cpbl:} In this model, cluster variation is included ($\boldsymbol{ \epsilon }_{i:}$), but we integrate out variation in the population denominator ($\boldsymbol{N}_{i:}$), binomial variation ($\boldsymbol{Z}_{i:}$), and EA location variation ($\boldsymbol{s}_{i:}$).
+
+Recall \eqref{eq:pi} and \eqref{eq:pig}: 
+
+\begin{align*}
+p_i &= \frac{1}{N_i}\sum_{c \in C_i} Z_{ic} = \sum_{c \in C_i} \frac{N_{ic}}{N_i}  \times \frac{Z_{ic}}{N_{ic}}  =  \sum_{c \in C_i} q_{ic} \times p_{ic} \\
+p_{ig} &= \frac{1}{N_{ig}} \sum_{c \in C^g} Z_{ic} = \sum_{c \in C^g} \frac{N_{ic}}{N_{ig}}  \times \frac{Z_{ic}}{N_{ic}}  =  \sum_{c \in C^g} q_{ic}^g \times p_{ic}.
+\end{align*}
+
+Taking expectation over $\boldsymbol{Z}_{i:}$,  $\boldsymbol{s}_{i:}$, and $\boldsymbol{N}_{i:}$, at the area level we get: 
+
+\begin{align*}
+E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}} \left [p_i \right ] &= E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}} \left [\sum_{c \in C_i} \frac{N_{ic}}{N_i}  \times \frac{Z_{ic}}{N_{ic}}  \right ] \\
+&= E_{\boldsymbol{N}_{i:}} \left [\sum_{c \in C_i} \frac{N_{ic}}{N_i}  \times E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}} \left [ \frac{Z_{ic}}{N_{ic}} \Big \vert \boldsymbol{N}_{i:} \right ]  \right ] \\
+&= E_{\boldsymbol{N}_{i:}} \left [\sum_{c \in C_i} \frac{N_{ic}}{N_i}  \times E_{\boldsymbol{s}_{i:}} [\mu_{ic}]  \right ] \\
+&= \sum_{c \in C_i} E_{\boldsymbol{N}_{i:}} \left [ \frac{N_{ic}}{N_i} \right ] \times \int_{A_i} \mu_{ic}(s_{ic}) \cdot \frac{q(s_{ic})}{\int_{A_i} q(s) \ ds} \ ds_{ic}.  \\
+\end{align*}
+
+At this point, it is important to note that we may know the particular stratum, say urban or rural crossed with area, of each EA.  In that case, the distribution of $\boldsymbol{N}_{ic} \vert \mathscr{W}$ may depend on whether EA $c$ is urban or rural. We therefore split the above summation into a summation over rural EAs, and another over urban EAs. Letting $C_i^{\mathrm{URB}}$ and $C_i^{\mathrm{RUR}}$ be the number of urban and rural EAs an area $i$, we then get: 
+
+\begin{align}
+E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}} \left [p_i \right ] &= \sum_{c \in C_i^{\mathrm{RUR}}} q^{\mathrm{RUR}} \times \int_{A_i^{\mathrm{RUR}}} \mu_{ic}(s_{ic}) \cdot \frac{q(s_{ic})}{\int_{A_i^{\mathrm{RUR}}} q(s) \ ds} \ ds_{ic} \nonumber \\
+&+ \sum_{c \in C_i^{\mathrm{URB}}} q^{\mathrm{URB}} \times \int_{A_i^{\mathrm{URB}}} \mu_{ic}(s_{ic}) \cdot \frac{q(s_{ic})}{\int_{A_i^{\mathrm{URB}}} q(s) \ ds} \ ds_{ic}, \label{eq:CpblCounty}
+\end{align}
+where $q^{\mathrm{RUR}}$ and $q^{\mathrm{URB}}$ are the values of the expectation $E_{\boldsymbol{N}_{i:}} \left [ \frac{N_{ic}}{N_i} \right ]$ in rural and urban EAs respectively.
+
+Just as in the CPbl model, we can calculate the integrals \eqref{eq:CpblCounty} repeatedly by estimating them as a function of $ \epsilon_{ic}$ using interpolating splines. TODO: look into the same CLT approximations as for the CPbl model.
+
+At the subarea level, whatever stratum $g$ is in, we assume all EAs in subarea $g$ are also in that stratum so that the $N_{ic}$ for any such $EA$ are equal in expectation.  We then have: 
+\begin{align*}
+E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}} \left [p_{ig} \right ] &= E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}} \left [ \sum_{c \in C^g} \frac{N_{ic}}{N_{ig}}  \times \frac{Z_{ic}}{N_{ic}} \right ] \\
+&= E_{\boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}} \left [ \sum_{c \in C^g} \frac{N_{ic}}{N_{ig}}  \times  \mu_{ic} \right ] \\
+&= E_{\boldsymbol{s}_{i:}} \left [ \sum_{c \in C^g} \frac{1}{|C^g|}  \times  \mu_{ic} \right ].
+\end{align*}
+
+To calculate this expectation, we will again need to approximate the distribution of $|C^g|$. Again, if $g$ is small in area, then $\mu_{ic}$ will be constant over $g$, and we can approximate the distribution of $|C^g|$ by giving a small number of possible values probability mass. if $g$ is large, then we could use a Monte Carlo sample for the approximation. For now, we will assume that $g$ is small in area, noting that this will be the case for a fine pixelated grid over which estimates could be produced. In this case, we get: 
+ 
+ \begin{align}
+ E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}} \left [p_{ig} \right ] & \approx \sum_{n \in \{0,...,K_g\}} m_n^g  \cdot \sum_{c \in C^g, \ |C^g|=n} \frac{1}{n}  \times  \mu_{ic}. \label{eq:CpblPixel}
+ \end{align}
+ 
+ We can take posterior draws from $ E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}} \left [p_{i} \right ]$ and $ E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}} \left [p_{ig} \right ]$ using similar algorithms as above
+ 
+ \medskip
+ \noindent
+ \textbf{cpbl:} In this model, we also integrate out the cluster effect, including only variation in the spatial function $u(\cdot)$.
+ 
+ Starting from where we left off above, we have: 
+ 
+\begin{align*}
+E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}, \boldsymbol{ \epsilon }_{i:}} \left [p_{i} \right ] &= E_{\boldsymbol{ \epsilon }_{i:}} \bigg [ \sum_{c \in C_i^{\mathrm{RUR}}} q^{\mathrm{RUR}} \times \int_{A_i^{\mathrm{RUR}}} \mu_{ic}(s_{ic}) \cdot \frac{q(s_{ic})}{\int_{A_i^{\mathrm{RUR}}} q(s) \ ds} \ ds_{ic} \nonumber \\
+&+ \sum_{c \in C_i^{\mathrm{URB}}} q^{\mathrm{URB}} \times \int_{A_i^{\mathrm{URB}}} \mu_{ic}(s_{ic}) \cdot \frac{q(s_{ic})}{\int_{A_i^{\mathrm{URB}}} q(s) \ ds} \ ds_{ic} \bigg ] \\
+&= \sum_{c \in C_i^{\mathrm{RUR}}} q^{\mathrm{RUR}} \times \int_{A_i^{\mathrm{RUR}}} E_{\boldsymbol{ \epsilon }_{i:}} [\mu_{ic}(s_{ic})] \cdot \frac{q(s_{ic})}{\int_{A_i^{\mathrm{RUR}}} q(s) \ ds} \ ds_{ic} \nonumber \\
+&+ \sum_{c \in C_i^{\mathrm{URB}}} q^{\mathrm{URB}} \times \int_{A_i^{\mathrm{URB}}} E_{\boldsymbol{ \epsilon }_{i:}}  [\mu_{ic}(s_{ic}) ] \cdot \frac{q(s_{ic})}{\int_{A_i^{\mathrm{URB}}} q(s) \ ds} \ ds_{ic},
+\end{align*}
+
+yielding: 
+
+\begin{align}
+E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}, \boldsymbol{ \epsilon }_{i:}} \left [p_{i} \right ] &= |C_i^{\mathrm{RUR}}|  \cdot q^{\mathrm{RUR}} \times \int_{A_i^{\mathrm{RUR}}} E_{\boldsymbol{ \epsilon }_{i:}} [\mu_{i1}(s_{i1})] \cdot \frac{q(s_{i1})}{\int_{A_i^{\mathrm{RUR}}} q(s) \ ds} \ ds_{i1} \nonumber \\
+&+ |C_i^{\mathrm{URB}}|  \cdot q^{\mathrm{URB}} \times \int_{A_i^{\mathrm{URB}}} E_{\boldsymbol{ \epsilon }_{i:}}  [\mu_{i2}(s_{i2}) ] \cdot \frac{q(s_{i2})}{\int_{A_i^{\mathrm{URB}}} q(s) \ ds} \ ds_{i2}, \label{eq:cpblCounty}
+\end{align}
+
+\noindent
+which is the formula we used in the survey paper (TO DO: simplify $q^{\mathrm{URB}}$ and $q^{\mathrm{RUR}}$). Here, clusters 1 and 2 are used in $\mu_{i1}(s_{i1})$ and $\mu_{i2}(s_{i2})$ as arbitrary rural and urban clusters respectively. We could also use Jon's Logistic approximation to avoid needed to numerically integrate over $\epsilon_{ic}$.
+
+At the pixel level, we have: 
+
+\begin{align*}
+E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}, \boldsymbol{ \epsilon }_{i:}} \left [p_{ig} \right ] &= E_{\boldsymbol{s}_{i:}, \boldsymbol{ \epsilon }_{i:}} \left [ \sum_{c \in C^g} \frac{1}{|C^g|}  \times  \mu_{ic} \right ] \\
+&= E_{\boldsymbol{s}_{i:}} \left [ \sum_{c \in C^g} \frac{1}{|C^g|}  \times  E_{\boldsymbol{ \epsilon }_{i:}} \left [ \mu_{ic} \ \vert \ s_{ic} \right ] \right ].
+\end{align*}
+
+As above if $g$ is large, we could use Monte Carlo samples to approximate the outer expectation, but we will assume that $g$ is small. In that case, we can use the same approximation as previously to get: 
+
+\begin{align*}
+E_{\boldsymbol{s}_{i:}} \left [ \sum_{c \in C^g} \frac{1}{|C^g|}  \times  E_{\boldsymbol{ \epsilon }_{i:}} \left [ \mu_{ic} \ \vert \ s_{ic} \right ] \right ] &\approx \sum_{n \in \{0,...,K_g\}} m_n^g  \cdot \sum_{c \in C^g, \ |C^g|=n} \frac{1}{n}  \times  E_{\boldsymbol{ \epsilon }_{i:}} \left [ \mu_{ic} \ \vert \ s_{ic} = s_{ig} \right ].
+\end{align*}
+
+Since $E_{\boldsymbol{ \epsilon }_{i:}} \left [ \mu_{ic} \ \vert \ s_{ic} = s_{ig} \right ]$ is equal for each $c \in C^g$, we finally get:
+
+\begin{align}
+E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}, \boldsymbol{ \epsilon }_{i:}} \left [p_{ig} \right ] &\approx E_{\boldsymbol{ \epsilon }_{i:}} \left [ \mu_{ic} \ \vert \ s_{ic} = s_{ig} \right ] \label{eq:cpblPixel}
+\end{align}
+
+We can use the same method as for the area level to calculate this integral. A benefit of this model is that aggregations from the subarea to the area level are consistent. As written, this is not the case for the Cpbl and CPbl models, although perhaps there are different approximations that can be made for exact aggregation consistency. The reason for this lack of consistency is that, for there to be aggregation consistency, we would need a way to take joint draws over all subareas $g$ from $E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}} \left [p_{ig} \right ]$ and $E_{\boldsymbol{Z}_{i:}, \boldsymbol{s}_{i:}, \boldsymbol{N}_{i:}} \left [p_{ig} \right ]$. But this would be possible using Monte Carlo draws from $\boldsymbol{s}_{i:}$ if those draws were shared for all $g$! Perhaps only a small number would be needed. Could always check variation over the Monte Carlo draws to see if we have enough. TODO: change the approximations in Cpbl and CPbl models to use Monte Carlo draws from $\boldsymbol{s}_{i:}$ with exceptions for $g$ with small pop. density?
+
+\section{Plan of Action}
+
+First, I will simulate a fixed population and set of surveys for testing purposes with parameters similar to the Kenya secondary education ELK-T model fits as follows:
+\begin{itemize}
+\item Simulate the EAs (locations, households, neonational populations) as in the survey paper
+\item Simulate NMRs and deaths at EAs using the SPDE model fitted to the NMRs
+\item Draw surveys from the EAs as in the survey paper. Generate 100 stratified and unstratified, but we will only use 1 stratified survey to start with, and the unstratified might not be necessary.
+\item Evaluate differences between the chosen models at multiple aggregation levels
+\end{itemize}
+Could try this again, but using the ELK-T model to simulate NMRs.
+
+When we discussed this project in person, we considered proposing a variation of the Cpbl model (sampling over cluster level overdispersion) as an alternative to the cpbl model (the same, but integrating out cluster level overdispersion).  I mainly bring up the other model in case the difference between the cpbl and Cpbl models is not large.  Here are a few reasons I can think of why that might be the case:
+\begin{enumerate}
+\item There are many EAs in a given area, and averaging over all of them might not make a huge difference
+\item We might be comparing the models at the wrong aggregation level. There are fewer EAs the smaller the areal level, and by the time we get to pixels, averaging over variation in EAs will make much more of a difference
+\item Even at small areal aggregation level, binomial variation might make more of a difference than cluster (EA) level overdispersion. In that case, accounting for EA level overdispersion would be great, but not necessarily an exciting result.
+\item There are a lot of different approximations possible to use for these models, which could get confusing quickly. Testing them will be important as long as focus is kept on the larger goals
+\end{enumerate}
+Since the BCPL model would be very easy to code up at the pixel level (other levels would be harder, but doable using Algorithm 1 given above, I was hoping to include it in the exploratory phase to see how much variation at each aggregation level is due to each of these effects.
+
+As alluded to above, the performance of these methods will likely vary considerably depending on the aggregation level, so it would be prudent for us to, at least in the exploratory phase, evaluate performance at the region, county, and 5km pixel levels. For simplicity, we could start by including BCL only at the pixel level, and including other models at all levels, for a single survey.
+
+%\bibliographystyle{chicago}
+%\bibliographystyle{apalike}
+
+%\bibliography{../myBib}
+
+
+\end{document}
+
+
+
+
+
+
+
+
+
+

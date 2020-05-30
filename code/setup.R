@@ -58,7 +58,8 @@ source("code/utilityFuns.R")
 source('code/getSimulationDataSets.R')
 source('code/generateSimDataSets.R')
 source('code/simStudy.R')
-# source('code/plotGenerator.R')
+source('code/test.R')
+source('code/plotGenerator.R')
 
 # set some basic parameters to hold constant throughout analysis
 kenyaLonRange = c(33.5, 42)
