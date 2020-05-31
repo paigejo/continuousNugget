@@ -70,8 +70,13 @@ testCPBL = function(fit=NULL) {
   # load SPDE UC model (fit it if necessary)
   if(is.null(fit)) {
     fitFile = paste0(outputDirectory, "test/spdeMortFitUC.RData")
-    if(file.exists(fitFile)) {
+    fitFileCompact = paste0(outputDirectory, "test/spdeMortFitUCCompact.RData")
+    if(file.exists(fitFileCompact)) {
+      out = load(fitFileCompact)
+    } else if(file.exists(fitFile)) {
       out = load(fitFile)
+      fit$mod = NULL
+      save(fit, file=fitFileCompact)
     } else {
       fit = fitSPDEKenyaDat()
       save(fit, file=fitFile)
@@ -84,6 +89,19 @@ testCPBL = function(fit=NULL) {
   # aggregate using CPBL model
   out = modCPBL(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empiricalDistributions=NULL, 
                 includeUrban=TRUE, maxEmptyFraction=1)
+  
+  browser()
+}
+
+testrbinom1 = function(n=1000000, size=100, prob=.02) {
+  simulations = rbinom1(n, size, prob)
+  
+  xs = 1:size
+  ps = dbinom1(xs, size, prob)
+  
+  ylim=range(ps)
+  hist(simulations, breaks=seq(from=0.5, to=size+0.5, by=1), freq=FALSE, col="skyblue")
+  lines(xs, ps, type="l", ylim=ylim)
   
   browser()
 }

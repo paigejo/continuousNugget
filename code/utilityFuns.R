@@ -3041,6 +3041,59 @@ rMyMultinomial = function(n, i, includeUrban=TRUE, urban=TRUE, popMat=NULL, easp
   rmultinom(n, nEA, prob=thesePixelProbs)
 }
 
+# Same as rMyMultinomial, except samples from independent binomial distributions 
+# (conditional on the stratum totals and population densities) conditioned to have 
+# at least one EA per pixel
+rMyMultiBinomial1 = function(n, i, includeUrban=TRUE, urban=TRUE, popMat=NULL, easpa=NULL) {
+  
+  # set default inputs
+  if(is.null(popMat)) {
+    popMat = makeDefaultPopMat()
+    # lon: longitude
+    # lat: latitude
+    # east: easting (km)
+    # north: northing (km)
+    # pop: proportional to population density for each grid cell
+    # area: an id or area name in which the grid cell corresponding to each row resides
+    # urban: whether the grid cell is urban or rural
+  }
+  if(is.null(easpa)) {
+    easpa = makeDefaultEASPA()
+    # Area: the name or id of the area
+    # EAUrb: the number of EAs in the urban part of the area
+    # EARur: the number of EAs in the rural part of the area
+    # EATotal: the number of EAs in the the area
+    # HHUrb: the number of households in the urban part of the area
+    # HHRur: the number of households in the rural part of the area
+    # HHTotal: the number of households in the the area
+    # popUrb: the number of people in the urban part of the area
+    # popRur: the number of people in the rural part of the area
+    # popTotal: the number of people in the the area
+  }
+  
+  # get area names
+  areas = sort(unique(popMat$area))
+  if(any(areas != easpa$area))
+    stop("area names and easpa do not match popMat or are not in the correct order")
+  
+  # determine which pixels and how many EAs are in this stratum
+  if(includeUrban) {
+    includeI = popMat$area == areas[i] & popMat$urban == urban
+    nEA = ifelse(urban, easpa$EAUrb[i], easpa$EARur[i])
+  }
+  else {
+    includeI = popMat$area == areas[i]
+    nEA = ifelse(urban, easpa$EAUrb[i], easpa$EATotal[i])
+  }
+  
+  # sample from the pixels if this stratum exists
+  if(sum(includeI) == 0)
+    return(matrix(nrow=0, ncol=n))
+  thesePixelProbs = popMat$pop[includeI]
+  thesePixelProbs = thesePixelProbs * (1 / sum(thesePixelProbs))
+  matrix(rbinom1(n*length(thesePixelProbs), nEA, prob=thesePixelProbs), ncol=n)
+}
+
 # function for determining how to recombine separate multinomials into the draws over all pixels
 getSortIndices = function(i, urban=TRUE, popMat=NULL, includeUrban=TRUE) {
   
@@ -3139,6 +3192,79 @@ rStratifiedMultnomial = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE) 
   eaSamples
 }
 
+# gives nPixels x n matrix of draws from the stratified independent binomial 
+# distributions with values corresponding to the value of |C^g| for each pixel, 
+# g (the number of EAs/pixel). Each drama is conditioned on having at least one 
+# EA per pixel marginally, and the total number of EAs is not enforced strictly. 
+# Instead, the stratum totals are used to obtain the marginal binomial 
+# (conditioned on having at least one success/EA per pixel) distributions.
+rStratifiedBinomial1 = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE) {
+  
+  # set default inputs
+  if(is.null(popMat)) {
+    popMat = makeDefaultPopMat()
+    # lon: longitude
+    # lat: latitude
+    # east: easting (km)
+    # north: northing (km)
+    # pop: proportional to population density for each grid cell
+    # area: an id or area name in which the grid cell corresponding to each row resides
+    # urban: whether the grid cell is urban or rural
+  }
+  if(is.null(easpa)) {
+    easpa = makeDefaultEASPA()
+    # Area: the name or id of the area
+    # EAUrb: the number of EAs in the urban part of the area
+    # EARur: the number of EAs in the rural part of the area
+    # EATotal: the number of EAs in the the area
+    # HHUrb: the number of households in the urban part of the area
+    # HHRur: the number of households in the rural part of the area
+    # HHTotal: the number of households in the the area
+    # popUrb: the number of people in the urban part of the area
+    # popRur: the number of people in the rural part of the area
+    # popTotal: the number of people in the the area
+  }
+  
+  # get area names
+  areas = sort(unique(popMat$area))
+  if(any(areas != easpa$area))
+    stop("area names and easpa do not match popMat or are not in the correct order")
+  
+  # we will need to draw separate multinomial for each stratum. Start by 
+  # creating matrix of all draws of |C^g|
+  eaSamples = matrix(NA, nrow=nrow(popMat), ncol=n)
+  
+  # now draw multinomials
+  if(includeUrban) {
+    # draw for each area crossed with urban/rural
+    urbanSamples = do.call("rbind", lapply(1:length(areas), rMyMultiBinomial1, n=n, urban=TRUE, 
+                                           includeUrban=includeUrban, popMat=popMat, easpa=easpa))
+    ruralSamples = do.call("rbind", lapply(1:length(areas), rMyMultiBinomial1, n=n, urban=FALSE, 
+                                           includeUrban=includeUrban, popMat=popMat, easpa=easpa))
+    
+    # get the indices used to recombine into the full set of draws
+    urbanIndices = unlist(sapply(1:length(areas), getSortIndices, urban=TRUE, popMat=popMat, includeUrban=includeUrban))
+    ruralIndices = unlist(sapply(1:length(areas), getSortIndices, urban=FALSE, popMat=popMat, includeUrban=includeUrban))
+    
+    # recombine into eaSamples
+    eaSamples[urbanIndices,] = urbanSamples
+    eaSamples[ruralIndices,] = ruralSamples
+  } else {
+    # draw for each area
+    stratumSamples = rbind(sapply(1:length(areas), n=n, rMyMultiBinomial1, 
+                                  includeUrban=includeUrban, popMat=popMat, easpa=easpa))
+    
+    # get the indices used to recombine into the full set of draws
+    stratumIndices = c(sapply(1:length(areas), getSortIndices, popMat=popMat, includeUrban=includeUrban))
+    
+    # recombine into eaSamples
+    eaSamples[stratumIndices,] = stratumSamples
+  }
+  
+  # return results
+  eaSamples
+}
+
 # taken from logitnorm package.  Calculates the mean of a distribution whose 
 # logit is Gaussian. Each row of muSigmaMat has a mean and standard deviation 
 # on the logit scale
@@ -3168,6 +3294,21 @@ logitNormMean = function(muSigmaMat, parClust=NULL, logisticApproximation=TRUE, 
       }
     }
   }
+}
+
+dbinom1 = function(x, size, prob) {
+  dbinom(x, size, prob) * (1 / (1 - pbinom(0, size, prob)))
+}
+
+qbinom1 = function(q, size, prob) {
+  q = q * (1-pbinom(0, size, prob)) + pbinom(0, size, prob)
+  qbinom(q, size, prob)
+}
+
+# random binomial draws conditional on the number of successes being at least one
+rbinom1 = function(n, size, prob) {
+  q = runif(n)
+  qbinom1(q, size, prob)
 }
 
 # calculate the expected value of a summation under a Poisson distribution

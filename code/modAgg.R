@@ -13,6 +13,7 @@
 # maxEmptyFraction: the maximum fraction of posterior samples for which a given subarea can have 
 #                   no EAs before separate marginal approximations are performed. If 1, never 
 #                   perform separate marginal approximations
+# doModifiedPixelLevel: include draws at the pixel level conditional on there being at least one EA per pixel
 ## NOTE1: For aggregation consistent models: 'areas' should be the finest spatial areas for which number 
 ##        of urban and rural EAs is known. For coarser areas, further aggregate the draws of each 
 ##        aggregation function as necessary. The same goes for the pixel grid. For larger 'subareas' 
@@ -64,7 +65,7 @@ makeDefaultEASPA = function(dataType=c("children", "women")) {
 # outline
 modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, empiricalDistributions=NULL, 
                    includeUrban=TRUE, maxEmptyFraction=1, clusterLevel=TRUE, pixelLevel=TRUE, countyLevel=TRUE, 
-                   regionLevel=TRUE) {
+                   regionLevel=TRUE, doModifiedPixelLevel=TRUE) {
   nDraws = ncol(uDraws)
   
   # set default inputs
@@ -118,20 +119,32 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
   
   # take draws from the stratified binomial process for each posterior sample
   eaSamples = rStratifiedMultnomial(nDraws, popMat, easpa, includeUrban)
+  if(doModifiedPixelLevel) {
+    eaSamplesMod = rStratifiedBinomial1(nDraws, popMat, easpa, includeUrban)
+  }
   
   # make matrix of pixel indices mapping matrices of EA values to matrices of pixel values
   pixelIndexMat = matrix(rep(rep(1:nrow(popMat), nDraws), times=eaSamples), ncol=nDraws)
+  if(doModifiedPixelLevel) {
+    pixelIndexMatMod = matrix(rep(rep(1:nrow(popMat), nDraws), times=eaSamplesMod), ncol=nDraws)
+  }
   
   # determine which EAs are urban if necessary
   if(includeUrban) {
     # urbanMat = matrix(rep(rep(popMat$urban, nDraws), times=c(eaSamples)), ncol=nDraws)
     urbanMat = matrix(popMat$urban[pixelIndexMat], ncol=nDraws)
+    if(doModifiedPixelLevel) {
+      urbanMatMod = matrix(popMat$urban[pixelIndexMatMod], ncol=nDraws)
+    }
   } else {
     urbanMat = NULL
   }
   
   # determine which EAs are from which area
   areaMat = matrix(popMat$area[pixelIndexMat], ncol=nDraws)
+  if(doModifiedPixelLevel) {
+    areaMatMod = matrix(popMat$area[pixelIndexMatMod], ncol=nDraws)
+  }
   
   ##### Line 2: draw cluster effects, epsilon
   # NOTE1: we assume there are many more EAs then sampled clusters, so that 
@@ -163,8 +176,13 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
   ##### Line 4: Aggregate appropriate values from EAs to the grid cell level
   
   # function for aggregating values for each grid cell
-  getPixelColumnFromEAs = function(i, valMat, applyFun=sum) {
-    out = tapply(valMat[,i], factor(as.character(pixelIndexMat[,i])), FUN=applyFun)
+  getPixelColumnFromEAs = function(i, valMat, applyFun=sum, doMod=FALSE) {
+    if(!doMod) {
+      out = tapply(valMat[,i], factor(as.character(pixelIndexMat[,i])), FUN=applyFun)
+    } else {
+      out = tapply(valMat[,i], factor(as.character(pixelIndexMatMod[,i])), FUN=applyFun)
+    }
+    
     indices = as.numeric(names(out))
     
     vals = rep(NA, nrow(uDraws))
@@ -178,18 +196,36 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
   Ng <- sapply(1:ncol(Ncs), getPixelColumnFromEAs, valMat=Ncs)
   Ng[is.na(Ng)] = 0
   
+  if(doModifiedPixelLevel) {
+    NgMod <- sapply(1:ncol(Ncs), getPixelColumnFromEAs, valMat=Ncs, doMod=TRUE)
+  }
+  
   ##### Line 7: aggregate response for each grid cell to get Z_{ig}
   Zg <- sapply(1:ncol(Zc), getPixelColumnFromEAs, valMat=Zc)
+  
+  if(doModifiedPixelLevel) {
+    ZgMod <- sapply(1:ncol(Zc), getPixelColumnFromEAs, valMat=Zc, doMod=TRUE)
+  }
   
   ##### Line 8: Calculate empirical mortality proportions for each grid cell, p_{ig}. 
   #####         Whenever Z_{ig} is 0, set p_{ig} to 0 as well
   pg = Zg / Ng
   pg[Zg == 0] = 0
   
+  if(doModifiedPixelLevel) {
+    pgMod = ZgMod / NgMod
+    pgMod[ZgMod == 0] = 0
+  }
+  
   # just for testing purposes:
   if(FALSE) {
     mug = sapply(1:ncol(muc), getPixelColumnFromEAs, valMat=muc, applyFun=function(x) {mean(x, na.rm=TRUE)})
     mug[!is.finite(mug)] = NA
+    
+    if(doModifiedPixelLevel) {
+      mugMod = sapply(1:ncol(muc), getPixelColumnFromEAs, valMat=muc, applyFun=function(x) {mean(x, na.rm=TRUE)}, doMod=TRUE)
+      mugMod[!is.finite(mugMod)] = NA
+    }
     
     # this takes a veeeeery long time. Just use the logistic approximation instead
     cpbl = matrix(logitNormMean(cbind(c(as.matrix(uDraws)), rep(sigmaEpsilonDraws, each=nrow(uDraws)))), nrow=nrow(uDraws))
@@ -254,7 +290,6 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
     
-    sdRange = zlim
     sdTicks = pretty(sdRange, n=5)[-1]
     sdTickLabels = as.character(sdTicks)
     image.plot(zlim=range(log(sdRange)), nlevel=length(sdCols), legend.only=TRUE, horizontal=FALSE,
@@ -280,6 +315,64 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
                legend.cex=4, legend.width=3)
     plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
+    dev.off()
+    
+    ## now do the same but for the modified pixel sampling scheme with >= 1 EA per pixel
+    # plot means
+    png(paste0(figDirectory, "exploratoryAnalysis/CPBLpgMugMeanMod.png"), width=1500, height=600)
+    par(mfrow=c(1,3), oma=c( 0,0,0,7), mar=c(5.1, 5.1, 4.1, 2.5))
+    # meanRange = quantile(probs=c(.005, .995), c(rowMeans(mugMod, na.rm=TRUE), rowMeans(pgMod, na.rm=TRUE), rowMeans(cpbl, na.rm=TRUE)), na.rm=TRUE)
+    meanRange = range(c(rowMeans(mugMod, na.rm=TRUE), rowMeans(pgMod, na.rm=TRUE), rowMeans(cpbl, na.rm=TRUE)), na.rm=TRUE)
+    quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(cpbl, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
+               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (cpbl model)"), cex.main=3, col=meanCols, add.legend=FALSE)
+    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
+    plotMapDat(mapDat=regionMap, lwd=2.5)
+    quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(mugMod, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
+               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (CpbL model, mod.)"), cex.main=3, col=meanCols, add.legend=FALSE)
+    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
+    plotMapDat(mapDat=regionMap, lwd=2.5)
+    quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(pgMod, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
+               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (CPBL model, mod.)"), cex.main=3, col=meanCols, add.legend=FALSE)
+    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
+    plotMapDat(mapDat=regionMap, lwd=2.5)
+    
+    meanTicks = pretty(meanRange, n=5)[-1]
+    meanTickLabels = as.character(meanTicks)
+    image.plot(zlim=range(logit(meanRange)), nlevel=length(meanCols), legend.only=TRUE, horizontal=FALSE,
+               col=meanCols, add = TRUE, axis.args=list(at=logit(meanTicks), labels=meanTickLabels, cex.axis=2, tck=-.7, hadj=-.1), 
+               legend.mar = 0, legend.cex=2, legend.width=3, smallplot= c(.97,1,.1,.9))
+    dev.off()
+    
+    # plot SDs
+    SDsUg = apply(cpbl, 1, sd, na.rm=TRUE)
+    SDsMugMod = apply(mugMod, 1, sd, na.rm=TRUE)
+    SDsPgMod = apply(pgMod, 1, sd, na.rm=TRUE)
+    allSDs = c(SDsUg, SDsMugMod, SDsPgMod)
+    # sdRange = quantile(probs=c(.001, .995), allSDs, na.rm=TRUE)
+    sdRange = quantile(probs=c(.001, .995), allSDs, na.rm=TRUE)
+    png(paste0(figDirectory, "exploratoryAnalysis/CPBLpgMugSDMod.png"), width=1500, height=600)
+    par(mfrow=c(1,3), oma=c( 0,0,0,7), mar=c(5.1, 5.1, 4.1, 2.5))
+    quilt.plot(popMat$lon, popMat$lat, log(SDsUg), FUN=function(x){mean(x, na.rm=TRUE)}, 
+               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (cpbl model)"), cex.main=3, 
+               col=sdCols, add.legend=FALSE)
+    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
+    plotMapDat(mapDat=regionMap, lwd=2.5)
+    quilt.plot(popMat$lon, popMat$lat, log(SDsMugMod), FUN=function(x){mean(x, na.rm=TRUE)}, 
+               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (CpbL model, mod.)"), cex.main=3, 
+               col=sdCols, add.legend=FALSE)
+    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
+    plotMapDat(mapDat=regionMap, lwd=2.5)
+    quilt.plot(popMat$lon, popMat$lat, log(SDsPgMod), FUN=function(x){mean(x, na.rm=TRUE)}, 
+               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (CPBL model, mod.)"), cex.main=3, 
+               col=sdCols, add.legend=FALSE)
+    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
+    plotMapDat(mapDat=regionMap, lwd=2.5)
+    
+    sdTicks = pretty(sdRange, n=5)[-1]
+    sdTickLabels = as.character(sdTicks)
+    image.plot(zlim=range(log(sdRange)), nlevel=length(sdCols), legend.only=TRUE, horizontal=FALSE,
+               col=sdCols, add = TRUE, axis.args=list(at=log(sdTicks), labels=sdTickLabels, cex.axis=2, tck=-.7, hadj=-.1), 
+               legend.mar = 0, legend.cex=2, legend.width=3, smallplot= c(.97,1,.1,.9))
     dev.off()
   }
   
@@ -333,15 +426,18 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     # this takes quite a while (15 mins?)
     aggregatedResultscpbl = aggregateEAPredictions(cpblc, Ncs, areaMat, urbanMat, easpa=easpa, countyLevel=countyLevel, 
                                                    regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=TRUE)
-    aggregatedResultscpbl2 = aggregatePixelPredictions(cpbl, Ng2, popGrid=popMat, useDensity=TRUE, countyLevel=countyLevel, 
-                                                       regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=TRUE)
+    
+    Ng2 = Ng
+    Ng2[Ng2 != 0] = 1
+    aggregatedResultscpbl2 = aggregatePixelPredictions(cpbl*eaSamples, eaSamples, popGrid=popMat, useDensity=FALSE, countyLevel=countyLevel, 
+                                                       regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=FALSE)
     
     # county level
-    Pcountycpbl = aggregatedResultscpbl$countyResults$Z
-    PcountyUrbancpbl = aggregatedResultscpbl$countyResults$ZUrban
-    PcountyRuralcpbl = aggregatedResultscpbl$countyResults$ZRural
+    # Pcountycpbl = aggregatedResultscpbl$countyResults$Z
+    # PcountyUrbancpbl = aggregatedResultscpbl$countyResults$ZUrban
+    # PcountyRuralcpbl = aggregatedResultscpbl$countyResults$ZRural
     
-    Pcountycpbl2 = aggregatedResultscpbl2$countyMatrices$p
+    Pcountycpbl = aggregatedResultscpbl2$countyMatrices$p
     PcountyUrbancpbl2 = aggregatedResultscpbl$countyResults$pUrban
     PcountyRuralcpbl2 = aggregatedResultscpbl$countyResults$pRural
     
@@ -359,8 +455,10 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     # this takes quite a while (15 mins?)
     aggregatedResultsCpbL = aggregateEAPredictions(cpblc, Ncs, areaMat, urbanMat, easpa=easpa, countyLevel=countyLevel, 
                                                    regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=TRUE)
-    aggregatedResultsCpbL = aggregatePixelPredictions(mug, Ng2, popGrid=popMat, useDensity=FALSE, countyLevel=countyLevel, 
-                                                      regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=TRUE)
+    mug2 = mug
+    mug2[!is.finite(mug2)] = 0
+    aggregatedResultsCpbL = aggregatePixelPredictions(mug*eaSamples, eaSamples, popGrid=popMat, useDensity=FALSE, countyLevel=countyLevel, 
+                                                      regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=FALSE)
     
     # county level
     PcountyCpbL = aggregatedResultsCpbL$countyMatrices$p
@@ -377,6 +475,9 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     PnationUrbanCpbL = aggregatedResultsCpbL$nationalResults$ZUrban
     PnationRuralCpbL = aggregatedResultsCpbL$nationalResults$ZRural
     
+    save(Pcountycpbl, PcountyCpbL, Pcounty, file=paste0(outputDirectory, "test/clusterTest.RData"))
+    out = load(paste0(outputDirectory, "test/clusterTest.RData"))
+    
     # load shape files for plotting
     require(maptools)
     # regionMap = readShapePoly("../U5MR/mapData/kenya_region_shapefile/kenya_region_shapefile.shp", delete_null_obj=TRUE, force_ring=TRUE, repair=TRUE)
@@ -391,7 +492,10 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     
     ## plot county results
     # plot mean
-    meanRange = quantile(probs=c(.005, .995), c(rowMeans(Pcountycpbl2, na.rm=TRUE), rowMeans(PcountyCpbL, na.rm=TRUE), rowMeans(Pcounty, na.rm=TRUE)), na.rm=TRUE)
+    # meanRange = range(c(rowMeans(Pcountycpbl, na.rm=TRUE), rowMeans(PcountyCpbL, na.rm=TRUE), rowMeans(Pcounty, na.rm=TRUE)), na.rm=TRUE)
+    # meanTicks = pretty(meanRange, n=5)
+    # meanTickLabels = as.character(meanTicks)
+    meanRange = quantile(probs=c(.005, .995), c(rowMeans(mug, na.rm=TRUE), rowMeans(pg, na.rm=TRUE), rowMeans(cpbl, na.rm=TRUE)), na.rm=TRUE)
     meanTicks = pretty(meanRange, n=5)[-1]
     meanTickLabels = as.character(meanTicks)
     
@@ -428,35 +532,40 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     dev.off()
     
     # plot SDs
-    SDsUg = apply(cpbl, 1, sd, na.rm=TRUE)
-    SDsMug = apply(mug, 1, sd, na.rm=TRUE)
-    SDsPg = apply(pg, 1, sd, na.rm=TRUE)
-    allSDs = c(SDsUg, SDsMug, SDsPg)
-    sdRange = quantile(probs=c(.001, .995), allSDs, na.rm=TRUE)
-    png(paste0(figDirectory, "exploratoryAnalysis/CPBLpgMugSD.png"), width=1500, height=600)
+    SDscpbl = apply(Pcountycpbl, 1, sd, na.rm=TRUE)
+    SDsCpbL = apply(PcountyCpbL, 1, sd, na.rm=TRUE)
+    SDsPcounty = apply(Pcounty, 1, sd, na.rm=TRUE)
+    allSDs = c(SDscpbl, SDsCpbL, SDsPcounty)
+    sdRange = range(allSDs, na.rm=TRUE)
+    sdTicks = pretty(sdRange, n=5)
+    sdTickLabels = as.character(sdTicks)
+    
+    png(paste0(figDirectory, "exploratoryAnalysis/CPBLpgMugSDCounty.png"), width=1500, height=600)
     par(mfrow=c(1,3), oma=c( 0,0,0,7), mar=c(5.1, 5.1, 4.1, 2.5))
-    quilt.plot(popMat$lon, popMat$lat, log(SDsUg), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (cpbl model)"), cex.main=3, 
-               col=sdCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    quilt.plot(popMat$lon, popMat$lat, log(SDsMug), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (CpbL model)"), cex.main=3, 
-               col=sdCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    quilt.plot(popMat$lon, popMat$lat, log(SDsPg), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (CPBL model)"), cex.main=3, 
-               col=sdCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
+    plotMapDat(plotVar=SDscpbl, new = TRUE, 
+               main="Posterior SD (cpbl model)", scaleFun=log, scaleFunInverse=exp, 
+               cols=sdCols, zlim=log(sdRange), ticks=sdTicks, tickLabels=sdTickLabels, 
+               xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = FALSE, 
+               legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.width=3, 
+               plotArgs=list(cex.main=3, cex.axis=2, cex.lab=2), legend.mar=0, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
     
-    sdRange = zlim
-    sdTicks = pretty(sdRange, n=5)[-1]
-    sdTickLabels = as.character(sdTicks)
-    image.plot(zlim=range(log(sdRange)), nlevel=length(sdCols), legend.only=TRUE, horizontal=FALSE,
-               col=sdCols, add = TRUE, axis.args=list(at=log(sdTicks), labels=sdTickLabels, cex.axis=2, tck=-.7, hadj=-.1), 
-               legend.mar = 0, legend.cex=2, legend.width=3, smallplot= c(.97,1,.1,.9))
+    plotMapDat(plotVar=SDsCpbL, new = TRUE, 
+               main="Posterior SD (CpbL model)", scaleFun=log, scaleFunInverse=exp, 
+               cols=sdCols, zlim=log(sdRange), ticks=sdTicks, tickLabels=sdTickLabels, 
+               xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = FALSE, 
+               legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.width=3, 
+               plotArgs=list(cex.main=3, cex.axis=2, cex.lab=2), legend.mar=0, lwd=.5, border=rgb(.4,.4,.4))
+    plotMapDat(mapDat=regionMap, lwd=2.5)
+    
+    plotMapDat(plotVar=SDsPcounty, new = TRUE, 
+               main="Posterior SD (CPBL model)", scaleFun=log, scaleFunInverse=exp, 
+               cols=sdCols, zlim=log(sdRange), ticks=sdTicks, tickLabels=sdTickLabels, 
+               xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = TRUE, 
+               legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.width=3, 
+               plotArgs=list(cex.main=3, cex.axis=2, cex.lab=2), legend.mar=0, lwd=.5, border=rgb(.4,.4,.4))
+    plotMapDat(mapDat=regionMap, lwd=2.5)
+    
     dev.off()
   }
   
