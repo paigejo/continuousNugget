@@ -3198,8 +3198,8 @@ nEAsByStratum = function(areaListMod, urbanListMod) {
   
   # calculate the number of enumeration areas for each draw and for a single area
   allDrawsSingleArea = function(area) {
-    correctAreaListUrban = lapply(areaListMod, function(j) {valList[[j]] == area & urbanListMod[[j]]})
-    correctAreaListRural = lapply(areaListMod, function(j) {valList[[j]] == area & !urbanListMod[[j]]})
+    correctAreaListUrban = lapply(1:length(areaListMod), function(j) {areaListMod[[j]] == area & urbanListMod[[j]]})
+    correctAreaListRural = lapply(1:length(areaListMod), function(j) {areaListMod[[j]] == area & !urbanListMod[[j]]})
     
     # calculate the number of enumeration areas for a single draw and a single area
     singleDrawSingleArea = function(j) {

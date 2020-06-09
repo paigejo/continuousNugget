@@ -157,7 +157,7 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
   #       the cluster effects for each EA, including those sampled, are iid
   epsc = matrix(rnorm(totalEAs*nDraws, sd=rep(sigmaEpsilonDraws, each=totalEAs)), ncol=nDraws)
   if(doModifiedPixelLevel) {
-    epscMod = lapply(1:nDraws, function(j) {rnorm(length(areaListMod[[j]]), sd=rep(sigmaEpsilonDraws, each=length(areaListMod[[j]])))})
+    epscMod = lapply(1:nDraws, function(j) {rnorm(length(areaListMod[[j]]), sd=sigmaEpsilonDraws[j])})
   }
   
   ##### Line 3: draw EA population denominators, N
@@ -174,7 +174,7 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
   Ncs = sampleNPoissonMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, 
                                   popMat=popMat, includeUrban=includeUrban, verbose=TRUE)
   if(doModifiedPixelLevel) {
-    NcsMod = sampleNPoissonBinomial(pixelIndexListMod=pixelIndexListMod, areaListMod=areaListMod, includeUrban=includeUrban)
+    NcsMod = sampleNPoissonBinomial(pixelIndexListMod=pixelIndexListMod, areaListMod=areaListMod, urbanListMod=urbanListMod, includeUrban=includeUrban)
   }
   
   ##### do part of Line 7 in advance
