@@ -3222,7 +3222,7 @@ nEAsByStratum = function(areaListMod, urbanListMod) {
   # combine the results over all areas for each draw
   require(purrr)
   allAreaResults = transpose(allAreaResults)
-  browser()
+  
   nEAsList = lapply(allAreaResults, rbind)
   nEAsList = lapply(nEAsList, function(x){as.data.frame(do.call("rbind", x))})
   
