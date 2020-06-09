@@ -3222,14 +3222,14 @@ nEAsByStratum = function(areaListMod, urbanListMod) {
   # combine the results over all areas for each draw
   require(purrr)
   allAreaResults = transpose(allAreaResults)
-  easpaList = lapply(allAreaResults, rbind)
+  nEAsList = lapply(allAreaResults, function(x) {do.call("rbind", x)})
   
   # adjust the names so that the areas are labeled
-  for(j in 1:length(easpaList)) {
-    easpaList$Area = areas
+  for(j in 1:length(nEAsList)) {
+    nEAsList[[j]]$Area = areas
   }
   
-  easpaList
+  nEAsList
 }
 
 # gives nPixels x n matrix of draws from the stratified independent binomial 

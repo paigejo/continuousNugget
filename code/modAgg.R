@@ -776,7 +776,7 @@ sampleNPoissonMultinomial = function(nDraws = ncol(pixelIndexMat), pixelIndexMat
 #            per stratum. It is assumed that the number of EAs per stratum is 
 #            the same in each list element. If easpaList is a data frame, 
 #            number of households per stratum is assumed constant
-sampleNPoissonBinomial = function(eaSamplesMod, pixelIndexListMod, areaListMod, urbanListMod, nDraws=length(eaSamplesMod), 
+sampleNPoissonBinomial = function(pixelIndexListMod, areaListMod, urbanListMod, nDraws=length(pixelIndexListMod), 
                                   easpa=NULL, easpaList=NULL, popMat=NULL, includeUrban=TRUE, verbose=TRUE) {
   
   # set default inputs
