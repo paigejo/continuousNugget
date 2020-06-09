@@ -1,0 +1,405 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{graphicx}
+%\usepackage{enumerate}
+\usepackage{natbib}
+\usepackage{url} % not crucial - just used below for the URL 
+\usepackage{xr-hyper}
+\usepackage{hyperref}
+\usepackage{lscape}
+\usepackage{rotating}
+\usepackage{subfig}
+
+\usepackage{multirow}
+\usepackage{ltablex}
+\usepackage{ragged2e}
+\usepackage{booktabs}
+
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\usepackage{bm}
+\usepackage[mathscr]{eucal}
+
+\externaldocument{ELKsupplement}
+
+\hypersetup{
+    colorlinks = true,
+    citecolor = {black}, 
+    urlcolor = {blue}, 
+    linkcolor = {black}, 
+    filecolor={black}
+}
+%\hypersetup{
+%    colorlinks = false,
+%    allbordercolors = [rgb]{0,1,0}
+%}
+%\hypersetup{
+%    colorlinks = true,
+%    urlbordercolor = [rgb]{0,1,0}
+%}
+
+
+%%%%%%%%%%%%%%%%%%%%
+%\usepackage[top=0.45in, bottom=0.55in, left=0.55in, right=0.5in, noheadfoot]{geometry}
+\usepackage{helvet}
+%\renewcommand{\familydefault}{\sfdefault}
+%\usepackage[dvips]{graphicx}
+\usepackage{color}
+\usepackage{boxedminipage}
+\usepackage{amsfonts}
+\usepackage{verbatim}
+\usepackage{multirow}
+%\usepackage{amsmath,color}
+\usepackage{placeins}
+%\usepackage{url}
+\def\mycaptionsize{\footnotesize}
+\def\mycodesize{\footnotesize}
+\def\myeqnsize{\small}
+\def\sheading#1{{\bf #1:}\ }
+\def\sheading#1{\subsubsection{#1}}
+\long\def\gobble#1{}
+\def\Jigsaw{{\sc Jigsaw}}
+\def\ahelix{\ensuremath{\alpha}-helix}
+\def\ahelices{\ensuremath{\alpha}-helices}
+\def\ahelical{$\alpha$-helical}
+\def\bstrand{\ensuremath{\beta}-strand}
+\def\bstrands{\ensuremath{\beta}-strands}
+\def\bsheet{\ensuremath{\beta}-sheet}
+\def\bsheets{\ensuremath{\beta}-sheets}
+\def\hone{{\ensuremath{^1}\rm{H}}}
+\def\htwo{{$^{2}$H}}
+\def\cthir{{\ensuremath{^{13}}\rm{C}}}
+\def\nfif{{\ensuremath{^{15}}\rm{N}}}
+\def\hn{{\rm{H}\ensuremath{^\mathrm{N}}}}
+\def\hnone{{\textup{H}\ensuremath{^1_\mathrm{N}}}}
+\def\ca{{\rm{C}\ensuremath{^\alpha}}}
+\def\catwel{{\ensuremath{^{12}}\rm{C}\ensuremath{^\alpha}}}
+\def\ha{{\rm{H}\ensuremath{^\alpha}}}
+\def\cb{{\rm{C}\ensuremath{^\beta}}}
+\def\hb{{\rm{H}\ensuremath{^\beta}}}
+\def\hg{{\rm{H}\ensuremath{^\gamma}}}
+\def\dnn{{\ensuremath{d_{\mathrm{NN}}}}}
+\def\dan{{\ensuremath{d_{\alpha \mathrm{N}}}}}
+\def\jconst{{\ensuremath{^{3}\mathrm{J}_{\mathrm{H}^{\mathrm{N}}\mathrm{H}^{\alpha}}}} }
+\def\cbfb{{CBF-$\beta$}}
+
+%\usepackage{subfigure,afterpage,wrapfig} 
+\usepackage{afterpage,wrapfig} 
+%\usepackage[sort&compress,super]{natbib}
+%\usepackage{natbib}
+\def \IR{\hbox{{\rm I}\kern-.2em\hbox{{\rm R}}}}
+\newcommand*{\mc}[1]{\multicolumn{1}{|c|}{#1}}
+\newcommand{\bmX}{\mbox{\boldmath $X$}}
+\newcommand{\bt}{\mbox{\boldmath $t$}}
+\newcommand{\N}{\mbox{$N$}}
+\newcommand{\bmY}{\mbox{\boldmath $Y$}}
+\newcommand{\bmB}{\mbox{\boldmath $B$}}
+\newcommand{\bmc}{\mbox{\boldmath $c$}}
+\newcommand{\bmy}{\mbox{\boldmath $y$}}
+\newcommand{\bmw}{\mbox{\boldmath $w$}}
+\newcommand{\bmZ}{\mbox{\boldmath $Z$}}
+\newcommand{\bZ}{\mbox{\boldmath $Z$}}
+\newcommand{\bmz}{\mbox{\boldmath $z$}}
+\newcommand{\bme}{\mbox{\boldmath $e$}}
+\newcommand{\bmx}{\mbox{\boldmath $x$}}
+\newcommand{\bmQ}{\mbox{\boldmath $Q$}}
+\newcommand{\bD}{\mbox{\boldmath $D$}}
+\newcommand{\bd}{\mbox{\boldmath $d$}}
+\newcommand{\bmU}{\mbox{\boldmath $U$}}
+\newcommand{\bmu}{\mbox{\boldmath $u$}}
+\newcommand{\bu}{\mbox{\boldmath $u$}}
+\newcommand{\bT}{\mbox{\boldmath $T$}}
+\newcommand{\bmV}{\mbox{\boldmath $V$}}
+\newcommand{\bmk}{\mbox{\boldmath $k$}}
+\newcommand{\bmd}{\mbox{\boldmath $d$}}
+\newcommand{\bmt}{\mbox{\boldmath $t$}}
+\newcommand{\bmT}{\mbox{\boldmath $T$}}
+\newcommand{\bmI}{\mbox{\boldmath $I$}}
+\newcommand{\bmR}{\mbox{\boldmath $R$}}
+\newcommand{\bmE}{\mbox{\boldmath $E$}}
+\newcommand{\bmW}{\mbox{\boldmath $W$}}
+\newcommand{\bmD}{\mbox{\boldmath $D$}}
+\newcommand{\bms}{\mbox{\boldmath $s$}}
+\newcommand{\bma}{\mbox{\boldmath $a$}}
+\newcommand{\bmq}{\mbox{\boldmath $q$}}
+\newcommand{\bmf}{\mbox{\boldmath $f$}}
+\newcommand{\bmA}{\mbox{\boldmath $A$}}
+\newcommand{\bmb}{\mbox{\boldmath $b$}}
+\newcommand{\bb}{\mbox{\boldmath $A$}}
+\newcommand{\bmr}{\mbox{\boldmath $r$}}
+\newcommand{\bmS}{\mbox{\boldmath $S$}}
+\newcommand{\bS}{\mbox{\boldmath $S$}}
+\newcommand{\bx}{\mbox{\boldmath $x$}}
+\newcommand{\by}{\mbox{\boldmath $y$}}
+\newcommand{\md}{\mbox{d}}
+\newcommand{\E}{\mbox{E}}
+\newcommand{\V}{\mbox{var}}
+\newcommand{\Prob}{\mbox{Pr}}
+\newcommand{\bmone}{\mbox{\bf 1}}
+\newcommand{\bmzero}{\mbox{\bf 0}}
+\newcommand{\bmbeta}{\mbox{\boldmath $\beta$}}
+\newcommand{\bbeta}{\mbox{\boldmath $\beta$}}
+\newcommand{\balpha}{\mbox{\boldmath $\alpha$}}
+\newcommand{\bmdelta}{\mbox{\boldmath $\delta$}}
+\newcommand{\bmtheta}{\mbox{\boldmath $\theta$}}
+\newcommand{\bmeta}{\mbox{\boldmath $\eta$}}
+\newcommand{\btheta}{\mbox{\boldmath $\theta$}}
+\newcommand{\bmpsi}{\mbox{\boldmath $\psi$}}
+\newcommand{\bmphi}{\mbox{\boldmath $\phi$}}
+\newcommand{\bphi}{\mbox{\boldmath $\phi$}}
+\newcommand{\bmlambda}{\mbox{\boldmath $\lambda$}}
+\newcommand{\blambda}{\mbox{\boldmath $\lambda$}}
+\newcommand{\bmnu}{\mbox{\boldmath $\nu$}}
+\newcommand{\bmgamma}{\mbox{\boldmath $\gamma$}}
+\newcommand{\bgamma}{\mbox{\boldmath $\gamma$}}
+\newcommand{\bmmu}{\mbox{\boldmath $\mu$}}
+\newcommand{\bmepsilon}{\mbox{\boldmath $\epsilon$}}
+\newcommand{\bmSigma}{\mbox{\boldmath $\Sigma$}}
+\newcommand{\bLambda}{\mbox{\boldmath $\Lambda$}}
+\usepackage{tensor}
+\newcommand{\qmonth}{\tensor*[_1]{\mbox{q}}{_m}}
+\newcommand{\oneqzero}{\tensor*[_1]q{_0}}
+\newcommand{\oneqone}{\tensor*[_1]q{_1}}
+\newcommand{\oneqtwo}{\tensor*[_1]q{_2}}
+\newcommand{\aqj}{\tensor*[_a]q{_j}}
+\newcommand{\oneqa}{\tensor*[_1]q{_a}}
+\newcommand{\bigi}{\mathcal{I}}
+
+\newcommand{\paren}[1]{\left(#1\right)}
+\newcommand{\image}[2]{\includegraphics[#1]{#2}}
+\newcommand{\indep}{\rotatebox[origin=c]{90}{$\models$}}
+
+%\usepackage{/Users/johnpaige/myStyleSimple} 
+
+\defcitealias{KDHS2014}{KDHS, 2014}
+\defcitealias{KenyaCensus:2009}{Kenya National Bureau Of Statistics, 2014}
+%%%%%%%%%%%%%%%%%%%%
+
+%\pdfminorversion=4
+% NOTE: To produce blinded version, replace "0" with "1" below.
+\newcommand{\blind}{0}
+
+% DON'T change margins - should be 1 inch all around.
+\addtolength{\oddsidemargin}{-.5in}%
+\addtolength{\evensidemargin}{-.5in}%
+\addtolength{\textwidth}{1in}%
+\addtolength{\textheight}{1.3in}%
+\addtolength{\topmargin}{-.8in}%
+
+%\usepackage{fouriernc}
+
+% Instructions for authors:
+% https://www.tandfonline.com/action/authorSubmission?show=instructions&journalCode=ucgs20#prep
+
+% use math font for fancy Y
+% font links:
+% https://ctan.math.illinois.edu/macros/latex/contrib/unicode-math/unimath-symbols.pdf
+% http://www.gang.umass.edu/~franz/latexmanual.pdf
+\usepackage[T1]{fontenc}
+\usepackage{newpxmath}
+%\usepackage{newpxtext}
+
+\renewcommand{\floatpagefraction}{.9}
+\renewcommand{\arraystretch}{0.75}
+
+\begin{document}
+
+%\bibliographystyle{natbib}
+
+\def\spacingset#1{\renewcommand{\baselinestretch}%
+{#1}\small\normalsize} \spacingset{1}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  \title{A fully continuous spatial model for multi-level survey-based population inference and aggregation}
+  \author{John Paige\\
+    Department of Statistics, University of Washington,\\
+    Geir-Arne Fuglstad \\
+    Department of Mathematical Sciences, NTNU, \\
+    Andrea Riebler \\
+    Department of Mathematical Sciences, NTNU, \\
+    and Jon Wakefield \\
+    Departments of Statistics and Biostatistics, University of Washington}
+  \maketitle
+
+\bigskip
+\begin{abstract}
+The production of fine-scale, pixel level maps using demographic data from complex, multi-level household survey data have become increasingly prevalent in the current era of precision public health. For these types of datasets, no continuous spatial model has been developed to simultaneously account for the many sources of uncertainty important at such scales including enumeration area (EA) locations, cluster effects, spatial variation, binomial variation, and pixel and EA level population denominators. Instead, all continuous spatial models applied in this context routinely ignore these sources of uncertainty except for spatial variation and cluster effects. In addition, no study has explored how all these sources of uncertainty affect predictive uncertainty.
+
+In this study, we propose a model and method of inference that accounts for these sources of uncertainty in a computationally efficient way. Our model can be fit and applied post-hoc after fitting a spatial model that does not directly account for these sources of uncertainty, and can therefore be used in conjunction with a wide variety of continuous spatial models, agreeing with the central predictions of the original model, and differing only in the uncertainty. In a simulation study, we find that our proposed model produces 80\% credible interval (CI) widths at the pixel level on average roughly 3 times larger than those of a SPDE-based model as a result of accounting for the additional sources of uncertainty, and 80\% CIs on average 10\% larger at the county level. Finally, we use our model to predict neonatal mortality rates in Kenya from 2010-2014 with data from the 2014 Kenya demographic health survey, validating it at the pixel level. Achieved 80\% CI coverage is still too low at only 70\%, but much higher than the 30\% pixel level coverages of the SPDE model. We believe cluster location jittering, and errors in estimates of urbanicity and population density are contributing to the proposed model's undercoverage.
+\end{abstract}
+
+\noindent%
+\vfill
+
+%\newpage
+\spacingset{1.5} % DON'T change the spacing!
+
+\section{Introduction}
+
+\begin{itemize}
+\item Problems with pixel level mapping
+\item Problems with spatial analysis of survey data
+\item Marked point process models in ecology
+\end{itemize}
+
+\section{Problem Setup}
+
+We assume the following model for neonatal mortality, indexed at the area (usually county), $i$, and the cluster, $c$:
+\begin{eqnarray}
+Z_{ic} | \mu_{ic}& \sim& \mbox{Binomial}(N_{ic}, \mu_{ic}) \label{eq:model1}\\
+\mu_{ic} &=& \mbox{expit}(u(s_{ic}) + \epsilon_{ic}), \label{eq:model2}
+\end{eqnarray}
+where the counts are the number of neonatals that died, and $\epsilon_{ic} \sim N(0,\sigma_\epsilon^2)$ is a cluster level random effect that can allow for dependency between observations in the same cluster. Hence, within the area we have $|C_{i}|$ distinct prevalences, where $C_{i}$ is the set of cluster indices in area $i$, and $|\cdot|$ denotes the set cardinality. The count $Z_{ic}$ is the number of neonatals in EA $c$ and area $i$, where $s_{ic}$ is the spatial location of EA $c$ in the area.
+
+The main targets of inference are the proportion of neonatals that died at different aggregation levels.  To begin, we can start by considering inference at the area level, where the number of EAs is known, and a partition of area $i$ into a fine pixelated grid indexed by $g$, where the number of EAs in each pixel is not known, but the stratum associated with each grid cell (usually urban/rural classification) is known.  The targets of inference in area $i$ and subarea $g$ will be: 
+\begin{align}
+p_i &= \frac{1}{N_i} \sum_{c \in C_{i}} Z_{ic} = \sum_{c \in C_{i}} \frac{N_{ic}}{N_i}  \times \frac{Z_{ic}}{N_{ic}} \label{eq:pi} \\
+p_{ig} &= \frac{1}{N_{ig}} \sum_{c \in C^g} Z_{ic} = \sum_{c \in C^g} \frac{N_{ic}}{N_{ig}}  \times \frac{Z_{ic}}{N_{ic}}  , \label{eq:pig}
+\end{align}
+where $N_i \equiv \sum_{c=1}^{C_{i}} N_{ic}$ and $N_{g} \equiv \sum_{c \in C^g} N_{ic}$ are the number of neonatals in area $i$ and pixel $g$ respectively. Note that the set $C^g$ gives the indices of the EAs that are in subarea $g$, and that $p_i$ and $p_{ig}$ are empirical proportions rather than latent probabilities.
+
+Our main goal will be to explore how best to aggregate from the cluster level to the pixel and area levels in a way that balances quality of the predictive distribution at multiple aggregation levels, and computational feasibility. An important side goal of this project will be to determine the most important sources of uncertainty when conducting inference at both area and pixel (most likely 5km resolution) levels. In the ideal scenario, we would validate this model at the pixel level, and show that the data is well characterized by the predictive distribution even at such fine spatial scales.
+
+\section{A continuous spatial framework for population-level aggregates of neonatal mortality}
+
+In this section we will describe a modeling framework for aggregation spatial predictions that are continuously indexed to the areal level, since this is of particular interest for policymaking. To begin, we introduce a continuous spatial model for the demographic outcome, neonatal mortality, and then point out some problems it has when making predictions at different aggregation levels from pixel to county and to even coarser aggregation levels. We then introduce and describe a solution to this problem involving combining the outcome model with a demographic aggregation model that is dictated by the known spatial population density surface. This combined outcome and aggregation model can be thought of as a marked point process.
+
+\subsection{The outcome model: A geospatial model for neonatal mortality}
+
+For the continuous (SPDE) model, if we knew the complete list of EA locations in the sampling frame, we could predict at the county level using the posterior distribution of a weighted sum of the predicted probabilities $p(\bmx)$, calculated from (\ref{eq:modelB:main}), at the EA locations. The majority of EA locations are unobserved, however. In the absence of such information, we can aggregate by integrating the spatial probability surface $p(\bmx)$ with respect to population density. Let $p_i$ denote the county level estimates for county $i$, then
+\begin{equation}
+p_i = \int_{A_i} p(\bmx) \times q(\bmx) ~ d\bmx \approx \sum_{j=1}^{m_i} p(\bmx_j) \times q(\bmx_j),
+\label{eq:popDensityIntegral}
+\end{equation}
+where $A_i$ is the geographical extent of area $i$, $q(\bmx)$ is the target population density at location $\bmx$ normalized so that $\int_{A_i} q(\bmx) \ d\bmx = 1$ for each $i$, and $m_i$ is the number of grid cells with centroids in area $i$ that is used to approximate the integral. Accounting for cluster effects when making aggregated predictions is more complicated in continuous spatial models since $p(  \cdot )$ varies within each stratum, and the locations of unsampled EAs are not necessarily known. Rather than leaving out unobserved cluster effects when producing pixel level and aggregated predictions, we integrate out the cluster effects at each location in order to achieve the correct expectation at the pixel level before aggregation. More information on how we integrate out cluster effects and account for stratification for the SPDE model can be found in Appendix~A.1.
+
+In order to generate maps of urbanicity and population density as given in the right panel of Figure \ref{fig:urbanMap}, we use 1km $ \times $ 1km gridded population density surfaces from WorldPop \citep{stevens2015disaggregating,tatem2017worldpop}. The 2010 and 2015 population density is interpolated, assuming a constant rate of population growth, to produce the 2014 population density map used throughout this paper. 
+The 2009 Kenya Population and Housing Census provides information on the proportion of the population within each county that is urban and rural, and we generate urbanicity classifications by thresholding the population density maps within each county at the level required to achieve this proportion.
+
+\begin{figure}
+\centering
+\image{width=3.16in}{../figures/populationDensity.png} \image{width=2.89in}{../figures/urbanMapWhiteRural.png}
+\caption{Left: WorldPop based population density estimates. Right: urban areas in Kenya used in this analysis are depicted in blue. Locations are determined to be urban versus rural based on thresholding population density.}
+\label{fig:urbanMap}
+\end{figure}
+
+
+
+
+In this analysis, we will assume a framework for accounting for different sources of variation when producing areal level results from continuously indexed spatial models.  We consider five variables that respectively lead to different sources of variation: $\boldsymbol{u}_{i:}, \boldsymbol{ \epsilon }_{i:}, \boldsymbol{N}_{i:}$, $\boldsymbol{Z}_{i:}$, and $\boldsymbol{s}_{i:}$, where `$:$' denotes varying over all indices to form a vector, and where $u_{ic} \equiv u(s_{ic})$.  In order to determine which sources of variation are most important for central predictions and credible intervals at different spatial aggregation levels, one could imagine approximating the targets of inference, $p_i$ and $p_{ig}$, with a series of simplifications, each successive approximation accounting for fewer of the five considered sources of variation as follows: 
+\begin{table}[H]
+\centering
+\begin{tabular}{ccccc}
+\multicolumn{5}{c}{\textbf{Models:}} \\
+\textbf{LCPB}&\textbf{LCPb}&\textbf{LCpb}&\textbf{Lcpb}&\textbf{lcpb} \\
+\hline
+$p_i $&$\approx E_{\boldsymbol{Z}_{i:}}  \left [ p_{ic} \right ] $&$\approx E_{\boldsymbol{Z}_{i:},\boldsymbol{N}_{i:}}  \left [ p_{i} \right ] $&$\approx E_{\boldsymbol{Z}_{i:}, \boldsymbol{N}_{i:}, \boldsymbol{ \epsilon }_{i:}} \left [p_i \right ] $&$\approx E_{\boldsymbol{Z}_{i:}, \boldsymbol{N}_{i:}, \boldsymbol{ \epsilon }_{i:}, \boldsymbol{ s }_{i:}} \left [p_{i} \right ]$\\
+$p_{ig} $&$\approx E_{\boldsymbol{Z}_{i:}}  \left [ p_{ig} \right ] $&$\approx E_{\boldsymbol{Z}_{i:},\boldsymbol{N}_{i:}}  \left [ p_{ig} \right ] $&$\approx E_{\boldsymbol{Z}_{i:}, \boldsymbol{N}_{i:}, \boldsymbol{ \epsilon }_{i:}} \left [p_{ig} \right ] $&$\approx E_{\boldsymbol{Z}_{i:}, \boldsymbol{N}_{i:}, \boldsymbol{ \epsilon }_{i:}, \boldsymbol{ s }_{i:}} \left [p_{ig} \right ]$\\
+\hline
+\end{tabular}
+\end{table}
+\noindent
+In the LCpb model, for instance, rather than using draws from the posterior of $p_i$, we use draws from the posterior of $E_{\boldsymbol{Z}_{i:},\boldsymbol{N}_{i:}}  \left [ p_{i} \right ]$ to make central predictions and credible intervals for area $i$. The same is true for $p_{ig}$, and with equivalent expectations used as approximations for the other models. The symbols l/L, c/C, p/P, and b/B denote whether variation in cluster effects ($\boldsymbol{ \epsilon }_{i:}$), population denominators ($\boldsymbol{N}_{i:}$), binomial variation ($\boldsymbol{Z}_{i:}$), and EA location uncertainty ($\boldsymbol{s}_{i:}$) is integrated out or not, where by `integrating out' we mean taking expectation over as described above. Lowercase symbols signify integrating out the corresponding sources of variation when making predictions for area $i$ and subarea $g$, as opposed to sampling over that variation instead, which is denoted by uppercase symbols.
+
+Since we never integrate out $\boldsymbol{u}_{i:}$, there are 16 different orders in which we can integrate out sources of variation in the other four terms. However, we chose this hierarchy from a distributional dependence and computational feasibility standpoint. We integrate out $\boldsymbol{s}_{i:}$ last since all variables except $\boldsymbol{u}_{i:}$ are dependent on the existence and number of EAs in any pixel and area. We integrate out $\boldsymbol{Z}_{i:}$ last, because it is dependent on all the other variables.
+
+It may seem as though integrating out four of the five considered sources of uncertainty reduces the level of uncertainty by too large an amount. However, this is similar to what is commonly done in practice, and accounting for additional sources of variation can be computationally difficult.  Moreover, when producing estimates for large enough areas, we have found that some of these sources of variation, such as $\boldsymbol{Z}_{i:}$ and $\boldsymbol{ \epsilon}_{i:}$, tend to average out.  However, the required size an area must be for each source of variation to become insignificant is not known.  Assessing the scenarios in which each source of variation becomes significant, their relative importance, and how to integrate them out when necessary in a computationally feasible way is therefore very important.
+
+\medskip
+\noindent
+\textbf{LCPB:} In this case, we attempt to sample over all considered forms of variation. In this case, we must decide on a model for the EA locations, $\boldsymbol{s}_{i:}$. For simplicity, it would be simplest to assume that EA locations are independent of each other. Relaxing this assumption would require a much more complex model that we do not consider here. In addition to assuming independence, it would be justifiable to assume that the probability of an EA being at a certain location within area $i$ is proportional to that location's population density. Under these two assumptions, the EA locations in area $i$ \textit{must} follow a Poisson process with intensity proportional to the continuously indexed population density surface, say $q(s)$ for spatial location $s$, conditioned on the information that there are $|C_i|$ EAs in total in area $i$. This is also known as a binomial process. Note that we are assuming for simplicity that $|C_i|$ is much greater than the number of sampled clusters, so that we can ignore the sampled cluster locations.
+
+We will assume that $\boldsymbol{N}_{i:}$ is independent of $\mathbf{s}_{i:}$, instead entirely dependent on a separate census dataset, say $\mathscr{W}$, used only to determine the distribution of $\boldsymbol{N}_{i:}$.
+
+The number of EAs in $g$, $|C^g|$, is binomial with probability equal to $\frac{q(s_{ig})}{\int_{A_i} q(s) \ ds}$, and has $|C_i|$ trials. Here, $A_i$ is the spatial domain of area $i$.  $|C^g|$ is also roughly Poisson with rate $|C_i| \frac{q(s_{ig})}{\int_{A_i} q(s) \ ds}$ for sufficiently small subareas.
+
+To draw a sample from the posterior of $p_i$, we can draw a sample from the joint distribution of $\boldsymbol{N}_{ig}$ and $p_{ig}$ over all grid cells $g \in A_i$, and then aggregate with the formula, $p_i = \sum_{g \in A_i} \frac{N_{ig}}{N_{i}} \times p_{ig}$. To accomplish this, we can use the following algorithm given the dataset,~$\mathscr{Y}$:
+
+\begin{algorithm}[H]
+\caption{Draw $p_i^{(j)}, \ p_{ig}^{(j)}$ from posterior $p_i, p_{ig} \vert  \mathscr{Y}$}
+\label{alg:main}
+\begin{algorithmic}[1]
+\STATE $\mathbf{s}_{i:}^{(j)}\leftarrow \mathbf{s}_{i:} \vert q( \cdot )$
+\STATE $\boldsymbol{u}_{i:}^{(j)} \leftarrow \boldsymbol{u}_{i:} \vert \mathbf{s}_{i:}, \mathscr{Y}$
+\STATE $\boldsymbol{ \epsilon }_{i:}^{(j)} \leftarrow \boldsymbol{ \epsilon }_{i:}  \vert  \mathscr{Y} $
+\STATE $\mathbf{N}_{i:}^{(j)} \leftarrow \mathbf{N}_{i:} \vert \mathscr{W}$
+\STATE $\mathbf{Z}_{i:}^{(j)} \leftarrow \mathbf{Z}_{i:} \vert \mathbf{N}_{i:}, \boldsymbol{\mu}_{i:}$
+\STATE $N_i^{(j)} \leftarrow \bmone^T \mathbf{N}_{i:}^{(j)}$
+\FORALL{$g \in A_i$ } 
+\STATE{ $N_{ig}^{(j)} \leftarrow \sum_{c\in C^g} N_{ic}^{(j)} $}
+\STATE{ $p_{ig}^{(j)} \leftarrow \sum_{c\in C^g} \frac{N_{ic}^{(j)}}{N_{ig}^{(j)}}  \times \frac{Z_{ic}^{(j)}}{N_{ic}^{(j)}}$ }
+\ENDFOR
+\STATE $p_i^{(j)} \leftarrow  \sum_{g \in A_i} \frac{N_{ig}^{(j)}}{N_{i}^{(j)}} \times p_{ig}^{(j)}$
+\end{algorithmic}
+\end{algorithm}
+
+For sufficiently fine $g$, $u$ will not change significantly over $A^g$, the spatial domain of subarea $g$. In that case, we can simplify the process by considering only the values of $u$ at the centroid of each subarea $g$, and conditioning on those values when drawing $\boldsymbol{Z}_{i:}$.  This would provide a considerable computational advantage if, for instance, $u$ is represented as a linear combination of basis functions, since the basis matrix would not need to be recomputed for each draw of $\boldsymbol{s}_{i:}$:
+
+\begin{algorithm}[H]
+\caption{Draw $p_i^{(j)}, \ p_{ig}^{(j)}$ from posterior $p_i, p_{ig} \vert  \mathscr{Y}$}
+\label{alg:main}
+\begin{algorithmic}[1]
+\STATE $\mathbf{s}_{i:}^{(j)}\leftarrow \mathbf{s}_{i:} \vert q( \cdot )$
+\STATE $\boldsymbol{ \epsilon }_{i:}^{(j)} \leftarrow \boldsymbol{ \epsilon }_{i:}  \vert  \mathscr{Y} $
+\STATE $\mathbf{N}_{i:}^{(j)} \leftarrow \mathbf{N}_{i:} \vert \mathscr{W}$
+\FORALL{$g \in A_i$ } 
+\STATE $u_{ig}^{(j)} \leftarrow u_{i:} \vert s_{ig}, \mathscr{Y}$
+\STATE{ $N_{ig}^{(j)} \leftarrow \sum_{c\in C^g} N_{ic}^{(j)} $}
+\STATE $Z_{ig}^{(j)} \leftarrow Z_{ig} \vert \mathbf{N}_{i:}, \boldsymbol{\mu}_{i:}$
+\STATE{ $p_{ig}^{(j)} \leftarrow \sum_{c\in C^g} \frac{N_{ic}^{(j)}}{N_{ig}^{(j)}} \times \frac{Z_{ic}^{(j)}}{N_{ic}^{(j)}}$ }
+\ENDFOR
+\STATE $N_i^{(j)} \leftarrow \bmone^T \mathbf{N}_{i:}^{(j)}$
+\STATE $p_i^{(j)} \leftarrow  \sum_{g \in A_i} \frac{N_{ig}^{(j)}}{N_{i}^{(j)}} \times p_{ig}^{(j)}$
+\end{algorithmic}
+\end{algorithm}
+
+A disadvantage of this approach, aside from being more computationally intensive than the others, is that subareas with very small population densities will likely get very few EAs drawn in them on average. Hence, many posterior draws would be required in order to get a finer estimate of the posterior distribution. If any such subareas existed, then the posterior $|C^g| \vert \mathscr{Y}$ can be well-approximated by placing probability mass only on a small number of possible values of $|C^g|$, say $K$ values.  Call this approximation $|\tilde{C}^g|$, with probability mass function $P(|\tilde{C}^g|=n) = m_n^g$ for $n=0,...,K_g$. Then one could condition on $|\tilde{C}^g|$ being equal to $0, \ldots, K_g$, averaging over the draws with weights $m_n^g$.  However, we do not need to get into the mathematical details of this until we actually run into this problem.
+
+\section{Plan of Action}
+
+First, I will simulate a fixed population and set of surveys for testing purposes with parameters similar to the Kenya secondary education ELK-T model fits as follows:
+\begin{itemize}
+\item Simulate the EAs (locations, households, neonational populations) as in the survey paper
+\item Simulate NMRs and deaths at EAs using the SPDE model fitted to the NMRs
+\item Draw surveys from the EAs as in the survey paper. Generate 100 stratified and unstratified, but we will only use 1 stratified survey to start with, and the unstratified might not be necessary.
+\item Evaluate differences between the chosen models at multiple aggregation levels
+\end{itemize}
+Could try this again, but using the ELK-T model to simulate NMRs.
+
+When we discussed this project in person, we considered proposing a variation of the Cpbl model (sampling over cluster level overdispersion) as an alternative to the cpbl model (the same, but integrating out cluster level overdispersion).  I mainly bring up the other model in case the difference between the cpbl and Cpbl models is not large.  Here are a few reasons I can think of why that might be the case:
+\begin{enumerate}
+\item There are many EAs in a given area, and averaging over all of them might not make a huge difference
+\item We might be comparing the models at the wrong aggregation level. There are fewer EAs the smaller the areal level, and by the time we get to pixels, averaging over variation in EAs will make much more of a difference
+\item Even at small areal aggregation level, binomial variation might make more of a difference than cluster (EA) level overdispersion. In that case, accounting for EA level overdispersion would be great, but not necessarily an exciting result.
+\item There are a lot of different approximations possible to use for these models, which could get confusing quickly. Testing them will be important as long as focus is kept on the larger goals
+\end{enumerate}
+Since the BCPL model would be very easy to code up at the pixel level (other levels would be harder, but doable using Algorithm 1 given above, I was hoping to include it in the exploratory phase to see how much variation at each aggregation level is due to each of these effects.
+
+As alluded to above, the performance of these methods will likely vary considerably depending on the aggregation level, so it would be prudent for us to, at least in the exploratory phase, evaluate performance at the region, county, and 5km pixel levels. For simplicity, we could start by including BCL only at the pixel level, and including other models at all levels, for a single survey.
+
+
+\section{Appendix}
+
+\subsection{Drawing from \texorpdfstring{$\boldsymbol{N}_{i:} \vert \mathscr{W}$}{N\textsubscript{i:} | W}}
+
+%\bibliographystyle{chicago}
+%\bibliographystyle{apalike}
+
+%\bibliography{../myBib}
+
+
+\end{document}
+
+
+
+
+
+
+
+
+
+

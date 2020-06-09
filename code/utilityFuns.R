@@ -3083,7 +3083,7 @@ rMyMultiBinomial1 = function(n, i, includeUrban=TRUE, urban=TRUE, popMat=NULL, e
   }
   else {
     includeI = popMat$area == areas[i]
-    nEA = ifelse(urban, easpa$EAUrb[i], easpa$EATotal[i])
+    nEA = easpa$EATotal[i]
   }
   
   # sample from the pixels if this stratum exists
@@ -3091,7 +3091,10 @@ rMyMultiBinomial1 = function(n, i, includeUrban=TRUE, urban=TRUE, popMat=NULL, e
     return(matrix(nrow=0, ncol=n))
   thesePixelProbs = popMat$pop[includeI]
   thesePixelProbs = thesePixelProbs * (1 / sum(thesePixelProbs))
-  matrix(rbinom1(n*length(thesePixelProbs), nEA, prob=thesePixelProbs), ncol=n)
+  out = matrix(rbinom1(n*length(thesePixelProbs), nEA, prob=thesePixelProbs), ncol=n)
+  if(any(colSums(out[,1:6]) > 50000))
+    browser()
+  out
 }
 
 # function for determining how to recombine separate multinomials into the draws over all pixels
@@ -3347,7 +3350,8 @@ qbinom1 = function(q, size, prob) {
 # random binomial draws conditional on the number of successes being at least one
 rbinom1 = function(n, size, prob) {
   q = runif(n)
-  qbinom1(q, size, prob)
+  out = qbinom1(q, size, prob)
+  out[prob == 0] = 1 # this is a limiting case and is necessary due to numerical round off
 }
 
 dpois1 = function(x, prob) {
@@ -3362,7 +3366,8 @@ qpois1 = function(q, prob) {
 # random Poissonial draws conditional on the number of successes being at least one
 rpois1 = function(n, prob) {
   q = runif(n)
-  qpois1(q, prob)
+  out = qpois1(q, prob)
+  out[prob == 0] = 1 # this is a limiting case and is necessary due to numerical round off
 }
 
 # calculate the expected value of a summation under a Poisson distribution
