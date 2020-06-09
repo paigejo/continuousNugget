@@ -19,7 +19,7 @@
 ##        aggregation function as necessary. The same goes for the pixel grid. For larger 'subareas' 
 ##        containing an unknown number of EAs, in which case aggregate pixel predictions as need be. 
 ## NOTE2: Aggregation consistent models:
-#           pixels/subareas (unknown EAs): CPBL, cpbl (any others?)
+#           pixels/subareas (unknown EAs): LCPB, lcpb (any others?)
 #           areas/regions (known EAs): all of them?
 
 # Use the popGrid variable to construct a matrix suitable for input into the aggregation models. 
@@ -47,6 +47,12 @@ makeDefaultPopMat = function() {
 # EAUrb: the number of EAs in the urban part of the area
 # EARur: the number of EAs in the rural part of the area
 # EATotal: the number of EAs in the the area
+# HHUrb: the number of households in the urban part of the area
+# HHRur: the number of households in the rural part of the area
+# HHTotal: the number of households in the the area
+# popUrb: the number of people in the urban part of the area
+# popRur: the number of people in the rural part of the area
+# popTotal: the number of people in the the area
 # Also, the rows of this table will be ordered by Area
 makeDefaultEASPA = function(dataType=c("children", "women")) {
   dataType = match.arg(dataType)
@@ -63,7 +69,7 @@ makeDefaultEASPA = function(dataType=c("children", "women")) {
 
 # in this model, we assume a binomial process for the EA locations. Follows algorithm 2 from the 
 # outline
-modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, empiricalDistributions=NULL, 
+modLCPB = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, empiricalDistributions=NULL, 
                    includeUrban=TRUE, maxEmptyFraction=1, clusterLevel=TRUE, pixelLevel=TRUE, countyLevel=TRUE, 
                    regionLevel=TRUE, doModifiedPixelLevel=TRUE) {
   nDraws = ncol(uDraws)
@@ -126,7 +132,7 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
   # make matrix of pixel indices mapping matrices of EA values to matrices of pixel values
   pixelIndexMat = matrix(rep(rep(1:nrow(popMat), nDraws), times=eaSamples), ncol=nDraws)
   if(doModifiedPixelLevel) {
-    pixelIndexMatMod = matrix(rep(rep(1:nrow(popMat), nDraws), times=eaSamplesMod), ncol=nDraws)
+    pixelIndexListMod = lapply(1:nDraws, function(j) {rep(1:nrow(popMat), times=eaSamplesMod[,j])})
   }
   
   # determine which EAs are urban if necessary
@@ -134,7 +140,7 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     # urbanMat = matrix(rep(rep(popMat$urban, nDraws), times=c(eaSamples)), ncol=nDraws)
     urbanMat = matrix(popMat$urban[pixelIndexMat], ncol=nDraws)
     if(doModifiedPixelLevel) {
-      urbanMatMod = matrix(popMat$urban[pixelIndexMatMod], ncol=nDraws)
+      urbanListMod = lapply(1:nDraws, function(j) {popMat$urban[pixelIndexListMod[[j]]]})
     }
   } else {
     urbanMat = NULL
@@ -143,13 +149,16 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
   # determine which EAs are from which area
   areaMat = matrix(popMat$area[pixelIndexMat], ncol=nDraws)
   if(doModifiedPixelLevel) {
-    areaMatMod = matrix(popMat$area[pixelIndexMatMod], ncol=nDraws)
+    areaListMod = lapply(1:nDraws, function(j) {popMat$area[pixelIndexListMod[[j]]]})
   }
   
   ##### Line 2: draw cluster effects, epsilon
   # NOTE1: we assume there are many more EAs then sampled clusters, so that 
   #       the cluster effects for each EA, including those sampled, are iid
   epsc = matrix(rnorm(totalEAs*nDraws, sd=rep(sigmaEpsilonDraws, each=totalEAs)), ncol=nDraws)
+  if(doModifiedPixelLevel) {
+    epscMod = lapply(1:nDraws, function(j) {rnorm(length(areaListMod[[j]]), sd=rep(sigmaEpsilonDraws, each=length(areaListMod[[j]])))})
+  }
   
   ##### Line 3: draw EA population denominators, N
   # NOTE1: we assume the values for each EA within urban/rural boundaries are iid
@@ -164,30 +173,41 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
   # }
   Ncs = sampleNPoissonMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, 
                                   popMat=popMat, includeUrban=includeUrban, verbose=TRUE)
+  if(doModifiedPixelLevel) {
+    NcsMod = sampleNPoissonBinomial(pixelIndexListMod=pixelIndexListMod, areaListMod=areaListMod, includeUrban=includeUrban)
+  }
   
   ##### do part of Line 7 in advance
   # calculate mu_{ic} for each EA in each pixel
   uc = matrix(uDraws[cbind(rep(rep(1:nrow(uDraws), nDraws), times=c(eaSamples)), rep(1:nDraws, each=totalEAs))], ncol=nDraws)
   muc = expit(uc + epsc)
+  if(doModifiedPixelLevel) {
+    ucMod = lapply(1:nDraws, function(j) {uDraws[rep(1:nrow(uDraws), times=eaSamplesMod[,j]), j]})
+    mucMod = lapply(1:nDraws, function(j) {expit(ucMod[[j]] + epscMod[[j]])})
+  }
   
   # calculate Z_{ic} for each EA in each pixel
   Zc = matrix(rbinom(n=totalEAs * nDraws, size=Ncs, prob=muc), ncol=nDraws)
+  if(doModifiedPixelLevel) {
+    ZcMod = lapply(1:nDraws, function(j) {rbinom(n=length(mucMod[[j]]), size=NcsMod[[j]], prob=mucMod[[j]])})
+  }
   
   ##### Line 4: Aggregate appropriate values from EAs to the grid cell level
   
   # function for aggregating values for each grid cell
-  getPixelColumnFromEAs = function(i, valMat, applyFun=sum, doMod=FALSE) {
+  getPixelColumnFromEAs = function(i, vals, applyFun=sum, doMod=FALSE) {
     if(!doMod) {
-      out = tapply(valMat[,i], factor(as.character(pixelIndexMat[,i])), FUN=applyFun)
+      out = tapply(vals[,i], factor(as.character(pixelIndexMat[,i])), FUN=applyFun)
     } else {
-      out = tapply(valMat[,i], factor(as.character(pixelIndexMatMod[,i])), FUN=applyFun)
+      # in this case
+      out = tapply(vals[[i]], factor(as.character(pixelIndexListMod[[i]])), FUN=applyFun)
     }
     
     indices = as.numeric(names(out))
     
-    vals = rep(NA, nrow(uDraws))
-    vals[indices] = out
-    vals
+    returnValues = rep(NA, nrow(uDraws))
+    returnValues[indices] = out
+    returnValues
   }
   
   ##### Line 5: We already did this, resulting in uDraws input
@@ -197,7 +217,8 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
   Ng[is.na(Ng)] = 0
   
   if(doModifiedPixelLevel) {
-    NgMod <- sapply(1:ncol(Ncs), getPixelColumnFromEAs, valMat=Ncs, doMod=TRUE)
+    NgMod <- sapply(1:nDraws, getPixelColumnFromEAs, valMat=NcsMod, doMod=TRUE)
+    NgMod[is.na(NgMod)] = 0
   }
   
   ##### Line 7: aggregate response for each grid cell to get Z_{ig}
@@ -214,7 +235,7 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
   
   if(doModifiedPixelLevel) {
     pgMod = ZgMod / NgMod
-    pgMod[ZgMod == 0] = 0
+    pgMod[is.na(ZgMod)] = 0
   }
   
   # just for testing purposes:
@@ -223,12 +244,12 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     mug[!is.finite(mug)] = NA
     
     if(doModifiedPixelLevel) {
-      mugMod = sapply(1:ncol(muc), getPixelColumnFromEAs, valMat=muc, applyFun=function(x) {mean(x, na.rm=TRUE)}, doMod=TRUE)
+      mugMod = sapply(1:ncol(muc), getPixelColumnFromEAs, valMat=mucMod, applyFun=function(x) {mean(x, na.rm=TRUE)}, doMod=TRUE)
       mugMod[!is.finite(mugMod)] = NA
     }
     
     # this takes a veeeeery long time. Just use the logistic approximation instead
-    cpbl = matrix(logitNormMean(cbind(c(as.matrix(uDraws)), rep(sigmaEpsilonDraws, each=nrow(uDraws)))), nrow=nrow(uDraws))
+    lcpb = matrix(logitNormMean(cbind(c(as.matrix(uDraws)), rep(sigmaEpsilonDraws, each=nrow(uDraws)))), nrow=nrow(uDraws))
     
     # load shape files for plotting
     require(maptools)
@@ -243,19 +264,19 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     popCols=makePurpleYellowSequentialColors(64, rev=TRUE)
     
     # plot means
-    png(paste0(figDirectory, "exploratoryAnalysis/CPBLpgMugMean.png"), width=1500, height=600)
+    png(paste0(figDirectory, "exploratoryAnalysis/LCPBpgMugMean.png"), width=1500, height=600)
     par(mfrow=c(1,3), oma=c( 0,0,0,7), mar=c(5.1, 5.1, 4.1, 2.5))
-    meanRange = quantile(probs=c(.005, .995), c(rowMeans(mug, na.rm=TRUE), rowMeans(pg, na.rm=TRUE), rowMeans(cpbl, na.rm=TRUE)), na.rm=TRUE)
-    quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(cpbl, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (cpbl model)"), cex.main=3, col=meanCols, add.legend=FALSE)
+    meanRange = quantile(probs=c(.005, .995), c(rowMeans(mug, na.rm=TRUE), rowMeans(pg, na.rm=TRUE), rowMeans(lcpb, na.rm=TRUE)), na.rm=TRUE)
+    quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(lcpb, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
+               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (lcpb model)"), cex.main=3, col=meanCols, add.legend=FALSE)
     plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
     quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(mug, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (CpbL model)"), cex.main=3, col=meanCols, add.legend=FALSE)
+               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (LCpb model)"), cex.main=3, col=meanCols, add.legend=FALSE)
     plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
     quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(pg, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (CPBL model)"), cex.main=3, col=meanCols, add.legend=FALSE)
+               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (LCPB model)"), cex.main=3, col=meanCols, add.legend=FALSE)
     plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
     
@@ -267,25 +288,25 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     dev.off()
     
     # plot SDs
-    SDsUg = apply(cpbl, 1, sd, na.rm=TRUE)
+    SDsUg = apply(lcpb, 1, sd, na.rm=TRUE)
     SDsMug = apply(mug, 1, sd, na.rm=TRUE)
     SDsPg = apply(pg, 1, sd, na.rm=TRUE)
     allSDs = c(SDsUg, SDsMug, SDsPg)
     sdRange = quantile(probs=c(.001, .995), allSDs, na.rm=TRUE)
-    png(paste0(figDirectory, "exploratoryAnalysis/CPBLpgMugSD.png"), width=1500, height=600)
+    png(paste0(figDirectory, "exploratoryAnalysis/LCPBpgMugSD.png"), width=1500, height=600)
     par(mfrow=c(1,3), oma=c( 0,0,0,7), mar=c(5.1, 5.1, 4.1, 2.5))
     quilt.plot(popMat$lon, popMat$lat, log(SDsUg), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (cpbl model)"), cex.main=3, 
+               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (lcpb model)"), cex.main=3, 
                col=sdCols, add.legend=FALSE)
     plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
     quilt.plot(popMat$lon, popMat$lat, log(SDsMug), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (CpbL model)"), cex.main=3, 
+               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (LCpb model)"), cex.main=3, 
                col=sdCols, add.legend=FALSE)
     plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
     quilt.plot(popMat$lon, popMat$lat, log(SDsPg), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (CPBL model)"), cex.main=3, 
+               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (LCPB model)"), cex.main=3, 
                col=sdCols, add.legend=FALSE)
     plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
@@ -298,7 +319,7 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     dev.off()
     
     # plot Ns, pop density
-    png(paste0(figDirectory, "exploratoryAnalysis/CPBLpgMugN.png"), width=1500, height=600)
+    png(paste0(figDirectory, "exploratoryAnalysis/LCPBpgMugN.png"), width=1500, height=600)
     par(mfrow=c(1,3))
     quilt.plot(popMat$lon, popMat$lat, popMat$pop, FUN=function(x){log10(mean(x, na.rm=TRUE)+.1)}, 
                nx=160, ny=160, main=TeX("log_{10} Population surface"), cex.main=3, col=popCols, 
@@ -319,20 +340,20 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     
     ## now do the same but for the modified pixel sampling scheme with >= 1 EA per pixel
     # plot means
-    png(paste0(figDirectory, "exploratoryAnalysis/CPBLpgMugMeanMod.png"), width=1500, height=600)
+    png(paste0(figDirectory, "exploratoryAnalysis/LCPBpgMugMeanMod.png"), width=1500, height=600)
     par(mfrow=c(1,3), oma=c( 0,0,0,7), mar=c(5.1, 5.1, 4.1, 2.5))
-    # meanRange = quantile(probs=c(.005, .995), c(rowMeans(mugMod, na.rm=TRUE), rowMeans(pgMod, na.rm=TRUE), rowMeans(cpbl, na.rm=TRUE)), na.rm=TRUE)
-    meanRange = range(c(rowMeans(mugMod, na.rm=TRUE), rowMeans(pgMod, na.rm=TRUE), rowMeans(cpbl, na.rm=TRUE)), na.rm=TRUE)
-    quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(cpbl, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (cpbl model)"), cex.main=3, col=meanCols, add.legend=FALSE)
+    # meanRange = quantile(probs=c(.005, .995), c(rowMeans(mugMod, na.rm=TRUE), rowMeans(pgMod, na.rm=TRUE), rowMeans(lcpb, na.rm=TRUE)), na.rm=TRUE)
+    meanRange = range(c(rowMeans(mugMod, na.rm=TRUE), rowMeans(pgMod, na.rm=TRUE), rowMeans(lcpb, na.rm=TRUE)), na.rm=TRUE)
+    quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(lcpb, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
+               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (lcpb model)"), cex.main=3, col=meanCols, add.legend=FALSE)
     plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
     quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(mugMod, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (CpbL model, mod.)"), cex.main=3, col=meanCols, add.legend=FALSE)
+               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (LCpb model, mod.)"), cex.main=3, col=meanCols, add.legend=FALSE)
     plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
     quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(pgMod, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (CPBL model, mod.)"), cex.main=3, col=meanCols, add.legend=FALSE)
+               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (LCPB model, mod.)"), cex.main=3, col=meanCols, add.legend=FALSE)
     plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
     
@@ -344,26 +365,26 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     dev.off()
     
     # plot SDs
-    SDsUg = apply(cpbl, 1, sd, na.rm=TRUE)
+    SDsUg = apply(lcpb, 1, sd, na.rm=TRUE)
     SDsMugMod = apply(mugMod, 1, sd, na.rm=TRUE)
     SDsPgMod = apply(pgMod, 1, sd, na.rm=TRUE)
     allSDs = c(SDsUg, SDsMugMod, SDsPgMod)
     # sdRange = quantile(probs=c(.001, .995), allSDs, na.rm=TRUE)
-    sdRange = quantile(probs=c(.001, .995), allSDs, na.rm=TRUE)
-    png(paste0(figDirectory, "exploratoryAnalysis/CPBLpgMugSDMod.png"), width=1500, height=600)
+    sdRange = range(allSDs, na.rm=TRUE)
+    png(paste0(figDirectory, "exploratoryAnalysis/LCPBpgMugSDMod.png"), width=1500, height=600)
     par(mfrow=c(1,3), oma=c( 0,0,0,7), mar=c(5.1, 5.1, 4.1, 2.5))
     quilt.plot(popMat$lon, popMat$lat, log(SDsUg), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (cpbl model)"), cex.main=3, 
+               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (lcpb model)"), cex.main=3, 
                col=sdCols, add.legend=FALSE)
     plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
     quilt.plot(popMat$lon, popMat$lat, log(SDsMugMod), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (CpbL model, mod.)"), cex.main=3, 
+               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (LCpb model, mod.)"), cex.main=3, 
                col=sdCols, add.legend=FALSE)
     plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
     quilt.plot(popMat$lon, popMat$lat, log(SDsPgMod), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (CPBL model, mod.)"), cex.main=3, 
+               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (LCPB model, mod.)"), cex.main=3, 
                col=sdCols, add.legend=FALSE)
     plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
@@ -419,63 +440,63 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
   
   # plots for testing purposes
   if(FALSE) {
-    ## cpbl
-    # aggregatedResultscpbl = aggregatePixelPredictions(cpbl, Ng, popGrid=popMat, useDensity=TRUE, countyLevel=countyLevel, 
+    ## lcpb
+    # aggregatedResultslcpb = aggregatePixelPredictions(lcpb, Ng, popGrid=popMat, useDensity=TRUE, countyLevel=countyLevel, 
     #                                               regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=TRUE)
-    cpblc = matrix(logitNormMean(cbind(c(logit(as.matrix(uc))), rep(sigmaEpsilonDraws, each=nrow(uc)))), nrow=nrow(uc))
+    lcpbc = matrix(logitNormMean(cbind(c(logit(as.matrix(uc))), rep(sigmaEpsilonDraws, each=nrow(uc)))), nrow=nrow(uc))
     # this takes quite a while (15 mins?)
-    aggregatedResultscpbl = aggregateEAPredictions(cpblc, Ncs, areaMat, urbanMat, easpa=easpa, countyLevel=countyLevel, 
+    aggregatedResultslcpb = aggregateEAPredictions(lcpbc, Ncs, areaMat, urbanMat, easpa=easpa, countyLevel=countyLevel, 
                                                    regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=TRUE)
     
     Ng2 = Ng
     Ng2[Ng2 != 0] = 1
-    aggregatedResultscpbl2 = aggregatePixelPredictions(cpbl*eaSamples, eaSamples, popGrid=popMat, useDensity=FALSE, countyLevel=countyLevel, 
+    aggregatedResultslcpb2 = aggregatePixelPredictions(lcpb*eaSamples, eaSamples, popGrid=popMat, useDensity=FALSE, countyLevel=countyLevel, 
                                                        regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=FALSE)
     
     # county level
-    # Pcountycpbl = aggregatedResultscpbl$countyResults$Z
-    # PcountyUrbancpbl = aggregatedResultscpbl$countyResults$ZUrban
-    # PcountyRuralcpbl = aggregatedResultscpbl$countyResults$ZRural
+    # Pcountylcpb = aggregatedResultslcpb$countyResults$Z
+    # PcountyUrbanlcpb = aggregatedResultslcpb$countyResults$ZUrban
+    # PcountyRurallcpb = aggregatedResultslcpb$countyResults$ZRural
     
-    Pcountycpbl = aggregatedResultscpbl2$countyMatrices$p
-    PcountyUrbancpbl2 = aggregatedResultscpbl$countyResults$pUrban
-    PcountyRuralcpbl2 = aggregatedResultscpbl$countyResults$pRural
+    Pcountylcpb = aggregatedResultslcpb2$countyMatrices$p
+    PcountyUrbanlcpb2 = aggregatedResultslcpb$countyResults$pUrban
+    PcountyRurallcpb2 = aggregatedResultslcpb$countyResults$pRural
     
     # province level
-    Pregioncpbl = aggregatedResultscpbl$regionResults$Z
-    PregionUrbancpbl = aggregatedResultscpbl$regionResults$ZUrban
-    PregionRuralcpbl = aggregatedResultscpbl$regionResults$ZRural
+    Pregionlcpb = aggregatedResultslcpb$regionResults$Z
+    PregionUrbanlcpb = aggregatedResultslcpb$regionResults$ZUrban
+    PregionRurallcpb = aggregatedResultslcpb$regionResults$ZRural
     
     # national level
-    Pnationcpbl = aggregatedResultscpbl$nationalResults$Z
-    PnationUrbancpbl = aggregatedResultscpbl$nationalResults$ZUrban
-    PnationRuralcpbl = aggregatedResultscpbl$nationalResults$ZRural
+    Pnationlcpb = aggregatedResultslcpb$nationalResults$Z
+    PnationUrbanlcpb = aggregatedResultslcpb$nationalResults$ZUrban
+    PnationRurallcpb = aggregatedResultslcpb$nationalResults$ZRural
     
-    ## CpbL
+    ## LCpb
     # this takes quite a while (15 mins?)
-    aggregatedResultsCpbL = aggregateEAPredictions(cpblc, Ncs, areaMat, urbanMat, easpa=easpa, countyLevel=countyLevel, 
+    aggregatedResultsLCpb = aggregateEAPredictions(lcpbc, Ncs, areaMat, urbanMat, easpa=easpa, countyLevel=countyLevel, 
                                                    regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=TRUE)
     mug2 = mug
     mug2[!is.finite(mug2)] = 0
-    aggregatedResultsCpbL = aggregatePixelPredictions(mug*eaSamples, eaSamples, popGrid=popMat, useDensity=FALSE, countyLevel=countyLevel, 
+    aggregatedResultsLCpb = aggregatePixelPredictions(mug*eaSamples, eaSamples, popGrid=popMat, useDensity=FALSE, countyLevel=countyLevel, 
                                                       regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=FALSE)
     
     # county level
-    PcountyCpbL = aggregatedResultsCpbL$countyMatrices$p
-    PcountyUrbanCpbL = aggregatedResultsCpbL$countyResults$pUrban
-    PcountyRuralCpbL = aggregatedResultsCpbL$countyResults$pRural
+    PcountyLCpb = aggregatedResultsLCpb$countyMatrices$p
+    PcountyUrbanLCpb = aggregatedResultsLCpb$countyResults$pUrban
+    PcountyRuralLCpb = aggregatedResultsLCpb$countyResults$pRural
     
     # province level
-    PregionCpbL = aggregatedResultsCpbL$regionResults$p
-    PregionUrbanCpbL = aggregatedResultsCpbL$regionResults$pUrban
-    PregionRuralCpbL = aggregatedResultsCpbL$regionResults$pRural
+    PregionLCpb = aggregatedResultsLCpb$regionResults$p
+    PregionUrbanLCpb = aggregatedResultsLCpb$regionResults$pUrban
+    PregionRuralLCpb = aggregatedResultsLCpb$regionResults$pRural
     
     # national level
-    PnationCpbL = aggregatedResultsCpbL$nationalResults$Z
-    PnationUrbanCpbL = aggregatedResultsCpbL$nationalResults$ZUrban
-    PnationRuralCpbL = aggregatedResultsCpbL$nationalResults$ZRural
+    PnationLCpb = aggregatedResultsLCpb$nationalResults$Z
+    PnationUrbanLCpb = aggregatedResultsLCpb$nationalResults$ZUrban
+    PnationRuralLCpb = aggregatedResultsLCpb$nationalResults$ZRural
     
-    save(Pcountycpbl, PcountyCpbL, Pcounty, file=paste0(outputDirectory, "test/clusterTest.RData"))
+    save(Pcountylcpb, PcountyLCpb, Pcounty, file=paste0(outputDirectory, "test/clusterTest.RData"))
     out = load(paste0(outputDirectory, "test/clusterTest.RData"))
     
     # load shape files for plotting
@@ -492,26 +513,26 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     
     ## plot county results
     # plot mean
-    # meanRange = range(c(rowMeans(Pcountycpbl, na.rm=TRUE), rowMeans(PcountyCpbL, na.rm=TRUE), rowMeans(Pcounty, na.rm=TRUE)), na.rm=TRUE)
+    # meanRange = range(c(rowMeans(Pcountylcpb, na.rm=TRUE), rowMeans(PcountyLCpb, na.rm=TRUE), rowMeans(Pcounty, na.rm=TRUE)), na.rm=TRUE)
     # meanTicks = pretty(meanRange, n=5)
     # meanTickLabels = as.character(meanTicks)
-    meanRange = quantile(probs=c(.005, .995), c(rowMeans(mug, na.rm=TRUE), rowMeans(pg, na.rm=TRUE), rowMeans(cpbl, na.rm=TRUE)), na.rm=TRUE)
+    meanRange = quantile(probs=c(.005, .995), c(rowMeans(mug, na.rm=TRUE), rowMeans(pg, na.rm=TRUE), rowMeans(lcpb, na.rm=TRUE)), na.rm=TRUE)
     meanTicks = pretty(meanRange, n=5)[-1]
     meanTickLabels = as.character(meanTicks)
     
-    png(paste0(figDirectory, "exploratoryAnalysis/CPBLpgMugMeanCounty.png"), width=1500, height=600)
+    png(paste0(figDirectory, "exploratoryAnalysis/LCPBpgMugMeanCounty.png"), width=1500, height=600)
     par(mfrow=c(1,3), oma=c( 0,0,0,7), mar=c(5.1, 5.1, 4.1, 2.5))
     
-    plotMapDat(plotVar=rowMeans(Pcountycpbl, na.rm=TRUE), new = TRUE, 
-               main="Posterior mean (cpbl model)", scaleFun=logit, scaleFunInverse=expit, 
+    plotMapDat(plotVar=rowMeans(Pcountylcpb, na.rm=TRUE), new = TRUE, 
+               main="Posterior mean (lcpb model)", scaleFun=logit, scaleFunInverse=expit, 
                cols=meanCols, zlim=logit(meanRange), ticks=meanTicks, tickLabels=meanTickLabels, 
                xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = FALSE, 
                legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.width=3, 
                plotArgs=list(cex.main=3, cex.axis=2, cex.lab=2), legend.mar=0, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
     
-    plotMapDat(plotVar=rowMeans(PcountyCpbL, na.rm=TRUE), new = TRUE, 
-               main="Posterior mean (CpbL model)", scaleFun=logit, scaleFunInverse=expit, 
+    plotMapDat(plotVar=rowMeans(PcountyLCpb, na.rm=TRUE), new = TRUE, 
+               main="Posterior mean (LCpb model)", scaleFun=logit, scaleFunInverse=expit, 
                cols=meanCols, zlim=logit(meanRange), ticks=meanTicks, tickLabels=meanTickLabels, 
                xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = FALSE, 
                legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.width=3, 
@@ -519,7 +540,7 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     plotMapDat(mapDat=regionMap, lwd=2.5)
     
     plotMapDat(plotVar=rowMeans(Pcounty, na.rm=TRUE), new = TRUE, 
-               main="Posterior mean (CPBL model)", scaleFun=logit, scaleFunInverse=expit, 
+               main="Posterior mean (LCPB model)", scaleFun=logit, scaleFunInverse=expit, 
                cols=meanCols, zlim=logit(meanRange), ticks=meanTicks, tickLabels=meanTickLabels, 
                xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = TRUE, 
                legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.width=3, 
@@ -532,26 +553,26 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     dev.off()
     
     # plot SDs
-    SDscpbl = apply(Pcountycpbl, 1, sd, na.rm=TRUE)
-    SDsCpbL = apply(PcountyCpbL, 1, sd, na.rm=TRUE)
+    SDslcpb = apply(Pcountylcpb, 1, sd, na.rm=TRUE)
+    SDsLCpb = apply(PcountyLCpb, 1, sd, na.rm=TRUE)
     SDsPcounty = apply(Pcounty, 1, sd, na.rm=TRUE)
-    allSDs = c(SDscpbl, SDsCpbL, SDsPcounty)
+    allSDs = c(SDslcpb, SDsLCpb, SDsPcounty)
     sdRange = range(allSDs, na.rm=TRUE)
     sdTicks = pretty(sdRange, n=5)
     sdTickLabels = as.character(sdTicks)
     
-    png(paste0(figDirectory, "exploratoryAnalysis/CPBLpgMugSDCounty.png"), width=1500, height=600)
+    png(paste0(figDirectory, "exploratoryAnalysis/LCPBpgMugSDCounty.png"), width=1500, height=600)
     par(mfrow=c(1,3), oma=c( 0,0,0,7), mar=c(5.1, 5.1, 4.1, 2.5))
-    plotMapDat(plotVar=SDscpbl, new = TRUE, 
-               main="Posterior SD (cpbl model)", scaleFun=log, scaleFunInverse=exp, 
+    plotMapDat(plotVar=SDslcpb, new = TRUE, 
+               main="Posterior SD (lcpb model)", scaleFun=log, scaleFunInverse=exp, 
                cols=sdCols, zlim=log(sdRange), ticks=sdTicks, tickLabels=sdTickLabels, 
                xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = FALSE, 
                legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.width=3, 
                plotArgs=list(cex.main=3, cex.axis=2, cex.lab=2), legend.mar=0, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
     
-    plotMapDat(plotVar=SDsCpbL, new = TRUE, 
-               main="Posterior SD (CpbL model)", scaleFun=log, scaleFunInverse=exp, 
+    plotMapDat(plotVar=SDsLCpb, new = TRUE, 
+               main="Posterior SD (LCpb model)", scaleFun=log, scaleFunInverse=exp, 
                cols=sdCols, zlim=log(sdRange), ticks=sdTicks, tickLabels=sdTickLabels, 
                xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = FALSE, 
                legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.width=3, 
@@ -559,7 +580,7 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
     plotMapDat(mapDat=regionMap, lwd=2.5)
     
     plotMapDat(plotVar=SDsPcounty, new = TRUE, 
-               main="Posterior SD (CPBL model)", scaleFun=log, scaleFunInverse=exp, 
+               main="Posterior SD (LCPB model)", scaleFun=log, scaleFunInverse=exp, 
                cols=sdCols, zlim=log(sdRange), ticks=sdTicks, tickLabels=sdTickLabels, 
                xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = TRUE, 
                legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.width=3, 
@@ -579,7 +600,7 @@ modCPBL = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
 # distribution of the number of people (children) per household given 
 # the total per stratum
 # n: the number of draws from the joint distribution of N
-# eaPixelSamples: this is eaSamples from modCPBL (nPixel x n matrix of number of EAs per pixel)
+# eaPixelSamples: this is eaSamples from modLCPB (nPixel x n matrix of number of EAs per pixel)
 # easpaList: a list of length n with each element being of the format given 
 #            in makeDefaultEASPA() giving the number of households and EAs 
 #            per stratum. It is assumed that the number of EAs per stratum is 
@@ -721,7 +742,7 @@ sampleNPoissonMultinomial = function(nDraws = ncol(pixelIndexMat), pixelIndexMat
         householdDrawsRural = sapply(totalHouseholdsRural[i,], rmultinom, n=1, prob=rep(1/totalEAsRural[i], totalEAsRural[i])) + 25
       }
     } else {
-      householdDraws[areaMat==thisArea] = sapply(totalHouseholds[i,], rmultinom, n=1, prob=rep(1/totalEAs[i], totalEAs[i]))
+      householdDraws = sapply(totalHouseholds[i,], rmultinom, n=1, prob=rep(1/totalEAs[i], totalEAs[i]))
     }
     
     # drawing children per EA, with probability proportional to the number of households
@@ -737,6 +758,139 @@ sampleNPoissonMultinomial = function(nDraws = ncol(pixelIndexMat), pixelIndexMat
     } else {
       probs = sweep(householdDraws, 2, 1 / colSums(householdDraws), "*")
       childrenDraws[areaMat==thisArea] = sapply(1:nDraws, function(j) {rmultinom(1, totalChildren[i,j], probs[,j])})
+    }
+  }
+  
+  ##### Return results
+  childrenDraws
+}
+
+# Use Poisson-Binomial method to draw first from marginal distributions of 
+# number of households per EA given the total per stratum, and then from the joint 
+# distribution of the number of people (children) per household given 
+# the total per stratum
+# n: the number of draws from the joint distribution of N
+# eaPixelSamples: this is eaSamples from modLCPB (nPixel x n matrix of number of EAs per pixel)
+# easpaList: a list of length n with each element being of the format given 
+#            in makeDefaultEASPA() giving the number of households and EAs 
+#            per stratum. It is assumed that the number of EAs per stratum is 
+#            the same in each list element. If easpaList is a data frame, 
+#            number of households per stratum is assumed constant
+sampleNPoissonBinomial = function(eaSamplesMod, pixelIndexListMod, areaListMod, urbanListMod, nDraws=length(eaSamplesMod), 
+                                  easpa=NULL, easpaList=NULL, popMat=NULL, includeUrban=TRUE, verbose=TRUE) {
+  
+  # set default inputs
+  if(is.null(easpa)) {
+    easpa = makeDefaultEASPA()
+    # Area: the name or id of the area
+    # EAUrb: the number of EAs in the urban part of the area
+    # EARur: the number of EAs in the rural part of the area
+    # EATotal: the number of EAs in the the area
+    # HHUrb: the number of households in the urban part of the area
+    # HHRur: the number of households in the rural part of the area
+    # HHTotal: the number of households in the the area
+    # popUrb: the number of people in the urban part of the area
+    # popRur: the number of people in the rural part of the area
+    # popTotal: the number of people in the the area
+    # pctTotal: the percentage of people in this area out of the total national population
+    # pctUrb: the percentage of people in this area that live in urban areas
+  }
+  if(is.null(easpaList)) {
+    nEAs = nEAsByStratum(areaListMod, urbanListMod)
+    easpaList = lapply(1:nDraws, function(j) {
+      thiseaspa = easpa
+      thiseaspa[,2:4] = nEAs[[j]][,1:3]
+      thiseaspa
+    })
+  }
+  if(is.null(popMat)) {
+    popMat = makeDefaultPopMat()
+    # lon: longitude
+    # lat: latitude
+    # east: easting (km)
+    # north: northing (km)
+    # pop: proportional to population density for each grid cell
+    # area: an id or area name in which the grid cell corresponding to each row resides
+    # urban: whether the grid cell is urban or rural
+  }
+  
+  # subset areaMat by urban/rural if necessary
+  if(includeUrban) {
+    areaListModUrban = lapply(urbanListMod, function(isUrban) {areaListMod[isUrban]})
+    areaListModRural = lapply(urbanListMod, function(isUrban) {areaListMod[!isUrban]})
+    urbanStringListMod = lapply(urbanListMod, function(isUrban) {sapply(isUrban, function(singleUrban) {ifelse(singleUrban, "u", "r")})})
+    areaUrbanicityListMod = lapply(1:length(areaListMod), function(j) {paste(areaListMod[[j]], urbanStringListMod, sep=",")})
+  }
+  
+  # start by drawing the totals, then divide households amongst EAs, then divide children amongst households. 
+  # Make sure there are at least 25 households per EA (only divide the rest randomly)
+  
+  ##### Draw the total EAs
+  
+  # get the approximate total number of enumeration areas per stratum (actual total varies between draws)
+  areas = easpa$Area
+  approxTotalEAsUrban = easpa$EAUrb
+  approxTotalEAsRural = easpa$EARur
+  approxTotalEAs = easpa$EATotal
+  approxnEAs = sum(totalEAs)
+  
+  ##### draw the number of children per enumeration area
+  
+  childrenDraws = lapply(1:nDraws, function(j) {rep(NA, sum(nEAs[[j]]$EATotal))})
+  
+  # Draw the number of households per stratum area that will be randomly distributed (total minus the minimum 25)
+  if(includeUrban) {
+    # totalHouseholdsUrban = sweep(sapply(easpaList, function(x) {x$HHUrb}), 1, -25*approxTotalEAsUrban, "+")
+    # totalHouseholdsRural = sweep(sapply(easpaList, function(x) {x$HHRur}), 1, -25*approxTotalEAsRural, "+")
+    totalHouseholdsUrban = sapply(1:nDraws, function(j) {easpaList[[j]]$HHUrb - 25*easpaList[[j]]$EAUrb})
+    totalHouseholdsRural = sapply(1:nDraws, function(j) {easpaList[[j]]$HHRur - 25*easpaList[[j]]$EARur})
+    totalChildrenUrban = sapply(easpaList, function(x) {x$popUrb})
+    totalChildrenRural = sapply(easpaList, function(x) {x$popRur})
+    eaUrban = sapply(easpaList, function(x) {x$EAUrb})
+    eaRural = sapply(easpaList, function(x) {x$EARur})
+  } else {
+    totalHouseholds = sapply(1:nDraws, function(j) {easpaList[[j]]$HHTotal - 25*easpaList[[j]]$EATotal})
+    totalChildren = sapply(easpaList, function(x) {x$popHHTotal})
+    eaTotal = sapply(easpaList, function(x) {x$EATotal})
+  }
+  
+  # distribute the households throughout the enumeration areas with multinomial distribution, then 
+  # distribute the children amongst the households, also with a multinomial distribution
+  for(i in 1:length(areas)) {
+    thisArea = areas[i]
+    
+    # print progress if in verbose mode
+    if(verbose) {
+      print(paste0("drawing Ns for each EA for area ", thisArea, " (", i, "/", length(areas), ")"))
+    }
+    
+    # draw households per EA (make sure there are any rural EAs)
+    if(includeUrban) {
+      # householdDrawsUrban = sapply(approxTotalHouseholdsUrban[i,], rbinom, n=approxTotalEAsUrban[i], prob=1/approxTotalEAsUrban[i]) + 25
+      householdDrawsUrban = lapply(1:nDraws, function(j) {25 + rbinom(n=eaUrban[i,j], size=totalHouseholdsUrban[i,j], prob=1 / eaUrban[i,j])})
+      if(approxTotalEAsRural[i] != 0) {
+        householdDrawsRural = lapply(1:nDraws, function(j) {25 + rbinom(n=eaRural[i,j], size=totalHouseholdsRural[i,j], prob=1 / eaRural[i,j])})
+      }
+    } else {
+      # householdDraws = sapply(approxTotalHouseholds[i,], rbinom, n=approxTotalEAs[i], prob=1/approxTotalEAs[i]) + 25
+      householdDraws = lapply(1:nDraws, function(j) {25 + rbinom(n=eaTotal[i,j], size=totalHouseholds[i,j], prob=1 / eaTotal[i,j])})
+    }
+    
+    # drawing children per EA, with probability proportional to the number of households
+    if(includeUrban) {
+      probsUrban = lapply(1:nDraws, function(j) {householdDrawsUrban[[j]] * (1 / sum(householdDrawsUrban[[j]]))})
+      thisUrbanDraws = lapply(1:nDraws, function(j) {rbinom(n=eaUrban[i,j], size=totalChildrenUrban[i,j], prob=probsUrban[[j]])})
+      childrenDraws = lapply(1:nDraws, function(j) {childrenDraws[[j]][areaListMod[[j]] == thisArea & urbanListMod[[j]]] = thisUrbanDraws})
+      
+      if(approxTotalEAsRural[i] != 0) {
+        probsRural = lapply(1:nDraws, function(j) {householdDrawsRural[[j]] * (1 / sum(householdDrawsRural[[j]]))})
+        thisRuralDraws = lapply(1:nDraws, function(j) {rbinom(n=eaRural[i,j], size=totalChildrenRural[i,j], prob=probsRural[[j]])})
+        childrenDraws = lapply(1:nDraws, function(j) {childrenDraws[[j]][areaListMod[[j]] == thisArea & !urbanListMod[[j]]] = thisRuralDraws})
+      }
+    } else {
+      probs = lapply(1:nDraws, function(j) {householdDraws[[j]] * (1 / sum(householdDraws[[j]]))})
+      thisDraws = lapply(1:nDraws, function(j) {rbinom(n=eaTotal[i,j], size=totalChildren[i,j], prob=probs[[j]])})
+      childrenDraws = lapply(1:nDraws, function(j) {childrenDraws[[j]][areaListMod[[j]] == thisArea] = thisDraws})
     }
   }
   

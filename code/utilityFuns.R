@@ -3192,6 +3192,45 @@ rStratifiedMultnomial = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE) 
   eaSamples
 }
 
+nEAsByStratum = function(areaListMod, urbanListMod) {
+  areas = sort(unique(areaListMod[[1]]))
+  
+  # calculate the number of enumeration areas for each draw and for a single area
+  allDrawsSingleArea = function(area) {
+    correctAreaListUrban = lapply(areaListMod, function(j) {valList[[j]] == area & urbanListMod[[j]]})
+    correctAreaListRural = lapply(areaListMod, function(j) {valList[[j]] == area & !urbanListMod[[j]]})
+    
+    # calculate the number of enumeration areas for a single draw and a single area
+    singleDrawSingleArea = function(j) {
+      thisCorrectAreaUrban = correctAreaListUrban[[j]]
+      thisCorrectAreaRural = correctAreaListRural[[j]]
+      
+      out = c(sum(thisCorrectAreaUrban), sum(thisCorrectAreaRural))
+      out = c(out, sum(out))
+      names(out) = c("EAUrb", "EARur", "EATotal")
+      
+      out
+    }
+    
+    lapply(1:length(areaListMod), singleDrawSingleArea)
+  }
+  
+  # calculate the number of enumeration areas for all draws and areas
+  allAreaResults = lapply(areas, allDrawsSingleArea)
+  
+  # combine the results over all areas for each draw
+  require(purrr)
+  allAreaResults = transpose(allAreaResults)
+  easpaList = lapply(allAreaResults, rbind)
+  
+  # adjust the names so that the areas are labeled
+  for(j in 1:length(easpaList)) {
+    easpaList$Area = areas
+  }
+  
+  easpaList
+}
+
 # gives nPixels x n matrix of draws from the stratified independent binomial 
 # distributions with values corresponding to the value of |C^g| for each pixel, 
 # g (the number of EAs/pixel). Each drama is conditioned on having at least one 
@@ -3309,6 +3348,21 @@ qbinom1 = function(q, size, prob) {
 rbinom1 = function(n, size, prob) {
   q = runif(n)
   qbinom1(q, size, prob)
+}
+
+dpois1 = function(x, prob) {
+  dpois(x, prob) * (1 / (1 - ppois(0, prob)))
+}
+
+qpois1 = function(q, prob) {
+  q = q * (1-ppois(0, prob)) + ppois(0, prob)
+  qpois(q, prob)
+}
+
+# random Poissonial draws conditional on the number of successes being at least one
+rpois1 = function(n, prob) {
+  q = runif(n)
+  qpois1(q, prob)
 }
 
 # calculate the expected value of a summation under a Poisson distribution

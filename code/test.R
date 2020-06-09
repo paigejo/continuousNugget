@@ -66,7 +66,7 @@ getLogitNormalApproximation = function(u=-1, sigmaEpsilon=0.1, n=10, qs = expit(
 }
 
 # test the CPBL model using the SPDE fit
-testCPBL = function(fit=NULL) {
+testLCPB = function(fit=NULL) {
   # load SPDE UC model (fit it if necessary)
   if(is.null(fit)) {
     fitFile = paste0(outputDirectory, "test/spdeMortFitUC.RData")
@@ -87,20 +87,49 @@ testCPBL = function(fit=NULL) {
   sigmaEpsilonDraws = fit$sigmaEpsilonDraws
   
   # aggregate using CPBL model
-  out = modCPBL(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empiricalDistributions=NULL, 
+  out = modLCPB(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empiricalDistributions=NULL, 
                 includeUrban=TRUE, maxEmptyFraction=1)
   
   browser()
 }
 
-testrbinom1 = function(n=1000000, size=100, prob=.02) {
+testrbinom1 = function(n=1000000, size=100, prob=.02, maxPlot=size) {
   simulations = rbinom1(n, size, prob)
   
   xs = 1:size
   ps = dbinom1(xs, size, prob)
   
   ylim=range(ps)
-  hist(simulations, breaks=seq(from=0.5, to=size+0.5, by=1), freq=FALSE, col="skyblue")
+  hist(simulations, breaks=seq(from=0.5, to=size+0.5, by=1), freq=FALSE, col="skyblue", xlim=c(0, maxPlot))
+  lines(xs, ps, type="l", ylim=ylim)
+  
+  browser()
+}
+# testrbinom1(prob=20 / (2011 * 1000), size=2011, maxPlot=5)
+# head(ps)
+# [1] 9.900382e-01 9.895557e-03 6.590543e-05 3.290388e-07 1.313550e-09 4.367659e-12
+
+# testrbinom1(prob=100 / (211 * 1000), size=211, maxPlot=5)
+# head(ps)
+# [1] 9.510471e-01 4.734943e-02 1.564095e-03 3.856470e-05 7.570311e-07 1.232404e-08
+
+# testrbinom1(prob=1000 / (2011 * 1000), size=2011, maxPlot=10)
+# head(ps)
+# [1] 0.5820372099 0.2910186050 0.0969579399 0.0242153661 0.0048358447 0.0008043702
+
+# testrbinom1(prob=1000 / (211 * 1000), size=211, maxPlot=10)
+# head(ps)
+# [1] 0.5825546364 0.2912773182 0.0966300944 0.0239274520 0.0047171262 0.0007712127
+
+
+testrpois1 = function(n=1000000, prob=20 / (211 * 1000), maxPlot=qpois1(.99, prob)) {
+  simulations = rpois1(n, prob)
+  
+  xs = 1:max(simulations)
+  ps = dpois1(xs, prob)
+  
+  ylim=range(ps)
+  hist(simulations, breaks=seq(from=0.5, to=max(simulations)+0.5, by=1), freq=FALSE, col="skyblue", xlim=c(0, maxPlot))
   lines(xs, ps, type="l", ylim=ylim)
   
   browser()
