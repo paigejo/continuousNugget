@@ -3092,8 +3092,6 @@ rMyMultiBinomial1 = function(n, i, includeUrban=TRUE, urban=TRUE, popMat=NULL, e
   thesePixelProbs = popMat$pop[includeI]
   thesePixelProbs = thesePixelProbs * (1 / sum(thesePixelProbs))
   out = matrix(rbinom1(n*length(thesePixelProbs), nEA, prob=thesePixelProbs), ncol=n)
-  if(any(colSums(out[,1:6]) > 50000))
-    browser()
   out
 }
 
