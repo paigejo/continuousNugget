@@ -3352,6 +3352,7 @@ rbinom1 = function(n, size, prob) {
   q = runif(n)
   out = qbinom1(q, size, prob)
   out[prob == 0] = 1 # this is a limiting case and is necessary due to numerical round off
+  out
 }
 
 dpois1 = function(x, prob) {
@@ -3368,6 +3369,7 @@ rpois1 = function(n, prob) {
   q = runif(n)
   out = qpois1(q, prob)
   out[prob == 0] = 1 # this is a limiting case and is necessary due to numerical round off
+  out
 }
 
 # calculate the expected value of a summation under a Poisson distribution
