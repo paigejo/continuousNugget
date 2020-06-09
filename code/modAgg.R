@@ -819,7 +819,7 @@ sampleNPoissonBinomial = function(pixelIndexListMod, areaListMod, urbanListMod, 
     areaListModUrban = lapply(urbanListMod, function(isUrban) {areaListMod[isUrban]})
     areaListModRural = lapply(urbanListMod, function(isUrban) {areaListMod[!isUrban]})
     urbanStringListMod = lapply(urbanListMod, function(isUrban) {sapply(isUrban, function(singleUrban) {ifelse(singleUrban, "u", "r")})})
-    areaUrbanicityListMod = lapply(1:length(areaListMod), function(j) {paste(areaListMod[[j]], urbanStringListMod, sep=",")})
+    areaUrbanicityListMod = lapply(1:nDraws, function(j) {paste(areaListMod[[j]], urbanStringListMod[[j]], sep=",")})
   }
   
   # start by drawing the totals, then divide households amongst EAs, then divide children amongst households. 
@@ -880,17 +880,17 @@ sampleNPoissonBinomial = function(pixelIndexListMod, areaListMod, urbanListMod, 
     if(includeUrban) {
       probsUrban = lapply(1:nDraws, function(j) {householdDrawsUrban[[j]] * (1 / sum(householdDrawsUrban[[j]]))})
       thisUrbanDraws = lapply(1:nDraws, function(j) {rbinom(n=eaUrban[i,j], size=totalChildrenUrban[i,j], prob=probsUrban[[j]])})
-      childrenDraws = lapply(1:nDraws, function(j) {childrenDraws[[j]][areaListMod[[j]] == thisArea & urbanListMod[[j]]] = thisUrbanDraws})
+      childrenDraws = lapply(1:nDraws, function(j) {childrenDraws[[j]][areaListMod[[j]] == thisArea & urbanListMod[[j]]] = thisUrbanDraws[[j]]})
       
       if(approxTotalEAsRural[i] != 0) {
         probsRural = lapply(1:nDraws, function(j) {householdDrawsRural[[j]] * (1 / sum(householdDrawsRural[[j]]))})
         thisRuralDraws = lapply(1:nDraws, function(j) {rbinom(n=eaRural[i,j], size=totalChildrenRural[i,j], prob=probsRural[[j]])})
-        childrenDraws = lapply(1:nDraws, function(j) {childrenDraws[[j]][areaListMod[[j]] == thisArea & !urbanListMod[[j]]] = thisRuralDraws})
+        childrenDraws = lapply(1:nDraws, function(j) {childrenDraws[[j]][areaListMod[[j]] == thisArea & !urbanListMod[[j]]] = thisRuralDraws[[j]]})
       }
     } else {
       probs = lapply(1:nDraws, function(j) {householdDraws[[j]] * (1 / sum(householdDraws[[j]]))})
       thisDraws = lapply(1:nDraws, function(j) {rbinom(n=eaTotal[i,j], size=totalChildren[i,j], prob=probs[[j]])})
-      childrenDraws = lapply(1:nDraws, function(j) {childrenDraws[[j]][areaListMod[[j]] == thisArea] = thisDraws})
+      childrenDraws = lapply(1:nDraws, function(j) {childrenDraws[[j]][areaListMod[[j]] == thisArea] = thisDraws[[j]]})
     }
   }
   

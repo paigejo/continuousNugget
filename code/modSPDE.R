@@ -43,11 +43,12 @@ getSPDEMesh = function(locs=cbind(c(-1, -1, 1, 1), c(-1, 1, -1, 1)), n=3500, max
 
 # get a reasonable default mesh triangulation for the SPDE model for the Kenya data
 getSPDEMeshKenya = function(locs=NULL, n=5000, max.n=5000, doPlot=FALSE, max.edge=c(7, 200), 
-                            offset=-.08, cutoff=4) {
+                            offset=-.08, cutoff=4, jitterAmount=max.edge[1]/4, seed=123) {
   
   if(is.null(locs)) {
+    # jitter the locations used to create the mesh so that they do not always lie on mesh points
     out = load("../U5MR/kenyaDataEd.RData")
-    locs=cbind(ed$east, ed$north)
+    locs=cbind(jitter(ed$east, amount=jitterAmount), jitter(ed$north, amount=jitterAmount))
   }
   
   # generate mesh on R2
@@ -151,7 +152,7 @@ validateSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
                                 mesh=getSPDEMeshKenya(), prior=getSPDEPrior(mesh), 
                                 significanceCI=.8, int.strategy="ccd", strategy="gaussian", 
                                 nPostSamples=1000, verbose=FALSE, link=1, seed=123, 
-                                urbanEffect=TRUE, clusterEffect=FALSE, kmres=5, 
+                                urbanEffect=TRUE, clusterEffect=TRUE, kmres=5, 
                                 loadPreviousFit=TRUE, saveResults=TRUE, family=c("binomial", "betabinomial"), 
                                 sampleTable=NULL, stratifiedValidation=TRUE, loadPreviousResults=FALSE) {
   if(!is.null(seed))

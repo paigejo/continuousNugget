@@ -2556,7 +2556,9 @@ addBinomialVar = function(probMatrix, ns) {
 
 # create list of inclusion logicals, partitioning the given data set into 8 (by default) pieces. These 
 # pieces are of roughly equal size, and are chosen by a stratified sampling without replacement
-getValidationI = function(dat=NULL, dataType=c("mort", "ed"), allCountyNames=NULL, urban=NULL, nFold=8, seed=123) {
+# pixelLevel: if TRUE, leave out entire pixels
+getValidationI = function(dat=NULL, dataType=c("mort", "ed"), allCountyNames=NULL, urban=NULL, 
+                          nFold=8, pixelLevel=FALSE, seed=123) {
   set.seed(seed)
   dataType = match.arg(dataType)
   
