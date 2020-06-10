@@ -77,7 +77,7 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
   # set default inputs
   if(is.null(easpa)) {
     easpa = makeDefaultEASPA()
-    # Area: the name or id of the area
+    # area: the name or id of the area
     # EAUrb: the number of EAs in the urban part of the area
     # EARur: the number of EAs in the rural part of the area
     # EATotal: the number of EAs in the the area
@@ -612,7 +612,7 @@ sampleNPoissonMultinomial = function(nDraws = ncol(pixelIndexMat), pixelIndexMat
   # set default inputs
   if(is.null(easpaList)) {
     easpaList = lapply(1:nDraws, function(x){makeDefaultEASPA()})
-    # Area: the name or id of the area
+    # area: the name or id of the area
     # EAUrb: the number of EAs in the urban part of the area
     # EARur: the number of EAs in the rural part of the area
     # EATotal: the number of EAs in the the area
@@ -782,7 +782,7 @@ sampleNPoissonBinomial = function(pixelIndexListMod, areaListMod, urbanListMod, 
   # set default inputs
   if(is.null(easpa)) {
     easpa = makeDefaultEASPA()
-    # Area: the name or id of the area
+    # area: the name or id of the area
     # EAUrb: the number of EAs in the urban part of the area
     # EARur: the number of EAs in the rural part of the area
     # EATotal: the number of EAs in the the area
@@ -828,11 +828,11 @@ sampleNPoissonBinomial = function(pixelIndexListMod, areaListMod, urbanListMod, 
   ##### Draw the total EAs
   
   # get the approximate total number of enumeration areas per stratum (actual total varies between draws)
-  areas = easpa$Area
+  areas = easpa$area
   approxTotalEAsUrban = easpa$EAUrb
   approxTotalEAsRural = easpa$EARur
   approxTotalEAs = easpa$EATotal
-  approxnEAs = sum(totalEAs)
+  approxnEAs = sum(approxTotalEAs)
   
   ##### draw the number of children per enumeration area
   

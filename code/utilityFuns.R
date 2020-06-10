@@ -1551,7 +1551,7 @@ aggregateEAPredictions = function(Zc, Nc, areaMat, urbanMat, easpa=NULL, uniqueR
   
   if(is.null(easpa)) {
     easpa = makeDefaultEASPA()
-    # Area: the name or id of the area
+    # area: the name or id of the area
     # EAUrb: the number of EAs in the urban part of the area
     # EARur: the number of EAs in the rural part of the area
     # EATotal: the number of EAs in the the area
@@ -2842,6 +2842,24 @@ getMeanRadius = function(areaLevel=c("Region", "County")) {
   radii
 }
 
+getPixelIndex = function(eastNorth, popMat=NULL) {
+  
+  if(is.null(popMat)) {
+    popMat = makeDefaultPopMat()
+    # lon: longitude
+    # lat: latitude
+    # east: easting (km)
+    # north: northing (km)
+    # pop: proportional to population density for each grid cell
+    # area: an id or area name in which the grid cell corresponding to each row resides
+    # urban: whether the grid cell is urban or rural
+  }
+  
+  # construct distance matrix. For each observation location, get closest pixel
+  distMat = rdist(eastNorth, cbind(popMat$east, popMat$north))
+  apply(distMat, 1, which.min)
+}
+
 getPredictionDistance = function(doLog=TRUE, dataType=c("ed", "mort")) {
   # load the pixel/prediction grid
   out = load("../U5MR/popGrid.RData")
@@ -3009,7 +3027,7 @@ rMyMultinomial = function(n, i, includeUrban=TRUE, urban=TRUE, popMat=NULL, easp
   }
   if(is.null(easpa)) {
     easpa = makeDefaultEASPA()
-    # Area: the name or id of the area
+    # area: the name or id of the area
     # EAUrb: the number of EAs in the urban part of the area
     # EARur: the number of EAs in the rural part of the area
     # EATotal: the number of EAs in the the area
@@ -3061,7 +3079,7 @@ rMyMultiBinomial1 = function(n, i, includeUrban=TRUE, urban=TRUE, popMat=NULL, e
   }
   if(is.null(easpa)) {
     easpa = makeDefaultEASPA()
-    # Area: the name or id of the area
+    # area: the name or id of the area
     # EAUrb: the number of EAs in the urban part of the area
     # EARur: the number of EAs in the rural part of the area
     # EATotal: the number of EAs in the the area
@@ -3143,7 +3161,7 @@ rStratifiedMultnomial = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE) 
   }
   if(is.null(easpa)) {
     easpa = makeDefaultEASPA()
-    # Area: the name or id of the area
+    # area: the name or id of the area
     # EAUrb: the number of EAs in the urban part of the area
     # EARur: the number of EAs in the rural part of the area
     # EATotal: the number of EAs in the the area
@@ -3230,7 +3248,7 @@ nEAsByStratum = function(areaListMod, urbanListMod) {
   
   # adjust the names so that the areas are labeled
   for(j in 1:length(nEAsList)) {
-    nEAsList[[j]]$Area = areas
+    nEAsList[[j]]$area = areas
   }
   
   nEAsList
@@ -3257,7 +3275,7 @@ rStratifiedBinomial1 = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE) {
   }
   if(is.null(easpa)) {
     easpa = makeDefaultEASPA()
-    # Area: the name or id of the area
+    # area: the name or id of the area
     # EAUrb: the number of EAs in the urban part of the area
     # EARur: the number of EAs in the rural part of the area
     # EATotal: the number of EAs in the the area
