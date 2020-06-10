@@ -213,19 +213,19 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
   ##### Line 5: We already did this, resulting in uDraws input
   
   ##### Line 6: aggregate population denominators for each grid cell to get N_{ig}
-  Ng <- sapply(1:ncol(Ncs), getPixelColumnFromEAs, valMat=Ncs)
+  Ng <- sapply(1:ncol(Ncs), getPixelColumnFromEAs, vals=Ncs)
   Ng[is.na(Ng)] = 0
   
   if(doModifiedPixelLevel) {
-    NgMod <- sapply(1:nDraws, getPixelColumnFromEAs, valMat=NcsMod, doMod=TRUE)
+    NgMod <- sapply(1:nDraws, getPixelColumnFromEAs, vals=NcsMod, doMod=TRUE)
     NgMod[is.na(NgMod)] = 0
   }
   
   ##### Line 7: aggregate response for each grid cell to get Z_{ig}
-  Zg <- sapply(1:ncol(Zc), getPixelColumnFromEAs, valMat=Zc)
+  Zg <- sapply(1:ncol(Zc), getPixelColumnFromEAs, vals=Zc)
   
   if(doModifiedPixelLevel) {
-    ZgMod <- sapply(1:ncol(Zc), getPixelColumnFromEAs, valMat=Zc, doMod=TRUE)
+    ZgMod <- sapply(1:ncol(Zc), getPixelColumnFromEAs, vals=ZcMod, doMod=TRUE)
   }
   
   ##### Line 8: Calculate empirical mortality proportions for each grid cell, p_{ig}. 
@@ -240,11 +240,11 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, 
   
   # just for testing purposes:
   if(FALSE) {
-    mug = sapply(1:ncol(muc), getPixelColumnFromEAs, valMat=muc, applyFun=function(x) {mean(x, na.rm=TRUE)})
+    mug = sapply(1:ncol(muc), getPixelColumnFromEAs, vals=muc, applyFun=function(x) {mean(x, na.rm=TRUE)})
     mug[!is.finite(mug)] = NA
     
     if(doModifiedPixelLevel) {
-      mugMod = sapply(1:ncol(muc), getPixelColumnFromEAs, valMat=mucMod, applyFun=function(x) {mean(x, na.rm=TRUE)}, doMod=TRUE)
+      mugMod = sapply(1:ncol(muc), getPixelColumnFromEAs, vals=mucMod, applyFun=function(x) {mean(x, na.rm=TRUE)}, doMod=TRUE)
       mugMod[!is.finite(mugMod)] = NA
     }
     
@@ -880,17 +880,26 @@ sampleNPoissonBinomial = function(pixelIndexListMod, areaListMod, urbanListMod, 
     if(includeUrban) {
       probsUrban = lapply(1:nDraws, function(j) {householdDrawsUrban[[j]] * (1 / sum(householdDrawsUrban[[j]]))})
       thisUrbanDraws = lapply(1:nDraws, function(j) {rbinom(n=eaUrban[i,j], size=totalChildrenUrban[i,j], prob=probsUrban[[j]])})
-      childrenDraws = lapply(1:nDraws, function(j) {childrenDraws[[j]][areaListMod[[j]] == thisArea & urbanListMod[[j]]] = thisUrbanDraws[[j]]})
+      childrenDraws = lapply(1:nDraws, function(j) {
+        childrenDraws[[j]][areaListMod[[j]] == thisArea & urbanListMod[[j]]] = thisUrbanDraws[[j]]
+        childrenDraws[[j]]
+        })
       
       if(approxTotalEAsRural[i] != 0) {
         probsRural = lapply(1:nDraws, function(j) {householdDrawsRural[[j]] * (1 / sum(householdDrawsRural[[j]]))})
         thisRuralDraws = lapply(1:nDraws, function(j) {rbinom(n=eaRural[i,j], size=totalChildrenRural[i,j], prob=probsRural[[j]])})
-        childrenDraws = lapply(1:nDraws, function(j) {childrenDraws[[j]][areaListMod[[j]] == thisArea & !urbanListMod[[j]]] = thisRuralDraws[[j]]})
+        childrenDraws = lapply(1:nDraws, function(j) {
+          childrenDraws[[j]][areaListMod[[j]] == thisArea & !urbanListMod[[j]]] = thisRuralDraws[[j]]
+          childrenDraws[[j]]
+        })
       }
     } else {
       probs = lapply(1:nDraws, function(j) {householdDraws[[j]] * (1 / sum(householdDraws[[j]]))})
       thisDraws = lapply(1:nDraws, function(j) {rbinom(n=eaTotal[i,j], size=totalChildren[i,j], prob=probs[[j]])})
-      childrenDraws = lapply(1:nDraws, function(j) {childrenDraws[[j]][areaListMod[[j]] == thisArea] = thisDraws[[j]]})
+      childrenDraws = lapply(1:nDraws, function(j) {
+        childrenDraws[[j]][areaListMod[[j]] == thisArea] = thisDraws[[j]]
+        childrenDraws[[j]]
+      })
     }
   }
   
