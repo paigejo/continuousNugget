@@ -3254,6 +3254,39 @@ nEAsByStratum = function(areaListMod, urbanListMod) {
   nEAsList
 }
 
+nEAsByStratum2 = function(eaSamplesMod, popMat=NULL) {
+  
+  # set default inputs
+  if(is.null(popMat)) {
+    popMat = makeDefaultPopMat()
+    # lon: longitude
+    # lat: latitude
+    # east: easting (km)
+    # north: northing (km)
+    # pop: proportional to population density for each grid cell
+    # area: an id or area name in which the grid cell corresponding to each row resides
+    # urban: whether the grid cell is urban or rural
+  }
+  
+  # get info from popMat
+  uniqueAreas = sort(unique(as.character(popMat$area)))
+  allAreas = as.character(popMat$area)
+  allUrban = as.character(popMat$urban)
+  
+  # aggregate number of EAs per stratum
+  
+  nEAsList = lapply(as.list(data.frame(eaSamplesMod)), 
+                    function(pixelEAs) {
+                      out = data.frame("area"=uniqueAreas, tapply(pixelEAs, list(area=allAreas, urban=allUrban), FUN=sum))
+                      out$EATotal = rowSums(out[,2:3])
+                      names(out) = c("area", "EAUrb", "EARur", "EATotal")
+                      out[is.na(out)] = 0
+                      out
+                    })
+  
+  nEAsList
+}
+
 # gives nPixels x n matrix of draws from the stratified independent binomial 
 # distributions with values corresponding to the value of |C^g| for each pixel, 
 # g (the number of EAs/pixel). Each drama is conditioned on having at least one 
