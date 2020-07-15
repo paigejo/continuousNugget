@@ -815,7 +815,7 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
                                              sampleTable=NULL, stratifiedValidation=TRUE, 
                                              doPixelLevelValidation=TRUE, doCountyLevelValidation=FALSE, 
                                              loadPreviousResults=FALSE, 
-                                             doLCPB=TRUE, doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE, dolcpb=TRUE) {
+                                             doLCPB=TRUE, doLCPb=FALSE, doLCpb=FALSE, doLcpb=FALSE, dolcpb=FALSE) {
   
   if(doLCPb || doLCpb || doLcpb || dolcpb) {
     stop("Only LCPB aggregation model is currently supported in validation")
