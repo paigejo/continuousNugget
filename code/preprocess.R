@@ -59,8 +59,33 @@ save(NcsUrban, NcsRural, file=paste0(globalDirectory, "NcsUrbanRural.RData"))
 Ncs = simNsFull(1000, includeUrban=FALSE)
 save(Ncs, file=paste0(globalDirectory, "Ncs.RData"))
 
+# poppc modified to contain sampled population totals
+out = aggregate(mort$n, by=list(admin1=mort$admin1, urban=mort$urban), FUN=sum, drop=FALSE)
+out[is.na(out[,3]), 3] = 0
+# urbanToRuralI = c(1:27, 29, 31:47) # skip mombasa and nairobi
+out2 = cbind(out, rural=0)[48:94,]
+out2[, 4] = out$x[1:47]
+unsortedToSorted = sort(poppc$County, index.return=TRUE)$ix
+poppcMort = poppc
+poppcMort[unsortedToSorted, 2:3] = out2[,3:4]
+poppcMort$popTotal = poppcMort$popUrb + poppcMort$popRur
+poppcMort$pctTotal = 100 * poppcMort$popTotal * (1 / sum(poppcMort$popTotal))
+poppcMort$pctUrb = 100 * poppcMort$popUrb / poppcMort$popTotal
 
+## clustpc modified to contain sampled cluster and household totals
+# first the number of sampled clusters
+out = aggregate(mort$n, by=list(admin1=mort$admin1, urban=mort$urban), FUN=length, drop=FALSE)
+out[is.na(out[,3]), 3] = 0
+# urbanToRuralI = c(1:27, 29, 31:47) # skip mombasa and nairobi
+out2 = cbind(out, rural=0)[48:94,]
+out2[, 4] = out$x[1:47]
+unsortedToSorted = sort(poppc$County, index.return=TRUE)$ix
+easpcMort = clustpc
+names(easpcMort) = names(easpc)
+easpcMort[unsortedToSorted, 2:3] = out2[,3:4]
+easpcMort$EATotal = easpcMort$EAUrb + easpcMort$EARur
 
-
+save(poppcMort, file=paste0(globalDirectory, "poppcMort.RData"))
+save(easpcMort, file=paste0(globalDirectory, "easpcMort.RData"))
 
 

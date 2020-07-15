@@ -135,6 +135,51 @@ testrpois1 = function(n=1000000, prob=20 / (211 * 1000), maxPlot=qpois1(.99, pro
   browser()
 }
 
+testValidationIndices = function(validationOut=NULL) {
+  popMat = makeDefaultPopMat()
+  
+  if(is.null(validationOut)) {
+    validationOut = getValidationI(pixelLevel=TRUE, popMat=popMat)
+  }
+  
+  indexMatrix = validationOut$sampleMatrix
+  pixelIndexMatrix = validationOut$pixelIndexList
+  browser()
+  # load shape files for plotting
+  require(maptools)
+  regionMap = readShapePoly("../U5MR/mapData/kenya_region_shapefile/kenya_region_shapefile.shp", delete_null_obj=TRUE, force_ring=TRUE, repair=TRUE)
+  out = load("../U5MR/adminMapData.RData")
+  kenyaMap = adm0
+  countyMap = adm1
+  
+  # do the plotting
+  par(mfrow=c(1,2))
+  cols = rainbow(10)
+  for(i in 1:10) {
+    theseIndices = indexMatrix[,i]
+    
+    if(i == 1) {
+      plot(mort$lon, mort$lat, type="n", xlim=kenyaLonRange, ylim=kenyaLatRange)
+    }
+    
+    points(mort$lon[theseIndices], mort$lat[theseIndices], pch=19, col=cols[i], cex=.2)
+  }
+  plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
+  plotMapDat(mapDat=regionMap, lwd=2.5)
+  
+  for(i in 1:10) {
+    thesePixelIndices = pixelIndexMatrix[[i]]
+    
+    if(i == 1) {
+      plot(mort$lon, mort$lat, type="n", xlim=kenyaLonRange, ylim=kenyaLatRange)
+    }
+    
+    points(popMat$lon[thesePixelIndices], popMat$lat[thesePixelIndices], pch=19, col=cols[i], cex=.2)
+  }
+  plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
+  plotMapDat(mapDat=regionMap, lwd=2.5)
+}
+
 
 
 

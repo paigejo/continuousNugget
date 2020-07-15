@@ -2311,10 +2311,8 @@ plotMapDat = function(plotVar=NULL, varCounties=NULL, zlim=NULL, project=FALSE, 
   }
   if(is.null(varCounties)) {
     if(length(mapDat) != 8) {
-      out = load("../U5MR/kenyaData.RData")
       varCounties=sort(as.character(unique(mort$admin1)))
     } else {
-      out = load("../U5MR/poppr.RData")
       varCounties = sort(as.character(poppr$Region))
     }
   }
@@ -2555,21 +2553,21 @@ addBinomialVar = function(probMatrix, ns) {
 }
 
 # create list of inclusion logicals, partitioning the given data set into 8 (by default) pieces. These 
-# pieces are of roughly equal size, and are chosen by a stratified sampling without replacement
+# pieces are of roughly equal size, and are chosen by a stratified sampling without replacement. If 
+# pixelLevel is set to TRUE, returns the sample index matrix as well as a pixel index list. 
+# NOTE: nonzero indices and listed pixel indices are the ones that are left out
 # pixelLevel: if TRUE, leave out entire pixels
 getValidationI = function(dat=NULL, dataType=c("mort", "ed"), allCountyNames=NULL, urban=NULL, 
-                          nFold=8, pixelLevel=FALSE, seed=123) {
+                          pixelLevel=FALSE, nFold=ifelse(pixelLevel, 10, 8), popMat=NULL, seed=123) {
   set.seed(seed)
   dataType = match.arg(dataType)
   
   if(is.null(allCountyNames) || is.null(urban)) {
     if(is.null(dat)) {
       if(dataType == "mort") {
-        out = load("../U5MR/kenyaData.RData")
         dat = mort
       }
       else {
-        out = load("../U5MR/kenyaDataEd.RData")
         dat = ed
       }
     }
@@ -2578,7 +2576,29 @@ getValidationI = function(dat=NULL, dataType=c("mort", "ed"), allCountyNames=NUL
     urban = dat$urban
   }
   
+  if(is.null(popMat)) {
+    popMat = makeDefaultPopMat()
+    # lon: longitude
+    # lat: latitude
+    # east: easting (km)
+    # north: northing (km)
+    # pop: proportional to population density for each grid cell
+    # area: an id or area name in which the grid cell corresponding to each row resides
+    # urban: whether the grid cell is urban or rural
+  }
+  
+  if(pixelLevel) {
+    # determine in which pixel each observation is located
+    pixelIndices = getPixelIndex(cbind(dat$east, dat$north), popMat=popMat)
+    uniquePixelIndices = sort(unique(pixelIndices))
+    pixelUrban = popMat$urban[uniquePixelIndices]
+    pixelCounty = popMat$area[uniquePixelIndices]
+    urban = pixelUrban
+    allCountyNames = pixelCounty
+  }
+  
   strata = sapply(1:length(urban), function(i) {paste0(allCountyNames[i], ifelse(urban[i], "U", "R"))})
+  
   uniqueStrata = unique(strata)
   nPerStrata = table(strata)
   nPerStrata = nPerStrata[sort(match(names(nPerStrata), uniqueStrata), index.return=TRUE)$ix]
@@ -2592,6 +2612,10 @@ getValidationI = function(dat=NULL, dataType=c("mort", "ed"), allCountyNames=NUL
   for(i in 1:nrow(nSamplesTable)) {
     if(nLowFoldsPerStrata[i] < nFold)
       nSamplesTable[i,(nLowFoldsPerStrata[i]+1):ncol(nSamplesTable)] = nSamplesTable[i,(nLowFoldsPerStrata[i]+1):ncol(nSamplesTable)] + 1
+    
+    # scramble the number of samples within each stratum so that later folds don't necessarily have 
+    # more samples than earlier folds
+    nSamplesTable[i,] = nSamplesTable[i,sample(1:nFold, nFold, replace=FALSE)]
   }
   
   # construct a list of vectors, one for each fold, each vector containing the indices of the observations in the fold
@@ -2603,7 +2627,7 @@ getValidationI = function(dat=NULL, dataType=c("mort", "ed"), allCountyNames=NUL
     for(j in 1:nFold) {
       
       # sample the fold observations from the remaining on sampled observations in the stratum
-      if(length(stratumIndices) != 1)
+      if(length(stratumIndices) > 1)
         theseIndices = sample(stratumIndices, nSamplesTable[i,j], replace=FALSE)
       else
         theseIndices = stratumIndices # in this case, sample function does something different
@@ -2615,18 +2639,32 @@ getValidationI = function(dat=NULL, dataType=c("mort", "ed"), allCountyNames=NUL
       }
       
       # remove the sampled observations from the vector of observation indices in the stratum
-      stratumIndices = stratumIndices[-match(theseIndices, stratumIndices)]
+      if(length(theseIndices) > 0) {
+        # if statement is necessary here for some reason...
+        stratumIndices = stratumIndices[-match(theseIndices, stratumIndices)]
+      }
     }
   }
   
   # convert foldIndices to a matrix of logical
-  sampleMatrix = matrix(FALSE, nrow=length(urban), ncol=nFold)
+  sampleMatrix = matrix(FALSE, nrow=nrow(dat), ncol=nFold)
+  pixelIndexList = list()
   for(i in 1:nFold) {
-    sampleMatrix[foldIndices[[i]],i] = TRUE
+    if(pixelLevel) {
+      clusterIndices = pixelIndices %in% uniquePixelIndices[foldIndices[[i]]]
+      sampleMatrix[clusterIndices,i] = TRUE
+      pixelIndexList = c(pixelIndexList, list(uniquePixelIndices[foldIndices[[i]]]))
+    } else {
+      sampleMatrix[foldIndices[[i]],i] = TRUE
+    }
   }
   
   # return results
-  sampleMatrix
+  if(!pixelLevel) {
+    sampleMatrix
+  } else {
+    list(sampleMatrix=sampleMatrix, pixelIndexList=pixelIndexList)
+  }
 }
 
 getAveragePredictionDistance = function(areaLevel=c("Region", "County", "Pixel", "Cluster")) {
@@ -2694,11 +2732,9 @@ getAreaPerObservation = function(areaLevel=c("Region", "County"), dataType=c("ed
   # load the dataset
   dataType = match.arg(dataType)
   if(dataType == "mort") {
-    out = load("../U5MR/kenyaData.RData")
     dat = mort
   }
   else {
-    out = load("../U5MR/kenyaDataEd.RData")
     dat = ed
   }
   
@@ -2842,24 +2878,6 @@ getMeanRadius = function(areaLevel=c("Region", "County")) {
   radii
 }
 
-getPixelIndex = function(eastNorth, popMat=NULL) {
-  
-  if(is.null(popMat)) {
-    popMat = makeDefaultPopMat()
-    # lon: longitude
-    # lat: latitude
-    # east: easting (km)
-    # north: northing (km)
-    # pop: proportional to population density for each grid cell
-    # area: an id or area name in which the grid cell corresponding to each row resides
-    # urban: whether the grid cell is urban or rural
-  }
-  
-  # construct distance matrix. For each observation location, get closest pixel
-  distMat = rdist(eastNorth, cbind(popMat$east, popMat$north))
-  apply(distMat, 1, which.min)
-}
-
 getPredictionDistance = function(doLog=TRUE, dataType=c("ed", "mort")) {
   # load the pixel/prediction grid
   out = load("../U5MR/popGrid.RData")
@@ -2868,11 +2886,9 @@ getPredictionDistance = function(doLog=TRUE, dataType=c("ed", "mort")) {
   # load the dataset
   dataType = match.arg(dataType)
   if(dataType == "mort") {
-    out = load("../U5MR/kenyaData.RData")
     dat = mort
   }
   else {
-    out = load("../U5MR/kenyaDataEd.RData")
     dat = ed
   }
   observationPoints = cbind(dat$east, dat$north)
@@ -3064,7 +3080,10 @@ rMyMultinomial = function(n, i, includeUrban=TRUE, urban=TRUE, popMat=NULL, easp
 # Same as rMyMultinomial, except samples from independent binomial distributions 
 # (conditional on the stratum totals and population densities) conditioned to have 
 # at least one EA per pixel
-rMyMultiBinomial1 = function(n, i, includeUrban=TRUE, urban=TRUE, popMat=NULL, easpa=NULL) {
+# validationPixelI: a vector of indices corresponding to the rows of popMat (pixels) to draw 
+#                   samples for
+rMyMultiBinomial1 = function(n, i, includeUrban=TRUE, urban=TRUE, popMat=NULL, easpa=NULL, 
+                             validationPixelI=NULL) {
   
   # set default inputs
   if(is.null(popMat)) {
@@ -3111,12 +3130,19 @@ rMyMultiBinomial1 = function(n, i, includeUrban=TRUE, urban=TRUE, popMat=NULL, e
     return(matrix(nrow=0, ncol=n))
   thesePixelProbs = popMat$pop[includeI]
   thesePixelProbs = thesePixelProbs * (1 / sum(thesePixelProbs))
+  
+  if(!is.null(validationPixelI)) {
+    # for validation, we are only interested in a subset of pixels for this stratum
+    includeForValidation = which(includeI) %in% validationPixelI
+    thesePixelProbs = thesePixelProbs[includeForValidation]
+  }
+  
   out = matrix(rbinom1(n*length(thesePixelProbs), nEA, prob=thesePixelProbs), ncol=n)
   out
 }
 
 # function for determining how to recombine separate multinomials into the draws over all pixels
-getSortIndices = function(i, urban=TRUE, popMat=NULL, includeUrban=TRUE) {
+getSortIndices = function(i, urban=TRUE, popMat=NULL, includeUrban=TRUE, validationPixelI=NULL) {
   
   # set default inputs
   if(is.null(popMat)) {
@@ -3139,6 +3165,11 @@ getSortIndices = function(i, urban=TRUE, popMat=NULL, includeUrban=TRUE) {
   }
   else {
     includeI = popMat$area == areas[i]
+  }
+  
+  # include only indices included within validation if necessary
+  if(!is.null(validationPixelI)) {
+    includeI[! (which(includeI) %in% validationPixelI)] = FALSE
   }
   
   which(includeI)
@@ -3289,11 +3320,11 @@ nEAsByStratum2 = function(eaSamplesMod, popMat=NULL) {
 
 # gives nPixels x n matrix of draws from the stratified independent binomial 
 # distributions with values corresponding to the value of |C^g| for each pixel, 
-# g (the number of EAs/pixel). Each drama is conditioned on having at least one 
+# g (the number of EAs/pixel). Each draw is conditioned on having at least one 
 # EA per pixel marginally, and the total number of EAs is not enforced strictly. 
 # Instead, the stratum totals are used to obtain the marginal binomial 
 # (conditioned on having at least one success/EA per pixel) distributions.
-rStratifiedBinomial1 = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE) {
+rStratifiedBinomial1 = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE, validationPixelI=NULL) {
   
   # set default inputs
   if(is.null(popMat)) {
@@ -3333,13 +3364,17 @@ rStratifiedBinomial1 = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE) {
   if(includeUrban) {
     # draw for each area crossed with urban/rural
     urbanSamples = do.call("rbind", lapply(1:length(areas), rMyMultiBinomial1, n=n, urban=TRUE, 
-                                           includeUrban=includeUrban, popMat=popMat, easpa=easpa))
+                                           includeUrban=includeUrban, popMat=popMat, easpa=easpa, 
+                                           validationPixelI=validationPixelI))
     ruralSamples = do.call("rbind", lapply(1:length(areas), rMyMultiBinomial1, n=n, urban=FALSE, 
-                                           includeUrban=includeUrban, popMat=popMat, easpa=easpa))
+                                           includeUrban=includeUrban, popMat=popMat, easpa=easpa, 
+                                           validationPixelI=validationPixelI))
     
     # get the indices used to recombine into the full set of draws
-    urbanIndices = unlist(sapply(1:length(areas), getSortIndices, urban=TRUE, popMat=popMat, includeUrban=includeUrban))
-    ruralIndices = unlist(sapply(1:length(areas), getSortIndices, urban=FALSE, popMat=popMat, includeUrban=includeUrban))
+    urbanIndices = unlist(sapply(1:length(areas), getSortIndices, urban=TRUE, popMat=popMat, includeUrban=includeUrban, 
+                                 validationPixelI=validationPixelI))
+    ruralIndices = unlist(sapply(1:length(areas), getSortIndices, urban=FALSE, popMat=popMat, includeUrban=includeUrban, 
+                                 validationPixelI=validationPixelI))
     
     # recombine into eaSamples
     eaSamples[urbanIndices,] = urbanSamples
@@ -3347,10 +3382,12 @@ rStratifiedBinomial1 = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE) {
   } else {
     # draw for each area
     stratumSamples = rbind(sapply(1:length(areas), n=n, rMyMultiBinomial1, 
-                                  includeUrban=includeUrban, popMat=popMat, easpa=easpa))
+                                  includeUrban=includeUrban, popMat=popMat, easpa=easpa, 
+                                  validationPixelI=validationPixelI))
     
     # get the indices used to recombine into the full set of draws
-    stratumIndices = c(sapply(1:length(areas), getSortIndices, popMat=popMat, includeUrban=includeUrban))
+    stratumIndices = c(sapply(1:length(areas), getSortIndices, popMat=popMat, includeUrban=includeUrban, 
+                              validationPixelI=validationPixelI))
     
     # recombine into eaSamples
     eaSamples[stratumIndices,] = stratumSamples
@@ -3429,4 +3466,79 @@ rpois1 = function(n, prob) {
 expectSummationPoisson = function() {
   1
 }
+
+getPixelIndex = function(eastNorth, popMat=NULL) {
+  
+  if(is.null(popMat)) {
+    popMat = makeDefaultPopMat()
+    # lon: longitude
+    # lat: latitude
+    # east: easting (km)
+    # north: northing (km)
+    # pop: proportional to population density for each grid cell
+    # area: an id or area name in which the grid cell corresponding to each row resides
+    # urban: whether the grid cell is urban or rural
+  }
+  
+  # construct distance matrix. For each observation location, get closest pixel
+  distMat = rdist(eastNorth, cbind(popMat$east, popMat$north))
+  apply(distMat, 1, which.min)
+}
+
+# aggregate the dataset by pixel. 
+# dat: mort by default
+# popMat: we just need the pixel grid here, not population density.
+getPixelLevelTruth = function(dat=NULL, popMat=NULL, targetPop=c("children", "women")) {
+  # load in relevant data for the given example
+  if(targetPop == "women") {
+    resultNameRoot="Ed"
+    if(is.null(dat)) {
+      dat = ed
+    }
+    load("../U5MR/popGridAdjustedWomen.RData")
+  } else if(targetPop == "children") {
+    resultNameRoot="Mort"
+    if(is.null(dat)) {
+      dat = mort
+    }
+    load("../U5MR/popGridAdjusted.RData")
+  }
+  
+  # set popMat if necessary (we only need the pixel grid here, not population density)
+  if(is.null(popMat)) {
+    popMat = makeDefaultPopMat()
+    # lon: longitude
+    # lat: latitude
+    # east: easting (km)
+    # north: northing (km)
+    # pop: proportional to population density for each grid cell
+    # area: an id or area name in which the grid cell corresponding to each row resides
+    # urban: whether the grid cell is urban or rural
+  }
+  
+  # Get the pixel indices associated with each cluster in the dataset
+  pixelI = getPixelIndex(cbind(dat$east, dat$north), popMat)
+  
+  # aggregate dataset by pixel
+  y = aggregate(dat$y, by=list(pixelI=pixelI), FUN=sum)
+  n = aggregate(dat$n, by=list(pixelI=pixelI), FUN=sum)
+  p = y/n
+  p[is.na(p)] = 0
+  nClusters = aggregate(dat$n, by=list(pixelI=pixelI), FUN=length)
+  
+  # return results
+  results = data.frame(pixelI=pixelI, area=popMat$area[pixelI], east=popMat$east[pixelI], north=popMat$north[pixelI], 
+                       lon=popMat$lon[pixelI], lat=popMat$lat[pixelI], urban=popMat$urban[pixelI], 
+                       p=p, y=y, n=n, nClusters=nClusters)
+  sortI = sort(pixelI, index.return=TRUE)$ix
+  results[sortI,]
+}
+
+
+
+
+
+
+
+
 

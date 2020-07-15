@@ -47,8 +47,7 @@ getSPDEMeshKenya = function(locs=NULL, n=5000, max.n=5000, doPlot=FALSE, max.edg
   
   if(is.null(locs)) {
     # jitter the locations used to create the mesh so that they do not always lie on mesh points
-    out = load("../U5MR/kenyaDataEd.RData")
-    locs=cbind(jitter(ed$east, amount=jitterAmount), jitter(ed$north, amount=jitterAmount))
+    locs=cbind(jitter(mort$east, amount=jitterAmount), jitter(mort$north, amount=jitterAmount))
   }
   
   # generate mesh on R2
@@ -154,7 +153,8 @@ validateSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
                                 nPostSamples=1000, verbose=FALSE, link=1, seed=123, 
                                 urbanEffect=TRUE, clusterEffect=TRUE, kmres=5, 
                                 loadPreviousFit=TRUE, saveResults=TRUE, family=c("binomial", "betabinomial"), 
-                                sampleTable=NULL, stratifiedValidation=TRUE, loadPreviousResults=FALSE) {
+                                sampleTable=NULL, stratifiedValidation=TRUE, pixelLevelValidation=TRUE, 
+                                loadPreviousResults=FALSE) {
   if(!is.null(seed))
     set.seed(seed)
   family = match.arg(family)
@@ -163,11 +163,9 @@ validateSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
   dataType = match.arg(dataType)
   if(is.null(dat)) {
     if(dataType == "mort") {
-      out = load("../U5MR/kenyaData.RData")
       dat = mort
     }
     else {
-      out = load("../U5MR/kenyaDataEd.RData")
       dat = ed
     }
   }
@@ -199,7 +197,7 @@ validateSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
     lower = NULL
     upper = NULL
     estMat = fit$obsMat
-    estMatBinomial = addBinomialVar(estMat, dat$n)
+    # estMatBinomial = addBinomialVar(estMat, dat$n)
     
     cpo = fit$mod$cpo$cpo
     cpoFailure = fit$mod$cpo$failure
@@ -207,24 +205,23 @@ validateSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
     waic = fit$mod$waic$waic
     modelFit = fit$mod
     
-    # calculate validation scoring rules
-    print("Pooled scores:")
-    fullPooledScoresBinomial = data.frame(c(getScores(truth, est, vars, lower, upper, estMatBinomial, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), Time=time[3]))
-    print(fullPooledScoresBinomial)
-    print("Rural scores:")
-    fullRuralScoresBinomial = data.frame(c(getScores(truth[!obsUrban], est[!obsUrban], vars[!obsUrban], lower[!obsUrban], upper[!obsUrban], estMatBinomial[!obsUrban,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), Time=time[3]))
-    print(fullRuralScoresBinomial)
-    print("Urban scores:")
-    fullUrbanScoresBinomial = data.frame(c(getScores(truth[obsUrban], est[obsUrban], vars[obsUrban], lower[obsUrban], upper[obsUrban], estMatBinomial[obsUrban,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), Time=time[3]))
-    print(fullUrbanScoresBinomial)
-    
-    fullPooledScores = data.frame(c(getScores(truth, est, vars, lower, upper, estMat), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), Time=time[3]))
-    fullRuralScores = data.frame(c(getScores(truth[!obsUrban], est[!obsUrban], vars[!obsUrban], lower[!obsUrban], upper[!obsUrban], estMat[!obsUrban,]), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), Time=time[3]))
-    fullUrbanScores = data.frame(c(getScores(truth[obsUrban], est[obsUrban], vars[obsUrban], lower[obsUrban], upper[obsUrban], estMat[obsUrban,]), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), Time=time[3]))
+    # # calculate validation scoring rules
+    # print("Pooled scores:")
+    # fullPooledScoresBinomial = data.frame(c(getScores(truth, est, vars, lower, upper, estMatBinomial, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), Time=time[3]))
+    # print(fullPooledScoresBinomial)
+    # print("Rural scores:")
+    # fullRuralScoresBinomial = data.frame(c(getScores(truth[!obsUrban], est[!obsUrban], vars[!obsUrban], lower[!obsUrban], upper[!obsUrban], estMatBinomial[!obsUrban,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), Time=time[3]))
+    # print(fullRuralScoresBinomial)
+    # print("Urban scores:")
+    # fullUrbanScoresBinomial = data.frame(c(getScores(truth[obsUrban], est[obsUrban], vars[obsUrban], lower[obsUrban], upper[obsUrban], estMatBinomial[obsUrban,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), Time=time[3]))
+    # print(fullUrbanScoresBinomial)
+    # 
+    # fullPooledScores = data.frame(c(getScores(truth, est, vars, lower, upper, estMat), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), Time=time[3]))
+    # fullRuralScores = data.frame(c(getScores(truth[!obsUrban], est[!obsUrban], vars[!obsUrban], lower[!obsUrban], upper[!obsUrban], estMat[!obsUrban,]), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), Time=time[3]))
+    # fullUrbanScores = data.frame(c(getScores(truth[obsUrban], est[obsUrban], vars[obsUrban], lower[obsUrban], upper[obsUrban], estMat[obsUrban,]), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), Time=time[3]))
     
     if(saveResults)
-      save(time=time, fit=fit, fullPooledScoresBinomial=fullPooledScoresBinomial, fullRuralScoresBinomial=fullRuralScoresBinomial, fullUrbanScoresBinomial=fullUrbanScoresBinomial, 
-           fullPooledScores=fullPooledScores, fullRuralScores=fullRuralScores, fullUrbanScores=fullUrbanScores, file=fileName)
+      save(time=time, fit=fit, file=fileName)
   }
   else {
     print("Loading previous full model fit")
@@ -234,7 +231,7 @@ validateSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
   
   # set up sample table of indices if using stratified validation
   if(stratifiedValidation && is.null(sampleTable))
-    sampleTable = getValidationI(dat=dat, dataType=dataType)
+    sampleTable = getValidationI(dat=dat, dataType=dataType, pixelLevel=pixelLevelValidation)
   
   # get region names
   allRegions = countyToRegion(dat$admin1)
@@ -242,7 +239,7 @@ validateSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
   if(!stratifiedValidation)
     nFold = length(regions)
   else
-    nFold = 8
+    nFold = 10
   
   # calculate bins for nearest neighbor distances
   distanceMax = 0
@@ -288,10 +285,6 @@ validateSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
     distanceMax = max(distanceMax, tempMax)
   }
   distanceBreaks = seq(0, distanceMax+1, l=20)
-  
-  # set up sample table of indices if using stratified validation
-  if(stratifiedValidation && is.null(sampleTable))
-    sampleTable = getValidationI(dat=dat, dataType=dataType)
   
   completeScoreTableBinomial = c()
   pooledScoreTableBinomial = c()
@@ -346,10 +339,15 @@ validateSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
       thisSampleI = leaveOutI
     }
     
-    # fit the model
+    # fit the point level model
     time = system.time(fit <- fitSPDEKenyaDat(dat, dataType, mesh, prior, significanceCI, int.strategy, strategy, nPostSamples, 
                                               verbose, link, NULL, urbanEffect, clusterEffect, thisRegion,
                                               kmres, TRUE, previousFit, family=family, leaveOutI=leaveOutI))
+    
+    # get the aggregation model predictions
+    aggregatedPreds = modLCPB(uDraws, sigmaEpsilonDraws, results, easpa=NULL, popMat=NULL, empiricalDistributions=NULL, 
+                              includeUrban=TRUE, maxEmptyFraction=1, clusterLevel=TRUE, pixelLevel=TRUE, countyLevel=TRUE, 
+                              regionLevel=TRUE, doModifiedPixelLevel=TRUE, validationPixelI=)
     
     # get observations and prediction summary statistics
     truth = (dat$y / dat$n)[thisSampleI]
@@ -933,7 +931,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
        interceptSummary=interceptSummary, fixedEffectSummary=fixedEffectSummary, rangeSummary=rangeSummary, 
        sdSummary=sdSummary, varSummary=varSummary, overdispersionSummary=overdispersionSummary, 
        parameterSummaryTable=parameterSummaryTable, 
-       uDraws=predMat, obsMat=obsMatClustEffect, hyperMat=hyperMat, timings=timings, sigmaEpsilonDraws=clusterVars, rhos=rhos)
+       uDraws=logit(predMat), obsMat=obsMatClustEffect, hyperMat=hyperMat, timings=timings, sigmaEpsilonDraws=clusterVars, rhos=rhos)
 }
 
 # this function generates results for the simulation study for the SPDE model
