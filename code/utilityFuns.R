@@ -3522,15 +3522,19 @@ getPixelLevelTruth = function(dat=NULL, popMat=NULL, targetPop=c("children", "wo
   # aggregate dataset by pixel
   y = aggregate(dat$y, by=list(pixelI=pixelI), FUN=sum)
   n = aggregate(dat$n, by=list(pixelI=pixelI), FUN=sum)
-  p = y/n
+  p = y[,2]/n[,2]
   p[is.na(p)] = 0
   nClusters = aggregate(dat$n, by=list(pixelI=pixelI), FUN=length)
+  uniquePixelI = y[,1]
+  y = y[,2]
+  n = n[,2]
+  nClusters = nClusters[,2]
   
   # return results
-  results = data.frame(pixelI=pixelI, area=popMat$area[pixelI], east=popMat$east[pixelI], north=popMat$north[pixelI], 
-                       lon=popMat$lon[pixelI], lat=popMat$lat[pixelI], urban=popMat$urban[pixelI], 
+  results = data.frame(pixelI=uniquePixelI, area=popMat$area[uniquePixelI], east=popMat$east[uniquePixelI], north=popMat$north[uniquePixelI], 
+                       lon=popMat$lon[uniquePixelI], lat=popMat$lat[uniquePixelI], urban=popMat$urban[uniquePixelI], 
                        p=p, y=y, n=n, nClusters=nClusters)
-  sortI = sort(pixelI, index.return=TRUE)$ix
+  sortI = sort(uniquePixelI, index.return=TRUE)$ix
   results[sortI,]
 }
 
