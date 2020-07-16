@@ -829,9 +829,11 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
   if(is.null(dat)) {
     if(dataType == "mort") {
       dat = mort
+      dataType2 = "children"
     }
     else {
       dat = ed
+      dataType2 = "women"
     }
   }
   if(dataType == "mort")
@@ -850,13 +852,14 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
                                                    kmres=kmres, doValidation=TRUE, family="binomial"))[3]
     browser()
     print("Fitting full population aggregation model")
-    timeAggregation = system.time(fit2 <- modLCPB(uDraws=fit$uDraws, fit$sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empiricalDistributions=NULL, 
+    truthTableFull = getPixelLevelTruth(dat=dat, popMat=NULL, targetPop="children")
+    easpaMort = makeDefaultEASPA(dataType2, NULL, useClustersAsEAs=TRUE)
+    timeAggregation = system.time(fit2 <- modLCPB(uDraws=fit$uDraws, fit$sigmaEpsilonDraws, easpa=easpaMort, popMat=NULL, empiricalDistributions=NULL, 
                                                   includeUrban=urbanEffect, clusterLevel=FALSE, pixelLevel=TRUE, countyLevel=FALSE, 
-                                                  regionLevel=FALSE, doModifiedPixelLevel=TRUE, validationPixelI=NULL, 
+                                                  regionLevel=FALSE, doModifiedPixelLevel=TRUE, validationPixelI=truthTableFull$pixelI, 
                                                   onlyDoModifiedPixelLevel=TRUE))[3]
     
     # get observations and prediction summary statistics
-    truthTableFull = getPixelLevelTruth(dat=dat, popMat=NULL, targetPop="children")
     # easpaFull = makeDefaultEASPA(validationClusterI=NULL, useClustersAsEAs=TRUE)
     truthFull = truthTableFull$p
     truthUrban = truthTableFull$urban

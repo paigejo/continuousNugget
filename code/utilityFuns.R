@@ -3169,7 +3169,13 @@ getSortIndices = function(i, urban=TRUE, popMat=NULL, includeUrban=TRUE, validat
   
   # include only indices included within validation if necessary
   if(!is.null(validationPixelI)) {
-    includeI[! (which(includeI) %in% validationPixelI)] = FALSE
+    
+    # convert validationPixelI into a logical
+    temp = rep(FALSE, length(includeI))
+    temp[validationPixelI] = TRUE
+    
+    # include only indices we are interested in for the validation
+    includeI = includeI & temp
   }
   
   which(includeI)
