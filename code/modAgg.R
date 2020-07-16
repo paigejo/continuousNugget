@@ -235,7 +235,8 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empirical
                                     popMat=popMat, includeUrban=includeUrban, verbose=TRUE)
   }
   if(doModifiedPixelLevel) {
-    NcsMod = sampleNPoissonBinomial(eaSamplesMod=eaSamplesMod, pixelIndexListMod=pixelIndexListMod, areaListMod=areaListMod, urbanListMod=urbanListMod, includeUrban=includeUrban)
+    NcsMod = sampleNPoissonBinomial(eaSamplesMod=eaSamplesMod, pixelIndexListMod=pixelIndexListMod, areaListMod=areaListMod, urbanListMod=urbanListMod, 
+                                    includeUrban=includeUrban, easpa=easpa, popMat=popMat)
   }
   
   ##### do part of Line 7 in advance
