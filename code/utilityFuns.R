@@ -3364,7 +3364,10 @@ rStratifiedBinomial1 = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE, v
   
   # we will need to draw separate multinomial for each stratum. Start by 
   # creating matrix of all draws of |C^g|
-  eaSamples = matrix(NA, nrow=nrow(popMat), ncol=n)
+  if(is.null(validationPixelI))
+    eaSamples = matrix(NA, nrow=nrow(popMat), ncol=n)
+  else
+    eaSamples = matrix(NA, nrow=length(validationPixelI), ncol=n)
   
   # now draw multinomials
   if(includeUrban) {
@@ -3382,6 +3385,12 @@ rStratifiedBinomial1 = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE, v
     ruralIndices = unlist(sapply(1:length(areas), getSortIndices, urban=FALSE, popMat=popMat, includeUrban=includeUrban, 
                                  validationPixelI=validationPixelI))
     
+    if(!is.null(validationPixelI)) {
+      out = sort(c(urbanIndices, ruralIndices), index.return=TRUE)$ix
+      urbanIndices = out[1:length(urbanIndices)]
+      ruralIndices = out[(length(urbanIndices)+1):length(out)]
+    }
+    
     # recombine into eaSamples
     eaSamples[urbanIndices,] = urbanSamples
     eaSamples[ruralIndices,] = ruralSamples
@@ -3394,6 +3403,10 @@ rStratifiedBinomial1 = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE, v
     # get the indices used to recombine into the full set of draws
     stratumIndices = c(sapply(1:length(areas), getSortIndices, popMat=popMat, includeUrban=includeUrban, 
                               validationPixelI=validationPixelI))
+    
+    if(!is.null(validationPixelI)) {
+      stratumIndices = sort(stratumIndices, index.return=TRUE)$ix
+    }
     
     # recombine into eaSamples
     eaSamples[stratumIndices,] = stratumSamples
