@@ -1,0 +1,291 @@
+﻿OBJECTID *,Shape *,admin2Name_en,admin2Pcode,admin2RefName,admin2AltName1_en,admin2AltName2_en,admin1Name_en,admin1Pcode,admin0Name_en,admin0Pcode,date,validOn,validTo,Shape_Length,Shape_Area
+1,Polygon,Ainabkoi,KE027144,<Null>,<Null>,<Null>,Uasin Gishu,KE027,Kenya,KE,11/3/17,10/31/19,<Null>,1.746986,0.040829
+2,Polygon,Ainamoi,KE035190,<Null>,<Null>,<Null>,Kericho,KE035,Kenya,KE,11/3/17,10/31/19,<Null>,0.917307,0.019957
+3,Polygon,Aldai,KE029152,<Null>,<Null>,<Null>,Nandi,KE029,Kenya,KE,11/3/17,10/31/19,<Null>,1.402637,0.038
+4,Polygon,Alego Usonga,KE041234,<Null>,<Null>,<Null>,Siaya,KE041,Kenya,KE,11/3/17,10/31/19,<Null>,1.081354,0.049357
+5,Polygon,Awendo,KE044254,<Null>,<Null>,<Null>,Migori,KE044,Kenya,KE,11/3/17,10/31/19,<Null>,0.743915,0.021365
+6,Polygon,Bahati,KE032174,<Null>,<Null>,<Null>,Nakuru,KE032,Kenya,KE,11/3/17,10/31/19,<Null>,0.797055,0.024234
+7,Polygon,Balambala,KE007028,<Null>,<Null>,<Null>,Garissa,KE007,Kenya,KE,11/3/17,10/31/19,<Null>,3.937161,0.393245
+8,Polygon,Banissa,KE009040,<Null>,<Null>,<Null>,Mandera,KE009,Kenya,KE,11/3/17,10/31/19,<Null>,2.799368,0.247446
+9,Polygon,Baringo Central,KE030159,<Null>,<Null>,<Null>,Baringo,KE030,Kenya,KE,11/3/17,10/31/19,<Null>,1.332541,0.053758
+10,Polygon,Baringo North,KE030158,<Null>,<Null>,<Null>,Baringo,KE030,Kenya,KE,11/3/17,10/31/19,<Null>,1.718592,0.132741
+11,Polygon,Baringo South,KE030160,<Null>,<Null>,<Null>,Baringo,KE030,Kenya,KE,11/3/17,10/31/19,<Null>,2.611854,0.148415
+12,Polygon,Belgut,KE035192,<Null>,<Null>,<Null>,Kericho,KE035,Kenya,KE,11/3/17,10/31/19,<Null>,1.434854,0.031094
+13,Polygon,Bobasi,KE045264,<Null>,<Null>,<Null>,Kisii,KE045,Kenya,KE,11/3/17,10/31/19,<Null>,0.682056,0.019528
+14,Polygon,Bomachoge Borabu,KE045263,<Null>,<Null>,<Null>,Kisii,KE045,Kenya,KE,11/3/17,10/31/19,<Null>,0.44317,0.009275
+15,Polygon,Bomachoge Chache,KE045265,<Null>,<Null>,<Null>,Kisii,KE045,Kenya,KE,11/3/17,10/31/19,<Null>,0.504551,0.008287
+16,Polygon,Bomet Central,KE036197,<Null>,<Null>,<Null>,Bomet,KE036,Kenya,KE,11/3/17,10/31/19,<Null>,1.00095,0.021851
+17,Polygon,Bomet East,KE036196,<Null>,<Null>,<Null>,Bomet,KE036,Kenya,KE,11/3/17,10/31/19,<Null>,1.097686,0.024847
+18,Polygon,Bonchari,KE045261,<Null>,<Null>,<Null>,Kisii,KE045,Kenya,KE,11/3/17,10/31/19,<Null>,0.400134,0.010292
+19,Polygon,Bondo,KE041236,<Null>,<Null>,<Null>,Siaya,KE041,Kenya,KE,11/3/17,10/31/19,<Null>,1.513095,0.106468
+20,Polygon,Borabu,KE046273,<Null>,<Null>,<Null>,Nyamira,KE046,Kenya,KE,11/3/17,10/31/19,<Null>,1.186568,0.023828
+21,Polygon,Budalangi,KE040231,<Null>,<Null>,<Null>,Busia,KE040,Kenya,KE,11/3/17,10/31/19,<Null>,0.641532,0.025236
+22,Polygon,Bumula,KE039219,<Null>,<Null>,<Null>,Bungoma,KE039,Kenya,KE,11/3/17,10/31/19,<Null>,0.971189,0.028057
+23,Polygon,Bura,KE004020,<Null>,<Null>,<Null>,Tana River,KE004,Kenya,KE,11/3/17,10/31/19,<Null>,4.987772,1.105157
+24,Polygon,Buret,KE035191,<Null>,<Null>,<Null>,Kericho,KE035,Kenya,KE,11/3/17,10/31/19,<Null>,0.774758,0.02565
+25,Polygon,Butere,KE037207,<Null>,<Null>,<Null>,Kakamega,KE037,Kenya,KE,11/3/17,10/31/19,<Null>,0.798038,0.016998
+26,Polygon,Butula,KE040229,<Null>,<Null>,<Null>,Busia,KE040,Kenya,KE,11/3/17,10/31/19,<Null>,0.740608,0.019739
+27,Polygon,Buuri,KE012057,<Null>,<Null>,<Null>,Meru,KE012,Kenya,KE,11/3/17,10/31/19,<Null>,2.269751,0.10682
+28,Polygon,Cental Imenti,KE012058,<Null>,<Null>,<Null>,Meru,KE012,Kenya,KE,11/3/17,10/31/19,<Null>,1.965308,0.062705
+29,Polygon,Changamwe,KE001001,<Null>,<Null>,<Null>,Mombasa,KE001,Kenya,KE,11/3/17,10/31/19,<Null>,0.250736,0.001854
+30,Polygon,Chepalungu,KE036195,<Null>,<Null>,<Null>,Bomet,KE036,Kenya,KE,11/3/17,10/31/19,<Null>,1.141075,0.043595
+31,Polygon,Cherangany,KE026140,<Null>,<Null>,<Null>,Trans Nzoia,KE026,Kenya,KE,11/3/17,10/31/19,<Null>,1.20108,0.05099
+32,Polygon,Chesumei,KE029154,<Null>,<Null>,<Null>,Nandi,KE029,Kenya,KE,11/3/17,10/31/19,<Null>,1.156096,0.03949
+33,Polygon,Dadaab,KE007030,<Null>,<Null>,<Null>,Garissa,KE007,Kenya,KE,11/3/17,10/31/19,<Null>,4.581505,0.56261
+34,Polygon,Dagoretti,KE047276,<Null>,<Null>,<Null>,Nairobi,KE047,Kenya,KE,11/3/17,10/31/19,<Null>,0.267128,0.001986
+35,Polygon,Dujis,KE007027,<Null>,<Null>,<Null>,Garissa,KE007,Kenya,KE,11/3/17,10/31/19,<Null>,0.934262,0.046176
+36,Polygon,Eldama Ravine,KE030162,<Null>,<Null>,<Null>,Baringo,KE030,Kenya,KE,11/3/17,10/31/19,<Null>,1.433876,0.075773
+37,Polygon,Eldas,KE008037,<Null>,<Null>,<Null>,Wajir,KE008,Kenya,KE,11/3/17,10/31/19,<Null>,4.092418,0.385452
+38,Polygon,Embakasi Central,KE047284,<Null>,<Null>,<Null>,Nairobi,KE047,Kenya,KE,11/3/17,10/31/19,<Null>,0.130085,0.000665
+39,Polygon,Embakasi East,KE047285,<Null>,<Null>,<Null>,Nairobi,KE047,Kenya,KE,11/3/17,10/31/19,<Null>,0.405266,0.006976
+40,Polygon,Embakasi North,KE047283,<Null>,<Null>,<Null>,Nairobi,KE047,Kenya,KE,11/3/17,10/31/19,<Null>,0.143452,0.000441
+41,Polygon,Embakasi South,KE047282,<Null>,<Null>,<Null>,Nairobi,KE047,Kenya,KE,11/3/17,10/31/19,<Null>,0.243431,0.001426
+42,Polygon,Embakasi West,KE047286,<Null>,<Null>,<Null>,Nairobi,KE047,Kenya,KE,11/3/17,10/31/19,<Null>,0.168045,0.000793
+43,Polygon,Emgwen,KE029155,<Null>,<Null>,<Null>,Nandi,KE029,Kenya,KE,11/3/17,10/31/19,<Null>,1.40744,0.029482
+44,Polygon,Emuhaya,KE038215,<Null>,<Null>,<Null>,Vihiga,KE038,Kenya,KE,11/3/17,10/31/19,<Null>,0.431816,0.007245
+45,Polygon,Emurua Dikirr,KE033178,<Null>,<Null>,<Null>,Narok,KE033,Kenya,KE,11/3/17,10/31/19,<Null>,0.93782,0.026414
+46,Polygon,Endebess,KE026137,<Null>,<Null>,<Null>,Trans Nzoia,KE026,Kenya,KE,11/3/17,10/31/19,<Null>,1.283175,0.054353
+47,Polygon,Fafi,KE007031,<Null>,<Null>,<Null>,Garissa,KE007,Kenya,KE,11/3/17,10/31/19,<Null>,5.273501,1.34739
+48,Polygon,Funyula,KE040230,<Null>,<Null>,<Null>,Busia,KE040,Kenya,KE,11/3/17,10/31/19,<Null>,0.765179,0.022205
+49,Polygon,Gachoka,KE014065,<Null>,<Null>,<Null>,Embu,KE014,Kenya,KE,11/3/17,10/31/19,<Null>,2.337936,0.107519
+50,Polygon,Galole,KE004019,<Null>,<Null>,<Null>,Tana River,KE004,Kenya,KE,11/3/17,10/31/19,<Null>,4.366257,0.787267
+51,Polygon,Ganze,KE003015,<Null>,<Null>,<Null>,Kilifi,KE003,Kenya,KE,11/3/17,10/31/19,<Null>,2.560004,0.238829
+52,Polygon,Garsen,KE004018,<Null>,<Null>,<Null>,Tana River,KE004,Kenya,KE,11/3/17,10/31/19,<Null>,6.342787,1.292981
+53,Polygon,Gatanga,KE021110,<Null>,<Null>,<Null>,Murang'a,KE021,Kenya,KE,11/3/17,10/31/19,<Null>,2.420709,0.048801
+54,Polygon,Gatundu North,KE022112,<Null>,<Null>,<Null>,Kiambu,KE022,Kenya,KE,11/3/17,10/31/19,<Null>,0.993124,0.019056
+55,Polygon,Gatundu South,KE022111,<Null>,<Null>,<Null>,Kiambu,KE022,Kenya,KE,11/3/17,10/31/19,<Null>,0.939206,0.018013
+56,Polygon,Gem,KE041235,<Null>,<Null>,<Null>,Siaya,KE041,Kenya,KE,11/3/17,10/31/19,<Null>,1.00595,0.032738
+57,Polygon,Gichugu,KE020101,<Null>,<Null>,<Null>,Kirinyaga,KE020,Kenya,KE,11/3/17,10/31/19,<Null>,1.026964,0.03795
+58,Polygon,Gilgil,KE032169,<Null>,<Null>,<Null>,Nakuru,KE032,Kenya,KE,11/3/17,10/31/19,<Null>,1.897389,0.10269
+59,Polygon,Githunguri,KE022116,<Null>,<Null>,<Null>,Kiambu,KE022,Kenya,KE,11/3/17,10/31/19,<Null>,0.756157,0.014056
+60,Polygon,Hamisi,KE038213,<Null>,<Null>,<Null>,Vihiga,KE038,Kenya,KE,11/3/17,10/31/19,<Null>,0.874204,0.015164
+61,Polygon,Homa Bay,KE043249,<Null>,<Null>,<Null>,Homa Bay,KE043,Kenya,KE,11/3/17,10/31/19,<Null>,0.895107,0.021858
+62,Polygon,Igembe Central,KE012052,<Null>,<Null>,<Null>,Meru,KE012,Kenya,KE,11/3/17,10/31/19,<Null>,2.176235,0.065186
+63,Polygon,Igembe North,KE012053,<Null>,<Null>,<Null>,Meru,KE012,Kenya,KE,11/3/17,10/31/19,<Null>,1.294999,0.087411
+64,Polygon,Igembe South,KE012051,<Null>,<Null>,<Null>,Meru,KE012,Kenya,KE,11/3/17,10/31/19,<Null>,1.81656,0.068166
+65,Polygon,Ijara,KE007032,<Null>,<Null>,<Null>,Garissa,KE007,Kenya,KE,11/3/17,10/31/19,<Null>,4.952437,0.668431
+66,Polygon,Ikolomani,KE037210,<Null>,<Null>,<Null>,Kakamega,KE037,Kenya,KE,11/3/17,10/31/19,<Null>,0.653698,0.011685
+67,Polygon,Isiolo North,KE011049,<Null>,<Null>,<Null>,Isiolo,KE011,Kenya,KE,11/3/17,10/31/19,<Null>,9.287772,1.245064
+68,Polygon,Isiolo South,KE011050,<Null>,<Null>,<Null>,Isiolo,KE011,Kenya,KE,11/3/17,10/31/19,<Null>,5.379041,0.818787
+69,Polygon,Jomvu,KE001002,<Null>,<Null>,<Null>,Mombasa,KE001,Kenya,KE,11/3/17,10/31/19,<Null>,0.339882,0.002583
+70,Polygon,Juja,KE022113,<Null>,<Null>,<Null>,Kiambu,KE022,Kenya,KE,11/3/17,10/31/19,<Null>,1.134347,0.030344
+71,Polygon,Kabete,KE022119,<Null>,<Null>,<Null>,Kiambu,KE022,Kenya,KE,11/3/17,10/31/19,<Null>,0.384771,0.004568
+72,Polygon,Kabondo Kasipul,KE043246,<Null>,<Null>,<Null>,Homa Bay,KE043,Kenya,KE,11/3/17,10/31/19,<Null>,0.82264,0.02006
+73,Polygon,Kabuchai,KE039218,<Null>,<Null>,<Null>,Bungoma,KE039,Kenya,KE,11/3/17,10/31/19,<Null>,0.700803,0.018991
+74,Polygon,Kacheliba,KE024131,<Null>,<Null>,<Null>,West Pokot,KE024,Kenya,KE,11/3/17,10/31/19,<Null>,3.672954,0.334187
+75,Polygon,Kaiti,KE017085,<Null>,<Null>,<Null>,Makueni,KE017,Kenya,KE,11/3/17,10/31/19,<Null>,1.066959,0.03286
+76,Polygon,Kajiado Central,KE034184,<Null>,<Null>,<Null>,Kajiado,KE034,Kenya,KE,11/3/17,10/31/19,<Null>,2.937419,0.35002
+77,Polygon,Kajiado East,KE034186,<Null>,<Null>,<Null>,Kajiado,KE034,Kenya,KE,11/3/17,10/31/19,<Null>,3.844417,0.265713
+78,Polygon,Kajiado North,KE034183,<Null>,<Null>,<Null>,Kajiado,KE034,Kenya,KE,11/3/17,10/31/19,<Null>,0.674149,0.009134
+79,Polygon,Kajiado South,KE034187,<Null>,<Null>,<Null>,Kajiado,KE034,Kenya,KE,11/3/17,10/31/19,<Null>,3.388088,0.515502
+80,Polygon,Kajiado West,KE034185,<Null>,<Null>,<Null>,Kajiado,KE034,Kenya,KE,11/3/17,10/31/19,<Null>,4.194567,0.638814
+81,Polygon,Kaloleni,KE003013,<Null>,<Null>,<Null>,Kilifi,KE003,Kenya,KE,11/3/17,10/31/19,<Null>,1.363236,0.054408
+82,Polygon,Kamukunji,KE047288,<Null>,<Null>,<Null>,Nairobi,KE047,Kenya,KE,11/3/17,10/31/19,<Null>,0.1399,0.000718
+83,Polygon,Kandara,KE021109,<Null>,<Null>,<Null>,Murang'a,KE021,Kenya,KE,11/3/17,10/31/19,<Null>,0.941101,0.017058
+84,Polygon,Kanduyi,KE039220,<Null>,<Null>,<Null>,Bungoma,KE039,Kenya,KE,11/3/17,10/31/19,<Null>,1.126771,0.025932
+85,Polygon,Kangema,KE021104,<Null>,<Null>,<Null>,Murang'a,KE021,Kenya,KE,11/3/17,10/31/19,<Null>,1.266719,0.028543
+86,Polygon,Kangundo,KE016077,<Null>,<Null>,<Null>,Machakos,KE016,Kenya,KE,11/3/17,10/31/19,<Null>,0.61116,0.013896
+87,Polygon,Kapenguria,KE024129,<Null>,<Null>,<Null>,West Pokot,KE024,Kenya,KE,11/3/17,10/31/19,<Null>,3.099983,0.144343
+88,Polygon,Kapseret,KE027145,<Null>,<Null>,<Null>,Uasin Gishu,KE027,Kenya,KE,11/3/17,10/31/19,<Null>,0.971852,0.029017
+89,Polygon,Karachuonyo,KE043247,<Null>,<Null>,<Null>,Homa Bay,KE043,Kenya,KE,11/3/17,10/31/19,<Null>,1.138443,0.060754
+90,Polygon,Kasarani,KE047280,<Null>,<Null>,<Null>,Nairobi,KE047,Kenya,KE,11/3/17,10/31/19,<Null>,0.712715,0.011074
+91,Polygon,Kasipul,KE043245,<Null>,<Null>,<Null>,Homa Bay,KE043,Kenya,KE,11/3/17,10/31/19,<Null>,0.631207,0.020971
+92,Polygon,Kathiani,KE016079,<Null>,<Null>,<Null>,Machakos,KE016,Kenya,KE,11/3/17,10/31/19,<Null>,0.897551,0.016742
+93,Polygon,Keiyo North,KE028149,<Null>,<Null>,<Null>,Elgeyo-Marakwet,KE028,Kenya,KE,11/3/17,10/31/19,<Null>,1.133919,0.044024
+94,Polygon,Keiyo South,KE028150,<Null>,<Null>,<Null>,Elgeyo-Marakwet,KE028,Kenya,KE,11/3/17,10/31/19,<Null>,1.415058,0.072006
+95,Polygon,Kesses,KE027146,<Null>,<Null>,<Null>,Uasin Gishu,KE027,Kenya,KE,11/3/17,10/31/19,<Null>,1.955523,0.054494
+96,Polygon,Khwisero,KE037208,<Null>,<Null>,<Null>,Kakamega,KE037,Kenya,KE,11/3/17,10/31/19,<Null>,0.760461,0.011733
+97,Polygon,Kiambaa,KE022118,<Null>,<Null>,<Null>,Kiambu,KE022,Kenya,KE,11/3/17,10/31/19,<Null>,0.530998,0.007205
+98,Polygon,Kiambu,KE022117,<Null>,<Null>,<Null>,Kiambu,KE022,Kenya,KE,11/3/17,10/31/19,<Null>,0.548588,0.007962
+99,Polygon,Kibra,KE047278,<Null>,<Null>,<Null>,Nairobi,KE047,Kenya,KE,11/3/17,10/31/19,<Null>,0.204387,0.001002
+100,Polygon,Kibwezi East,KE017088,<Null>,<Null>,<Null>,Makueni,KE017,Kenya,KE,11/3/17,10/31/19,<Null>,2.929736,0.180503
+101,Polygon,Kibwezi West,KE017087,<Null>,<Null>,<Null>,Makueni,KE017,Kenya,KE,11/3/17,10/31/19,<Null>,2.414179,0.143711
+102,Polygon,Kieni,KE019095,<Null>,<Null>,<Null>,Nyeri,KE019,Kenya,KE,11/3/17,10/31/19,<Null>,2.654826,0.14738
+103,Polygon,Kigumo,KE021107,<Null>,<Null>,<Null>,Murang'a,KE021,Kenya,KE,11/3/17,10/31/19,<Null>,1.358379,0.025694
+104,Polygon,Kiharu,KE021106,<Null>,<Null>,<Null>,Murang'a,KE021,Kenya,KE,11/3/17,10/31/19,<Null>,1.221167,0.024836
+105,Polygon,Kikuyu,KE022120,<Null>,<Null>,<Null>,Kiambu,KE022,Kenya,KE,11/3/17,10/31/19,<Null>,0.766768,0.014164
+106,Polygon,Kilgoris,KE033177,<Null>,<Null>,<Null>,Narok,KE033,Kenya,KE,11/3/17,10/31/19,<Null>,3.037646,0.206303
+107,Polygon,Kilifi North,KE003011,<Null>,<Null>,<Null>,Kilifi,KE003,Kenya,KE,11/3/17,10/31/19,<Null>,2.572741,0.063841
+108,Polygon,Kilifi South,KE003012,<Null>,<Null>,<Null>,Kilifi,KE003,Kenya,KE,11/3/17,10/31/19,<Null>,1.103399,0.034543
+109,Polygon,Kilimani,KE047275,<Null>,<Null>,<Null>,Nairobi,KE047,Kenya,KE,11/3/17,10/31/19,<Null>,0.228079,0.002385
+110,Polygon,Kilome,KE017084,<Null>,<Null>,<Null>,Makueni,KE017,Kenya,KE,11/3/17,10/31/19,<Null>,1.580431,0.066917
+111,Polygon,Kimilili,KE039223,<Null>,<Null>,<Null>,Bungoma,KE039,Kenya,KE,11/3/17,10/31/19,<Null>,0.656576,0.014414
+112,Polygon,Kiminini,KE026139,<Null>,<Null>,<Null>,Trans Nzoia,KE026,Kenya,KE,11/3/17,10/31/19,<Null>,1.128839,0.029952
+113,Polygon,Kinango,KE002010,<Null>,<Null>,<Null>,Kwale,KE002,Kenya,KE,11/3/17,10/31/19,<Null>,3.934694,0.393618
+114,Polygon,Kinangop,KE018089,<Null>,<Null>,<Null>,Nyandarua,KE018,Kenya,KE,11/3/17,10/31/19,<Null>,1.339175,0.043783
+115,Polygon,Kipipiri,KE018090,<Null>,<Null>,<Null>,Nyandarua,KE018,Kenya,KE,11/3/17,10/31/19,<Null>,1.551033,0.076464
+116,Polygon,Kipkelion East,KE035188,<Null>,<Null>,<Null>,Kericho,KE035,Kenya,KE,11/3/17,10/31/19,<Null>,2.027243,0.06113
+117,Polygon,Kipkelion West,KE035189,<Null>,<Null>,<Null>,Kericho,KE035,Kenya,KE,11/3/17,10/31/19,<Null>,0.898342,0.028622
+118,Polygon,Kirinyaga Central,KE020103,<Null>,<Null>,<Null>,Kirinyaga,KE020,Kenya,KE,11/3/17,10/31/19,<Null>,1.017951,0.019277
+119,Polygon,Kisauni,KE001003,<Null>,<Null>,<Null>,Mombasa,KE001,Kenya,KE,11/3/17,10/31/19,<Null>,0.76496,0.00729
+120,Polygon,Kisumu Central,KE042240,<Null>,<Null>,<Null>,Kisumu,KE042,Kenya,KE,11/3/17,10/31/19,<Null>,0.462468,0.00555
+121,Polygon,Kisumu East,KE042238,<Null>,<Null>,<Null>,Kisumu,KE042,Kenya,KE,11/3/17,10/31/19,<Null>,0.939202,0.013442
+122,Polygon,Kisumu West,KE042239,<Null>,<Null>,<Null>,Kisumu,KE042,Kenya,KE,11/3/17,10/31/19,<Null>,0.775223,0.025376
+123,Polygon,Kitui Central,KE015072,<Null>,<Null>,<Null>,Kitui,KE015,Kenya,KE,11/3/17,10/31/19,<Null>,1.816617,0.059205
+124,Polygon,Kitui East,KE015073,<Null>,<Null>,<Null>,Kitui,KE015,Kenya,KE,11/3/17,10/31/19,<Null>,3.267148,0.384091
+125,Polygon,Kitui Rural,KE015071,<Null>,<Null>,<Null>,Kitui,KE015,Kenya,KE,11/3/17,10/31/19,<Null>,3.463374,0.124282
+126,Polygon,Kitui South,KE015074,<Null>,<Null>,<Null>,Kitui,KE015,Kenya,KE,11/3/17,10/31/19,<Null>,6.187502,1.034081
+127,Polygon,Kitui West,KE015070,<Null>,<Null>,<Null>,Kitui,KE015,Kenya,KE,11/3/17,10/31/19,<Null>,1.076345,0.051221
+128,Polygon,Kitutu Chache North,KE045268,<Null>,<Null>,<Null>,Kisii,KE045,Kenya,KE,11/3/17,10/31/19,<Null>,0.484879,0.010597
+129,Polygon,Kitutu Chache South,KE045269,<Null>,<Null>,<Null>,Kisii,KE045,Kenya,KE,11/3/17,10/31/19,<Null>,0.450299,0.007927
+130,Polygon,Kitutu Masaba,KE046270,<Null>,<Null>,<Null>,Nyamira,KE046,Kenya,KE,11/3/17,10/31/19,<Null>,0.70817,0.020612
+131,Polygon,Konoin,KE036198,<Null>,<Null>,<Null>,Bomet,KE036,Kenya,KE,11/3/17,10/31/19,<Null>,1.44148,0.069169
+132,Polygon,Kuresoi North,KE032171,<Null>,<Null>,<Null>,Nakuru,KE032,Kenya,KE,11/3/17,10/31/19,<Null>,1.703895,0.049677
+133,Polygon,Kuresoi South,KE032170,<Null>,<Null>,<Null>,Nakuru,KE032,Kenya,KE,11/3/17,10/31/19,<Null>,1.024738,0.042648
+134,Polygon,Kuria East,KE044260,<Null>,<Null>,<Null>,Migori,KE044,Kenya,KE,11/3/17,10/31/19,<Null>,0.955368,0.019359
+135,Polygon,Kuria West,KE044259,<Null>,<Null>,<Null>,Migori,KE044,Kenya,KE,11/3/17,10/31/19,<Null>,0.829739,0.027775
+136,Polygon,Kwanza,KE026136,<Null>,<Null>,<Null>,Trans Nzoia,KE026,Kenya,KE,11/3/17,10/31/19,<Null>,0.903987,0.037769
+137,Polygon,Lafey,KE009044,<Null>,<Null>,<Null>,Mandera,KE009,Kenya,KE,11/3/17,10/31/19,<Null>,2.770684,0.288381
+138,Polygon,Lagdera,KE007029,<Null>,<Null>,<Null>,Garissa,KE007,Kenya,KE,11/3/17,10/31/19,<Null>,4.069466,0.524335
+139,Polygon,Laikipia East,KE031164,<Null>,<Null>,<Null>,Laikipia,KE031,Kenya,KE,11/3/17,10/31/19,<Null>,3.201865,0.261785
+140,Polygon,Laikipia North,KE031165,<Null>,<Null>,<Null>,Laikipia,KE031,Kenya,KE,11/3/17,10/31/19,<Null>,4.362716,0.39941
+141,Polygon,Laikipia West,KE031163,<Null>,<Null>,<Null>,Laikipia,KE031,Kenya,KE,11/3/17,10/31/19,<Null>,2.350169,0.113612
+142,Polygon,Laisamis,KE010048,<Null>,<Null>,<Null>,Marsabit,KE010,Kenya,KE,11/3/17,10/31/19,<Null>,8.655537,1.95791
+143,Polygon,Lamu East,KE005021,<Null>,<Null>,<Null>,Lamu,KE005,Kenya,KE,11/3/17,10/31/19,<Null>,3.916929,0.175039
+144,Polygon,Lamu West,KE005022,<Null>,<Null>,<Null>,Lamu,KE005,Kenya,KE,11/3/17,10/31/19,<Null>,4.437201,0.316535
+145,Polygon,Langata,KE047277,<Null>,<Null>,<Null>,Nairobi,KE047,Kenya,KE,11/3/17,10/31/19,<Null>,0.879392,0.01705
+146,Polygon,Lari,KE022122,<Null>,<Null>,<Null>,Kiambu,KE022,Kenya,KE,11/3/17,10/31/19,<Null>,1.412651,0.037858
+147,Polygon,Likoni,KE001005,<Null>,<Null>,<Null>,Mombasa,KE001,Kenya,KE,11/3/17,10/31/19,<Null>,0.47128,0.004241
+148,Polygon,Likuyani,KE037200,<Null>,<Null>,<Null>,Kakamega,KE037,Kenya,KE,11/3/17,10/31/19,<Null>,0.874045,0.024476
+149,Polygon,Limuru,KE022121,<Null>,<Null>,<Null>,Kiambu,KE022,Kenya,KE,11/3/17,10/31/19,<Null>,0.947444,0.023155
+150,Polygon,Loima,KE023126,<Null>,<Null>,<Null>,Turkana,KE023,Kenya,KE,11/3/17,10/31/19,<Null>,5.089454,0.792864
+151,Polygon,Luanda,KE038214,<Null>,<Null>,<Null>,Vihiga,KE038,Kenya,KE,11/3/17,10/31/19,<Null>,0.54204,0.006793
+152,Polygon,Lugari,KE037199,<Null>,<Null>,<Null>,Kakamega,KE037,Kenya,KE,11/3/17,10/31/19,<Null>,1.332959,0.02988
+153,Polygon,Lunga Lunga,KE002008,<Null>,<Null>,<Null>,Kwale,KE002,Kenya,KE,11/3/17,10/31/19,<Null>,3.590345,0.164487
+154,Polygon,Lurambi,KE037202,<Null>,<Null>,<Null>,Kakamega,KE037,Kenya,KE,11/3/17,10/31/19,<Null>,0.787433,0.013136
+155,Polygon,Maara,KE013061,<Null>,<Null>,<Null>,Tharaka-Nithi,KE013,Kenya,KE,11/3/17,10/31/19,<Null>,1.36319,0.041017
+156,Polygon,Machakos Town,KE016081,<Null>,<Null>,<Null>,Machakos,KE016,Kenya,KE,11/3/17,10/31/19,<Null>,1.851317,0.061527
+157,Polygon,Magarini,KE003017,<Null>,<Null>,<Null>,Kilifi,KE003,Kenya,KE,11/3/17,10/31/19,<Null>,3.897676,0.567531
+158,Polygon,Makadara,KE047287,<Null>,<Null>,<Null>,Nairobi,KE047,Kenya,KE,11/3/17,10/31/19,<Null>,0.173443,0.000975
+159,Polygon,Makueni,KE017086,<Null>,<Null>,<Null>,Makueni,KE017,Kenya,KE,11/3/17,10/31/19,<Null>,2.161795,0.160929
+160,Polygon,Malava,KE037201,<Null>,<Null>,<Null>,Kakamega,KE037,Kenya,KE,11/3/17,10/31/19,<Null>,1.027037,0.034363
+161,Polygon,Malindi,KE003016,<Null>,<Null>,<Null>,Kilifi,KE003,Kenya,KE,11/3/17,10/31/19,<Null>,1.64217,0.046928
+162,Polygon,Mandera East,KE009043,<Null>,<Null>,<Null>,Mandera,KE009,Kenya,KE,11/3/17,10/31/19,<Null>,2.299982,0.207705
+163,Polygon,Mandera North,KE009041,<Null>,<Null>,<Null>,Mandera,KE009,Kenya,KE,11/3/17,10/31/19,<Null>,3.806505,0.498978
+164,Polygon,Mandera South,KE009042,<Null>,<Null>,<Null>,Mandera,KE009,Kenya,KE,11/3/17,10/31/19,<Null>,3.505709,0.450706
+165,Polygon,Mandera West,KE009039,<Null>,<Null>,<Null>,Mandera,KE009,Kenya,KE,11/3/17,10/31/19,<Null>,3.242602,0.421129
+166,Polygon,Manyatta,KE014063,<Null>,<Null>,<Null>,Embu,KE014,Kenya,KE,11/3/17,10/31/19,<Null>,1.293242,0.029096
+167,Polygon,Maragwa,KE021108,<Null>,<Null>,<Null>,Murang'a,KE021,Kenya,KE,11/3/17,10/31/19,<Null>,1.358566,0.037536
+168,Polygon,Marakwet East,KE028147,<Null>,<Null>,<Null>,Elgeyo-Marakwet,KE028,Kenya,KE,11/3/17,10/31/19,<Null>,1.294715,0.065862
+169,Polygon,Marakwet West,KE028148,<Null>,<Null>,<Null>,Elgeyo-Marakwet,KE028,Kenya,KE,11/3/17,10/31/19,<Null>,1.907155,0.06254
+170,Polygon,Masinga,KE016075,<Null>,<Null>,<Null>,Machakos,KE016,Kenya,KE,11/3/17,10/31/19,<Null>,2.464952,0.114275
+171,Polygon,Matayos,KE040228,<Null>,<Null>,<Null>,Busia,KE040,Kenya,KE,11/3/17,10/31/19,<Null>,0.697534,0.015755
+172,Polygon,Mathare,KE047290,<Null>,<Null>,<Null>,Nairobi,KE047,Kenya,KE,11/3/17,10/31/19,<Null>,0.108716,0.000236
+173,Polygon,Mathioya,KE021105,<Null>,<Null>,<Null>,Murang'a,KE021,Kenya,KE,11/3/17,10/31/19,<Null>,1.180961,0.022726
+174,Polygon,Mathira,KE019096,<Null>,<Null>,<Null>,Nyeri,KE019,Kenya,KE,11/3/17,10/31/19,<Null>,1.245959,0.037206
+175,Polygon,Matuga,KE002009,<Null>,<Null>,<Null>,Kwale,KE002,Kenya,KE,11/3/17,10/31/19,<Null>,1.710278,0.085845
+176,Polygon,Matungu,KE037206,<Null>,<Null>,<Null>,Kakamega,KE037,Kenya,KE,11/3/17,10/31/19,<Null>,0.932348,0.02257
+177,Polygon,Matungulu,KE016078,<Null>,<Null>,<Null>,Machakos,KE016,Kenya,KE,11/3/17,10/31/19,<Null>,1.122314,0.047245
+178,Polygon,Mavoko,KE016080,<Null>,<Null>,<Null>,Machakos,KE016,Kenya,KE,11/3/17,10/31/19,<Null>,1.598577,0.068472
+179,Polygon,Mbooni,KE017083,<Null>,<Null>,<Null>,Makueni,KE017,Kenya,KE,11/3/17,10/31/19,<Null>,2.000411,0.079683
+180,Polygon,Mogotio,KE030161,<Null>,<Null>,<Null>,Baringo,KE030,Kenya,KE,11/3/17,10/31/19,<Null>,2.177165,0.112745
+181,Polygon,Moiben,KE027143,<Null>,<Null>,<Null>,Uasin Gishu,KE027,Kenya,KE,11/3/17,10/31/19,<Null>,1.627593,0.063036
+182,Polygon,Molo,KE032166,<Null>,<Null>,<Null>,Nakuru,KE032,Kenya,KE,11/3/17,10/31/19,<Null>,1.289372,0.041526
+183,Polygon,Mosop,KE029156,<Null>,<Null>,<Null>,Nandi,KE029,Kenya,KE,11/3/17,10/31/19,<Null>,1.245659,0.04747
+184,Polygon,Moyale,KE010045,<Null>,<Null>,<Null>,Marsabit,KE010,Kenya,KE,11/3/17,10/31/19,<Null>,4.792366,0.760217
+185,Polygon,Msambweni,KE002007,<Null>,<Null>,<Null>,Kwale,KE002,Kenya,KE,11/3/17,10/31/19,<Null>,1.126292,0.029306
+186,Polygon,Mt. Elgon,KE039216,<Null>,<Null>,<Null>,Bungoma,KE039,Kenya,KE,11/3/17,10/31/19,<Null>,1.444284,0.077587
+187,Polygon,Muhoroni,KE042243,<Null>,<Null>,<Null>,Kisumu,KE042,Kenya,KE,11/3/17,10/31/19,<Null>,1.902987,0.053959
+188,Polygon,Mukurweni,KE019098,<Null>,<Null>,<Null>,Nyeri,KE019,Kenya,KE,11/3/17,10/31/19,<Null>,0.670991,0.014491
+189,Polygon,Mumias East,KE037205,<Null>,<Null>,<Null>,Kakamega,KE037,Kenya,KE,11/3/17,10/31/19,<Null>,0.656216,0.014215
+190,Polygon,Mumias West,KE037204,<Null>,<Null>,<Null>,Kakamega,KE037,Kenya,KE,11/3/17,10/31/19,<Null>,0.666613,0.011239
+191,Polygon,Mvita,KE001006,<Null>,<Null>,<Null>,Mombasa,KE001,Kenya,KE,11/3/17,10/31/19,<Null>,0.172803,0.001199
+192,Polygon,Mwala,KE016082,<Null>,<Null>,<Null>,Machakos,KE016,Kenya,KE,11/3/17,10/31/19,<Null>,1.892793,0.082796
+193,Polygon,Mwatate,KE006025,<Null>,<Null>,<Null>,Taita Taveta,KE006,Kenya,KE,11/3/17,10/31/19,<Null>,3.728476,0.300541
+194,Polygon,Mwea,KE020100,<Null>,<Null>,<Null>,Kirinyaga,KE020,Kenya,KE,11/3/17,10/31/19,<Null>,0.860801,0.035139
+195,Polygon,Mwingi East,KE015069,<Null>,<Null>,<Null>,Kitui,KE015,Kenya,KE,11/3/17,10/31/19,<Null>,3.127393,0.3449
+196,Polygon,Mwingi North,KE015067,<Null>,<Null>,<Null>,Kitui,KE015,Kenya,KE,11/3/17,10/31/19,<Null>,3.131229,0.381628
+197,Polygon,Mwingi West,KE015068,<Null>,<Null>,<Null>,Kitui,KE015,Kenya,KE,11/3/17,10/31/19,<Null>,1.839942,0.095929
+198,Polygon,Naivasha,KE032168,<Null>,<Null>,<Null>,Nakuru,KE032,Kenya,KE,11/3/17,10/31/19,<Null>,2.210796,0.139894
+199,Polygon,Nakuru Town East,KE032176,<Null>,<Null>,<Null>,Nakuru,KE032,Kenya,KE,11/3/17,10/31/19,<Null>,0.723105,0.012788
+200,Polygon,Nakuru Town West,KE032175,<Null>,<Null>,<Null>,Nakuru,KE032,Kenya,KE,11/3/17,10/31/19,<Null>,0.68648,0.011365
+201,Polygon,Nambale,KE040227,<Null>,<Null>,<Null>,Busia,KE040,Kenya,KE,11/3/17,10/31/19,<Null>,0.832985,0.018876
+202,Polygon,Nandi Hills,KE029153,<Null>,<Null>,<Null>,Nandi,KE029,Kenya,KE,11/3/17,10/31/19,<Null>,1.078659,0.031934
+203,Polygon,Narok East,KE033180,<Null>,<Null>,<Null>,Narok,KE033,Kenya,KE,11/3/17,10/31/19,<Null>,1.910458,0.166314
+204,Polygon,Narok North,KE033179,<Null>,<Null>,<Null>,Narok,KE033,Kenya,KE,11/3/17,10/31/19,<Null>,3.340003,0.221277
+205,Polygon,Narok South,KE033181,<Null>,<Null>,<Null>,Narok,KE033,Kenya,KE,11/3/17,10/31/19,<Null>,4.92314,0.392638
+206,Polygon,Narok West,KE033182,<Null>,<Null>,<Null>,Narok,KE033,Kenya,KE,11/3/17,10/31/19,<Null>,3.792059,0.442619
+207,Polygon,Navakholo,KE037203,<Null>,<Null>,<Null>,Kakamega,KE037,Kenya,KE,11/3/17,10/31/19,<Null>,0.870779,0.020913
+208,Polygon,Ndaragwa,KE018093,<Null>,<Null>,<Null>,Nyandarua,KE018,Kenya,KE,11/3/17,10/31/19,<Null>,1.728408,0.071012
+209,Polygon,Ndhiwa,KE043250,<Null>,<Null>,<Null>,Homa Bay,KE043,Kenya,KE,11/3/17,10/31/19,<Null>,1.188612,0.0565
+210,Polygon,Ndia,KE020102,<Null>,<Null>,<Null>,Kirinyaga,KE020,Kenya,KE,11/3/17,10/31/19,<Null>,1.739421,0.027493
+211,Polygon,Nithi,KE013060,<Null>,<Null>,<Null>,Tharaka-Nithi,KE013,Kenya,KE,11/3/17,10/31/19,<Null>,1.653763,0.048596
+212,Polygon,Njoro,KE032167,<Null>,<Null>,<Null>,Nakuru,KE032,Kenya,KE,11/3/17,10/31/19,<Null>,1.523835,0.063573
+213,Polygon,North Horr,KE010046,<Null>,<Null>,<Null>,Marsabit,KE010,Kenya,KE,11/3/17,10/31/19,<Null>,8.791834,3.300665
+214,Polygon,North Imenti,KE012056,<Null>,<Null>,<Null>,Meru,KE012,Kenya,KE,11/3/17,10/31/19,<Null>,1.198324,0.024533
+215,Polygon,North Mugirango,KE046272,<Null>,<Null>,<Null>,Nyamira,KE046,Kenya,KE,11/3/17,10/31/19,<Null>,0.544648,0.01384
+216,Polygon,Nyakach,KE042244,<Null>,<Null>,<Null>,Kisumu,KE042,Kenya,KE,11/3/17,10/31/19,<Null>,1.066478,0.032703
+217,Polygon,Nyali,KE001004,<Null>,<Null>,<Null>,Mombasa,KE001,Kenya,KE,11/3/17,10/31/19,<Null>,0.18052,0.001857
+218,Polygon,Nyando,KE042242,<Null>,<Null>,<Null>,Kisumu,KE042,Kenya,KE,11/3/17,10/31/19,<Null>,1.65309,0.048996
+219,Polygon,Nyaribari Chache,KE045267,<Null>,<Null>,<Null>,Kisii,KE045,Kenya,KE,11/3/17,10/31/19,<Null>,0.510367,0.011046
+220,Polygon,Nyaribari Masaba,KE045266,<Null>,<Null>,<Null>,Kisii,KE045,Kenya,KE,11/3/17,10/31/19,<Null>,0.481585,0.012933
+221,Polygon,Nyatike,KE044258,<Null>,<Null>,<Null>,Migori,KE044,Kenya,KE,11/3/17,10/31/19,<Null>,1.424859,0.098647
+222,Polygon,Nyeri Town,KE019099,<Null>,<Null>,<Null>,Nyeri,KE019,Kenya,KE,11/3/17,10/31/19,<Null>,0.730234,0.013746
+223,Polygon,Ol Jorok,KE018092,<Null>,<Null>,<Null>,Nyandarua,KE018,Kenya,KE,11/3/17,10/31/19,<Null>,1.459257,0.050807
+224,Polygon,Ol Kalou,KE018091,<Null>,<Null>,<Null>,Nyandarua,KE018,Kenya,KE,11/3/17,10/31/19,<Null>,1.054121,0.023333
+225,Polygon,Othaya,KE019097,<Null>,<Null>,<Null>,Nyeri,KE019,Kenya,KE,11/3/17,10/31/19,<Null>,1.004196,0.02896
+226,Polygon,Pokot South,KE024132,<Null>,<Null>,<Null>,West Pokot,KE024,Kenya,KE,11/3/17,10/31/19,<Null>,1.793588,0.10302
+227,Polygon,Rabai,KE003014,<Null>,<Null>,<Null>,Kilifi,KE003,Kenya,KE,11/3/17,10/31/19,<Null>,0.81702,0.019048
+228,Polygon,Rangwe,KE043248,<Null>,<Null>,<Null>,Homa Bay,KE043,Kenya,KE,11/3/17,10/31/19,<Null>,1.001485,0.02362
+229,Polygon,Rarieda,KE041237,<Null>,<Null>,<Null>,Siaya,KE041,Kenya,KE,11/3/17,10/31/19,<Null>,0.967748,0.055176
+230,Polygon,Rongai,KE032173,<Null>,<Null>,<Null>,Nakuru,KE032,Kenya,KE,11/3/17,10/31/19,<Null>,2.25655,0.082984
+231,Polygon,Rongo,KE044253,<Null>,<Null>,<Null>,Migori,KE044,Kenya,KE,11/3/17,10/31/19,<Null>,0.860138,0.017272
+232,Polygon,Roysambu,KE047279,<Null>,<Null>,<Null>,Nairobi,KE047,Kenya,KE,11/3/17,10/31/19,<Null>,0.378024,0.003909
+233,Polygon,Ruaraka,KE047281,<Null>,<Null>,<Null>,Nairobi,KE047,Kenya,KE,11/3/17,10/31/19,<Null>,0.160805,0.000583
+234,Polygon,Ruiru,KE022115,<Null>,<Null>,<Null>,Kiambu,KE022,Kenya,KE,11/3/17,10/31/19,<Null>,0.781181,0.012442
+235,Polygon,Runyenjes,KE014064,<Null>,<Null>,<Null>,Embu,KE014,Kenya,KE,11/3/17,10/31/19,<Null>,1.358071,0.030209
+236,Polygon,Sabatia,KE038212,<Null>,<Null>,<Null>,Vihiga,KE038,Kenya,KE,11/3/17,10/31/19,<Null>,0.51261,0.009058
+237,Polygon,Saboti,KE026138,<Null>,<Null>,<Null>,Trans Nzoia,KE026,Kenya,KE,11/3/17,10/31/19,<Null>,1.099285,0.028829
+238,Polygon,Saku,KE010047,<Null>,<Null>,<Null>,Marsabit,KE010,Kenya,KE,11/3/17,10/31/19,<Null>,1.646106,0.166398
+239,Polygon,Samburu East,KE025135,<Null>,<Null>,<Null>,Samburu,KE025,Kenya,KE,11/3/17,10/31/19,<Null>,4.584203,0.817361
+240,Polygon,Samburu North,KE025134,<Null>,<Null>,<Null>,Samburu,KE025,Kenya,KE,11/3/17,10/31/19,<Null>,5.704622,0.689288
+241,Polygon,Samburu West,KE025133,<Null>,<Null>,<Null>,Samburu,KE025,Kenya,KE,11/3/17,10/31/19,<Null>,2.857592,0.201165
+242,Polygon,Seme,KE042241,<Null>,<Null>,<Null>,Kisumu,KE042,Kenya,KE,11/3/17,10/31/19,<Null>,0.929064,0.036486
+243,Polygon,Shinyalu,KE037209,<Null>,<Null>,<Null>,Kakamega,KE037,Kenya,KE,11/3/17,10/31/19,<Null>,0.969415,0.033174
+244,Polygon,Siakago,KE014066,<Null>,<Null>,<Null>,Embu,KE014,Kenya,KE,11/3/17,10/31/19,<Null>,1.636002,0.062591
+245,Polygon,Sigor,KE024130,<Null>,<Null>,<Null>,West Pokot,KE024,Kenya,KE,11/3/17,10/31/19,<Null>,2.303986,0.174793
+246,Polygon,Sigowet/Soin,KE035193,<Null>,<Null>,<Null>,Kericho,KE035,Kenya,KE,11/3/17,10/31/19,<Null>,1.164449,0.037727
+247,Polygon,Sirisia,KE039217,<Null>,<Null>,<Null>,Bungoma,KE039,Kenya,KE,11/3/17,10/31/19,<Null>,0.808555,0.017074
+248,Polygon,Sotik,KE036194,<Null>,<Null>,<Null>,Bomet,KE036,Kenya,KE,11/3/17,10/31/19,<Null>,1.306324,0.038636
+249,Polygon,South Imenti,KE012059,<Null>,<Null>,<Null>,Meru,KE012,Kenya,KE,11/3/17,10/31/19,<Null>,1.340907,0.053758
+250,Polygon,South Mugirango,KE045262,<Null>,<Null>,<Null>,Kisii,KE045,Kenya,KE,11/3/17,10/31/19,<Null>,0.698389,0.016853
+251,Polygon,Soy,KE027141,<Null>,<Null>,<Null>,Uasin Gishu,KE027,Kenya,KE,11/3/17,10/31/19,<Null>,1.721661,0.053254
+252,Polygon,Starehe,KE047289,<Null>,<Null>,<Null>,Nairobi,KE047,Kenya,KE,11/3/17,10/31/19,<Null>,0.200733,0.001368
+253,Polygon,Suba North,KE043251,<Null>,<Null>,<Null>,Homa Bay,KE043,Kenya,KE,11/3/17,10/31/19,<Null>,1.651767,0.085376
+254,Polygon,Suba South,KE043252,<Null>,<Null>,<Null>,Homa Bay,KE043,Kenya,KE,11/3/17,10/31/19,<Null>,1.255542,0.095305
+255,Polygon,Subukia,KE032172,<Null>,<Null>,<Null>,Nakuru,KE032,Kenya,KE,11/3/17,10/31/19,<Null>,1.503499,0.036904
+256,Polygon,Suna East,KE044255,<Null>,<Null>,<Null>,Migori,KE044,Kenya,KE,11/3/17,10/31/19,<Null>,0.976863,0.016794
+257,Polygon,Suna West,KE044256,<Null>,<Null>,<Null>,Migori,KE044,Kenya,KE,11/3/17,10/31/19,<Null>,0.860416,0.023089
+258,Polygon,Tarbaj,KE008035,<Null>,<Null>,<Null>,Wajir,KE008,Kenya,KE,11/3/17,10/31/19,<Null>,3.603919,0.613423
+259,Polygon,Taveta,KE006023,<Null>,<Null>,<Null>,Taita Taveta,KE006,Kenya,KE,11/3/17,10/31/19,<Null>,3.514408,0.326123
+260,Polygon,Teso North,KE040225,<Null>,<Null>,<Null>,Busia,KE040,Kenya,KE,11/3/17,10/31/19,<Null>,0.865729,0.020643
+261,Polygon,Teso South,KE040226,<Null>,<Null>,<Null>,Busia,KE040,Kenya,KE,11/3/17,10/31/19,<Null>,0.833476,0.024724
+262,Polygon,Tetu,KE019094,<Null>,<Null>,<Null>,Nyeri,KE019,Kenya,KE,11/3/17,10/31/19,<Null>,1.485928,0.029127
+263,Polygon,Tharaka,KE013062,<Null>,<Null>,<Null>,Tharaka-Nithi,KE013,Kenya,KE,11/3/17,10/31/19,<Null>,2.078138,0.12007
+264,Polygon,Thika Town,KE022114,<Null>,<Null>,<Null>,Kiambu,KE022,Kenya,KE,11/3/17,10/31/19,<Null>,1.135992,0.017803
+265,Polygon,Tiaty,KE030157,<Null>,<Null>,<Null>,Baringo,KE030,Kenya,KE,11/3/17,10/31/19,<Null>,3.376513,0.3613
+266,Polygon,Tigania East,KE012055,<Null>,<Null>,<Null>,Meru,KE012,Kenya,KE,11/3/17,10/31/19,<Null>,1.712898,0.0677
+267,Polygon,Tigania West,KE012054,<Null>,<Null>,<Null>,Meru,KE012,Kenya,KE,11/3/17,10/31/19,<Null>,1.174411,0.031805
+268,Polygon,Tinderet,KE029151,<Null>,<Null>,<Null>,Nandi,KE029,Kenya,KE,11/3/17,10/31/19,<Null>,1.646619,0.044007
+269,Polygon,Tongaren,KE039224,<Null>,<Null>,<Null>,Bungoma,KE039,Kenya,KE,11/3/17,10/31/19,<Null>,0.958308,0.030504
+270,Polygon,Turbo,KE027142,<Null>,<Null>,<Null>,Uasin Gishu,KE027,Kenya,KE,11/3/17,10/31/19,<Null>,1.390975,0.035346
+271,Polygon,Turkana Central,KE023125,<Null>,<Null>,<Null>,Turkana,KE023,Kenya,KE,11/3/17,10/31/19,<Null>,4.395364,0.538282
+272,Polygon,Turkana East,KE023128,<Null>,<Null>,<Null>,Turkana,KE023,Kenya,KE,11/3/17,10/31/19,<Null>,6.886148,0.909087
+273,Polygon,Turkana North,KE023123,<Null>,<Null>,<Null>,Turkana,KE023,Kenya,KE,11/3/17,10/31/19,<Null>,6.834861,1.668972
+274,Polygon,Turkana South,KE023127,<Null>,<Null>,<Null>,Turkana,KE023,Kenya,KE,11/3/17,10/31/19,<Null>,5.353568,0.603286
+275,Polygon,Turkana West,KE023124,<Null>,<Null>,<Null>,Turkana,KE023,Kenya,KE,11/3/17,10/31/19,<Null>,6.400987,1.195936
+276,Polygon,Ugenya,KE041232,<Null>,<Null>,<Null>,Siaya,KE041,Kenya,KE,11/3/17,10/31/19,<Null>,0.952021,0.026083
+277,Polygon,Ugunja,KE041233,<Null>,<Null>,<Null>,Siaya,KE041,Kenya,KE,11/3/17,10/31/19,<Null>,0.791571,0.016181
+278,Polygon,Uriri,KE044257,<Null>,<Null>,<Null>,Migori,KE044,Kenya,KE,11/3/17,10/31/19,<Null>,0.894886,0.031183
+279,Polygon,Vihiga,KE038211,<Null>,<Null>,<Null>,Vihiga,KE038,Kenya,KE,11/3/17,10/31/19,<Null>,0.42782,0.007273
+280,Polygon,Voi,KE006026,<Null>,<Null>,<Null>,Taita Taveta,KE006,Kenya,KE,11/3/17,10/31/19,<Null>,6.174515,0.698291
+281,Polygon,Wajir East,KE008034,<Null>,<Null>,<Null>,Wajir,KE008,Kenya,KE,11/3/17,10/31/19,<Null>,2.983208,0.347874
+282,Polygon,Wajir North,KE008033,<Null>,<Null>,<Null>,Wajir,KE008,Kenya,KE,11/3/17,10/31/19,<Null>,5.250464,0.845903
+283,Polygon,Wajir South,KE008038,<Null>,<Null>,<Null>,Wajir,KE008,Kenya,KE,11/3/17,10/31/19,<Null>,5.308828,1.753522
+284,Polygon,Wajir West,KE008036,<Null>,<Null>,<Null>,Wajir,KE008,Kenya,KE,11/3/17,10/31/19,<Null>,4.060576,0.660316
+285,Polygon,Webuye East,KE039221,<Null>,<Null>,<Null>,Bungoma,KE039,Kenya,KE,11/3/17,10/31/19,<Null>,0.714407,0.013321
+286,Polygon,Webuye West,KE039222,<Null>,<Null>,<Null>,Bungoma,KE039,Kenya,KE,11/3/17,10/31/19,<Null>,1.010876,0.01918
+287,Polygon,West Mugirango,KE046271,<Null>,<Null>,<Null>,Nyamira,KE046,Kenya,KE,11/3/17,10/31/19,<Null>,0.630183,0.01461
+288,Polygon,Westlands,KE047274,<Null>,<Null>,<Null>,Nairobi,KE047,Kenya,KE,11/3/17,10/31/19,<Null>,0.405298,0.005908
+289,Polygon,Wundanyi,KE006024,<Null>,<Null>,<Null>,Taita Taveta,KE006,Kenya,KE,11/3/17,10/31/19,<Null>,1.214526,0.069243
+290,Polygon,Yatta,KE016076,<Null>,<Null>,<Null>,Machakos,KE016,Kenya,KE,11/3/17,10/31/19,<Null>,1.737731,0.086211

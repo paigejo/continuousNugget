@@ -11,15 +11,12 @@
 # HHoldVar: household effect variance
 # effRange: spatial range
 # urbanOverSamplefrac: the proportion with which to inflate the amount of urban samples in the surveys
-generateSimDataSets = function(nsim=100, rho=0.243, sigmaEpsilon=sqrt(0.463), 
-                              gamma = 0.079, effRange = 241, beta0=-4, 
+generateSimDataSets = function(nsim=10, rho=0.243, sigmaEpsilon=sqrt(0.463), 
+                              gamma = 0.009, effRange = 406.51, beta0=-3.922, 
                               figureSaveDirectory="~/git/continuousNugget/figures/simDataSets/", 
                               dataSaveDirectory="~/git/continuousNugget/savedOutput/simDataSets/", seed=123) {
   tausq = sigmaEpsilon^2
   set.seed(seed)
-  
-  wd = getwd()
-  setwd("~/Google Drive/UW/Wakefield/WakefieldShared/U5MR/")
   
   # make strings representing the simulation with and without cluster effects
   dataID = paste0("Beta", round(beta0, 4), "rho", round(rho, 4), "sigmaEps", 
@@ -95,25 +92,14 @@ generateSimDataSets = function(nsim=100, rho=0.243, sigmaEpsilon=sqrt(0.463),
   
   save(overSampDat, SRSDat, file=paste0(dataSaveDirectory, "simDataMulti", dataID, ".RData"))
   
-  setwd(wd)
-  
   invisible(NULL)
 }
 
 generateAllDataSets = function() {
-  generateSimDataSets(gamma=-1, margVar=.15^2)
-  generateSimDataSets(gamma=-1, margVar=0)
-  generateSimDataSets(gamma=0, margVar=.15^2)
-  generateSimDataSets(gamma=0, margVar=0)
-}
-
-generateAllNewDataSets = function() {
-  generateSimDataSets(gamma=-1, margVar=.15^2, effRange=50)
-  generateSimDataSets(gamma=0, margVar=.15^2, effRange=50)
-  generateSimDataSets(gamma=0, margVar=0, effRange=50)
-  
-  generateSimDataSets(gamma=-1, margVar=.3^2, effRange=150)
-  generateSimDataSets(gamma=0, margVar=.3^2, effRange=150)
+  generateSimDataSets(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9)
+  generateSimDataSets(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9)
+  generateSimDataSets(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
+  generateSimDataSets(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
 }
 
 # simulate and save datasets used for the simulation study with the given model parameters

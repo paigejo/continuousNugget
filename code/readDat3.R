@@ -153,6 +153,10 @@ gpsI = match(data.frame(rbind(mort$lon, mort$lat)), data.frame(rbind(gpsDat$lon,
 mort$admin1 = gpsDat$admin1[gpsI]
 mort$region = gpsDat$region[gpsI]
 
+# reset the county and province based on spatial polygons
+mort$admin1 = getCounty(cbind(mort$lon, mort$lat))
+mort$region = getProvince(cbind(mort$lon, mort$lat))
+
 # get easting and northing using projection
 tmp = projKenya(mort$lon, mort$lat)
 mort$east = tmp[,1]

@@ -31,12 +31,20 @@
 # pop: proportional to population density for each grid cell
 # area: an id or area name in which the grid cell corresponding to each row resides
 # urban: whether the grid cell is urban or rural
-makeDefaultPopMat = function() {
-  out = popGrid
+# constituency: the sub-area
+# province: the super-area
+makeDefaultPopMat = function(getAdjusted=FALSE) {
+  if(getAdjusted) {
+    out = popGridAdjusted
+  } else {
+    out = popGrid
+  }
   out$pop = out$popOrig
   out$area = out$admin1
   out$popOrig = NULL
   out$admin1 = NULL
+  out$constituency = out$admin2
+  out$province = out$region
   
   out
 }
@@ -54,7 +62,8 @@ makeDefaultPopMat = function() {
 # popRur: the number of people in the rural part of the area
 # popTotal: the number of people in the the area
 # Also, the rows of this table will be ordered by Area
-makeDefaultEASPA = function(dataType=c("children", "women"), validationClusterI=NULL, useClustersAsEAs=!is.null(validationClusterI)) {
+makeDefaultEASPA = function(dataType=c("children", "women"), validationClusterI=NULL, 
+                            useClustersAsEAs=!is.null(validationClusterI), usePixelUrban=TRUE) {
   dataType = match.arg(dataType)
   
   if(!useClustersAsEAs) {
@@ -65,10 +74,17 @@ makeDefaultEASPA = function(dataType=c("children", "women"), validationClusterI=
       out = merge(easpcMort, poppcMort)
     } else {
       ## construct faux population based on left out observations
-      thisMort = mort[validationClusterI]
+      thisMort = mort[validationClusterI,]
+      
+      # change urbanicity to take the pixel level values rather than the cluster level values if necessary:
+      test = getPixelIndex(cbind(thisMort$east, thisMort$north), popGrid, thisMort$admin1)
+      temp = thisMort
+      if(usePixelUrban) {
+        temp$urban = popGrid$urban[test]
+      }
       
       # faux poppc
-      out = aggregate(thisMort$n, by=list(admin1=thisMort$admin1, urban=thisMort$urban), FUN=sum, drop=FALSE)
+      out = aggregate(temp$n, by=list(admin1=temp$admin1, urban=temp$urban), FUN=sum, drop=FALSE)
       out[is.na(out[,3]), 3] = 0
       # urbanToRuralI = c(1:27, 29, 31:47) # skip mombasa and nairobi
       out2 = cbind(out, rural=0)[48:94,]
@@ -81,8 +97,7 @@ makeDefaultEASPA = function(dataType=c("children", "women"), validationClusterI=
       poppcMort$pctUrb = 100 * poppcMort$popUrb / poppcMort$popTotal
       
       # faux easpc
-      thisMort = mort[validationClusterI]
-      out = aggregate(thisMort$n, by=list(admin1=thisMort$admin1, urban=thisMort$urban), FUN=length, drop=FALSE)
+      out = aggregate(temp$n, by=list(admin1=temp$admin1, urban=temp$urban), FUN=length, drop=FALSE)
       out[is.na(out[,3]), 3] = 0
       # urbanToRuralI = c(1:27, 29, 31:47) # skip mombasa and nairobi
       out2 = cbind(out, rural=0)[48:94,]
@@ -92,6 +107,10 @@ makeDefaultEASPA = function(dataType=c("children", "women"), validationClusterI=
       names(easpcMort) = names(easpc)
       easpcMort[unsortedToSorted, 2:3] = out2[,3:4]
       easpcMort$EATotal = easpcMort$EAUrb + easpcMort$EARur
+      
+      easpcMort$HHUrb = 25 * easpcMort$EAUrb
+      easpcMort$HHRur = 25 * easpcMort$EARur
+      easpcMort$HHTotal = easpcMort$HHUrb + easpcMort$HHRur
       
       # combine results
       out = merge(easpcMort, poppcMort)
@@ -110,18 +129,22 @@ makeDefaultEASPA = function(dataType=c("children", "women"), validationClusterI=
 # in this model, we assume a binomial process for the EA locations. Follows algorithm 2 from the 
 # outline
 # validationPixelI: a set of indices of pixels for which we want predictions in validation.
-modLCPB = function(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empiricalDistributions=NULL, 
-                   includeUrban=TRUE, maxEmptyFraction=1, clusterLevel=TRUE, pixelLevel=TRUE, countyLevel=TRUE, 
-                   regionLevel=TRUE, doModifiedPixelLevel=TRUE, validationPixelI=NULL, 
-                   onlyDoModifiedPixelLevel=!is.null(validationPixelI)) {
+# urbanEffect: only used if constituency level results are desired. Helps produce urban/rural predictions in 
+#              constituencies without urban/rural pixels
+modLCPB = function(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, adjustedPopMat=NULL, empiricalDistributions=NULL, 
+                   includeUrban=TRUE, maxEmptyFraction=1, clusterLevel=TRUE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
+                   regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=TRUE, validationPixelI=NULL, validationClusterI=NULL, 
+                   onlyDoModifiedPixelLevel=FALSE, clustersPerPixel=NULL, 
+                   doLcpb=FALSE, doLCpb=FALSE, doLCPb=FALSE, constituencyPop=poppcon, 
+                   ensureAtLeast1PerConstituency=sum(easpa$EATotal)>2000, urbanEffect=NULL) {
   nDraws = ncol(uDraws)
   
   # set default inputs
   if(is.null(easpa)) {
-    if(!is.null(validationPixelI))
-      stop("Must include validationClusterI or easpa in this case")
+    if(!is.null(validationPixelI) || !is.null(validationClusterI))
+      stop("Must include both validationClusterI and validationPixelI or easpa")
     
-    easpa = makeDefaultEASPA(useClustersAsEAs=!is.null(validationPixelI))
+    easpa = makeDefaultEASPA(validationClusterI=validationClusterI, useClustersAsEAs=!is.null(validationClusterI))
     # area: the name or id of the area
     # EAUrb: the number of EAs in the urban part of the area
     # EARur: the number of EAs in the rural part of the area
@@ -133,7 +156,16 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empirical
     # popRur: the number of people in the rural part of the area
     # popTotal: the number of people in the the area
   }
+  
   totalEAs = sum(easpa$EATotal)
+  if(!is.null(clustersPerPixel)) {
+    emptyPixels = clustersPerPixel == 0
+    if(totalEAs != sum(clustersPerPixel))
+      stop("sum(easpa$EATotal) != sum(clustersPerPixel)")
+    if(doModifiedPixelLevel)
+      stop("doModifiedPixelLevel cannot be set to TRUE when clustersPerPixel is specified")
+  }
+  
   if(is.null(popMat)) {
     popMat = makeDefaultPopMat()
     # lon: longitude
@@ -169,18 +201,33 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empirical
   pixelProbs = popMat$pop
   
   # take draws from the stratified binomial process for each posterior sample
-  if(!onlyDoModifiedPixelLevel) {
-    eaSamples = rStratifiedMultnomial(nDraws, popMat, easpa, includeUrban)
-  }
-  if(doModifiedPixelLevel) {
-    eaSamplesMod = rStratifiedBinomial1(nDraws, popMat, easpa, includeUrban, validationPixelI=validationPixelI)
+  if(is.null(clustersPerPixel)) {
+    if(!onlyDoModifiedPixelLevel) {
+      if(constituencyLevel) {
+        eaSamples = rStratifiedMultnomialByConstituency(nDraws, popMat, easpa, includeUrban, constituencyPop=constituencyPop, 
+                                                        ensureAtLeast1PerConstituency=ensureAtLeast1PerConstituency)
+      } else {
+        eaSamples = rStratifiedMultnomial(nDraws, popMat, easpa, includeUrban)
+      }
+    }
+    if(doModifiedPixelLevel) {
+      if(constituencyLevel) 
+        stop("constituencyLevel and doModifiedPixelLevel both being set to TRUE is not yet supported")
+      eaSamplesMod = rStratifiedBinomial1(nDraws, popMat, easpa, includeUrban, validationPixelI=validationPixelI)
+    }
   }
   
-  # make matrix of pixel indices mapping matrices of EA values to matrices of pixel values
-  if(!onlyDoModifiedPixelLevel) {
-    pixelIndexMat = matrix(rep(rep(1:nrow(popMat), nDraws), times=eaSamples), ncol=nDraws)
+  if(!is.null(clustersPerPixel) && !exists("eaSamples")) {
+    eaSamples = matrix(rep(clustersPerPixel, nDraws), ncol=nDraws)
   }
-  if(doModifiedPixelLevel) {
+  
+  # make matrix (or list) of pixel indices mapping matrices of EA values to matrices of pixel values
+  if(!is.null(clustersPerPixel)) {
+    pixelIndices = rep(1:nrow(popMat), times=clustersPerPixel) # this contains repetitions and has length == nEAs
+    uniquePixelIndices = sort(unique(pixelIndices))
+  } else if(!onlyDoModifiedPixelLevel) {
+    pixelIndexMat = matrix(rep(rep(1:nrow(popMat), nDraws), times=eaSamples), ncol=nDraws)
+  } else if(doModifiedPixelLevel) {
     if(is.null(validationPixelI)) {
       pixelIndexListMod = lapply(1:nDraws, function(j) {rep(1:nrow(popMat), times=eaSamplesMod[,j])})
     } else {
@@ -191,10 +238,12 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empirical
   # determine which EAs are urban if necessary
   if(includeUrban) {
     # urbanMat = matrix(rep(rep(popMat$urban, nDraws), times=c(eaSamples)), ncol=nDraws)
-    if(!onlyDoModifiedPixelLevel) {
+    if(!is.null(clustersPerPixel)) {
+      urbanVals = popMat$urban[pixelIndices]
+      uniqueUrbanVals = popMat$urban[uniquePixelIndices]
+    }else if(!onlyDoModifiedPixelLevel) {
       urbanMat = matrix(popMat$urban[pixelIndexMat], ncol=nDraws)
-    }
-    if(doModifiedPixelLevel) {
+    } else if(doModifiedPixelLevel) {
       urbanListMod = lapply(1:nDraws, function(j) {popMat$urban[pixelIndexListMod[[j]]]})
     }
   } else {
@@ -202,20 +251,21 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empirical
   }
   
   # determine which EAs are from which area
-  if(!onlyDoModifiedPixelLevel) {
+  if(!is.null(clustersPerPixel)) {
+    areaVals = popMat$area[pixelIndices]
+    uniqueAreaVals = popMat$area[uniquePixelIndices]
+  } else if(!onlyDoModifiedPixelLevel) {
     areaMat = matrix(popMat$area[pixelIndexMat], ncol=nDraws)
-  }
-  if(doModifiedPixelLevel) {
+  } else if(doModifiedPixelLevel) {
     areaListMod = lapply(1:nDraws, function(j) {popMat$area[pixelIndexListMod[[j]]]})
   }
   
   ##### Line 2: draw cluster effects, epsilon
   # NOTE1: we assume there are many more EAs then sampled clusters, so that 
   #       the cluster effects for each EA, including those sampled, are iid
-  if(!onlyDoModifiedPixelLevel) {
+  if(!onlyDoModifiedPixelLevel || !is.null(clustersPerPixel)) {
     epsc = matrix(rnorm(totalEAs*nDraws, sd=rep(sigmaEpsilonDraws, each=totalEAs)), ncol=nDraws)
-  }
-  if(doModifiedPixelLevel) {
+  } else if(doModifiedPixelLevel) {
     epscMod = lapply(1:nDraws, function(j) {rnorm(length(areaListMod[[j]]), sd=sigmaEpsilonDraws[j])})
   }
   
@@ -230,18 +280,29 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empirical
   # } else {
   #   load(paste0(globalDirectory, "Ncs.RData"))
   # }
-  if(!onlyDoModifiedPixelLevel) {
-    Ncs = sampleNPoissonMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, 
+  if(!is.null(clustersPerPixel)) {
+    if(is.null(validationPixelI))
+      stop("clustersPerPixel must only be set for validation, but validationPixelI is NULL")
+    
+    # in this case, every left out cluster has exactly 25 households. Simply sample children 
+    # with equal probability from each cluster/faux EA
+    Ncs = sampleNPoissonMultinomialFixed(clustersPerPixel, nDraws=nDraws, pixelIndices=pixelIndices, 
+                                         urbanVals=urbanVals, areaVals=areaVals, easpa=easpa, popMat=popMat, includeUrban=includeUrban, 
+                                         verbose=TRUE)
+  } else if(!onlyDoModifiedPixelLevel) {
+    Ncs = sampleNPoissonMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 
                                     popMat=popMat, includeUrban=includeUrban, verbose=TRUE)
-  }
-  if(doModifiedPixelLevel) {
+  } else if(doModifiedPixelLevel) {
     NcsMod = sampleNPoissonBinomial(eaSamplesMod=eaSamplesMod, pixelIndexListMod=pixelIndexListMod, areaListMod=areaListMod, urbanListMod=urbanListMod, 
                                     includeUrban=includeUrban, easpa=easpa, popMat=popMat)
   }
   
   ##### do part of Line 7 in advance
   # calculate mu_{ic} for each EA in each pixel
-  if(!onlyDoModifiedPixelLevel) {
+  if(!is.null(clustersPerPixel)) {
+    uc = uDraws[pixelIndices,]
+    muc = expit(uc + epsc)
+  } else if(!onlyDoModifiedPixelLevel) {
     uc = matrix(uDraws[cbind(rep(rep(1:nrow(uDraws), nDraws), times=c(eaSamples)), rep(1:nDraws, each=totalEAs))], ncol=nDraws)
     muc = expit(uc + epsc)
   }
@@ -256,8 +317,8 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empirical
   }
   
   # calculate Z_{ic} for each EA in each pixel
-  if(!onlyDoModifiedPixelLevel) {
-    Zc = matrix(rbinom(n=totalEAs * nDraws, size=Ncs, prob=muc), ncol=nDraws)
+  if(!onlyDoModifiedPixelLevel || !is.null(clustersPerPixel)) {
+    Zc = matrix(rbinom(n=totalEAs * nDraws, size=Ncs, prob=as.matrix(muc)), ncol=nDraws)
   }
   if(doModifiedPixelLevel) {
     ZcMod = lapply(1:nDraws, function(j) {rbinom(n=length(mucMod[[j]]), size=NcsMod[[j]], prob=mucMod[[j]])})
@@ -266,39 +327,68 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empirical
   ##### Line 4: Aggregate appropriate values from EAs to the grid cell level
   
   # function for aggregating values for each grid cell
-  getPixelColumnFromEAs = function(i, vals, applyFun=sum, doMod=FALSE) {
+  getPixelColumnFromEAs = function(i, vals, applyFun=sum, doMod=FALSE, popWeightMatrix=NULL) {
+    # calculate levels over which to aggregate
     if(!doMod) {
-      out = tapply(vals[,i], factor(as.character(pixelIndexMat[,i])), FUN=applyFun)
+      if(!is.null(clustersPerPixel)) {
+        indices = pixelIndices
+      } else {
+        indices = factor(as.character(pixelIndexMat[,i]))
+      }
     } else {
-      # in this case
-      out = tapply(vals[[i]], factor(as.character(pixelIndexListMod[[i]])), FUN=applyFun)
+      indices = factor(as.character(pixelIndexListMod[[i]]))
     }
     
-    indices = as.numeric(names(out))
+    # in this case (the LCPb model), we calculate weighted means within factor levels using popWeightMatrix
+    if(!is.null(popWeightMatrix)) {
+      stop("using popWeightMatrix is no longer support, since this is much slower than calculating normalized 
+           weights separately and multiplying values by them outside this function")
+      # applyFun = function(x) {weighted.mean(x, popWeightMatrix[,i], na.rm=TRUE)}
+      
+      Data = data.frame(v=vals[,i], w=popWeightMatrix[,i])
+      out = sapply(split(Data, indices), function(x) weighted.mean(x$v,x$w))
+    } else {
+      if(!doMod) {
+        if(!is.null(clustersPerPixel)) {
+          # out = tapply(vals[,i], factor(as.character(pixelIndices)), FUN=applyFun)
+          out = tapply(vals[,i], indices, FUN=applyFun)
+        } else {
+          out = tapply(vals[,i], indices, FUN=applyFun)
+        }
+      } else {
+        # in this case
+        out = tapply(vals[[i]], indices, FUN=applyFun)
+      }
+    }
     
-    returnValues = rep(NA, nrow(uDraws))
-    returnValues[indices] = out
+    if(!is.null(clustersPerPixel)) {
+      returnValues = out
+    } else {
+      indices = as.numeric(names(out))
+      
+      returnValues = rep(NA, nrow(uDraws))
+      returnValues[indices] = out
+    }
+    
     returnValues
   }
   
   ##### Line 5: We already did this, resulting in uDraws input
   
   ##### Line 6: aggregate population denominators for each grid cell to get N_{ig}
-  if(!onlyDoModifiedPixelLevel) {
+  if(!onlyDoModifiedPixelLevel || !is.null(clustersPerPixel)) {
     Ng <- sapply(1:ncol(Ncs), getPixelColumnFromEAs, vals=Ncs)
     Ng[is.na(Ng)] = 0
   }
-  
   if(doModifiedPixelLevel) {
     NgMod <- sapply(1:nDraws, getPixelColumnFromEAs, vals=NcsMod, doMod=TRUE)
     NgMod[is.na(NgMod)] = 0
   }
   
   ##### Line 7: aggregate response for each grid cell to get Z_{ig}
-  if(!onlyDoModifiedPixelLevel) {
+  if(!onlyDoModifiedPixelLevel || !is.null(clustersPerPixel)) {
     Zg <- sapply(1:ncol(Zc), getPixelColumnFromEAs, vals=Zc)
   }
-  
   if(doModifiedPixelLevel) {
     ZgMod <- sapply(1:ncol(Zc), getPixelColumnFromEAs, vals=ZcMod, doMod=TRUE)
   }
@@ -313,6 +403,75 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empirical
   if(doModifiedPixelLevel) {
     pgMod = ZgMod / NgMod
     pgMod[is.na(ZgMod)] = 0
+  }
+  
+  ##### calculate results for the other models if necessary
+  
+  # uses the logistic approximation for speedup. Even if dolcpb is FALSE we still use this for calculating the mean (central predictions)
+  lcpbSwitchedUrban = NULL
+  if(is.null(clustersPerPixel)) {
+    lcpb = matrix(logitNormMean(cbind(c(as.matrix(uDraws)), rep(sigmaEpsilonDraws, each=nrow(uDraws)))), nrow=nrow(uDraws))
+    if(constituencyLevel && !is.null(urbanEffect)) {
+      lcpbSwitchedUrban = lcpb
+      zeroConUrban = constituencyPop$popUrb == 0
+      zeroConRural = (constituencyPop$popRur == 0) & !(constituencyPop$County %in% c("Mombasa", "Nairobi"))
+      allZeroCon = constituencyPop$Constituency[zeroConUrban | zeroConRural]
+      uDrawsSwitchedUrban = uDraws
+      uDrawsSwitchedUrban[(popMat$admin2 == allZeroCon) & popMat$urban,] = uDrawsSwitchedUrban[(popMat$admin2 == allZeroCon) & popMat$urban,] - urbanEffect
+      uDrawsSwitchedUrban[(popMat$admin2 == allZeroCon) & !popMat$urban,] = uDrawsSwitchedUrban[(popMat$admin2 == allZeroCon) & !popMat$urban,] + urbanEffect
+      lcpbSwitchedUrban[popMat$admin2 == allZeroCon,] = matrix(logitNormMean(cbind(c(as.matrix(uDraws[popMat$admin2 == allZeroCon,])), rep(sigmaEpsilonDraws, each=sum(popMat$admin2 == allZeroCon)))), nrow=sum(popMat$admin2 == allZeroCon))
+    }
+  } else {
+    lcpb = matrix(logitNormMean(cbind(c(as.matrix(uDraws)[uniquePixelIndices,]), rep(sigmaEpsilonDraws, each=length(uniquePixelIndices)))), nrow=length(uniquePixelIndices))
+  }
+  
+  if(doLcpb) {
+    # the only difference between this model and lcpb is in the areal predictions assuming pixels are sufficiently small. 
+    # For those, we must aggregate lcpb predictions with weights proportional to the number of sampled EAs per pixel. 
+    # No steps necessary for pixel level predictions though
+    Lcpb = lcpb
+  } else {
+    Lcpb = NULL
+  }
+  
+  if(doLCpb) {
+    LCpb = sapply(1:ncol(muc), getPixelColumnFromEAs, vals=muc, applyFun=function(x) {mean(x, na.rm=TRUE)})
+    LCpb[!is.finite(LCpb)] = NA
+    
+    if(doModifiedPixelLevel) {
+      LCpbMod = sapply(1:ncol(muc), getPixelColumnFromEAs, vals=mucMod, applyFun=function(x) {mean(x, na.rm=TRUE)}, doMod=TRUE)
+      LCpbMod[!is.finite(mugMod)] = NA
+    }
+  } else {
+    LCpb = NULL
+  }
+  
+  if(doLCPb) {
+    # first make population weights matrix
+    popWeightMat = Ncs
+    
+    if(!is.null(clustersPerPixel)) {
+      pixelTotals = apply(Ng, 2, function(x) {rep(x, clustersPerPixel[clustersPerPixel != 0])})
+    } else {
+      pixelTotals = sapply(1:nDraws, function(i) {rep(Ng[,i], eaSamples[,i])})
+    }
+    if(doModifiedPixelLevel) {
+      pixelTotalsMod = lapply(1:nDraws, function(i) {rep(Ng[,i], eaSamplesMod[[i]])})
+    } 
+    
+    popWeightMat = popWeightMat / pixelTotals
+    
+    # now calculate weighted average
+    LCPb = sapply(1:ncol(muc), getPixelColumnFromEAs, vals=muc*popWeightMat)
+    LCPb[!is.finite(LCPb)] = NA
+    
+    if(doModifiedPixelLevel) {
+      temp = lapply(1:nDraws, function(i) {mucMod[[i]] * pixelTotalsMod[[i]]})
+      LCPbMod = sapply(1:ncol(muc), getPixelColumnFromEAs, vals=temp, doMod=TRUE)
+      LCPbMod[!is.finite(mugMod)] = NA
+    }
+  } else {
+    LCPb = NULL
   }
   
   # just for testing purposes:
@@ -598,14 +757,157 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empirical
     plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
     plotMapDat(mapDat=regionMap, lwd=2.5)
     dev.off()
+    
+    
+    
+    ## new plots: testing all models
+    cols = rep("green", length(uniquePixelIndices))
+    cols[urbanPixels] = "blue"
+    my_line <- function(x,y,...){
+      abline(a = 0,b = 1,...)
+      points(x,y,..., col=cols)
+    }
+    testSDs = data.frame(apply(lcpb, 1, sd), apply(Lcpb, 1, sd), apply(LCpb, 1, sd), apply(LCPb, 1, sd), apply(pg, 1, sd))
+    
+    numberModels = 5
+    width = 3 * numberModels
+    pdf(file=paste0(figDirectory, "exploratoryAnalysis/pixelSDPairsAllExtended.pdf"), width=width, height=width)
+    myPairs(testSDs, pch=19, cex=.2, labels=c("lcpb", "Lcpb", "LCpb", "LCPb", "LCPB"), 
+            lower.panel=my_line, upper.panel = my_line, ylim=range(c(testSDs), na.rm=TRUE), 
+            xlim=range(c(testSDs), na.rm=TRUE), main="Prediction SD (Pixel Level)")
+    dev.off()
+    
+    pdf(file=paste0(figDirectory, "exploratoryAnalysis/pixelSDPairsAll.pdf"), width=width, height=width)
+    myPairs(testSDs, pch=19, cex=.2, labels=c("lcpb", "Lcpb", "LCpb", "LCPb", "LCPB"), 
+            lower.panel=my_line, upper.panel = my_line, main="Prediction SD (Pixel Level)")
+    dev.off()
+    
+    names(testSDs) = c("lcpb", "Lcpb", "LCpb", "LCPb", "LCPB")
+    pdf(file=paste0(figDirectory, "exploratoryAnalysis/pixelSDBoxplotAll.pdf"), width=5, height=5)
+    boxplot(testSDs, col="skyblue", pch=19, cex=.3, main="Predictive SDs (Pixel Level)", ylim=c(0, max(testSDs, na.rm=TRUE)))
+    dev.off()
+    
+    pdf(file=paste0(figDirectory, "exploratoryAnalysis/pixelVarPairsAllExtended.pdf"), width=width, height=width)
+    testVars = data.frame(apply(lcpb, 1, var), apply(Lcpb, 1, var), apply(LCpb, 1, var), apply(LCPb, 1, var), apply(pg, 1, var))
+    myPairs(testVars, pch=19, cex=.2, labels=c("lcpb", "Lcpb", "LCpb", "LCPb", "LCPB"), 
+            lower.panel=my_line, upper.panel = my_line, ylim=range(c(testVars), na.rm=TRUE), 
+            xlim=range(c(testVars), na.rm=TRUE), main="Prediction Variance (Pixel Level)")
+    dev.off()
+    
+    pdf(file=paste0(figDirectory, "exploratoryAnalysis/pixelVarPairsAll.pdf"), width=5, height=5)
+    myPairs(testVars, pch=19, cex=.2, labels=c("lcpb", "Lcpb", "LCpb", "LCPb", "LCPB"), 
+            lower.panel=my_line, upper.panel = my_line, main="Prediction Variance (Pixel Level)")
+    dev.off()
+    
+    names(testVars) = c("lcpb", "Lcpb", "LCpb", "LCPb", "LCPB")
+    pdf(file=paste0(figDirectory, "exploratoryAnalysis/pixelVarBoxplotAll.pdf"), width=5, height=5)
+    boxplot(testVars, col="skyblue", pch=19, cex=.3, main="Predictive Variances (Pixel Level)", ylim=c(0, max(testVars, na.rm=TRUE)))
+    dev.off()
   }
   
   ##### Line 9: done aggregating to the pixel level
   
   ##### Line 10: aggregate from pixel level to relevant areal levels if necessary
   if(!onlyDoModifiedPixelLevel) {
-    aggregatedResults = aggregatePixelPredictions(Zg, Ng, popGrid=popMat, useDensity=FALSE, countyLevel=countyLevel, 
-                                                  regionLevel=regionLevel, separateUrbanRural=TRUE)
+    # subset eaSamples matrix to pixels of interest if need be
+    if(!is.null(clustersPerPixel)) {
+      eaSamples = eaSamples[uniquePixelIndices,]
+    }
+    
+    # LCPB model
+    aggregatedResults = aggregatePixelPredictions(Zg, Ng, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
+                                                  constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
+                                                  separateUrbanRural=TRUE)
+    
+    # determine which constituencies don't have urban or rural populations
+    if(constituencyLevel) {
+      zeroConstituenciesUrban = apply(aggregatedResults$constituencyMatrices$NUrban, 1, function(x) {all(x == 0)})
+      zeroConstituenciesRural = apply(aggregatedResults$constituencyMatrices$NRural, 1, function(x) {all(x == 0)})
+    }
+    
+    # lcpb model (always do this, since all models agree in expectation, and this has lowest variance)
+    if(onlyDoModifiedPixelLevel && (constituencyLevel || countyLevel || regionLevel || nationalLevel)) {
+      stop("onlyDoModifiedPixelLevel must be set to FALSE if dolcpb is set to TRUE and aggregations coarser than pixel level is desired")
+    }
+    
+    # construct population density surface, adjusted based on known or estimated stratum populations (or "faux" stratum populations)
+    if(is.null(adjustedPopMat)) {
+      adjustedPopMat = adjustPopGrid(popMat, poppcAdjusted=easpa)
+    }
+    
+    # aggregatedResultslcpb = aggregatePixelPredictions(lcpb*eaSamples, eaSamples, popGrid=popMat, useDensity=FALSE, 
+    #                                                   countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
+    #                                                   separateUrbanRural=TRUE, normalize=FALSE)
+    aggregatedResultslcpb = aggregatePixelPredictions(lcpb, eaSamples, popMatAdjusted=adjustedPopMat, useDensity=TRUE, 
+                                                      constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
+                                                      separateUrbanRural=TRUE, normalize=TRUE, lcpbSwitchedUrban=lcpbSwitchedUrban)
+    
+    # Lcpb model
+    if(doLcpb) {
+      # unlike for the lcpb model, we weight by the number of EAs per pixel rather than population density. 
+      # 
+      aggregatedResultsLcpb = aggregatePixelPredictions(Lcpb*eaSamples, eaSamples, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
+                                                        constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
+                                                        separateUrbanRural=TRUE, normalize=FALSE)
+    } else {
+      aggregatedResultsLcpb = NULL
+    }
+    
+    # LCpb model
+    if(doLCpb) {
+      aggregatedResultsLCpb = aggregatePixelPredictions(LCpb*eaSamples, eaSamples, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
+                                                        constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
+                                                        separateUrbanRural=TRUE, normalize=FALSE, lcpbSwitchedUrban=lcpbSwitchedUrban)
+    } else {
+      aggregatedResultsLCpb = NULL
+    }
+    
+    # LCPb model
+    if(doLCPb) {
+      aggregatedResultsLCPb = aggregatePixelPredictions(LCPb*Ng, Ng, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
+                                                        constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
+                                                        separateUrbanRural=TRUE, normalize=FALSE, lcpbSwitchedUrban=lcpbSwitchedUrban)
+    } else {
+      aggregatedResultsLCPb = NULL
+    }
+    
+    # use risk predictions rather than prevalence for constituency strata if there is no population denominator
+    if(constituencyLevel && (any(zeroConstituenciesUrban) || any(zeroConstituenciesRural))) {
+      # LCPB
+      aggregatedResults$constituencyMatrices$pUrban[zeroConstituenciesUrban,] = aggregatedResultslcpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,]
+      aggregatedResults$constituencyMatrices$pRural[zeroConstituenciesRural,] = aggregatedResultslcpb$constituencyMatrices$pRural[zeroConstituenciesRural,]
+      
+      # Lcpb
+      if(doLcpb) {
+        aggregatedResultsLcpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,] = aggregatedResultslcpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,]
+        aggregatedResultsLcpb$constituencyMatrices$pRural[zeroConstituenciesRural,] = aggregatedResultslcpb$constituencyMatrices$pRural[zeroConstituenciesRural,]
+      }
+      
+      # LCpb
+      if(doLCpb) {
+        aggregatedResultsLCpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,] = aggregatedResultslcpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,]
+        aggregatedResultsLCpb$constituencyMatrices$pRural[zeroConstituenciesRural,] = aggregatedResultslcpb$constituencyMatrices$pRural[zeroConstituenciesRural,]
+      }
+      
+      # LCPb
+      if(doLCPb) {
+        aggregatedResultsLCPb$constituencyMatrices$pUrban[zeroConstituenciesUrban,] = aggregatedResultslcpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,]
+        aggregatedResultsLCPb$constituencyMatrices$pRural[zeroConstituenciesRural,] = aggregatedResultslcpb$constituencyMatrices$pRural[zeroConstituenciesRural,]
+      }
+    }
+    
+    browser()
+    
+    # constituency level
+    Zconstituency = aggregatedResults$constituencyMatrices$Z
+    Nconstituency = aggregatedResults$constituencyMatrices$N
+    Pconstituency = aggregatedResults$constituencyMatrices$p
+    ZconstituencyUrban = aggregatedResults$constituencyMatrices$ZUrban
+    NconstituencyUrban = aggregatedResults$constituencyMatrices$NUrban
+    PconstituencyUrban = aggregatedResults$constituencyMatrices$pUrban
+    ZconstituencyRural = aggregatedResults$constituencyMatrices$ZRural
+    NconstituencyRural = aggregatedResults$constituencyMatrices$NRural
+    PconstituencyRural = aggregatedResults$constituencyMatrices$pRural
     
     # county level
     Zcounty = aggregatedResults$countyMatrices$Z
@@ -640,8 +942,6 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empirical
     NnationRural = aggregatedResults$nationalMatrices$NRural
     PnationRural = aggregatedResults$nationalMatrices$pRural
     
-    browser()
-    
     # plots for testing purposes
     if(FALSE) {
       ## lcpb
@@ -654,7 +954,9 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empirical
       
       Ng2 = Ng
       Ng2[Ng2 != 0] = 1
-      aggregatedResultslcpb2 = aggregatePixelPredictions(lcpb*eaSamples, eaSamples, popGrid=popMat, useDensity=FALSE, countyLevel=countyLevel, 
+      
+      # NOTE: the following MUST be INCORRECT. set useDensity to TRUE, and don't use eaSamples at all!
+      aggregatedResultslcpb2 = aggregatePixelPredictions(lcpb*eaSamples, eaSamples, popMatAdjusted=adjustedPopMat, useDensity=FALSE, countyLevel=countyLevel, 
                                                          regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=FALSE)
       
       # county level
@@ -682,7 +984,7 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empirical
                                                      regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=TRUE)
       mug2 = mug
       mug2[!is.finite(mug2)] = 0
-      aggregatedResultsLCpb = aggregatePixelPredictions(mug*eaSamples, eaSamples, popGrid=popMat, useDensity=FALSE, countyLevel=countyLevel, 
+      aggregatedResultsLCpb = aggregatePixelPredictions(mug*eaSamples, eaSamples, popMatAdjusted=adjustedPopMat, useDensity=FALSE, countyLevel=countyLevel, 
                                                         regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=FALSE)
       
       # county level
@@ -796,10 +1098,20 @@ modLCPB = function(uDraws, sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empirical
     
     ##### Extra steps: collect draws at each level and generate:
     ##### areas, preds, 
-    allMatrices = c(pixelMatrices=list(p=pg, Z=Zg, N=Ng), aggregatedResults)
+    allMatrices = list(pixelMatricesLCPB=list(p=pg, Z=Zg, N=Ng), aggregatedResultsLCPB=aggregatedResults, 
+                       pixelMatriceslcpb=list(p=lcpb), aggregatedResultslcpb=aggregatedResultslcpb, 
+                       pixelMatricesLcpb=list(p=Lcpb), aggregatedResultsLcpb=aggregatedResultsLcpb, 
+                       pixelMatricesLCpb=list(p=LCpb), aggregatedResultsLCpb=aggregatedResultsLCpb, 
+                       pixelMatricesLCPb=list(p=LCPb), aggregatedResultsLCPb=aggregatedResultsLCPb)
   } else {
-    # for the pixel level validation, return only the pixel results
-    allMatrices = c(pixelMatrices=list(p=pgMod, Z=ZgMod, N=NgMod))
+    # for the if we only care about the modified pixel level predictions, just include those
+    if(is.null(clustersPerPixel)) {
+      allMatrices = list(pixelMatricesLCPB=list(p=pgMod, Z=ZgMod, N=NgMod), 
+                         pixelMatriceslcpb=list(p=lcpb))
+    } else {
+      allMatrices = list(pixelMatricesLCPB=list(p=pg, Z=Zg, N=Ng), 
+                         pixelMatriceslcpb=list(p=lcpb))
+    }
   }
   
   allMatrices
@@ -814,13 +1126,9 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
                                              urbanEffect=TRUE, clusterEffect=TRUE, kmres=5, 
                                              loadPreviousFit=TRUE, saveResults=TRUE, 
                                              sampleTable=NULL, stratifiedValidation=TRUE, 
-                                             doPixelLevelValidation=TRUE, doCountyLevelValidation=FALSE, 
+                                             doPixelLevelValidation=TRUE, doCountyLevelValidation=TRUE, 
                                              loadPreviousResults=FALSE, 
-                                             doLCPB=TRUE, doLCPb=FALSE, doLCpb=FALSE, doLcpb=FALSE, dolcpb=FALSE) {
-  
-  if(doLCPb || doLCpb || doLcpb || dolcpb) {
-    stop("Only LCPB aggregation model is currently supported in validation")
-  }
+                                             doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE) {
   
   if(!is.null(seed))
     set.seed(seed)
@@ -847,31 +1155,67 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
   fileName = paste0("savedOutput/validation/resultsSPDE", fileNameRoot, "ValidationFull", 
                     "_urb", urbanEffect, ".RData")
   if(!loadPreviousFit || !file.exists(fileName)) {
-    print("Fitting full point level model")
-    timePoint = system.time(fit <- fitSPDEKenyaDat(dat, dataType, mesh, prior, significanceCI, int.strategy, strategy, nPostSamples,
-                                                   verbose, link, NULL, urbanEffect, clusterEffect=TRUE,
-                                                   kmres=kmres, doValidation=TRUE, family="binomial"))[3]
-    browser()
-    print("Fitting full population aggregation model")
-    truthTableFull = getPixelLevelTruth(dat=dat, popMat=NULL, targetPop="children")
-    easpaMort = makeDefaultEASPA(dataType2, NULL, useClustersAsEAs=TRUE)
-    timeAggregation = system.time(fit2 <- modLCPB(uDraws=fit$uDraws, fit$sigmaEpsilonDraws, easpa=easpaMort, popMat=NULL, empiricalDistributions=NULL, 
-                                                  includeUrban=urbanEffect, clusterLevel=FALSE, pixelLevel=TRUE, countyLevel=FALSE, 
-                                                  regionLevel=FALSE, doModifiedPixelLevel=TRUE, validationPixelI=truthTableFull$pixelI, 
-                                                  onlyDoModifiedPixelLevel=TRUE))[3]
     
+    tempFileName = paste0("savedOutput/validation/resultsSPDE", fileNameRoot, "ValidationFullPointwise", 
+                          "_urb", urbanEffect, ".RData")
+    if(!file.exists(tempFileName)) {
+      print("Fitting full point level model")
+      timePoint = system.time(fit <- fitSPDEKenyaDat(dat, dataType, mesh, prior, significanceCI, int.strategy, strategy, nPostSamples,
+                                                     verbose, link, NULL, urbanEffect, clusterEffect=TRUE,
+                                                     kmres=kmres, doValidation=TRUE, family="binomial"))[3]
+      
+      if(saveResults)
+        save(fit, timePoint, file=tempFileName)
+    } else {
+      print("Loading full point level model")
+      load(tempFileName)
+    }
+    
+    if(urbanEffect) {
+      urbanEffectValue = fit$mod$summary.fixed[2,1]
+    } else {
+      urbanEffectValue = NULL
+    }
+    
+    print("Fitting full population aggregation model")
+    popMat = makeDefaultPopMat()
+    truthTableFull = getPixelLevelTruth(dat=dat, popMat=popMat, targetPop="children")
+    clustersPerPixel = rep(0, nrow(popMat))
+    clustersPerPixel[truthTableFull$pixelI] = truthTableFull$nClusters
+    easpa = makeDefaultEASPA(dataType2)
+    easpaMort = makeDefaultEASPA(dataType2, NULL, useClustersAsEAs=TRUE)
+    easpaMortClusterUrban = makeDefaultEASPA(dataType2, NULL, useClustersAsEAs=TRUE, usePixelUrban=FALSE)
+    
+    # do the pixel level validation
+    timeAggregationPixel = system.time(fit2 <- modLCPB(uDraws=fit$uDraws, fit$sigmaEpsilonDraws, easpa=easpaMort, popMat=popMat, empiricalDistributions=NULL, 
+                                                  includeUrban=urbanEffect, clusterLevel=FALSE, pixelLevel=TRUE, constituencyLevel=FALSE, countyLevel=FALSE, 
+                                                  regionLevel=FALSE, nationalLevel=FALSE, doModifiedPixelLevel=FALSE, validationPixelI=truthTableFull$pixelI, 
+                                                  onlyDoModifiedPixelLevel=FALSE, clustersPerPixel=clustersPerPixel, 
+                                                  doLCPb=doLCPb, doLCpb=doLCpb, doLcpb=doLcpb))[3]
+    
+    # do the county and province level validation
+    adjustedPopMat = makeDefaultPopMat(getAdjusted=TRUE)
+    
+    # do the same but making population level estimates rather than estimates of the data
+    timeAggregationCountyProvincePopulation = system.time(fit4 <- modLCPB(uDraws=fit$uDraws, fit$sigmaEpsilonDraws, easpa=easpa, popMat=popMat, 
+                                                                          adjustedPopMat=adjustedPopMat, empiricalDistributions=NULL, 
+                                                                          includeUrban=urbanEffect, clusterLevel=FALSE, pixelLevel=FALSE, constituencyLevel=TRUE, countyLevel=TRUE, 
+                                                                          regionLevel=TRUE, nationalLevel=FALSE, doModifiedPixelLevel=FALSE, 
+                                                                          onlyDoModifiedPixelLevel=FALSE, 
+                                                                          doLCPb=doLCPb, doLCpb=doLCpb, doLcpb=doLcpb, urbanEffect=urbanEffectValue))[3]
+    browser()
+    timeAggregationCountyProvince = system.time(fit3 <- modLCPB(uDraws=fit$uDraws, fit$sigmaEpsilonDraws, easpa=easpaMortClusterUrban, popMat=popMat, 
+                                                                adjustedPopMat=adjustedPopMat, empiricalDistributions=NULL, 
+                                                                includeUrban=urbanEffect, clusterLevel=FALSE, pixelLevel=FALSE, constituencyLevel=TRUE, countyLevel=TRUE, 
+                                                                regionLevel=TRUE, nationalLevel=FALSE, doModifiedPixelLevel=FALSE, 
+                                                                onlyDoModifiedPixelLevel=FALSE, 
+                                                                doLCPb=doLCPb, doLCpb=doLCpb, doLcpb=doLcpb))[3]
+    
+    ## pixel level
     # get observations and prediction summary statistics
     # easpaFull = makeDefaultEASPA(validationClusterI=NULL, useClustersAsEAs=TRUE)
     truthFull = truthTableFull$p
-    truthUrban = truthTableFull$urban
-    est = rowMeans(fit2$pixelMatrices$p)
-    vars = apply(fit2$pixelMatrices$p, 1, var)
-    # lower = fit$obsLower
-    # upper = fit$obsUpper
-    lower = NULL
-    upper = NULL
-    estMat = fit2$pixelMatrices$p
-    # estMatBinomial = addBinomialVar(estMat, dat$n)
+    obsUrban = truthTableFull$urban
     
     cpo = fit$mod$cpo$cpo
     cpoFailure = fit$mod$cpo$failure
@@ -879,30 +1223,699 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
     waic = fit$mod$waic$waic
     modelFit = fit$mod
     
+    est = rowMeans(fit2$pixelMatriceslcpb$p)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = fit2$pixelMatricesLCPB$p
+    # vars = apply(fit2$pixelMatricesLCPB$p, 1, var)
+    vars = rowMeans(sweep(estMat, 1, est, FUN="-")^2)
+    # estMatBinomial = addBinomialVar(estMat, dat$n)
+    
     # # calculate validation scoring rules
-    # print("Pooled scores:")
-    # fullPooledScoresBinomial = data.frame(c(getScores(truth, est, vars, lower, upper, estMatBinomial, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), Time=time[3]))
-    # print(fullPooledScoresBinomial)
-    # print("Rural scores:")
-    # fullRuralScoresBinomial = data.frame(c(getScores(truth[!obsUrban], est[!obsUrban], vars[!obsUrban], lower[!obsUrban], upper[!obsUrban], estMatBinomial[!obsUrban,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), Time=time[3]))
-    # print(fullRuralScoresBinomial)
-    # print("Urban scores:")
-    # fullUrbanScoresBinomial = data.frame(c(getScores(truth[obsUrban], est[obsUrban], vars[obsUrban], lower[obsUrban], upper[obsUrban], estMatBinomial[obsUrban,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), Time=time[3]))
-    # print(fullUrbanScoresBinomial)
-    # 
-    # fullPooledScores = data.frame(c(getScores(truth, est, vars, lower, upper, estMat), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), Time=time[3]))
-    # fullRuralScores = data.frame(c(getScores(truth[!obsUrban], est[!obsUrban], vars[!obsUrban], lower[!obsUrban], upper[!obsUrban], estMat[!obsUrban,]), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), Time=time[3]))
-    # fullUrbanScores = data.frame(c(getScores(truth[obsUrban], est[obsUrban], vars[obsUrban], lower[obsUrban], upper[obsUrban], estMat[obsUrban,]), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), Time=time[3]))
+    print("Pooled scores (LCPB, pixel):")
+    fullPooledScoresPixelLCPB = data.frame(c(getScores(truthFull, est, vars, lower, upper, estMat, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel))
+    print(fullPooledScoresPixelLCPB)
+    print("Rural scores (LCPB, pixel):")
+    fullRuralScoresPixelLCPB = data.frame(c(getScores(truthFull[!obsUrban], est[!obsUrban], vars[!obsUrban], lower[!obsUrban], upper[!obsUrban], estMat[!obsUrban,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresPixelLCPB)
+    print("Urban scores (LCPB, pixel):")
+    fullUrbanScoresPixelLCPB = data.frame(c(getScores(truthFull[obsUrban], est[obsUrban], vars[obsUrban], lower[obsUrban], upper[obsUrban], estMat[obsUrban,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresPixelLCPB)
+    
+    # est = rowMeans(fit2$pixelMatriceslcpb$p)
+    # vars = apply(fit2$pixelMatricesLCPb$p, 1, var)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = fit2$pixelMatricesLCPb$p
+    vars = rowMeans(sweep(estMat, 1, est, FUN="-")^2)
+    # estMatBinomial = addBinomialVar(estMat, dat$n)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (LCPb, pixel):")
+    fullPooledScoresPixelLCPb = data.frame(c(getScores(truthFull, est, vars, lower, upper, as.matrix(estMat), doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    # fullPooledScoresPixelLCPb2 = data.frame(c(getScores(truthFull[truthFull != 0], est[truthFull != 0], vars[truthFull != 0], lower[truthFull != 0], upper[truthFull != 0], as.matrix(estMat)[truthFull != 0,], doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresPixelLCPb)
+    print("Rural scores (LCPb, pixel):")
+    fullRuralScoresPixelLCPb = data.frame(c(getScores(truthFull[!obsUrban], est[!obsUrban], vars[!obsUrban], lower[!obsUrban], upper[!obsUrban], estMat[!obsUrban,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresPixelLCPb)
+    print("Urban scores (LCPb, pixel):")
+    fullUrbanScoresPixelLCPb = data.frame(c(getScores(truthFull[obsUrban], est[obsUrban], vars[obsUrban], lower[obsUrban], upper[obsUrban], estMat[obsUrban,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresPixelLCPb)
+    
+    # est = rowMeans(fit2$pixelMatriceslcpb$p)
+    # vars = apply(fit2$pixelMatricesLCpb$p, 1, var)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = fit2$pixelMatricesLCpb$p
+    vars = rowMeans(sweep(estMat, 1, est, FUN="-")^2)
+    # estMatBinomial = addBinomialVar(estMat, dat$n)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (LCpb, pixel):")
+    fullPooledScoresPixelLCpb = data.frame(c(getScores(truthFull, est, vars, lower, upper, estMat, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresPixelLCpb)
+    print("Rural scores (LCpb, pixel):")
+    fullRuralScoresPixelLCpb = data.frame(c(getScores(truthFull[!obsUrban], est[!obsUrban], vars[!obsUrban], lower[!obsUrban], upper[!obsUrban], estMat[!obsUrban,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresPixelLCpb)
+    print("Urban scores (LCpb, pixel):")
+    fullUrbanScoresPixelLCpb = data.frame(c(getScores(truthFull[obsUrban], est[obsUrban], vars[obsUrban], lower[obsUrban], upper[obsUrban], estMat[obsUrban,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresPixelLCpb)
+    
+    # est = rowMeans(fit2$pixelMatriceslcpb$p)
+    # vars = apply(fit2$pixelMatricesLcpb$p, 1, var)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = fit2$pixelMatricesLcpb$p
+    vars = rowMeans(sweep(estMat, 1, est, FUN="-")^2)
+    # estMatBinomial = addBinomialVar(estMat, dat$n)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (Lcpb, pixel):")
+    fullPooledScoresPixelLcpb = data.frame(c(getScores(truthFull, est, vars, lower, upper, estMat, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresPixelLcpb)
+    print("Rural scores (Lcpb, pixel):")
+    fullRuralScoresPixelLcpb = data.frame(c(getScores(truthFull[!obsUrban], est[!obsUrban], vars[!obsUrban], lower[!obsUrban], upper[!obsUrban], estMat[!obsUrban,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresPixelLcpb)
+    print("Urban scores (Lcpb, pixel):")
+    fullUrbanScoresPixelLcpb = data.frame(c(getScores(truthFull[obsUrban], est[obsUrban], vars[obsUrban], lower[obsUrban], upper[obsUrban], estMat[obsUrban,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresPixelLcpb)
+    
+    # est = rowMeans(fit2$pixelMatriceslcpb$p)
+    # vars = apply(fit2$pixelMatriceslcpb$p, 1, var)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = fit2$pixelMatriceslcpb$p
+    vars = rowMeans(sweep(estMat, 1, est, FUN="-")^2)
+    # estMatBinomial = addBinomialVar(estMat, dat$n)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (lcpb, pixel):")
+    fullPooledScoresPixellcpb = data.frame(c(getScores(truthFull, est, vars, lower, upper, estMat, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresPixellcpb)
+    print("Rural scores (lcpb, pixel):")
+    fullRuralScoresPixellcpb = data.frame(c(getScores(truthFull[!obsUrban], est[!obsUrban], vars[!obsUrban], lower[!obsUrban], upper[!obsUrban], estMat[!obsUrban,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresPixellcpb)
+    print("Urban scores (lcpb, pixel):")
+    fullUrbanScoresPixellcpb = data.frame(c(getScores(truthFull[obsUrban], est[obsUrban], vars[obsUrban], lower[obsUrban], upper[obsUrban], estMat[obsUrban,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresPixellcpb)
+    
+    fullScoresPixel = list(fullPooledScoreslcpb=fullPooledScoresPixellcpb, fullRuralScoreslcpb=fullRuralScoresPixellcpb, fullUrbanScoreslcpb=fullUrbanScoresPixellcpb, 
+                           fullPooledScoresLcpb=fullPooledScoresPixelLcpb, fullRuralScoresLcpb=fullRuralScoresPixelLcpb, fullUrbanScoresLcpb=fullUrbanScoresPixelLcpb, 
+                           fullPooledScoresLCpb=fullPooledScoresPixelLCpb, fullRuralScoresLCpb=fullRuralScoresPixelLCpb, fullUrbanScoresLCpb=fullUrbanScoresPixelLCpb, 
+                           fullPooledScoresLCPb=fullPooledScoresPixelLCPb, fullRuralScoresLCPb=fullRuralScoresPixelLCPb, fullUrbanScoresLCPb=fullUrbanScoresPixelLCPb, 
+                           fullPooledScoresLCPB=fullPooledScoresPixelLCPB, fullRuralScoresLCPB=fullRuralScoresPixelLCPB, fullUrbanScoresLCPB=fullUrbanScoresPixelLCPB)
+    
+    ## Constituency level
+    browser()
+    truthTableFullConstituency = getConstituencyLevelTruth(dat=dat, targetPop="children")
+    
+    # get observations and prediction summary statistics
+    # easpaFull = makeDefaultEASPA(validationClusterI=NULL, useClustersAsEAs=TRUE)
+    truthFull = truthTableFullConstituency$pStratified
+    truthFullUrban = truthTableFullConstituency$pUrban
+    truthFullRural = truthTableFullConstituency$pRural
+    
+    truthDirectFull = truthTableFullConstituency$pDirect
+    truthDirectFullUrban = truthTableFullConstituency$pDirectUrban
+    truthDirectFullRural = truthTableFullConstituency$pDirectRural
+    truthDirectFullLogitVar = truthTableFullConstituency$varDirectLogit
+    truthDirectFullUrbanLogitVar = truthTableFullConstituency$varDirectUrbanLogit
+    truthDirectFullRuralLogitVar = truthTableFullConstituency$varDirectRuralLogit
+    keepFullI = is.finite(truthDirectFullLogitVar) # & (poppcon$popTotal != 0)
+    keepFullUrbanI = (is.finite(truthDirectFullUrbanLogitVar) & (truthDirectFullUrbanLogitVar > 1e-15)) # & (poppcon$popUrb != 0)
+    keepFullRuralI = is.finite(truthDirectFullRuralLogitVar) & (truthDirectFullRuralLogitVar > 1e-15) # & (poppcon$popRur != 0)
+    # truthDirectFull = truthTableFullConstituency$pDirect[keepFullI]
+    # truthDirectFullUrban = truthTableFullConstituency$pDirectUrban[keepFullUrbanI]
+    # truthDirectFullRural = truthTableFullConstituency$pDirectRural[keepFullRuralI]
+    # truthDirectFullLogitVar = truthTableFullConstituency$varDirectLogit[keepFullI]
+    # truthDirectFullUrbanLogitVar = truthTableFullConstituency$varDirectUrbanLogit[keepFullUrbanI]
+    # truthDirectFullRuralLogitVar = truthTableFullConstituency$varDirectRuralLogit[keepFullRuralI]
+    
+    if(FALSE) {
+      makeRankPlots(fit4$aggregatedResultslcpb$constituencyMatrices$p, admin="admin2", 
+                    plotNameSuffix = "Risk", savePlots = TRUE)
+      makeRankPlots(fit4$aggregatedResultslcpb$constituencyMatrices$p, admin="admin2", 
+                    plotNameSuffix = "CPAM", savePlots = TRUE)
+    }
+    
+    # obsUrban = truthTableFullCounty$urban
+    
+    cpo = fit$mod$cpo$cpo
+    cpoFailure = fit$mod$cpo$failure
+    dic = fit$mod$dic$dic
+    waic = fit$mod$waic$waic
+    modelFit = fit$mod
+    
+    est = rowMeans(fit3$aggregatedResultslcpb$constituencyMatrices$pUrban) * truthTableFullConstituency$urbanProp + rowMeans(fit3$aggregatedResultslcpb$constituencyMatrices$pRural) * (1 - truthTableFullConstituency$urbanProp)
+    estUrban = rowMeans(fit3$aggregatedResultslcpb$constituencyMatrices$pUrban)
+    estRural = rowMeans(fit3$aggregatedResultslcpb$constituencyMatrices$pRural)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = sweep(fit3$aggregatedResultsLCPB$constituencyMatrices$pUrban, 1, truthTableFullConstituency$urbanProp, FUN="*") + sweep(fit3$aggregatedResultsLCPB$constituencyMatrices$pRural, 1, 1-truthTableFullConstituency$urbanProp, FUN="*")
+    # vars = apply(estMat, 1, var)
+    vars = rowMeans(sweep(estMat, 1, est, FUN="-")^2)
+    estMatUrban = fit3$aggregatedResultsLCPB$constituencyMatrices$pUrban
+    varsUrban = rowMeans(sweep(estMatUrban, 1, estUrban, FUN="-")^2)
+    estMatRural = fit3$aggregatedResultsLCPB$constituencyMatrices$pRural
+    varsRural = rowMeans(sweep(estMatRural, 1, estRural, FUN="-")^2)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (LCPB, constituency, stratified):")
+    fullPooledScoresConstituencyLCPB = data.frame(c(getScores(truthFull, est, vars, lower, upper, estMat, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationConstituencyProvince=timeAggregationConstituencyProvince))
+    print(fullPooledScoresConstituencyLCPB)
+    print("Rural scores (LCPB, constituency, stratified):")
+    fullRuralScoresConstituencyLCPB = data.frame(c(getScores(truthFullRural[truthTableFullConstituency$urbanProp!=1], estRural[truthTableFullConstituency$urbanProp!=1], varsRural[truthTableFullConstituency$urbanProp!=1], lower, upper, estMatRural[truthTableFullConstituency$urbanProp!=1,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationConstituencyProvince=timeAggregationConstituencyProvince))
+    print(fullRuralScoresConstituencyLCPB)
+    print("Urban scores (LCPB, constituency, stratified):")
+    fullUrbanScoresConstituencyLCPB = data.frame(c(getScores(truthFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationConstituencyProvince=timeAggregationConstituencyProvince))
+    print(fullUrbanScoresConstituencyLCPB)
+    
+    # do the same for the direct estimate validation
+    est = rowMeans(fit4$aggregatedResultsLCpb$constituencyMatrices$p) #[keepFullI]
+    estUrban = rowMeans(fit4$aggregatedResultsLCpb$constituencyMatrices$pUrban) #[keepFullUrbanI]
+    estRural = rowMeans(fit4$aggregatedResultsLCpb$constituencyMatrices$pRural) #[keepFullRuralI]
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = fit4$aggregatedResultsLCPB$constituencyMatrices$p #[keepFullI,]
+    # vars = apply(estMat, 1, var)
+    vars = rep(NA, length(est))
+    varsUrban = rep(NA, length(estUrban))
+    varsRural = rep(NA, length(estRural))
+    vars[keepFullI] = rowMeans(expit(sweep(logit(estMat[keepFullI,]) + matrix(rnorm(n=length(estMat[keepFullI,]), sd=sqrt(truthDirectFullLogitVar[keepFullI])), ncol=ncol(estMat)), 1, logit(est[keepFullI]), FUN="-"))^2)
+    estMatUrban = fit4$aggregatedResultsLCPB$constituencyMatrices$pUrban #[keepFullUrbanI,]
+    varsUrban[keepFullUrbanI] = rowMeans(expit(sweep(logit(estMatUrban[keepFullUrbanI,]) + matrix(rnorm(n=length(estMatUrban[keepFullUrbanI,]), sd=sqrt(truthDirectFullUrbanLogitVar[keepFullUrbanI])), ncol=ncol(estMatUrban)), 1, logit(estUrban[keepFullUrbanI]), FUN="-"))^2)
+    estMatRural = fit4$aggregatedResultsLCPB$constituencyMatrices$pRural #[keepFullRuralI,]
+    varsRural[keepFullRuralI] = rowMeans(expit(sweep(logit(estMatRural[keepFullRuralI,]) + matrix(rnorm(n=length(estMatRural[keepFullRuralI,]), sd=sqrt(truthDirectFullRuralLogitVar[keepFullRuralI])), ncol=ncol(estMatRural)), 1, logit(estRural[keepFullRuralI]), FUN="-"))^2)
+    # vars[is.nan(vars)] = 0
+    # varsUrban[is.nan(varsUrban)] = 0
+    # varsRural[is.nan(varsRural)] = 0
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (LCPB, constituency, direct):")
+    fullPooledScoresConstituencyLCPBDirect = data.frame(c(getScores(truthDirectFull, est, vars, lower, upper, estMat, doRandomReject=TRUE, logitTruthVar=truthDirectFullLogitVar), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvincePopulation=timeAggregationCountyProvincePopulation))
+    print(fullPooledScoresConstituencyLCPBDirect)
+    print("Rural scores (LCPB, constituency, direct):")
+    fullRuralScoresConstituencyLCPBDirect = data.frame(c(getScores(truthDirectFullRural, estRural, varsRural, lower, upper, estMatRural, doRandomReject=TRUE, logitTruthVar=truthDirectFullRuralLogitVar), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvincePopulation=timeAggregationCountyProvincePopulation))
+    print(fullRuralScoresConstituencyLCPBDirect)
+    print("Urban scores (LCPB, constituency, direct):")
+    fullUrbanScoresConstituencyLCPBDirect = data.frame(c(getScores(truthDirectFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE, logitTruthVar=truthDirectFullUrbanLogitVar), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvincePopulation=timeAggregationCountyProvincePopulation))
+    print(fullUrbanScoresConstituencyLCPBDirect)
+    
+    ## lcpb
+    est = rowMeans(fit4$aggregatedResultslcpb$constituencyMatrices$p) #[keepFullI]
+    estUrban = rowMeans(fit4$aggregatedResultslcpb$constituencyMatrices$pUrban) #[keepFullUrbanI]
+    estRural = rowMeans(fit4$aggregatedResultslcpb$constituencyMatrices$pRural) #[keepFullRuralI]
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = fit4$aggregatedResultslcpb$constituencyMatrices$p #[keepFullI,]
+    # vars = apply(estMat, 1, var)
+    vars = rep(NA, length(est))
+    varsUrban = rep(NA, length(estUrban))
+    varsRural = rep(NA, length(estRural))
+    vars[keepFullI] = rowMeans(expit(sweep(logit(estMat[keepFullI,]) + matrix(rnorm(n=length(estMat[keepFullI,]), sd=sqrt(truthDirectFullLogitVar[keepFullI])), ncol=ncol(estMat)), 1, logit(est[keepFullI]), FUN="-"))^2)
+    estMatUrban = fit4$aggregatedResultslcpb$constituencyMatrices$pUrban #[keepFullUrbanI,]
+    varsUrban[keepFullUrbanI] = rowMeans(expit(sweep(logit(estMatUrban[keepFullUrbanI,]) + matrix(rnorm(n=length(estMatUrban[keepFullUrbanI,]), sd=sqrt(truthDirectFullUrbanLogitVar[keepFullUrbanI])), ncol=ncol(estMatUrban)), 1, logit(estUrban[keepFullUrbanI]), FUN="-"))^2)
+    estMatRural = fit4$aggregatedResultslcpb$constituencyMatrices$pRural #[keepFullRuralI,]
+    varsRural[keepFullRuralI] = rowMeans(expit(sweep(logit(estMatRural[keepFullRuralI,]) + matrix(rnorm(n=length(estMatRural[keepFullRuralI,]), sd=sqrt(truthDirectFullRuralLogitVar[keepFullRuralI])), ncol=ncol(estMatRural)), 1, logit(estRural[keepFullRuralI]), FUN="-"))^2)
+    # vars[is.nan(vars)] = 0
+    # varsUrban[is.nan(varsUrban)] = 0
+    # varsRural[is.nan(varsRural)] = 0
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (lcpb, constituency, direct):")
+    fullPooledScoresConstituencylcpbDirect = data.frame(c(getScores(truthDirectFull, est, vars, lower, upper, estMat, doRandomReject=TRUE, logitTruthVar=truthDirectFullLogitVar), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvincePopulation=timeAggregationCountyProvincePopulation))
+    print(fullPooledScoresConstituencylcpbDirect)
+    print("Rural scores (lcpb, constituency, direct):")
+    fullRuralScoresConstituencylcpbDirect = data.frame(c(getScores(truthDirectFullRural, estRural, varsRural, lower, upper, estMatRural, doRandomReject=TRUE, logitTruthVar=truthDirectFullRuralLogitVar), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvincePopulation=timeAggregationCountyProvincePopulation))
+    print(fullRuralScoresConstituencylcpbDirect)
+    print("Urban scores (lcpb, constituency, direct):")
+    fullUrbanScoresConstituencylcpbDirect = data.frame(c(getScores(truthDirectFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE, logitTruthVar=truthDirectFullUrbanLogitVar), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvincePopulation=timeAggregationCountyProvincePopulation))
+    print(fullUrbanScoresConstituencylcpbDirect)
+    
+    ##### County level
+    browser()
+    truthTableFullCounty = getCountyLevelTruth(dat=dat, easpa=easpa, targetPop="children")
+    
+    # get observations and prediction summary statistics
+    # easpaFull = makeDefaultEASPA(validationClusterI=NULL, useClustersAsEAs=TRUE)
+    truthFull = truthTableFullCounty$pStratified
+    truthFullUrban = truthTableFullCounty$pUrban
+    truthFullRural = truthTableFullCounty$pRural
+    
+    truthDirectFull = truthTableFullCounty$pDirect
+    truthDirectFullUrban = truthTableFullCounty$pDirectUrban
+    truthDirectFullRural = truthTableFullCounty$pDirectRural
+    truthDirectFullLogitVar = truthTableFullCounty$varDirectLogit
+    truthDirectFullUrbanLogitVar = truthTableFullCounty$varDirectUrbanLogit
+    truthDirectFullRuralLogitVar = truthTableFullCounty$varDirectRuralLogit
+    # obsUrban = truthTableFullCounty$urban
+    
+    cpo = fit$mod$cpo$cpo
+    cpoFailure = fit$mod$cpo$failure
+    dic = fit$mod$dic$dic
+    waic = fit$mod$waic$waic
+    modelFit = fit$mod
+    
+    browser()
+    est = rowMeans(fit3$aggregatedResultslcpb$countyMatrices$pUrban) * truthTableFullCounty$urbanProp + rowMeans(fit3$aggregatedResultslcpb$countyMatrices$pRural) * (1 - truthTableFullCounty$urbanProp)
+    estUrban = rowMeans(fit3$aggregatedResultslcpb$countyMatrices$pUrban)
+    estRural = rowMeans(fit3$aggregatedResultslcpb$countyMatrices$pRural)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = sweep(fit3$aggregatedResultsLCPB$countyMatrices$pUrban, 1, truthTableFullCounty$urbanProp, FUN="*") + sweep(fit3$aggregatedResultsLCPB$countyMatrices$pRural, 1, 1-truthTableFullCounty$urbanProp, FUN="*")
+    # vars = apply(estMat, 1, var)
+    vars = rowMeans(sweep(estMat, 1, est, FUN="-")^2)
+    estMatUrban = fit3$aggregatedResultsLCPB$countyMatrices$pUrban
+    varsUrban = rowMeans(sweep(estMatUrban, 1, estUrban, FUN="-")^2)
+    estMatRural = fit3$aggregatedResultsLCPB$countyMatrices$pRural
+    varsRural = rowMeans(sweep(estMatRural, 1, estRural, FUN="-")^2)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (LCPB, county, stratified):")
+    fullPooledScoresCountyLCPB = data.frame(c(getScores(truthFull, est, vars, lower, upper, estMat, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresCountyLCPB)
+    print("Rural scores (LCPB, county, stratified):")
+    fullRuralScoresCountyLCPB = data.frame(c(getScores(truthFullRural[truthTableFullCounty$urbanProp!=1], estRural[truthTableFullCounty$urbanProp!=1], varsRural[truthTableFullCounty$urbanProp!=1], lower, upper, estMatRural[truthTableFullCounty$urbanProp!=1,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresCountyLCPB)
+    print("Urban scores (LCPB, county, stratified):")
+    fullUrbanScoresCountyLCPB = data.frame(c(getScores(truthFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresCountyLCPB)
+    
+    # do the same for the direct estimate validation
+    est = rowMeans(fit4$aggregatedResultslcpb$countyMatrices$p)
+    estUrban = rowMeans(fit4$aggregatedResultslcpb$countyMatrices$pUrban)
+    estRural = rowMeans(fit4$aggregatedResultslcpb$countyMatrices$pRural)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = fit4$aggregatedResultsLCPB$countyMatrices$p
+    # vars = apply(estMat, 1, var)
+    vars = rowMeans(expit(sweep(logit(estMat) + matrix(rnorm(n=length(estMat), sd=sqrt(truthDirectFullLogitVar)), ncol=ncol(estMat)), 1, logit(est), FUN="-"))^2)
+    estMatUrban = fit4$aggregatedResultsLCPB$countyMatrices$pUrban
+    varsUrban = rowMeans(expit(sweep(logit(estMatUrban) + matrix(rnorm(n=length(estMatUrban), sd=sqrt(truthDirectFullUrbanLogitVar)), ncol=ncol(estMatUrban)), 1, logit(estUrban), FUN="-"))^2)
+    estMatRural = fit4$aggregatedResultsLCPB$countyMatrices$pRural
+    varsRural = rowMeans(expit(sweep(logit(estMatRural) + matrix(rnorm(n=length(estMatRural), sd=sqrt(truthDirectFullRuralLogitVar)), ncol=ncol(estMatRural)), 1, logit(estRural), FUN="-"))^2)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (LCPB, county, direct):")
+    fullPooledScoresCountyLCPBDirect = data.frame(c(getScores(truthDirectFull, est, vars, lower, upper, estMat, doRandomReject=TRUE, logitTruthVar=truthDirectFullLogitVar), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresCountyLCPBDirect)
+    print("Rural scores (LCPB, county, direct):")
+    fullRuralScoresCountyLCPBDirect = data.frame(c(getScores(truthDirectFullRural[truthTableFullCounty$urbanProp!=1], estRural[truthTableFullCounty$urbanProp!=1], varsRural[truthTableFullCounty$urbanProp!=1], lower, upper, estMatRural[truthTableFullCounty$urbanProp!=1,], doRandomReject=TRUE, logitTruthVar=truthDirectFullRuralLogitVar[truthTableFullCounty$urbanProp!=1]), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresCountyLCPBDirect)
+    print("Urban scores (LCPB, county, direct):")
+    fullUrbanScoresCountyLCPBDirect = data.frame(c(getScores(truthDirectFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE, logitTruthVar=truthDirectFullUrbanLogitVar), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresCountyLCPBDirect)
+    
+    # est = rowMeans(fit3$aggregatedResultslcpb$countyMatrices$p)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = sweep(fit3$aggregatedResultsLCPb$countyMatrices$pUrban, 1, truthTableFullCounty$urbanProp, FUN="*") + sweep(fit3$aggregatedResultsLCPb$countyMatrices$pRural, 1, 1-truthTableFullCounty$urbanProp, FUN="*")
+    vars = rowMeans(sweep(estMat, 1, est, FUN="-")^2)
+    estMatUrban = fit3$aggregatedResultsLCPb$countyMatrices$pUrban
+    varsUrban = rowMeans(sweep(estMatUrban, 1, estUrban, FUN="-")^2)
+    estMatRural = fit3$aggregatedResultsLCPb$countyMatrices$pRural
+    varsRural = rowMeans(sweep(estMatRural, 1, estRural, FUN="-")^2)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (LCPb, county):")
+    fullPooledScoresCountyLCPb = data.frame(c(getScores(truthFull, est, vars, lower, upper, estMat, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresCountyLCPb)
+    print("Rural scores (LCPb, county):")
+    fullRuralScoresCountyLCPb = data.frame(c(getScores(truthFullRural[truthTableFullCounty$urbanProp!=1], estRural[truthTableFullCounty$urbanProp!=1], varsRural[truthTableFullCounty$urbanProp!=1], lower, upper, estMatRural[truthTableFullCounty$urbanProp!=1,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresCountyLCPb)
+    print("Urban scores (LCPb, county):")
+    fullUrbanScoresCountyLCPb = data.frame(c(getScores(truthFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresCountyLCPb)
+    
+    # do the same for the direct estimate validation
+    est = rowMeans(fit4$aggregatedResultslcpb$countyMatrices$pUrban) * truthTableFullCounty$urbanProp + rowMeans(fit3$aggregatedResultslcpb$countyMatrices$pRural) * (1 - truthTableFullCounty$urbanProp)
+    estUrban = rowMeans(fit4$aggregatedResultslcpb$countyMatrices$pUrban)
+    estRural = rowMeans(fit4$aggregatedResultslcpb$countyMatrices$pRural)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = sweep(fit4$aggregatedResultsLCPb$countyMatrices$pUrban, 1, truthTableFullCounty$urbanProp, FUN="*") + sweep(fit4$aggregatedResultsLCPb$countyMatrices$pRural, 1, 1-truthTableFullCounty$urbanProp, FUN="*")
+    # vars = apply(estMat, 1, var)
+    vars = rowMeans(expit(sweep(logit(estMat) + matrix(rnorm(n=length(estMat), sd=sqrt(truthDirectFullLogitVar)), ncol=ncol(estMat)), 1, logit(est), FUN="-"))^2)
+    estMatUrban = fit4$aggregatedResultsLCPb$countyMatrices$pUrban
+    varsUrban = rowMeans(expit(sweep(logit(estMatUrban) + matrix(rnorm(n=length(estMatUrban), sd=sqrt(truthDirectFullUrbanLogitVar)), ncol=ncol(estMatUrban)), 1, logit(estUrban), FUN="-"))^2)
+    estMatRural = fit4$aggregatedResultsLCPb$countyMatrices$pRural
+    varsRural = rowMeans(expit(sweep(logit(estMatRural) + matrix(rnorm(n=length(estMatRural), sd=sqrt(truthDirectFullRuralLogitVar)), ncol=ncol(estMatRural)), 1, logit(estRural), FUN="-"))^2)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (LCPb, county, direct):")
+    fullPooledScoresCountyLCPbDirect = data.frame(c(getScores(truthDirectFull, est, vars, lower, upper, estMat, doRandomReject=TRUE, logitTruthVar=truthDirectFullLogitVar), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresCountyLCPbDirect)
+    print("Rural scores (LCPb, county, direct):")
+    fullRuralScoresCountyLCPbDirect = data.frame(c(getScores(truthDirectFullRural[truthTableFullCounty$urbanProp!=1], estRural[truthTableFullCounty$urbanProp!=1], varsRural[truthTableFullCounty$urbanProp!=1], lower, upper, estMatRural[truthTableFullCounty$urbanProp!=1,], doRandomReject=TRUE, logitTruthVar=truthDirectFullRuralLogitVar[truthTableFullCounty$urbanProp!=1]), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresCountyLCPbDirect)
+    print("Urban scores (LCPb, county, direct):")
+    fullUrbanScoresCountyLCPbDirect = data.frame(c(getScores(truthDirectFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE, logitTruthVar=truthDirectFullUrbanLogitVar), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresCountyLCPbDirect)
+    
+    # est = rowMeans(fit3$aggregatedResultslcpb$countyMatrices$p)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = sweep(fit3$aggregatedResultsLCpb$countyMatrices$pUrban, 1, truthTableFullCounty$urbanProp, FUN="*") + sweep(fit3$aggregatedResultsLCpb$countyMatrices$pRural, 1, 1-truthTableFullCounty$urbanProp, FUN="*")
+    vars = rowMeans(sweep(estMat, 1, est, FUN="-")^2)
+    estMatUrban = fit3$aggregatedResultsLCpb$countyMatrices$pUrban
+    varsUrban = rowMeans(sweep(estMatUrban, 1, estUrban, FUN="-")^2)
+    estMatRural = fit3$aggregatedResultsLCpb$countyMatrices$pRural
+    varsRural = rowMeans(sweep(estMatRural, 1, estRural, FUN="-")^2)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (LCpb, county):")
+    fullPooledScoresCountyLCpb = data.frame(c(getScores(truthFull, est, vars, lower, upper, estMat, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresCountyLCpb)
+    print("Rural scores (LCpb, county):")
+    fullRuralScoresCountyLCpb = data.frame(c(getScores(truthFullRural[truthTableFullCounty$urbanProp!=1], estRural[truthTableFullCounty$urbanProp!=1], varsRural[truthTableFullCounty$urbanProp!=1], lower, upper, estMatRural[truthTableFullCounty$urbanProp!=1,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresCountyLCpb)
+    print("Urban scores (LCpb, county):")
+    fullUrbanScoresCountyLCpb = data.frame(c(getScores(truthFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresCountyLCpb)
+    
+    # do the same for the direct estimate validation
+    est = rowMeans(fit4$aggregatedResultslcpb$countyMatrices$pUrban) * truthTableFullCounty$urbanProp + rowMeans(fit3$aggregatedResultslcpb$countyMatrices$pRural) * (1 - truthTableFullCounty$urbanProp)
+    estUrban = rowMeans(fit4$aggregatedResultslcpb$countyMatrices$pUrban)
+    estRural = rowMeans(fit4$aggregatedResultslcpb$countyMatrices$pRural)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = sweep(fit4$aggregatedResultsLCpb$countyMatrices$pUrban, 1, truthTableFullCounty$urbanProp, FUN="*") + sweep(fit4$aggregatedResultsLCpb$countyMatrices$pRural, 1, 1-truthTableFullCounty$urbanProp, FUN="*")
+    # vars = apply(estMat, 1, var)
+    vars = rowMeans(expit(sweep(logit(estMat) + matrix(rnorm(n=length(estMat), sd=sqrt(truthDirectFullLogitVar)), ncol=ncol(estMat)), 1, logit(est), FUN="-"))^2)
+    estMatUrban = fit4$aggregatedResultsLCpb$countyMatrices$pUrban
+    varsUrban = rowMeans(expit(sweep(logit(estMatUrban) + matrix(rnorm(n=length(estMatUrban), sd=sqrt(truthDirectFullUrbanLogitVar)), ncol=ncol(estMatUrban)), 1, logit(estUrban), FUN="-"))^2)
+    estMatRural = fit4$aggregatedResultsLCpb$countyMatrices$pRural
+    varsRural = rowMeans(expit(sweep(logit(estMatRural) + matrix(rnorm(n=length(estMatRural), sd=sqrt(truthDirectFullRuralLogitVar)), ncol=ncol(estMatRural)), 1, logit(estRural), FUN="-"))^2)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (LCpb, county, direct):")
+    fullPooledScoresCountyLCpbDirect = data.frame(c(getScores(truthDirectFull, est, vars, lower, upper, estMat, doRandomReject=TRUE, logitTruthVar=truthDirectFullLogitVar), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresCountyLCpbDirect)
+    print("Rural scores (LCpb, county, direct):")
+    fullRuralScoresCountyLCpbDirect = data.frame(c(getScores(truthDirectFullRural[truthTableFullCounty$urbanProp!=1], estRural[truthTableFullCounty$urbanProp!=1], varsRural[truthTableFullCounty$urbanProp!=1], lower, upper, estMatRural[truthTableFullCounty$urbanProp!=1,], doRandomReject=TRUE, logitTruthVar=truthDirectFullRuralLogitVar[truthTableFullCounty$urbanProp!=1]), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresCountyLCpbDirect)
+    print("Urban scores (LCpb, county, direct):")
+    fullUrbanScoresCountyLCpbDirect = data.frame(c(getScores(truthDirectFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE, logitTruthVar=truthDirectFullUrbanLogitVar), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresCountyLCpbDirect)
+    
+    # est = rowMeans(fit3$aggregatedResultslcpb$countyMatrices$p)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = sweep(fit3$aggregatedResultsLcpb$countyMatrices$pUrban, 1, truthTableFullCounty$urbanProp, FUN="*") + sweep(fit3$aggregatedResultsLcpb$countyMatrices$pRural, 1, 1-truthTableFullCounty$urbanProp, FUN="*")
+    vars = rowMeans(sweep(estMat, 1, est, FUN="-")^2)
+    estMatUrban = fit3$aggregatedResultsLcpb$countyMatrices$pUrban
+    varsUrban = rowMeans(sweep(estMatUrban, 1, estUrban, FUN="-")^2)
+    estMatRural = fit3$aggregatedResultsLcpb$countyMatrices$pRural
+    varsRural = rowMeans(sweep(estMatRural, 1, estRural, FUN="-")^2)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (Lcpb, county):")
+    fullPooledScoresCountyLcpb = data.frame(c(getScores(truthFull, est, vars, lower, upper, estMat, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresCountyLcpb)
+    print("Rural scores (Lcpb, county):")
+    fullRuralScoresCountyLcpb = data.frame(c(getScores(truthFullRural[truthTableFullCounty$urbanProp!=1], estRural[truthTableFullCounty$urbanProp!=1], varsRural[truthTableFullCounty$urbanProp!=1], lower, upper, estMatRural[truthTableFullCounty$urbanProp!=1,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresCountyLcpb)
+    print("Urban scores (Lcpb, county):")
+    fullUrbanScoresCountyLcpb = data.frame(c(getScores(truthFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresCountyLcpb)
+    
+    # do the same for the direct estimate validation
+    est = rowMeans(fit4$aggregatedResultslcpb$countyMatrices$pUrban) * truthTableFullCounty$urbanProp + rowMeans(fit3$aggregatedResultslcpb$countyMatrices$pRural) * (1 - truthTableFullCounty$urbanProp)
+    estUrban = rowMeans(fit4$aggregatedResultslcpb$countyMatrices$pUrban)
+    estRural = rowMeans(fit4$aggregatedResultslcpb$countyMatrices$pRural)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = sweep(fit4$aggregatedResultsLcpb$countyMatrices$pUrban, 1, truthTableFullCounty$urbanProp, FUN="*") + sweep(fit4$aggregatedResultsLcpb$countyMatrices$pRural, 1, 1-truthTableFullCounty$urbanProp, FUN="*")
+    # vars = apply(estMat, 1, var)
+    vars = rowMeans(expit(sweep(logit(estMat) + matrix(rnorm(n=length(estMat), sd=sqrt(truthDirectFullLogitVar)), ncol=ncol(estMat)), 1, logit(est), FUN="-"))^2)
+    estMatUrban = fit4$aggregatedResultsLcpb$countyMatrices$pUrban
+    varsUrban = rowMeans(expit(sweep(logit(estMatUrban) + matrix(rnorm(n=length(estMatUrban), sd=sqrt(truthDirectFullUrbanLogitVar)), ncol=ncol(estMatUrban)), 1, logit(estUrban), FUN="-"))^2)
+    estMatRural = fit4$aggregatedResultsLcpb$countyMatrices$pRural
+    varsRural = rowMeans(expit(sweep(logit(estMatRural) + matrix(rnorm(n=length(estMatRural), sd=sqrt(truthDirectFullRuralLogitVar)), ncol=ncol(estMatRural)), 1, logit(estRural), FUN="-"))^2)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (Lcpb, county, direct):")
+    fullPooledScoresCountyLcpbDirect = data.frame(c(getScores(truthDirectFull, est, vars, lower, upper, estMat, doRandomReject=TRUE, logitTruthVar=truthDirectFullLogitVar), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresCountyLcpbDirect)
+    print("Rural scores (Lcpb, county, direct):")
+    fullRuralScoresCountyLcpbDirect = data.frame(c(getScores(truthDirectFullRural[truthTableFullCounty$urbanProp!=1], estRural[truthTableFullCounty$urbanProp!=1], varsRural[truthTableFullCounty$urbanProp!=1], lower, upper, estMatRural[truthTableFullCounty$urbanProp!=1,], doRandomReject=TRUE, logitTruthVar=truthDirectFullRuralLogitVar[truthTableFullCounty$urbanProp!=1]), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresCountyLcpbDirect)
+    print("Urban scores (Lcpb, county, direct):")
+    fullUrbanScoresCountyLcpbDirect = data.frame(c(getScores(truthDirectFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE, logitTruthVar=truthDirectFullUrbanLogitVar), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresCountyLcpbDirect)
+    
+    # est = rowMeans(fit3$aggregatedResultslcpb$countyMatrices$p)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = sweep(fit3$aggregatedResultslcpb$countyMatrices$pUrban, 1, truthTableFullCounty$urbanProp, FUN="*") + sweep(fit3$aggregatedResultslcpb$countyMatrices$pRural, 1, 1-truthTableFullCounty$urbanProp, FUN="*")
+    vars = rowMeans(sweep(estMat, 1, est, FUN="-")^2)
+    estMatUrban = fit3$aggregatedResultslcpb$countyMatrices$pUrban
+    varsUrban = rowMeans(sweep(estMatUrban, 1, estUrban, FUN="-")^2)
+    estMatRural = fit3$aggregatedResultslcpb$countyMatrices$pRural
+    varsRural = rowMeans(sweep(estMatRural, 1, estRural, FUN="-")^2)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (lcpb, county):")
+    fullPooledScoresCountylcpb = data.frame(c(getScores(truthFull, est, vars, lower, upper, estMat, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresCountylcpb)
+    print("Rural scores (lcpb, county):")
+    fullRuralScoresCountylcpb = data.frame(c(getScores(truthFullRural[truthTableFullCounty$urbanProp!=1], estRural[truthTableFullCounty$urbanProp!=1], varsRural[truthTableFullCounty$urbanProp!=1], lower, upper, estMatRural[truthTableFullCounty$urbanProp!=1,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresCountylcpb)
+    print("Urban scores (lcpb, county):")
+    fullUrbanScoresCountylcpb = data.frame(c(getScores(truthFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresCountylcpb)
+    
+    # do the same for the direct estimate validation
+    est = rowMeans(fit4$aggregatedResultslcpb$countyMatrices$p)
+    estUrban = rowMeans(fit4$aggregatedResultslcpb$countyMatrices$pUrban)
+    estRural = rowMeans(fit4$aggregatedResultslcpb$countyMatrices$pRural)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = fit4$aggregatedResultslcpb$countyMatrices$p
+    # vars = apply(estMat, 1, var)
+    vars = rowMeans(expit(sweep(logit(estMat) + matrix(rnorm(n=length(estMat), sd=sqrt(truthDirectFullLogitVar)), ncol=ncol(estMat)), 1, logit(est), FUN="-"))^2)
+    estMatUrban = fit4$aggregatedResultslcpb$countyMatrices$pUrban
+    varsUrban = rowMeans(expit(sweep(logit(estMatUrban) + matrix(rnorm(n=length(estMatUrban), sd=sqrt(truthDirectFullUrbanLogitVar)), ncol=ncol(estMatUrban)), 1, logit(estUrban), FUN="-"))^2)
+    estMatRural = fit4$aggregatedResultslcpb$countyMatrices$pRural
+    varsRural = rowMeans(expit(sweep(logit(estMatRural) + matrix(rnorm(n=length(estMatRural), sd=sqrt(truthDirectFullRuralLogitVar)), ncol=ncol(estMatRural)), 1, logit(estRural), FUN="-"))^2)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (lcpb, county, direct):")
+    fullPooledScoresCountylcpbDirect = data.frame(c(getScores(truthDirectFull, est, vars, lower, upper, estMat, doRandomReject=TRUE, logitTruthVar=truthDirectFullLogitVar), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresCountylcpbDirect)
+    print("Rural scores (lcpb, county, direct):")
+    fullRuralScoresCountylcpbDirect = data.frame(c(getScores(truthDirectFullRural[truthTableFullCounty$urbanProp!=1], estRural[truthTableFullCounty$urbanProp!=1], varsRural[truthTableFullCounty$urbanProp!=1], lower, upper, estMatRural[truthTableFullCounty$urbanProp!=1,], doRandomReject=TRUE, logitTruthVar=truthDirectFullRuralLogitVar[truthTableFullCounty$urbanProp!=1]), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresCountylcpbDirect)
+    print("Urban scores (lcpb, county, direct):")
+    fullUrbanScoresCountylcpbDirect = data.frame(c(getScores(truthDirectFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE, logitTruthVar=truthDirectFullUrbanLogitVar), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresCountylcpbDirect)
+    
+    fullScoresCounty = list(fullPooledScoreslcpb=fullPooledScoresCountylcpb, fullRuralScoreslcpb=fullRuralScoresCountylcpb, fullUrbanScoreslcpb=fullUrbanScoresCountylcpb, 
+                            fullPooledScoresLcpb=fullPooledScoresCountyLcpb, fullRuralScoresLcpb=fullRuralScoresCountyLcpb, fullUrbanScoresLcpb=fullUrbanScoresCountyLcpb, 
+                            fullPooledScoresLCpb=fullPooledScoresCountyLCpb, fullRuralScoresLCpb=fullRuralScoresCountyLCpb, fullUrbanScoresLCpb=fullUrbanScoresCountyLCpb, 
+                            fullPooledScoresLCPb=fullPooledScoresCountyLCPb, fullRuralScoresLCPb=fullRuralScoresCountyLCPb, fullUrbanScoresLCPb=fullUrbanScoresCountyLCPb, 
+                            fullPooledScoresLCPB=fullPooledScoresCountyLCPB, fullRuralScoresLCPB=fullRuralScoresCountyLCPB, fullUrbanScoresLCPB=fullUrbanScoresCountyLCPB, 
+                            fullPooledScoreslcpbDirect=fullPooledScoresCountylcpbDirect, fullRuralScoreslcpbDirect=fullRuralScoresCountylcpbDirect, fullUrbanScoreslcpbDirect=fullUrbanScoresCountylcpbDirect, 
+                            fullPooledScoresLcpbDirect=fullPooledScoresCountyLcpbDirect, fullRuralScoresLcpbDirect=fullRuralScoresCountyLcpbDirect, fullUrbanScoresLcpbDirect=fullUrbanScoresCountyLcpbDirect, 
+                            fullPooledScoresLCpbDirect=fullPooledScoresCountyLCpbDirect, fullRuralScoresLCpbDirect=fullRuralScoresCountyLCpbDirect, fullUrbanScoresLCpbDirect=fullUrbanScoresCountyLCpbDirect, 
+                            fullPooledScoresLCPbDirect=fullPooledScoresCountyLCPbDirect, fullRuralScoresLCPbDirect=fullRuralScoresCountyLCPbDirect, fullUrbanScoresLCPbDirect=fullUrbanScoresCountyLCPbDirect, 
+                            fullPooledScoresLCPBDirect=fullPooledScoresCountyLCPBDirect, fullRuralScoresLCPBDirect=fullRuralScoresCountyLCPBDirect, fullUrbanScoresLCPBDirect=fullUrbanScoresCountyLCPBDirect)
+    
+    ## Province level
+    truthTableFullProvince = getProvinceLevelTruth(dat=dat, easpa=easpa, targetPop="children")
+    
+    # get observations and prediction summary statistics
+    # easpaFull = makeDefaultEASPA(validationClusterI=NULL, useClustersAsEAs=TRUE)
+    truthFull = truthTableFullProvince$pStratified
+    truthFullUrban = truthTableFullProvince$pUrban
+    truthFullRural = truthTableFullProvince$pRural
+    # obsUrban = truthTableFullProvince$urban
+    
+    cpo = fit$mod$cpo$cpo
+    cpoFailure = fit$mod$cpo$failure
+    dic = fit$mod$dic$dic
+    waic = fit$mod$waic$waic
+    modelFit = fit$mod
+    
+    est = rowMeans(fit3$aggregatedResultslcpb$regionMatrices$pUrban) * truthTableFullProvince$urbanProp + rowMeans(fit3$aggregatedResultslcpb$regionMatrices$pRural) * (1 - truthTableFullProvince$urbanProp)
+    estUrban = rowMeans(fit3$aggregatedResultslcpb$regionMatrices$pUrban)
+    estRural = rowMeans(fit3$aggregatedResultslcpb$regionMatrices$pRural)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = sweep(fit3$aggregatedResultsLCPB$regionMatrices$pUrban, 1, truthTableFullProvince$urbanProp, FUN="*") + sweep(fit3$aggregatedResultsLCPB$regionMatrices$pRural, 1, 1-truthTableFullProvince$urbanProp, FUN="*")
+    # vars = apply(estMat, 1, var)
+    vars = rowMeans(sweep(estMat, 1, est, FUN="-")^2)
+    estMatUrban = fit3$aggregatedResultsLCPB$regionMatrices$pUrban
+    varsUrban = rowMeans(sweep(estMatUrban, 1, estUrban, FUN="-")^2)
+    estMatRural = fit3$aggregatedResultsLCPB$regionMatrices$pRural
+    varsRural = rowMeans(sweep(estMatRural, 1, estRural, FUN="-")^2)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (LCPB, province):")
+    fullPooledScoresProvinceLCPB = data.frame(c(getScores(truthFull, est, vars, lower, upper, estMat, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresProvinceLCPB)
+    print("Rural scores (LCPB, province):")
+    fullRuralScoresProvinceLCPB = data.frame(c(getScores(truthFullRural[truthTableFullProvince$urbanProp!=1], estRural[truthTableFullProvince$urbanProp!=1], varsRural[truthTableFullProvince$urbanProp!=1], lower, upper, estMatRural[truthTableFullProvince$urbanProp!=1,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresProvinceLCPB)
+    print("Urban scores (LCPB, province):")
+    fullUrbanScoresProvinceLCPB = data.frame(c(getScores(truthFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresProvinceLCPB)
+    
+    # est = rowMeans(fit3$aggregatedResultslcpb$regionMatrices$p)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = sweep(fit3$aggregatedResultsLCPb$regionMatrices$pUrban, 1, truthTableFullProvince$urbanProp, FUN="*") + sweep(fit3$aggregatedResultsLCPb$regionMatrices$pRural, 1, 1-truthTableFullProvince$urbanProp, FUN="*")
+    # vars = apply(estMat, 1, var)
+    vars = rowMeans(sweep(estMat, 1, est, FUN="-")^2)
+    estMatUrban = fit3$aggregatedResultsLCPb$regionMatrices$pUrban
+    varsUrban = rowMeans(sweep(estMatUrban, 1, estUrban, FUN="-")^2)
+    estMatRural = fit3$aggregatedResultsLCPb$regionMatrices$pRural
+    varsRural = rowMeans(sweep(estMatRural, 1, estRural, FUN="-")^2)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (LCPb, province):")
+    fullPooledScoresProvinceLCPb = data.frame(c(getScores(truthFull, est, vars, lower, upper, estMat, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresProvinceLCPb)
+    print("Rural scores (LCPb, province):")
+    fullRuralScoresProvinceLCPb = data.frame(c(getScores(truthFullRural[truthTableFullProvince$urbanProp!=1], estRural[truthTableFullProvince$urbanProp!=1], varsRural[truthTableFullProvince$urbanProp!=1], lower, upper, estMatRural[truthTableFullProvince$urbanProp!=1,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresProvinceLCPb)
+    print("Urban scores (LCPb, province):")
+    fullUrbanScoresProvinceLCPb = data.frame(c(getScores(truthFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresProvinceLCPb)
+    
+    # est = rowMeans(fit3$aggregatedResultslcpb$regionMatrices$p)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = sweep(fit3$aggregatedResultsLCpb$regionMatrices$pUrban, 1, truthTableFullProvince$urbanProp, FUN="*") + sweep(fit3$aggregatedResultsLCpb$regionMatrices$pRural, 1, 1-truthTableFullProvince$urbanProp, FUN="*")
+    # vars = apply(estMat, 1, var)
+    vars = rowMeans(sweep(estMat, 1, est, FUN="-")^2)
+    estMatUrban = fit3$aggregatedResultsLCpb$regionMatrices$pUrban
+    varsUrban = rowMeans(sweep(estMatUrban, 1, estUrban, FUN="-")^2)
+    estMatRural = fit3$aggregatedResultsLCpb$regionMatrices$pRural
+    varsRural = rowMeans(sweep(estMatRural, 1, estRural, FUN="-")^2)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (LCpb, province):")
+    fullPooledScoresProvinceLCpb = data.frame(c(getScores(truthFull, est, vars, lower, upper, estMat, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresProvinceLCpb)
+    print("Rural scores (LCpb, province):")
+    fullRuralScoresProvinceLCpb = data.frame(c(getScores(truthFullRural[truthTableFullProvince$urbanProp!=1], estRural[truthTableFullProvince$urbanProp!=1], varsRural[truthTableFullProvince$urbanProp!=1], lower, upper, estMatRural[truthTableFullProvince$urbanProp!=1,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresProvinceLCpb)
+    print("Urban scores (LCpb, province):")
+    fullUrbanScoresProvinceLCpb = data.frame(c(getScores(truthFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresProvinceLCpb)
+    
+    # est = rowMeans(fit3$aggregatedResultslcpb$regionMatrices$p)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = sweep(fit3$aggregatedResultsLcpb$regionMatrices$pUrban, 1, truthTableFullProvince$urbanProp, FUN="*") + sweep(fit3$aggregatedResultsLcpb$regionMatrices$pRural, 1, 1-truthTableFullProvince$urbanProp, FUN="*")
+    # vars = apply(estMat, 1, var)
+    vars = rowMeans(sweep(estMat, 1, est, FUN="-")^2)
+    estMatUrban = fit3$aggregatedResultsLcpb$regionMatrices$pUrban
+    varsUrban = rowMeans(sweep(estMatUrban, 1, estUrban, FUN="-")^2)
+    estMatRural = fit3$aggregatedResultsLcpb$regionMatrices$pRural
+    varsRural = rowMeans(sweep(estMatRural, 1, estRural, FUN="-")^2)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (Lcpb, province):")
+    fullPooledScoresProvinceLcpb = data.frame(c(getScores(truthFull, est, vars, lower, upper, estMat, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresProvinceLcpb)
+    print("Rural scores (Lcpb, province):")
+    fullRuralScoresProvinceLcpb = data.frame(c(getScores(truthFullRural[truthTableFullProvince$urbanProp!=1], estRural[truthTableFullProvince$urbanProp!=1], varsRural[truthTableFullProvince$urbanProp!=1], lower, upper, estMatRural[truthTableFullProvince$urbanProp!=1,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresProvinceLcpb)
+    print("Urban scores (Lcpb, province):")
+    fullUrbanScoresProvinceLcpb = data.frame(c(getScores(truthFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresProvinceLcpb)
+    
+    # est = rowMeans(fit3$aggregatedResultslcpb$regionMatrices$p)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = sweep(fit3$aggregatedResultslcpb$regionMatrices$pUrban, 1, truthTableFullProvince$urbanProp, FUN="*") + sweep(fit3$aggregatedResultslcpb$regionMatrices$pRural, 1, 1-truthTableFullProvince$urbanProp, FUN="*")
+    # vars = apply(estMat, 1, var)
+    vars = rowMeans(sweep(estMat, 1, est, FUN="-")^2)
+    estMatUrban = fit3$aggregatedResultslcpb$regionMatrices$pUrban
+    varsUrban = rowMeans(sweep(estMatUrban, 1, estUrban, FUN="-")^2)
+    estMatRural = fit3$aggregatedResultslcpb$regionMatrices$pRural
+    varsRural = rowMeans(sweep(estMatRural, 1, estRural, FUN="-")^2)
+    
+    # # calculate validation scoring rules
+    print("Pooled scores (lcpb, province):")
+    fullPooledScoresProvincelcpb = data.frame(c(getScores(truthFull, est, vars, lower, upper, estMat, doRandomReject=TRUE), WAIC=waic, DIC=dic, CPO=mean(cpo, na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullPooledScoresProvincelcpb)
+    print("Rural scores (lcpb, province):")
+    fullRuralScoresProvincelcpb = data.frame(c(getScores(truthFullRural[truthTableFullProvince$urbanProp!=1], estRural[truthTableFullProvince$urbanProp!=1], varsRural[truthTableFullProvince$urbanProp!=1], lower, upper, estMatRural[truthTableFullProvince$urbanProp!=1,], doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[!obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullRuralScoresProvincelcpb)
+    print("Urban scores (lcpb, province):")
+    fullUrbanScoresProvincelcpb = data.frame(c(getScores(truthFullUrban, estUrban, varsUrban, lower, upper, estMatUrban, doRandomReject=TRUE), WAIC=NA, DIC=NA, CPO=mean(cpo[obsUrban], na.rm=TRUE), timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince))
+    print(fullUrbanScoresProvincelcpb)
+    
+    fullScoresProvince = list(fullPooledScoreslcpb=fullPooledScoresProvincelcpb, fullRuralScoreslcpb=fullRuralScoresProvincelcpb, fullUrbanScoreslcpb=fullUrbanScoresProvincelcpb, 
+                              fullPooledScoresLcpb=fullPooledScoresProvinceLcpb, fullRuralScoresLcpb=fullRuralScoresProvinceLcpb, fullUrbanScoresLcpb=fullUrbanScoresProvinceLcpb, 
+                              fullPooledScoresLCpb=fullPooledScoresProvinceLCpb, fullRuralScoresLCpb=fullRuralScoresProvinceLCpb, fullUrbanScoresLCpb=fullUrbanScoresProvinceLCpb, 
+                              fullPooledScoresLCPb=fullPooledScoresProvinceLCPb, fullRuralScoresLCPb=fullRuralScoresProvinceLCPb, fullUrbanScoresLCPb=fullUrbanScoresProvinceLCPb, 
+                              fullPooledScoresLCPB=fullPooledScoresProvinceLCPB, fullRuralScoresLCPB=fullRuralScoresProvinceLCPB, fullUrbanScoresLCPB=fullUrbanScoresProvinceLCPB)
     
     if(saveResults) {
-      save(timePoint=timePoint, timeAggregation=timeAggregation, fit=fit, fit2=fit2, file=fileName)}
+      print(paste0("Saving full model results to: ", fileName))
+      save(truthTableFull=truthTableFull, truthTableFullCounty=truthTableFullCounty, truthTableFullProvince=truthTableFullProvince, 
+           timePoint=timePoint, timeAggregationPixel=timeAggregationPixel, timeAggregationCountyProvince=timeAggregationCountyProvince, 
+           fit=fit, fit2=fit2, fit3=fit3, 
+           fullScoresPixel, fullScoresCounty, fullScoresProvince, 
+           file=fileName)
+    }
   }
   else {
     print("Loading previous full model fit")
     load(fileName)
   }
   previousFit = fit
-  
+  browser()
   # set up sample table of indices if using stratified validation
   if(stratifiedValidation && is.null(sampleTable)) {
     out = getValidationI(dat=dat, dataType=dataType, pixelLevel=TRUE)
@@ -939,7 +1952,7 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
     predPts = cbind(popMat$east[outOfSamplePixelIndices], popMat$north[outOfSamplePixelIndices])
     obsCoords = cbind(popMat$east[inSamplePixelIndices], popMat$north[inSamplePixelIndices])
     predUrban = popMat$urban[outOfSamplePixelIndices]
-    obsUrban = popMat$east[inSamplePixelIndices]
+    obsUrban = popMat$urban[inSamplePixelIndices]
     
     # first calculate all distances, broken down by urban, rural, and all aggregated observations
     distMatuu = rdist(obsCoords[!obsUrban,], predPts[!predUrban,])
@@ -967,24 +1980,183 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
   }
   distanceBreaks = seq(0, distanceMax+1, l=20)
   
-  completeScoreTableBinomial = c()
-  pooledScoreTableBinomial = c()
-  urbanScoreTableBinomial = c()
-  ruralScoreTableBinomial = c()
-  completeScoreTable = c()
-  pooledScoreTable = c()
-  urbanScoreTable = c()
-  ruralScoreTable = c()
-  binnedScoringRulesuuAll = list()
-  binnedScoringRulesuUAll = list()
-  binnedScoringRulesUuAll = list()
-  binnedScoringRulesUUAll = list()
-  binnedScoringRulesAuAll = list()
-  binnedScoringRulesAUAll = list()
-  binnedScoringRulesuAAll = list()
-  binnedScoringRulesUAAll = list()
-  binnedScoringRulesAAAll = list()
-  singleScores = c()
+  
+  
+  appendScores = function(thisEst, thisPredMatrices, thisTruthTab, thisScoreTabList, aggregationLevel=c("cluster", "pixel", "county", "province"), printRoot="") {
+    
+    aggregationLevel = match.arg(aggregationLevel)
+    if(aggregationLevel %in% c("cluster", "pixel")) {
+      stratifiedByUrban = TRUE
+    } else {
+      stratifiedByUrban = FALSE
+    }
+    
+    # get observations and prediction summary statistics
+    thisTruth = thisTruthTab$p
+    obsUrban = thisTruthTab$urban
+    est = thisEst
+    vars = apply(thisPredMatrices$p, 1, var)
+    # lower = fit$obsLower
+    # upper = fit$obsUpper
+    lower = NULL
+    upper = NULL
+    estMat = thisPredMatrices$p
+    
+    # calculate validation scoring rules
+    print(paste0(printRoot, " pooled scores:"))
+    if(!stratifiedValidation)
+      thisPooledScores = data.frame(c(list(Region=thisRegion), getScores(thisTruth, est, vars, lower, upper, estMat, doRandomReject=TRUE), timePoint=timePoint, timeAggregation=timeAggregation))
+    else
+      thisPooledScores = data.frame(c(list(Fold=i), getScores(thisTruth, est, vars, lower, upper, estMat, doRandomReject=TRUE), timePoint=timePoint, timeAggregation=timeAggregation))
+    print(thisPooledScores)
+    
+    # calculate stratified validation scoring rules by urban/rural if necessary
+    if(stratifiedByUrban) {
+      if(stratifiedValidation || thisRegion != "Nairobi") {
+        print(paste0(printRoot, " rural scores:"))
+        if(!stratifiedValidation)
+          thisRuralScores = data.frame(c(list(Region=thisRegion), getScores(thisTruth[!obsUrban], est[!obsUrban], vars[!obsUrban], lower[!obsUrban], upper[!obsUrban], estMat[!obsUrban,], doRandomReject=TRUE), timePoint=timePoint, timeAggregation=timeAggregation))
+        else
+          thisRuralScores = data.frame(c(list(Fold=i), getScores(thisTruth[!obsUrban], est[!obsUrban], vars[!obsUrban], lower[!obsUrban], upper[!obsUrban], estMat[!obsUrban,], doRandomReject=TRUE), timePoint=timePoint, timeAggregation=timeAggregation))
+        print(thisRuralScores)
+      } else {
+        thisRuralScores = thisPooledScores
+        thisRuralScores[,2:(ncol(thisRuralScores)-1)] = NA
+        thisRuralScores = thisRuralScores
+      }
+      
+      print(paste0(printRoot, " urban scores:"))
+      if(!stratifiedValidation)
+        thisUrbanScores = data.frame(c(list(Region=thisRegion), getScores(thisTruth[obsUrban], est[obsUrban], vars[obsUrban], lower[obsUrban], upper[obsUrban], estMat[obsUrban,], doRandomReject=TRUE), timePoint=timePoint, timeAggregation=timeAggregation))
+      else
+        thisUrbanScores = data.frame(c(list(Fold=i), getScores(thisTruth[obsUrban], est[obsUrban], vars[obsUrban], lower[obsUrban], upper[obsUrban], estMat[obsUrban,], doRandomReject=TRUE), timePoint=timePoint, timeAggregation=timeAggregation))
+      print(thisUrbanScores)
+    }
+    
+    
+    # append scoring rule tables
+    thisScoreTabList$completeScoreTable = rbind(thisScoreTabList$completeScoreTable, thisPooledScores)
+    thisScoreTabList$pooledScoreTable = rbind(thisScoreTabList$pooledScoreTable, thisPooledScores)
+    
+    if(stratifiedByUrban) {
+      thisScoreTabList$completeScoreTable = rbind(thisScoreTabList$completeScoreTable, thisRuralScores)
+      thisScoreTabList$completeScoreTable = rbind(thisScoreTabList$completeScoreTable, thisUrbanScores)
+      
+      thisScoreTabList$ruralScoreTable = rbind(thisScoreTabList$ruralScoreTable, thisRuralScores)
+      thisScoreTabList$urbanScoreTable = rbind(thisScoreTabList$urbanScoreTable, thisUrbanScores)
+    }
+    
+    ##### Break scores down by distance if necessary
+    if(stratifiedByUrban) {
+      outOfSamplePixelIndices = sampleListPixel[[i]]
+      inSamplePixelIndices = truthTableFull$pixelI[-match(outOfSamplePixelIndices, truthTableFull$pixelI)]
+      predPts = cbind(popMat$east[outOfSamplePixelIndices], popMat$north[outOfSamplePixelIndices])
+      obsCoords = cbind(popMat$east[inSamplePixelIndices], popMat$north[inSamplePixelIndices])
+      predUrban = popMat$urban[outOfSamplePixelIndices]
+      obsUrban = popMat$urban[inSamplePixelIndices]
+      
+      # first calculate all distances, broken down by urban, rural, and all aggregated observations
+      distMatuU = rdist(obsCoords[!obsUrban,], predPts[predUrban,])
+      distMatUU = rdist(obsCoords[obsUrban,], predPts[predUrban,])
+      distMatAU = rdist(obsCoords, predPts[predUrban,])
+      distMatuA = rdist(obsCoords[!obsUrban,], predPts)
+      distMatUA = rdist(obsCoords[obsUrban,], predPts)
+      distMatAA = rdist(obsCoords, predPts)
+      
+      # now calculate nearest distances
+      nndistsuU = apply(distMatuU, 2, function(x) {min(x[x != 0])})
+      nndistsUU = apply(distMatUU, 2, function(x) {min(x[x != 0])})
+      nndistsAU = apply(distMatAU, 2, function(x) {min(x[x != 0])})
+      nndistsuA = apply(distMatuA, 2, function(x) {min(x[x != 0])})
+      nndistsUA = apply(distMatUA, 2, function(x) {min(x[x != 0])})
+      nndistsAA = apply(distMatAA, 2, function(x) {min(x[x != 0])})
+      if(stratifiedValidation || thisRegion != "Nairobi") {
+        distMatuu = rdist(obsCoords[!obsUrban,], predPts[!predUrban,])
+        distMatUu = rdist(obsCoords[obsUrban,], predPts[!predUrban,])
+        distMatAu = rdist(obsCoords, predPts[!predUrban,])
+        
+        nndistsuu = apply(distMatuu, 2, function(x) {min(x[x != 0])})
+        nndistsUu = apply(distMatUu, 2, function(x) {min(x[x != 0])})
+        nndistsAu = apply(distMatAu, 2, function(x) {min(x[x != 0])})
+        
+        binnedScoringRulesuu = getScores(thisTruth[!predUrban], est[!predUrban], vars[!predUrban], estMat=estMat[!predUrban,], doRandomReject=TRUE, distances=nndistsuu, breaks=distanceBreaks)$binnedResults
+        binnedScoringRulesUu = getScores(thisTruth[!predUrban], est[!predUrban], vars[!predUrban], estMat=estMat[!predUrban,], doRandomReject=TRUE, distances=nndistsUu, breaks=distanceBreaks)$binnedResults
+        binnedScoringRulesAu = getScores(thisTruth[!predUrban], est[!predUrban], vars[!predUrban], estMat=estMat[!predUrban,], doRandomReject=TRUE, distances=nndistsAu, breaks=distanceBreaks)$binnedResults
+      } else {
+        binnedScoringRulesuu = NULL
+        binnedScoringRulesUu = NULL
+        binnedScoringRulesAu = NULL
+      }
+      
+      # calculate scores accounting for binomial variation using fuzzy reject intervals
+      binnedScoringRulesuU = getScores(thisTruth[predUrban], est[predUrban], vars[predUrban], estMat=estMat[predUrban,], doRandomReject=TRUE, distances=nndistsuU, breaks=distanceBreaks)$binnedResults
+      binnedScoringRulesUU = getScores(thisTruth[predUrban], est[predUrban], vars[predUrban], estMat=estMat[predUrban,], doRandomReject=TRUE, distances=nndistsUU, breaks=distanceBreaks)$binnedResults
+      binnedScoringRulesAU = getScores(thisTruth[predUrban], est[predUrban], vars[predUrban], estMat=estMat[predUrban,], doRandomReject=TRUE, distances=nndistsAU, breaks=distanceBreaks)$binnedResults
+      binnedScoringRulesuA = getScores(thisTruth, est, vars, estMat=estMat, doRandomReject=TRUE, distances=nndistsuA, breaks=distanceBreaks)$binnedResults
+      binnedScoringRulesUA = getScores(thisTruth, est, vars, estMat=estMat, doRandomReject=TRUE, distances=nndistsUA, breaks=distanceBreaks)$binnedResults
+      binnedScoringRulesAA = getScores(thisTruth, est, vars, estMat=estMat, doRandomReject=TRUE, distances=nndistsAA, breaks=distanceBreaks)$binnedResults
+      
+      # concatenate binned scoring rule results
+      thisScoreTabList$binnedScoringRulesuuAll = c(thisScoreTabList$binnedScoringRulesuuAll, list(binnedScoringRulesuu))
+      thisScoreTabList$binnedScoringRulesuUAll = c(thisScoreTabList$binnedScoringRulesuUAll, list(binnedScoringRulesuU))
+      thisScoreTabList$binnedScoringRulesUuAll = c(thisScoreTabList$binnedScoringRulesUuAll, list(binnedScoringRulesUu))
+      thisScoreTabList$binnedScoringRulesUUAll = c(thisScoreTabList$binnedScoringRulesUUAll, list(binnedScoringRulesUU))
+      thisScoreTabList$binnedScoringRulesAuAll = c(thisScoreTabList$binnedScoringRulesAuAll, list(binnedScoringRulesAu))
+      thisScoreTabList$binnedScoringRulesAUAll = c(thisScoreTabList$binnedScoringRulesAUAll, list(binnedScoringRulesAU))
+      thisScoreTabList$binnedScoringRulesuAAll = c(thisScoreTabList$binnedScoringRulesuAAll, list(binnedScoringRulesuA))
+      thisScoreTabList$binnedScoringRulesUAAll = c(thisScoreTabList$binnedScoringRulesUAAll, list(binnedScoringRulesUA))
+      thisScoreTabList$binnedScoringRulesAAAll = c(thisScoreTabList$binnedScoringRulesAAAll, list(binnedScoringRulesAA))
+    }
+    
+    ##### Calculate individual scoring rules
+    # calculate the scoring rules, and add nearest neighbor distances for each stratum
+    if(!stratifiedValidation) {
+      if(stratifiedByUrban) {
+        thisSingleScores = data.frame(c(list(Region=thisRegion, dataI=thisTruthTab[,1], NNDist=nndistsAA, NNDistU=nndistsUA, NNDistu=nndistsuA), getScores(thisTruth, est, vars, lower, upper, estMat, getAverage=FALSE), timePoint=timePoint, timeAggregation=timeAggregation))
+      } else {
+        thisSingleScores = data.frame(c(list(Region=thisRegion, dataI=thisTruthTab[,1]), getScores(thisTruth, est, vars, lower, upper, estMat, getAverage=FALSE), timePoint=timePoint, timeAggregation=timeAggregation))
+      }
+    }
+    else {
+      if(stratifiedByUrban) {
+        thisSingleScores = data.frame(c(list(Fold=i, dataI=thisTruthTab[,1], NNDist=nndistsAA, NNDistU=nndistsUA, NNDistu=nndistsuA), getScores(thisTruth, est, vars, lower, upper, estMat, getAverage=FALSE), timePoint=timePoint, timeAggregation=timeAggregation))
+      } else {
+        thisSingleScores = data.frame(c(list(Fold=i, dataI=thisTruthTab[,1]), getScores(thisTruth, est, vars, lower, upper, estMat, getAverage=FALSE), timePoint=timePoint, timeAggregation=timeAggregation))
+      }
+    }
+    
+    # concatenate the results
+    thisScoreTabList$singleScores = rbind(thisScoreTabList$singleScores, thisSingleScores)
+    
+    thisScoreTabList
+  }
+  
+  scoresPixelLCPB = list(completeScoreTable = c(), pooledScoreTable = c(),urbanScoreTable = c(), ruralScoreTable = c(), 
+                         binnedScoringRulesuuAll = list(), binnedScoringRulesuUAll = list(), binnedScoringRulesUuAll = list(), 
+                         binnedScoringRulesUUAll = list(), binnedScoringRulesAuAll = list(), binnedScoringRulesAUAll = list(), 
+                         binnedScoringRulesuAAll = list(), binnedScoringRulesUAAll = list(), binnedScoringRulesAAAll = list(), 
+                         singleScores = c())
+  scoresPixelLCPb = list(completeScoreTable = c(), pooledScoreTable = c(),urbanScoreTable = c(), ruralScoreTable = c(), 
+                         binnedScoringRulesuuAll = list(), binnedScoringRulesuUAll = list(), binnedScoringRulesUuAll = list(), 
+                         binnedScoringRulesUUAll = list(), binnedScoringRulesAuAll = list(), binnedScoringRulesAUAll = list(), 
+                         binnedScoringRulesuAAll = list(), binnedScoringRulesUAAll = list(), binnedScoringRulesAAAll = list(), 
+                         singleScores = c())
+  scoresPixelLCpb = list(completeScoreTable = c(), pooledScoreTable = c(),urbanScoreTable = c(), ruralScoreTable = c(), 
+                         binnedScoringRulesuuAll = list(), binnedScoringRulesuUAll = list(), binnedScoringRulesUuAll = list(), 
+                         binnedScoringRulesUUAll = list(), binnedScoringRulesAuAll = list(), binnedScoringRulesAUAll = list(), 
+                         binnedScoringRulesuAAll = list(), binnedScoringRulesUAAll = list(), binnedScoringRulesAAAll = list(), 
+                         singleScores = c())
+  scoresPixelLcpb = list(completeScoreTable = c(), pooledScoreTable = c(),urbanScoreTable = c(), ruralScoreTable = c(), 
+                         binnedScoringRulesuuAll = list(), binnedScoringRulesuUAll = list(), binnedScoringRulesUuAll = list(), 
+                         binnedScoringRulesUUAll = list(), binnedScoringRulesAuAll = list(), binnedScoringRulesAUAll = list(), 
+                         binnedScoringRulesuAAll = list(), binnedScoringRulesUAAll = list(), binnedScoringRulesAAAll = list(), 
+                         singleScores = c())
+  scoresPixellcpb = list(completeScoreTable = c(), pooledScoreTable = c(),urbanScoreTable = c(), ruralScoreTable = c(), 
+                         binnedScoringRulesuuAll = list(), binnedScoringRulesuUAll = list(), binnedScoringRulesUuAll = list(), 
+                         binnedScoringRulesUUAll = list(), binnedScoringRulesAuAll = list(), binnedScoringRulesAUAll = list(), 
+                         binnedScoringRulesuAAll = list(), binnedScoringRulesUAAll = list(), binnedScoringRulesAAAll = list(), 
+                         singleScores = c())
+  
   startFrom = 1
   
   # load previous results if necessary
@@ -1011,52 +2183,55 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
     }
     thisPixelI = sampleListPixel[[i]]
     
+    # subset the data
+    thisDat = dat[!leaveOutI,]
+    
     # fit the point level model
-    timePoint = system.time(fit <- fitSPDEKenyaDat(dat, dataType, mesh, prior, significanceCI, int.strategy, strategy, nPostSamples, 
+    timePoint = system.time(fit <- fitSPDEKenyaDat(thisDat, dataType, mesh, prior, significanceCI, int.strategy, strategy, nPostSamples, 
                                                    verbose, link, NULL, urbanEffect, clusterEffect, thisRegion,
-                                                   kmres, TRUE, previousFit, family="binomial", leaveOutI=leaveOutI))[3]
+                                                   kmres, TRUE, previousFit, family="binomial"))[3]
+    
+    # construction the faux population data frame for the left out data
+    thiseaspa = makeDefaultEASPA(dataType2, validationClusterI=leaveOutI, useClustersAsEAs=TRUE)
     
     # get the aggregation model predictions
-    aggregatedPreds = modLCPB(fit$uDraws, fit$sigmaEpsilonDraws, easpa=NULL, popMat=NULL, empiricalDistributions=NULL, 
-                              includeUrban=urbanEffect, maxEmptyFraction=1, clusterLevel=FALSE, pixelLevel=TRUE, countyLevel=FALSE, 
-                              regionLevel=FALSE, doModifiedPixelLevel=TRUE, validationPixelI=)
+    thisTruthTable = truthTableFull[match(thisPixelI, truthTableFull$pixelI),]
+    clustersPerPixel = rep(0, nrow(popMat))
+    clustersPerPixel[thisTruthTable$pixelI] = thisTruthTable$nClusters
+    
+    timeAggregation = system.time(aggregatedPreds <- modLCPB(fit$uDraws, fit$sigmaEpsilonDraws, easpa=thiseaspa, popMat=popMat, empiricalDistributions=NULL, 
+                                                             includeUrban=urbanEffect, maxEmptyFraction=1, clusterLevel=FALSE, pixelLevel=TRUE, countyLevel=FALSE, 
+                                                             regionLevel=FALSE, nationalLevel=FALSE, doModifiedPixelLevel=FALSE, 
+                                                             validationPixelI=thisPixelI, clustersPerPixel=clustersPerPixel, 
+                                                             doLCPb=doLCPb, doLCpb=doLCpb, doLcpb=doLcpb))[3]
     
     # get observations and prediction summary statistics
-    truth = (dat$y / dat$n)[thisSampleI]
-    obsUrban = dat$urban[thisSampleI]
-    est = fit$preds
-    vars = fit$sigmas^2
-    # lower = fit$lower
-    # upper = fit$upper
-    lower = NULL
-    upper = NULL
-    estMat = fit$predMat
-    
-    thisTruthTable = truthTable[match(thisPixelI, truthTable$pixelI),]
     thisTruth = thisTruthTable$p
-    truthUrban = thisTruthTable$urban
-    est = rowMeans(aggregatedPreds$pixelMatrices$p)
-    vars = apply(aggregatedPreds$pixelMatrices$p, 1, var)
+    obsUrban = thisTruthTable$urban
+    est = rowMeans(aggregatedPreds$pixelMatriceslcpb$p)
+    vars = apply(aggregatedPreds$pixelMatricesLCPB$p, 1, var)
     # lower = fit$obsLower
     # upper = fit$obsUpper
     lower = NULL
     upper = NULL
-    estMat = aggregatedPreds$pixelMatrices$p
+    estMat = aggregatedPreds$pixelMatricesLCPB$p
+    
+    scoresPixelLCPB = appendScores(thisEst, thisPredMatrices, thisTruthTab=thisTruthTable, scoresPixelLCPB, aggregationLevel="pixel", printRoot="LCPB")
     
     # calculate validation scoring rules
     print("Pooled scores:")
     if(!stratifiedValidation)
-      thisPooledScores = data.frame(c(list(Region=thisRegion), getScores(truth, est, vars, lower, upper, estMat, doRandomReject=TRUE), Time=time[3]))
+      thisPooledScores = data.frame(c(list(Region=thisRegion), getScores(thisTruth, est, vars, lower, upper, estMat, doRandomReject=TRUE), timePoint=timePoint, timeAggregation=timeAggregation))
     else
-      thisPooledScores = data.frame(c(list(Fold=i), getScores(truth, est, vars, lower, upper, estMat, doRandomReject=TRUE), Time=time[3]))
+      thisPooledScores = data.frame(c(list(Fold=i), getScores(thisTruth, est, vars, lower, upper, estMat, doRandomReject=TRUE), timePoint=timePoint, timeAggregation=timeAggregation))
     print(thisPooledScores)
     
     if(stratifiedValidation || thisRegion != "Nairobi") {
       print("Rural scores:")
       if(!stratifiedValidation)
-        thisRuralScores = data.frame(c(list(Region=thisRegion), getScores(truth[!obsUrban], est[!obsUrban], vars[!obsUrban], lower[!obsUrban], upper[!obsUrban], estMat[!obsUrban,], doRandomReject=TRUE), Time=time[3]))
+        thisRuralScores = data.frame(c(list(Region=thisRegion), getScores(thisTruth[!obsUrban], est[!obsUrban], vars[!obsUrban], lower[!obsUrban], upper[!obsUrban], estMat[!obsUrban,], doRandomReject=TRUE), timePoint=timePoint, timeAggregation=timeAggregation))
       else
-        thisRuralScores = data.frame(c(list(Fold=i), getScores(truth[!obsUrban], est[!obsUrban], vars[!obsUrban], lower[!obsUrban], upper[!obsUrban], estMat[!obsUrban,], doRandomReject=TRUE), Time=time[3]))
+        thisRuralScores = data.frame(c(list(Fold=i), getScores(thisTruth[!obsUrban], est[!obsUrban], vars[!obsUrban], lower[!obsUrban], upper[!obsUrban], estMat[!obsUrban,], doRandomReject=TRUE), timePoint=timePoint, timeAggregation=timeAggregation))
       print(thisRuralScores)
     } else {
       thisRuralScores = thisPooledScores
@@ -1066,9 +2241,9 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
     
     print("Urban scores:")
     if(!stratifiedValidation)
-      thisUrbanScores = data.frame(c(list(Region=thisRegion), getScores(truth[obsUrban], est[obsUrban], vars[obsUrban], lower[obsUrban], upper[obsUrban], estMat[obsUrban,], doRandomReject=TRUE), Time=time[3]))
+      thisUrbanScores = data.frame(c(list(Region=thisRegion), getScores(thisTruth[obsUrban], est[obsUrban], vars[obsUrban], lower[obsUrban], upper[obsUrban], estMat[obsUrban,], doRandomReject=TRUE), timePoint=timePoint, timeAggregation=timeAggregation))
     else
-      thisUrbanScores = data.frame(c(list(Fold=i), getScores(truth[obsUrban], est[obsUrban], vars[obsUrban], lower[obsUrban], upper[obsUrban], estMat[obsUrban,], doRandomReject=TRUE), Time=time[3]))
+      thisUrbanScores = data.frame(c(list(Fold=i), getScores(thisTruth[obsUrban], est[obsUrban], vars[obsUrban], lower[obsUrban], upper[obsUrban], estMat[obsUrban,], doRandomReject=TRUE), timePoint=timePoint, timeAggregation=timeAggregation))
     print(thisUrbanScores)
     
     # append scoring rule tables
@@ -1086,7 +2261,7 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
     predPts = cbind(popMat$east[outOfSamplePixelIndices], popMat$north[outOfSamplePixelIndices])
     obsCoords = cbind(popMat$east[inSamplePixelIndices], popMat$north[inSamplePixelIndices])
     predUrban = popMat$urban[outOfSamplePixelIndices]
-    obsUrban = popMat$east[inSamplePixelIndices]
+    obsUrban = popMat$urban[inSamplePixelIndices]
     
     # first calculate all distances, broken down by urban, rural, and all aggregated observations
     distMatuU = rdist(obsCoords[!obsUrban,], predPts[predUrban,])
@@ -1112,9 +2287,9 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
       nndistsUu = apply(distMatUu, 2, function(x) {min(x[x != 0])})
       nndistsAu = apply(distMatAu, 2, function(x) {min(x[x != 0])})
       
-      binnedScoringRulesuu = getScores(truth[!predUrban], est[!predUrban], vars[!predUrban], estMat=estMat[!predUrban,], doRandomReject=TRUE, distances=nndistsuu, breaks=distanceBreaks)$binnedResults
-      binnedScoringRulesUu = getScores(truth[!predUrban], est[!predUrban], vars[!predUrban], estMat=estMat[!predUrban,], doRandomReject=TRUE, distances=nndistsUu, breaks=distanceBreaks)$binnedResults
-      binnedScoringRulesAu = getScores(truth[!predUrban], est[!predUrban], vars[!predUrban], estMat=estMat[!predUrban,], doRandomReject=TRUE, distances=nndistsAu, breaks=distanceBreaks)$binnedResults
+      binnedScoringRulesuu = getScores(thisTruth[!predUrban], est[!predUrban], vars[!predUrban], estMat=estMat[!predUrban,], doRandomReject=TRUE, distances=nndistsuu, breaks=distanceBreaks)$binnedResults
+      binnedScoringRulesUu = getScores(thisTruth[!predUrban], est[!predUrban], vars[!predUrban], estMat=estMat[!predUrban,], doRandomReject=TRUE, distances=nndistsUu, breaks=distanceBreaks)$binnedResults
+      binnedScoringRulesAu = getScores(thisTruth[!predUrban], est[!predUrban], vars[!predUrban], estMat=estMat[!predUrban,], doRandomReject=TRUE, distances=nndistsAu, breaks=distanceBreaks)$binnedResults
     } else {
       binnedScoringRulesuu = NULL
       binnedScoringRulesUu = NULL
@@ -1122,12 +2297,12 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
     }
     
     # calculate scores accounting for binomial variation using fuzzy reject intervals
-    binnedScoringRulesuU = getScores(truth[predUrban], est[predUrban], vars[predUrban], estMat=estMat[predUrban,], doRandomReject=TRUE, distances=nndistsuU, breaks=distanceBreaks)$binnedResults
-    binnedScoringRulesUU = getScores(truth[predUrban], est[predUrban], vars[predUrban], estMat=estMat[predUrban,], doRandomReject=TRUE, distances=nndistsUU, breaks=distanceBreaks)$binnedResults
-    binnedScoringRulesAU = getScores(truth[predUrban], est[predUrban], vars[predUrban], estMat=estMat[predUrban,], doRandomReject=TRUE, distances=nndistsAU, breaks=distanceBreaks)$binnedResults
-    binnedScoringRulesuA = getScores(truth, est, vars, estMat=estMat, doRandomReject=TRUE, distances=nndistsuA, breaks=distanceBreaks)$binnedResults
-    binnedScoringRulesUA = getScores(truth, est, vars, estMat=estMat, doRandomReject=TRUE, distances=nndistsUA, breaks=distanceBreaks)$binnedResults
-    binnedScoringRulesAA = getScores(truth, est, vars, estMat=estMat, doRandomReject=TRUE, distances=nndistsAA, breaks=distanceBreaks)$binnedResults
+    binnedScoringRulesuU = getScores(thisTruth[predUrban], est[predUrban], vars[predUrban], estMat=estMat[predUrban,], doRandomReject=TRUE, distances=nndistsuU, breaks=distanceBreaks)$binnedResults
+    binnedScoringRulesUU = getScores(thisTruth[predUrban], est[predUrban], vars[predUrban], estMat=estMat[predUrban,], doRandomReject=TRUE, distances=nndistsUU, breaks=distanceBreaks)$binnedResults
+    binnedScoringRulesAU = getScores(thisTruth[predUrban], est[predUrban], vars[predUrban], estMat=estMat[predUrban,], doRandomReject=TRUE, distances=nndistsAU, breaks=distanceBreaks)$binnedResults
+    binnedScoringRulesuA = getScores(thisTruth, est, vars, estMat=estMat, doRandomReject=TRUE, distances=nndistsuA, breaks=distanceBreaks)$binnedResults
+    binnedScoringRulesUA = getScores(thisTruth, est, vars, estMat=estMat, doRandomReject=TRUE, distances=nndistsUA, breaks=distanceBreaks)$binnedResults
+    binnedScoringRulesAA = getScores(thisTruth, est, vars, estMat=estMat, doRandomReject=TRUE, distances=nndistsAA, breaks=distanceBreaks)$binnedResults
     
     # concatenate binned scoring rule results
     binnedScoringRulesuuAll = c(binnedScoringRulesuuAll, list(binnedScoringRulesuu))
@@ -1143,16 +2318,17 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
     ##### Calculate individual scoring rules
     # calculate the scoring rules, and add nearest neighbor distances for each stratum
     if(!stratifiedValidation) {
-      thisSingleScores = data.frame(c(list(Region=thisRegion, dataI=which(thisSampleI), NNDist=nndistsAA, NNDistU=nndistsUA, NNDistu=nndistsuA), getScores(truth, est, vars, lower, upper, estMat, getAverage=FALSE), Time=time[3]))
+      thisSingleScores = data.frame(c(list(Region=thisRegion, dataI=thisPixelI, NNDist=nndistsAA, NNDistU=nndistsUA, NNDistu=nndistsuA), getScores(thisTruth, est, vars, lower, upper, estMat, getAverage=FALSE), timePoint=timePoint, timeAggregation=timeAggregation))
     }
     else {
-      thisSingleScores = data.frame(c(list(Fold=i, dataI=which(thisSampleI), NNDist=nndistsAA, NNDistU=nndistsUA, NNDistu=nndistsuA), getScores(truth, est, vars, lower, upper, estMat, getAverage=FALSE), Time=time[3]))
+      thisSingleScores = data.frame(c(list(Fold=i, dataI=thisPixelI, NNDist=nndistsAA, NNDistU=nndistsUA, NNDistu=nndistsuA), getScores(thisTruth, est, vars, lower, upper, estMat, getAverage=FALSE), timePoint=timePoint, timeAggregation=timeAggregation))
     }
     
     # concatenate the results
     singleScores = rbind(singleScores, thisSingleScores)
     
     # save results so far
+    print(paste0("Saving validation fold ", i, "/", nFold, " results to: ", fileName))
     save(completeScoreTable, pooledScoreTable, ruralScoreTable, urbanScoreTable, 
          binnedScoringRulesuuAll, binnedScoringRulesuUAll, binnedScoringRulesUuAll, binnedScoringRulesUUAll, 
          binnedScoringRulesAuAll, binnedScoringRulesAUAll, binnedScoringRulesuAAll, binnedScoringRulesUAAll, 
@@ -1209,6 +2385,8 @@ sampleNPoissonMultinomial = function(nDraws = ncol(pixelIndexMat), pixelIndexMat
     # popTotal: the number of people in the the area
     # pctTotal: the percentage of people in this area out of the total national population
     # pctUrb: the percentage of people in this area that live in urban areas
+  } else if(length(easpaList) == 1) {
+    easpaList = replicate(nDraws, easpaList[[1]], simplify=FALSE)
   }
   if(is.null(popMat)) {
     popMat = makeDefaultPopMat()
@@ -1322,12 +2500,12 @@ sampleNPoissonMultinomial = function(nDraws = ncol(pixelIndexMat), pixelIndexMat
     
     # draw households per EA (make sure there are any rural EAs)
     if(includeUrban) {
-      householdDrawsUrban = sapply(totalHouseholdsUrban[i,], rmultinom, n=1, prob=rep(1/totalEAsUrban[i], totalEAsUrban[i])) + 25
+      householdDrawsUrban = matrix(sapply(totalHouseholdsUrban[i,], rmultinom, n=1, prob=rep(1/totalEAsUrban[i], totalEAsUrban[i])), nrow=totalEAsUrban[i], ncol=nDraws) + 25
       if(totalEAsRural[i] != 0) {
-        householdDrawsRural = sapply(totalHouseholdsRural[i,], rmultinom, n=1, prob=rep(1/totalEAsRural[i], totalEAsRural[i])) + 25
+        householdDrawsRural = matrix(sapply(totalHouseholdsRural[i,], rmultinom, n=1, prob=rep(1/totalEAsRural[i], totalEAsRural[i])), nrow=totalEAsRural[i], ncol=nDraws) + 25
       }
     } else {
-      householdDraws = sapply(totalHouseholds[i,], rmultinom, n=1, prob=rep(1/totalEAs[i], totalEAs[i]))
+      householdDraws = matrix(sapply(totalHouseholds[i,], rmultinom, n=1, prob=rep(1/totalEAs[i], totalEAs[i])), nrow=totalEAs[i], ncol=nDraws) + 25
     }
     
     # drawing children per EA, with probability proportional to the number of households
@@ -1362,11 +2540,11 @@ sampleNPoissonMultinomial = function(nDraws = ncol(pixelIndexMat), pixelIndexMat
 #            the same in each list element. If easpaList is a data frame, 
 #            number of households per stratum is assumed constant
 sampleNPoissonBinomial = function(eaSamplesMod, pixelIndexListMod, areaListMod, urbanListMod, nDraws=length(pixelIndexListMod), 
-                                  easpa=NULL, easpaList=NULL, popMat=NULL, includeUrban=TRUE, verbose=TRUE) {
+                                  easpa=NULL, easpaList=NULL, popMat=NULL, includeUrban=TRUE, verbose=TRUE, validationPixelI=NULL) {
   
   # set default inputs
   if(is.null(easpa)) {
-    easpa = makeDefaultEASPA()
+    easpa = makeDefaultEASPA(validationPixelI=validationPixelI)
     # area: the name or id of the area
     # EAUrb: the number of EAs in the urban part of the area
     # EARur: the number of EAs in the rural part of the area
@@ -1506,6 +2684,204 @@ sampleNPoissonBinomial = function(eaSamplesMod, pixelIndexListMod, areaListMod, 
                                       thisnEAs = eaSamplesMod[thisPopMat,j][i]
                                       rmultinom(1, size=childrenDrawsPixel[i,j], prob=rep(1/thisnEAs, thisnEAs))}))
                                   })
+    }
+  }
+  
+  ##### Return results
+  childrenDraws
+}
+
+# Same as sampleNPoissonMultinomial, except the number of EAs per pixel is fixed
+# n: the number of draws from the joint distribution of N
+# eaPixelSamples: this is eaSamples from modLCPB (nPixel x n matrix of number of EAs per pixel)
+# easpaList: a list of length n with each element being of the format given 
+#            in makeDefaultEASPA() giving the number of households and EAs 
+#            per stratum. It is assumed that the number of EAs per stratum is 
+#            the same in each list element. If easpaList is a data frame, 
+#            number of households per stratum is assumed constant
+sampleNPoissonMultinomialFixed = function(clustersPerPixel, nDraws=ncol(pixelIndices), pixelIndices=NULL, 
+                                          urbanVals=NULL, areaVals=NULL, easpa=NULL, popMat=NULL, includeUrban=TRUE, 
+                                          verbose=TRUE) {
+  
+  # set default inputs
+  if(is.null(easpa)) {
+    easpa = makeDefaultEASPA()
+    # area: the name or id of the area
+    # EAUrb: the number of EAs in the urban part of the area
+    # EARur: the number of EAs in the rural part of the area
+    # EATotal: the number of EAs in the the area
+    # HHUrb: the number of households in the urban part of the area
+    # HHRur: the number of households in the rural part of the area
+    # HHTotal: the number of households in the the area
+    # popUrb: the number of people in the urban part of the area
+    # popRur: the number of people in the rural part of the area
+    # popTotal: the number of people in the the area
+    # pctTotal: the percentage of people in this area out of the total national population
+    # pctUrb: the percentage of people in this area that live in urban areas
+  }
+  if(is.null(popMat)) {
+    popMat = makeDefaultPopMat()
+    # lon: longitude
+    # lat: latitude
+    # east: easting (km)
+    # north: northing (km)
+    # pop: proportional to population density for each grid cell
+    # area: an id or area name in which the grid cell corresponding to each row resides
+    # urban: whether the grid cell is urban or rural
+  }
+  if((is.null(areaVals) || is.null(urbanVals)) && is.null(pixelIndices)) {
+    stop("user must either supply pixelIndices or both areaVals and urbanVals")
+  }
+  if(is.null(areaVals)) {
+    areaVals = matrix(popMat$area[pixelIndices], ncol=nDraws)
+  }
+  if(is.null(urbanVals)) {
+    urbanVals = matrix(popMat$urban[pixelIndices], ncol=nDraws)
+  }
+  
+  # # subset areaVals by urban/rural if necessary
+  # if(includeUrban) {
+  #   areaValsUrban = areaVals[urbanVals]
+  #   areaValsRural = areaVals[!urbanVals]
+  #   urbanStringVals = sapply(urbanVals, function(x) {ifelse(x, "u", "r")})
+  #   areaUrbanicityVals = paste(areaVals, urbanStringVals, sep=",")
+  # }
+  
+  # start by drawing the totals, then divide households amongst EAs, then divide children amongst households. 
+  # Make sure there are at least 25 households per EA (only divide the rest randomly)
+  
+  ##### Draw the totals
+  
+  # get the total number of enumeration areas per stratum (this does not change between draws)
+  areas = easpa$area
+  totalEAsUrban = easpa$EAUrb
+  totalEAsRural = easpa$EARur
+  totalEAs = easpa$EATotal
+  nEAs = sum(totalEAs)
+  
+  if(nEAs != sum(clustersPerPixel)) {
+    stop("sum(easpa$EATotal) != sum(clustersPerPixel)")
+  }
+  
+  # ##### draw number of households per EA
+  # 
+  # # first preallocate the draws
+  # if(includeUrban) {
+  #   householdDrawsUrban = matrix(nrow=totalEAsUrban, ncol=nDraws)
+  #   householdDrawsRural = matrix(nrow=totalEAsRural, ncol=nDraws)
+  # } else {
+  #   householdDraws = matrix(nrow=totalEAs, ncol=nDraws)
+  # }
+  # 
+  # # Draw the number of households per stratum area that will be randomly distributed (total minus the minimum 25)
+  # if(includeUrban) {
+  #   totalHouseholdsUrban = sweep(sapply(easpaList, function(x) {x$HHUrb}), 1, -25*totalEAsUrban, "+")
+  #   totalHouseholdsRural = sweep(sapply(easpaList, function(x) {x$HHRur}), 1, -25*totalEAsRural, "+")
+  # } else {
+  #   totalHouseholds = sweep(sapply(easpaList, function(x) {x$HHTotal}), 1, -25*totalEAs, "+")
+  # }
+  # 
+  # # distribute the households throughout the enumeration areas with multinomial distribution
+  # for(i in 1:length(areas)) {
+  #   thisArea = areas[i]
+  #   
+  #   if(includeUrban) {
+  #     householdDrawsUrban[areaMatUrban==thisArea] = rmultinom(nDraws, totalHouseholdsUrban[i], rep(1/totalEAsUrban[i], totalEAsUrban[i]))
+  #     householdDrawsRural[areaMatRural==thisArea] = rmultinom(nDraws, totalHouseholdsRural[i], rep(1/totalEAsRural[i], totalEAsUrban[i]))
+  #   } else {
+  #     householdDraws[areaMat==thisArea] = rmultinom(nDraws, totalHouseholds[i], rep(1/totalEAs[i], totalEAs[i]))
+  #   }
+  # }
+  # 
+  # # add in the minimum 25 number of households
+  # if(includeUrban) {
+  #   householdDrawsUrban = householdDrawsUrban + 25
+  #   householdDrawsRural = householdDrawsRural + 25
+  # } else {
+  #   householdDraws = householdDraws + 25
+  # }
+  
+  ##### draw the number of children per enumeration area
+  
+  # first preallocate the draws
+  # if(includeUrban) {
+  #   childrenDrawsUrban = matrix(nrow=totalEAsUrban, ncol=nDraws)
+  #   childrenDrawsRural = matrix(nrow=totalEAsRural, ncol=nDraws)
+  # } else {
+  #   childrenDraws = matrix(nrow=totalEAs, ncol=nDraws)
+  # }
+  childrenDraws = matrix(nrow=nEAs, ncol=nDraws)
+  
+  # Draw the number of households per stratum area that will be randomly distributed (total minus the minimum 25)
+  if(includeUrban) {
+    # totalHouseholdsUrban = sweep(sapply(easpaList, function(x) {x$HHUrb}), 1, -25*totalEAsUrban, "+")
+    # totalHouseholdsRural = sweep(sapply(easpaList, function(x) {x$HHRur}), 1, -25*totalEAsRural, "+")
+    # totalChildrenUrban = sapply(easpaList, function(x) {x$popUrb})
+    # totalChildrenRural = sapply(easpaList, function(x) {x$popRur})
+    totalHouseholdsUrban = easpa$HHUrb -25*totalEAsUrban
+    totalHouseholdsRural = easpa$HHRur -25*totalEAsRural
+    totalChildrenUrban = easpa$popUrb
+    totalChildrenRural = easpa$popRur
+  } else {
+    # totalHouseholds = sweep(sapply(easpaList, function(x) {x$HHTotal}), 1, -25*totalEAs, "+")
+    # totalChildren = sapply(easpaList, function(x) {x$popHHTotal})
+    totalHouseholds = easpa$HHTotal - 25*totalEAs
+    totalChildren = easpa$popHHTotal
+  }
+  
+  # distribute the households throughout the enumeration areas with multinomial distribution, then 
+  # distribute the children amongst the households, also with a multinomial distribution
+  for(i in 1:length(areas)) {
+    thisArea = areas[i]
+    
+    # print progress if in verbose mode
+    if(verbose) {
+      print(paste0("drawing Ns for each EA for area ", thisArea, " (", i, "/", length(areas), ")"))
+    }
+    
+    # draw households per EA (make sure there are any rural EAs)
+    if(includeUrban) {
+      if(totalEAsUrban[i] != 0) {
+        if(any(totalHouseholdsUrban != 0)) {
+          householdDrawsUrban = rmultinom(n=nDraws, size=totalHouseholdsUrban[i], prob=rep(1/totalEAsUrban[i], totalEAsUrban[i])) + 25
+        } else {
+          householdDrawsUrban = matrix(rep(25, totalEAsUrban[i]*nDraws), ncol=nDraws)
+        }
+      }
+      
+      if(totalEAsRural[i] != 0) {
+        if(any(totalHouseholdsRural != 0)) {
+          householdDrawsRural = rmultinom(n=nDraws, size=totalHouseholdsRural[i], prob=rep(1/totalEAsRural[i], totalEAsRural[i])) + 25
+        } else {
+          householdDrawsRural = matrix(rep(25, totalEAsRural[i]*nDraws), ncol=nDraws)
+        }
+      }
+    } else {
+      if(any(totalHouseholdsRural != 0)) {
+        householdDraws = rmultinom(n=nDraws, size=totalHouseholds[i], prob=rep(1/totalEAs[i], totalEAs[i])) + 25
+      } else {
+        householdDraws = matrix(rep(25, totalEAs[i]*nDraws), ncol=nDraws)
+      }
+    }
+    
+    # drawing children per EA, with probability proportional to the number of households
+    if(includeUrban) {
+      
+      if(totalEAsUrban[i] != 0) {
+        probsUrban = sweep(householdDrawsUrban, 2, 1 / colSums(householdDrawsUrban), "*")
+        # childrenDrawsUrban[areaMatUrban==thisArea] = sapply(1:nDraws, function(j) {rmultinom(1, totalChildrenUrban[i,j], probsUrban[,j])})
+        childrenDraws[areaVals==thisArea & urbanVals] = sapply(1:nDraws, function(j) {rmultinom(1, totalChildrenUrban[i], probsUrban[,j])})
+      }
+      
+      if(totalEAsRural[i] != 0) {
+        probsRural = sweep(householdDrawsRural, 2, 1 / colSums(householdDrawsRural), "*")
+        # childrenDrawsRural[areaMatRural==thisArea] = sapply(1:nDraws, function(j) {rmultinom(1, totalChildrenRural[i,j], probsRural[,j])})
+        childrenDraws[areaVals==thisArea & !urbanVals] = sapply(1:nDraws, function(j) {rmultinom(1, totalChildrenRural[i], probsRural[,j])})
+      }
+      
+    } else {
+      probs = sweep(householdDraws, 2, 1 / colSums(householdDraws), "*")
+      childrenDraws[areaVals==thisArea] = sapply(1:nDraws, function(j) {rmultinom(1, totalChildren[i], probs[,j])})
     }
   }
   

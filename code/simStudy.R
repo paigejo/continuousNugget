@@ -39,7 +39,7 @@ makeUrbanMap = function(popGrid=NULL, kmres=2.5, savePlot=FALSE, fileName=ifelse
 # simulate enumeration areas from population data.  stratified by urban 
 # and rural and county
 simEAs = function(kenyaPop, numEAs=96251, totalKenyaPop=43.0 * 10^6, seed=123, 
-                   sampleByPop=TRUE, fixNumUrbanAtTruth=TRUE, thisEasPC=easpc) {
+                  sampleByPop=TRUE, fixNumUrbanAtTruth=TRUE, thisEasPC=easpc) {
   set.seed(seed)
   
   # determine which points in Kenya are urban

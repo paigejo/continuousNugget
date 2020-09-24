@@ -14,7 +14,25 @@
 # breaks: the number of equal spaced bins to break the scores into as a function of distance
 # NOTE: Discrete, count level credible intervals are estimated based on the input estMat along with coverage and CRPS
 getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=NULL, significance=.8, 
-                     distances=NULL, breaks=30, doRandomReject=FALSE, doFuzzyReject=TRUE, getAverage=TRUE) {
+                     distances=NULL, breaks=30, doRandomReject=FALSE, doFuzzyReject=TRUE, getAverage=TRUE, 
+                     logitTruthVar=NULL) {
+  
+  # add in extra variation to estMat if need be:
+  originalEstMat = NULL
+  if(!is.null(logitTruthVar)) {
+    if(any(estMat > 1) || any(estMat  < 0) || any(lower < 0) || any(lower > 1) || any(upper < 0) || any(upper > 1)) {
+      stop("logitTruthVar should only be given to getScores if all values input to getScores are on probability scale")
+    }
+    
+    if(!is.null(estMat)) {
+      originalEstMat = estMat
+      estMat = matrix(expit(logit(estMat) + rnorm(length(estMat), sd=rep(sqrt(logitTruthVar), ncol(estMat)))), ncol=ncol(estMat))
+    }
+    
+    if(!is.null(lower) || !is.null(upper)) {
+      stop("Modifying lower and upper using logitTruthVar is not yet supported")
+    }
+  }
   
   # if distances is included, must also break down scoring rules by distance bins
   if(!is.null(distances)) {
@@ -29,19 +47,20 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
     nPerBin = as.numeric(table(binsI))
     
     # helper function to compute the scoring rules for a given bin
-    getSubScores = function(uniqueBinI, truth, est, var, lower, upper, estMat, significance) {
+    getSubScores = function(uniqueBinI, truth, est, var, lower, upper, estMat, significance, logitTruthVar) {
       thisDatI = binsI == uniqueBinI
       
       newEstMat = NULL
       if(!is.null(estMat))
         newEstMat = matrix(estMat[thisDatI,], ncol=ncol(estMat))
       getScores(truth[thisDatI], est[thisDatI], var[thisDatI], lower[thisDatI], upper[thisDatI], 
-                newEstMat, significance, doRandomReject=doRandomReject, doFuzzyReject=doFuzzyReject)
+                newEstMat, significance, doRandomReject=doRandomReject, doFuzzyReject=doFuzzyReject, 
+                logitTruthVar=logitTruthVar[thisDatI])
     }
     
     # calculate scores for each bin individually
     binnedScores = t(sapply(uniqueBinsI, getSubScores, truth=truth, est=est, var=var, lower=lower, upper=upper, 
-                          estMat=estMat, significance=significance))
+                          estMat=estMat, significance=significance, logitTruthVar=logitTruthVar))
     
     # make sure each variable in binnedScores is a numeric, not a list...
     temp = matrix(unlist(binnedScores), nrow=length(uniqueBinsI))
@@ -67,6 +86,7 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
   coverage = coverage(truth, est, var, lower, upper, estMat=estMat, 
                       significance=significance, returnIntervalWidth=TRUE, 
                       doRandomReject=doRandomReject, doFuzzyReject=doFuzzyReject, getAverage=getAverage)
+  
   if(getAverage) {
     thisCoverage = coverage[1]
     thisWidth = coverage[2]
@@ -75,13 +95,33 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
     thisWidth = coverage[,2]
   }
   
+  originalWidth = NULL
+  if(!is.null(originalEstMat)) {
+    originalCoverage = coverage(truth, est, var, lower, upper, estMat=originalEstMat, 
+                                significance=significance, returnIntervalWidth=TRUE, 
+                                doRandomReject=doRandomReject, doFuzzyReject=doFuzzyReject, getAverage=getAverage)
+    
+    if(getAverage) {
+      originalWidth = originalCoverage[2]
+    } else {
+      originalWidth = coverage[,2]
+    }
+  }
+  
   # calculate CRPS
   thisCRPS = crps(truth, est, var, estMat=estMat, getAverage=getAverage)
   
   # collect the results in a data frame
-  results = matrix(c(thisBias, thisVar, thisMSE, sqrt(thisMSE), thisCRPS, thisCoverage, 
-                     thisWidth), ncol=7)
-  colnames(results) = c("Bias", "Var", "MSE", "RMSE", "CRPS", "Coverage", "Width")
+  if(is.null(originalWidth)) {
+    results = matrix(c(thisBias, thisVar, thisMSE, sqrt(thisMSE), thisCRPS, thisCoverage, 
+                       thisWidth), ncol=7)
+    colnames(results) = c("Bias", "Var", "MSE", "RMSE", "CRPS", "Coverage", "Width")
+  } else {
+    results = matrix(c(thisBias, thisVar, thisMSE, sqrt(thisMSE), thisCRPS, thisCoverage, 
+                       thisWidth, originalWidth), ncol=8)
+    colnames(results) = c("Bias", "Var", "MSE", "RMSE", "CRPS", "Coverage", "Width", "OriginalWidth")
+  }
+  
   results = as.data.frame(results)
   
   # include both binned and pooled results in one final table
@@ -145,6 +185,34 @@ mse <- function(truth, est, weights=NULL, getAverage=TRUE){
 coverage = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, 
                     estMat=NULL, significance=.8, returnIntervalWidth=FALSE, 
                     doRandomReject=FALSE, doFuzzyReject=TRUE, getAverage=TRUE, ns=NULL){
+  if(!is.null(var)) {
+    goodVars = !is.na(var)
+    
+    if(any(!goodVars)) {
+      warning("Some variances are NA. Removing corresponding observations when calculating coverage")
+    }
+    
+    truth = truth[goodVars]
+    
+    if(!is.null(est)) {
+      est = est[goodVars]
+    }
+    if(!is.null(var)) {
+      var = var[goodVars]
+    }
+    if(!is.null(lower)) {
+      lower = lower[goodVars]
+    }
+    if(!is.null(upper)) {
+      upper = upper[goodVars]
+    }
+    if(!is.null(estMat)) {
+      estMat = estMat[goodVars,]
+    }
+    if(!is.null(ns)) {
+      ns = ns[goodVars]
+    }
+  }
   
   if(any(is.null(lower)) || any(is.null(upper))) {
     # if the user did not supply their own credible intervals, we must get them ourselves given the other information
@@ -162,7 +230,7 @@ coverage = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
       # Instead, use the user supplied to probability matrix estMat
       
       # take the quantiles of the probability draws
-      CIs = apply(estMat, 1, function(ps) {quantile(ps, probs=c((1 - significance) / 2, 1 - (1 - significance) / 2))})
+      CIs = apply(estMat, 1, function(ps) {quantile(ps, probs=c((1 - significance) / 2, 1 - (1 - significance) / 2), na.rm=TRUE)})
       lower = CIs[1,]
       upper = CIs[2,]
     }
@@ -188,8 +256,8 @@ coverage = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     atLowerEdge = which(lower == truth)
     atUpperEdge = which(upper == truth)
     
-    probRejectLower = sapply(atLowerEdge, function(i) {((1 - significance) / 2 - mean(estMat[i,] < lower[i])) / mean(estMat[i,] == lower[i])})
-    probRejectUpper = sapply(atUpperEdge, function(i) {((1 - significance) / 2 - mean(estMat[i,] > upper[i])) / mean(estMat[i,] == upper[i])})
+    probRejectLower = sapply(atLowerEdge, function(i) {((1 - significance) / 2 - mean(estMat[i,] < lower[i], na.rm=TRUE)) / mean(estMat[i,] == lower[i], na.rm=TRUE)})
+    probRejectUpper = sapply(atUpperEdge, function(i) {((1 - significance) / 2 - mean(estMat[i,] > upper[i], na.rm=TRUE)) / mean(estMat[i,] == upper[i], na.rm=TRUE)})
     
     if(doFuzzyReject) {
       rejectLower = probRejectLower
@@ -201,18 +269,18 @@ coverage = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     
     # determine minimum differences between probabilities
     if(is.null(ns))
-      deltas = apply(estMat, 1, function(x) {min(diff(sort(unique(x))))})
+      deltas = apply(estMat, 1, function(x) {min(diff(sort(unique(x))), na.rm=TRUE)})
     else
       deltas = 1 / ns
     
     if(length(atLowerEdge) != 0) {
-      res[atLowerEdge] = sapply(1:length(atLowerEdge), function(i) {min(res[atLowerEdge][i], (1-rejectLower[i]))})
+      res[atLowerEdge] = sapply(1:length(atLowerEdge), function(i) {min(res[atLowerEdge][i], (1-rejectLower[i]), na.rm=TRUE)})
       
       # if reject, reduce CI width
       width[atLowerEdge] = width[atLowerEdge] - deltas[atLowerEdge] * as.numeric(rejectLower)
     }
     if(length(atUpperEdge) != 0) {
-      res[atUpperEdge] = sapply(1:length(atUpperEdge), function(i) {min(res[atUpperEdge][i], (1-rejectUpper[i]))})
+      res[atUpperEdge] = sapply(1:length(atUpperEdge), function(i) {min(res[atUpperEdge][i], (1-rejectUpper[i]), na.rm=TRUE)})
       
       # if reject, reduce CI width
       width[atUpperEdge] = width[atUpperEdge] - deltas[atUpperEdge] * as.numeric(rejectUpper)
@@ -222,13 +290,14 @@ coverage = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
   }
   
   if(getAverage)
-    allResults = c(coverage=mean(res))
+    allResults = c(coverage=mean(res, na.rm=TRUE))
   else
     allResults = c(coverage=res)
   
   if(returnIntervalWidth) {
+    width = width[is.finite(width)]
     if(getAverage)
-      allResults = c(allResults, width=mean(width))
+      allResults = c(allResults, width=mean(width, na.rm=TRUE))
     else
       allResults = cbind(allResults, width=width)
   }
@@ -342,7 +411,12 @@ crps <- function(truth, est=NULL, my.var=NULL, estMat=NULL, getAverage=TRUE){
       # estMat
       
       # thisCdf = ecdf(estMat[rowI,])
-      sorted = estMat[rowI,] # already sorted
+      if(!is.list(estMat)) {
+        sorted = estMat[rowI,] # already sorted
+      } else {
+        # this may occur if there are some NAs in estMat
+        sorted = estMat[[rowI]] # already sorted
+      }
       
       # since we are using the empirical distribution, there is a closed form for the integral
       allPoints = sort(c(sorted, thisTruth))
@@ -366,7 +440,7 @@ crps <- function(truth, est=NULL, my.var=NULL, estMat=NULL, getAverage=TRUE){
     }
     
     if(!is.null(estMat))
-      estMat = t(apply(estMat, 1, sort))
+      estMat = t(apply(as.matrix(estMat), 1, sort))
     res = sapply(1:length(truth), crpsRow)
   }
   

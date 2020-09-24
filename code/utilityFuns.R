@@ -1341,27 +1341,29 @@ aggregateModelResultsKenya = function(dat, results, popGrid, clusterLevel=TRUE, 
 # aggregates pixel predictions to the requested levels
 # pg: matrix of empirical proportion draws at the pixel level
 # Ng: matrix of population denominator draws at the pixel level
-# popGrid: of similar format to that returned by makeDefaultPopMat() (the default)
-# useDensity: whether to use population density weighting from popGrid 
+# popMatAdjusted: of similar format to that returned by makeDefaultPopMat() (the default), 
+#                  but with popOrig modified to include the 
+#                  density of the population of interest rather than the overall population
+# useDensity: whether to use population density weighting from popMatAdjusted 
 #             or even weighting within the strata
 # separateUrbanRural: whether or not to produce estimates in urban and 
 #                     rural parts of areas separately
-# popRegionNames: vector of region names with same length as nrow(popGrid)
+# popRegionNames: vector of region names with same length as nrow(popMatAdjusted)
 # countyLevel, regionLevel, nationalLevel: whether or not to aggregate to the 
 #                                          given levels
 # countyPopTotal: the total population in the county
 # normalize: whether or not to normalize the rowSums of the aggregation matrices. 
 #            If set to TRUE, calculates average of Zg and Ng over the areas for any single draw, and 
 #            pg is calculated as average of Zg over average of Ng
-aggregatePixelPredictions = function(Zg, Ng, popGrid=NULL, useDensity=FALSE, 
+aggregatePixelPredictions = function(Zg, Ng, popMatAdjusted=NULL, useDensity=FALSE, 
                                      separateUrbanRural=TRUE, popRegionNames=NULL, 
-                                     countyLevel=TRUE, regionLevel=TRUE, nationalLevel=TRUE, 
-                                     countyPopTotal=NULL, regionPopTotal=NULL, nationalPopTotal=NULL, 
-                                     countyPopUrban=NULL, regionPopUrban=NULL, nationalPopUrban=NULL, 
-                                     country="Kenya", normalize=FALSE) {
+                                     constituencyLevel=TRUE, countyLevel=TRUE, regionLevel=TRUE, nationalLevel=TRUE, 
+                                     constituencyPopTotal=NULL, countyPopTotal=NULL, regionPopTotal=NULL, nationalPopTotal=NULL, 
+                                     constituencyPopUrban=NULL, countyPopUrban=NULL, regionPopUrban=NULL, nationalPopUrban=NULL, 
+                                     country="Kenya", normalize=FALSE, lcpbSwitchedUrban=NULL) {
   
-  if(is.null(popGrid)) {
-    popGrid = makeDefaultPopMat()
+  if(is.null(popMatAdjusted)) {
+    popMatAdjusted = makeDefaultPopMat()
     # lon: longitude
     # lat: latitude
     # east: easting (km)
@@ -1369,28 +1371,30 @@ aggregatePixelPredictions = function(Zg, Ng, popGrid=NULL, useDensity=FALSE,
     # pop: proportional to population density for each grid cell
     # area: an id or area name in which the grid cell corresponding to each row resides
     # urban: whether the grid cell is urban or rural
-    
-    assumeKenya = TRUE
+    # constituency: the sub-area
+    # province: the super-area
   }
   
-  predPts = cbind(popGrid$east, popGrid$north)
-  predsUrban = popGrid$urban
-  predsCounty = popGrid$area
+  predPts = cbind(popMatAdjusted$east, popMatAdjusted$north)
+  predsUrban = popMatAdjusted$urban
+  predsConstituency = popMatAdjusted$constituency
+  predsCounty = popMatAdjusted$area
   predsCountry = rep(country, length(predsCounty))
   if(is.null(popRegionNames) && regionLevel) {
+    if(country != "Kenya")
+      stop("if country not Kenya, must specify popRegionNames")
+    
     predsRegion = countyToRegion(predsCounty)
-    assumeKenya = TRUE
   } else if(!is.null(popRegionNames) && regionLevel) {
     predsRegion = popRegionNames
   }
   
-  if(assumeKenya) {
-    warning("Since popGrid and predsRegion were not both specified, aggregation assumes country is Kenya")
-  }
-  
   # set NAs and pixels without any sample size to 0
   Ng[is.na(Ng)] = 0
-  Zg[Ng == 0] = 0
+  if(!useDensity) {
+    # is useDensity is true, then Zg is really a set of probabilities, so no need to set to 0
+    Zg[Ng == 0] = 0
+  }
   
   # From here onwards, we will need to aggregate predictions over the 
   # population density grid. Use the following function to get numerical 
@@ -1404,24 +1408,31 @@ aggregatePixelPredictions = function(Zg, Ng, popGrid=NULL, useDensity=FALSE,
   #            contain only binary values (or non-binary values based on the binary values if 
   #            urbanProportions is not NULL)
   getIntegrationMatrix = function(areaNames, urbanProportions=NULL, normalize=FALSE) {
+    popDensities = popMatAdjusted$pop
+    equalDensities = rep(1, nrow(popMatAdjusted))
     if(useDensity && normalize) {
-      densities = popGrid$pop
+      densities = popDensities
     } else if(!useDensity) {
-      densities = rep(1, nrow(popGrid))
+      densities = equalDensities
     } else
       stop("case when useDensity == TRUE and normalize == FALSE is not currently supported")
     
     uniqueNames = sort(unique(areaNames))
-    getMatrixHelper = function(i, thisUrban=NULL) {
+    getMatrixHelper = function(i, thisUrban=NULL, thisUseDensity=useDensity, thisNormalize=normalize) {
       areaI = areaNames == uniqueNames[i]
-      theseDensities = densities
+      
+      if(thisUseDensity) {
+        theseDensities = popDensities
+      } else {
+        theseDensities = equalDensities
+      }
       
       # make sure we only include pixels in the given area and, if necessary, with the given urbanicity
       theseDensities[!areaI] = 0
       if(!is.null(thisUrban))
-        theseDensities[predsUrban == thisUrban] = 0
+        theseDensities[predsUrban != thisUrban] = 0
       thisSum = sum(theseDensities)
-      if(thisSum != 0 && normalize)
+      if(thisSum != 0 && thisNormalize)
         theseDensities * (1/thisSum)
       else if(thisSum == 0)
         rep(0, length(theseDensities))
@@ -1442,9 +1453,29 @@ aggregatePixelPredictions = function(Zg, Ng, popGrid=NULL, useDensity=FALSE,
         integrationMatrix = t(matrix(sapply(1:length(uniqueNames), getMatrixHelper), ncol=length(uniqueNames)))
       }
       
+      # for any areas without any denominators, update the integration matrix to use unstratified densities
+      zeroUrbanAreas = apply(integrationMatrixUrban, 1, function(x) {all(x == 0)})
+      zeroRuralAreas = apply(integrationMatrixRural, 1, function(x) {all(x == 0)})
+      integrationMatrixUrbanSwitched = NULL
+      integrationMatrixRuralSwitched = NULL
+      if(!is.null(lcpbSwitchedUrban) && any(zeroUrbanAreas | zeroRuralAreas)) {
+        if(any(zeroUrbanAreas)) {
+          integrationMatrixUrbanSwitched = integrationMatrixUrban
+          integrationMatrixUrbanSwitched[zeroUrbanAreas,] = matrix(integrationMatrixRural[zeroUrbanAreas,], ncol=ncol(integrationMatrixUrbanSwitched))
+          integrationMatrixUrbanSwitched[zeroUrbanAreas,] = matrix(sweep(matrix(integrationMatrixUrbanSwitched[zeroUrbanAreas,], ncol=ncol(integrationMatrixUrbanSwitched)), 1, 1/rowSums(matrix(integrationMatrixUrbanSwitched[zeroUrbanAreas,], ncol=ncol(integrationMatrixUrbanSwitched))), "*"), ncol=ncol(integrationMatrixUrbanSwitched))
+        }
+        if(any(zeroRuralAreas)) {
+          integrationMatrixRuralSwitched = integrationMatrixRural
+          integrationMatrixRuralSwitched[zeroRuralAreas,] = integrationMatrixUrban[zeroRuralAreas,]
+          integrationMatrixRuralSwitched[zeroRuralAreas,] = matrix(sweep(matrix(integrationMatrixRuralSwitched[zeroRuralAreas,], ncol=ncol(integrationMatrixRuralSwitched)), 1, 1/rowSums(matrix(integrationMatrixRuralSwitched[zeroRuralAreas,], ncol=ncol(integrationMatrixRuralSwitched))), "*"), ncol=ncol(integrationMatrixRuralSwitched))
+        }
+      }
+      
       list(integrationMatrix=integrationMatrix, 
            integrationMatrixUrban=integrationMatrixUrban, 
-           integrationMatrixRural=integrationMatrixRural)
+           integrationMatrixRural=integrationMatrixRural, 
+           integrationMatrixUrbanSwitched=integrationMatrixUrbanSwitched, 
+           integrationMatrixRuralSwitched=integrationMatrixRuralSwitched)
     }
   }
   
@@ -1463,30 +1494,85 @@ aggregatePixelPredictions = function(Zg, Ng, popGrid=NULL, useDensity=FALSE,
       
       list(p=pAggregated, Z=ZAggregated, N=NAggregated, A=A)
     } else {
+      if(!is.null(lcpbSwitchedUrban)) {
+        zeroUrbanAreas = apply(A$integrationMatrixUrban, 1, function(x) {all(x == 0)})
+        zeroRuralAreas = apply(A$integrationMatrixRural, 1, function(x) {all(x == 0)})
+        AUrbanSwitched = A$integrationMatrixUrbanSwitched
+        ARuralSwitched = A$integrationMatrixRuralSwitched
+      }
       AUrban = A$integrationMatrixUrban
       ARural = A$integrationMatrixRural
       A = A$integrationMatrix
       
+      
+      # first aggregate the numerator. The denominator will depend on the aggregation method
       ZAggregated = A %*% Zg
-      NAggregated = A %*% Ng
-      pAggregated = ZAggregated / NAggregated
-      pAggregated[NAggregated == 0] = 0
-      
       ZAggregatedUrban = AUrban %*% Zg
-      NAggregatedUrban = AUrban %*% Ng
-      pAggregatedUrban = ZAggregatedUrban / NAggregatedUrban
-      pAggregatedUrban[NAggregatedUrban == 0] = 0
-      
       ZAggregatedRural = ARural %*% Zg
-      NAggregatedRural = ARural %*% Ng
-      pAggregatedRural = ZAggregatedRural / NAggregatedRural
-      pAggregatedRural[NAggregatedRural == 0] = 0
+      
+      if(useDensity) {
+        # for population density aggregation, we integrate probabilities rather than aggregate 
+        # empirical proportions
+        NAggregated = NULL
+        pAggregated = ZAggregated
+        ZAggregated = NULL
+        
+        NAggregatedUrban = NULL
+        pAggregatedUrban = ZAggregatedUrban
+        ZAggregatedUrban = NULL
+        
+        NAggregatedRural = NULL
+        pAggregatedRural = ZAggregatedRural
+        ZAggregatedRural = NULL
+      } else {
+        # if we do not use density, we must also aggregate the denominator to calculate 
+        # the aggregated empirical proportions
+        NAggregated = A %*% Ng
+        pAggregated = ZAggregated / NAggregated
+        pAggregated[NAggregated == 0] = 0
+        
+        NAggregatedUrban = AUrban %*% Ng
+        pAggregatedUrban = ZAggregatedUrban / NAggregatedUrban
+        pAggregatedUrban[NAggregatedUrban == 0] = 0
+        
+        NAggregatedRural = ARural %*% Ng
+        pAggregatedRural = ZAggregatedRural / NAggregatedRural
+        pAggregatedRural[NAggregatedRural == 0] = 0
+      }
+      
+      # if zero population denominator in an area, use the risk prediction instead of the prevalence
+      if(!is.null(lcpbSwitchedUrban)) {
+        if(any(zeroUrbanAreas | zeroRuralAreas)) {
+          warning("replacing predictions of some areas with zero population in a stratum with risk predictions for whole area")
+        }
+        
+        if(any(zeroUrbanAreas)) {
+          zeroUrbanAreasGrid = areaNames %in% sort(unique(areaNames))[zeroUrbanAreas]
+          pAggregatedUrban[zeroUrbanAreas,] = AUrbanSwitched[zeroUrbanAreas,zeroUrbanAreasGrid] %*% lcpbSwitchedUrban[zeroUrbanAreasGrid,]
+        }
+        if(any(zeroRuralAreas)) {
+          zeroRuralAreasGrid = areaNames %in% sort(unique(areaNames))[zeroRuralAreas]
+          pAggregatedRural[zeroRuralAreas,] = ARuralSwitched[zeroRuralAreas,zeroRuralAreasGrid] %*% lcpbSwitchedUrban[zeroRuralAreasGrid,]
+        }
+      }
       
       list(p=pAggregated, Z=ZAggregated, N=NAggregated, 
            pUrban=pAggregatedUrban, ZUrban=ZAggregatedUrban, NUrban=NAggregatedUrban, 
            pRural=pAggregatedRural, ZRural=ZAggregatedRural, NRural=NAggregatedRural, 
            A=A, AUrban=AUrban, ARural=ARural)
     }
+  }
+  
+  # Constituency level predictions
+  if(constituencyLevel) {
+    # load(paste0(globalDirectory, "poppc.RData"))
+    # urbanProportions = poppc$popUrb / poppc$popTotal
+    # sortI = sort(poppc$Constituency, index.return=TRUE)$ix
+    # urbanProportions = urbanProportions[sortI]
+    
+    constituencyMatrices = getIntegratedPredictions(predsConstituency)
+  } else {
+    constituencyMatrices = NULL
   }
   
   # County level predictions
@@ -1507,7 +1593,6 @@ aggregatePixelPredictions = function(Zg, Ng, popGrid=NULL, useDensity=FALSE,
     # urbanProportions = poppr$popUrb / poppr$popTotal
     # sortI = sort(as.character(poppr$Region), index.return=TRUE)$ix
     # urbanProportions = urbanProportions[sortI]
-    
     regionMatrices = getIntegratedPredictions(predsRegion)
   } else {
     regionMatrices = NULL
@@ -1521,7 +1606,7 @@ aggregatePixelPredictions = function(Zg, Ng, popGrid=NULL, useDensity=FALSE,
   }
   
   # return results
-  list(countyMatrices=countyMatrices, regionMatrices=regionMatrices, nationalMatrices=nationalMatrices)
+  list(constituencyMatrices=constituencyMatrices, countyMatrices=countyMatrices, regionMatrices=regionMatrices, nationalMatrices=nationalMatrices)
 }
 
 # aggregates EA predictions to the requested levels
@@ -2164,27 +2249,31 @@ getKenyaGrid = function(res=25, nc=NULL, nx=NULL, ny=NULL, getUrban=TRUE) {
   out
 }
 
-# for computing what administrative regions the given points are in
+# for computing what administrative 1 regions the given points are in
 # project: project to longitude/latitude coordinates
-getRegion = function(points, project=FALSE) {
-  load("../U5MR/adminMapData.RData")
-  mapDat = adm1
+getRegion = function(pts, project=FALSE) {
+  getCounty(pts, project)
+}
+
+# for computing what general administrative regions the given points are in
+# project: project to longitude/latitude coordinates
+getRegion2 = function(pts, project=FALSE, mapDat=adm1, nameVar="NAME_1") {
   
-  # project points to lon/lat coordinate system if user specifies
+  # project pts to lon/lat coordinate system if user specifies
   if(project)
-    points = projKenya(points, inverse=TRUE)
+    pts = projKenya(pts, inverse=TRUE)
   
-  regionNames = mapDat@data$NAME_1
+  regionNames = mapDat@data[[nameVar]]
   
   # make sure county names are consistent for mapDat == adm1
   regionNames[regionNames == "Elgeyo-Marakwet"] = "Elgeyo Marakwet"
   regionNames[regionNames == "Trans Nzoia"] = "Trans-Nzoia"
   
-  # get region map polygons and set helper function for testing if points are in the regions
+  # get region map polygons and set helper function for testing if pts are in the regions
   polys = mapDat@polygons
   inRegion = function(i) {
     countyPolys = polys[[i]]@Polygons
-    inside = sapply(1:length(countyPolys), function(x) {in.poly(points, countyPolys[[x]]@coords, inflation=0)})
+    inside = sapply(1:length(countyPolys), function(x) {in.poly(pts, countyPolys[[x]]@coords, inflation=0)})
     insideAny = apply(inside, 1, any)
     return(insideAny*i)
   }
@@ -2195,11 +2284,116 @@ getRegion = function(points, project=FALSE) {
   list(regionID=regionID, regionNames=regionNameVec, multipleRegs=multipleRegs)
 }
 
+# for computing what administrative regions the given points are in
+# project: project to longitude/latitude coordinates
+getProvince = function(pts, project=FALSE) {
+  out = getCounty(pts, project)
+  countyToRegion(out)
+}
+
+# for computing what administrative regions the given points are in
+# project: project to longitude/latitude coordinates
+getCounty = function(pts, project=FALSE) {
+  out = getConstituency(pts, project)
+  constituencies = out$constituencyNames
+  constituencyToCounty(constituencies)
+}
+
+# for computing what administrative regions the given points are in
+# project: project to longitude/latitude coordinates
+# mean.neighbor: argument passed to fields.rdist.near
+getConstituency = function(pts, project=FALSE, countyNames=NULL, delta=.05, mean.neighbor=50) {
+  
+  # project pts to lon/lat coordinate system if user specifies
+  if(project)
+    pts = projKenya(pts, inverse=TRUE)
+  
+  constituencyNames = adm2@data$CONSTITUEN
+  
+  # get constituency map polygons and set helper function for testing if pts are in the constituencies
+  polys = adm2@polygons
+  inRegion = function(i) {
+    countyPolys = polys[[i]]@Polygons
+    inside = sapply(1:length(countyPolys), function(x) {in.poly(pts, countyPolys[[x]]@coords, inflation=0)})
+    insideAny = apply(inside, 1, any)
+    
+    return(insideAny*i)
+  }
+  out = sapply(1:length(polys), inRegion)
+  multipleRegs = apply(out, 1, function(vals) {sum(vals != 0) > 1})
+  constituencyID = apply(out, 1, function(vals) {match(1, vals != 0)})
+  constituencyNameVec = constituencyNames[constituencyID]
+  
+  # get counties for the points if need be
+  # if(is.null(countyNames)) {
+  #   countyNames = getRegion(pts, project)
+  # }
+  
+  # for all points not in a constituency polygon, determine the nearest constituency
+  insideAny = apply(out, 1, function(x) {any(x != 0)})
+  if(any(!insideAny)) {
+    problemPointsI = which(!insideAny)
+    
+    # get nearby points (points within .2 lon/lat units), remove self matches
+    nearbyPoints = fields.rdist.near(pts[problemPointsI,], pts, delta=delta, mean.neighbor=mean.neighbor)
+    selfI = nearbyPoints$ra == 0
+    nearbyPoints$ind = nearbyPoints$ind[!selfI,]
+    nearbyPoints$ra = nearbyPoints$ra[!selfI]
+    nearbyI = lapply(sort(unique(nearbyPoints$ind[,1])), function(x) {nearbyPoints$ind[nearbyPoints$ind[,1] == x,2]})
+    
+    # get nearby constituencies, counties, and distances
+    nearbyConstituencies = lapply(nearbyI, function(x) {constituencyNameVec[x]})
+    nearbyLengths = sapply(nearbyI, function(x) {length(x)})
+    nearbyDistances = c()
+    # nearbyCounties = c()
+    startI = 1
+    for(i in 1:length(nearbyI)) {
+      endI = startI + nearbyLengths[i] - 1
+      nearbyDistances = c(nearbyDistances, list(nearbyPoints$ra[startI:endI]))
+      # nearbyCounties = c(nearbyCounties, list(countyNames[nearbyI[[i]]]))
+      startI = endI + 1
+    }
+    
+    # # remove points that aren't in the same county
+    # for(i in 1:length(nearbyI)) {
+    #   thisCounty = countyNames[problemPointsI[i]]
+    #   nearbyDistances[[i]] = nearbyDistances[[i]][nearbyCounties[[i]] == thisCounty]
+    #   nearbyI[[i]] = nearbyI[[i]][nearbyCounties[[i]] == thisCounty]
+    #   nearbyConstituencies[[i]] = nearbyConstituencies[[i]][nearbyCounties[[i]] == thisCounty]
+    #   nearbyCounties[[i]] = nearbyCounties[[i]][nearbyCounties[[i]] == thisCounty]
+    # }
+    
+    # sort nearby constituencies and indices by distance
+    for(i in 1:length(nearbyI)) {
+      thisDistances = nearbyDistances[[i]]
+      sortI = sort(thisDistances, index.return=TRUE)$ix
+      nearbyDistances[[i]] = nearbyDistances[[i]][sortI]
+      nearbyConstituencies[[i]] = nearbyConstituencies[[i]][sortI]
+      nearbyI[[i]] = nearbyI[[i]][sortI]
+    }
+    
+    # get nearest non-NA constituency and assign it
+    closestConstituency = sapply(nearbyConstituencies, function(x) {x[match(TRUE, !is.na(x))]})
+    
+    constituencyNameVec[problemPointsI] = closestConstituency
+  }
+  
+  list(constituencyID=constituencyID, constituencyNames=constituencyNameVec, multipleRegs=multipleRegs)
+}
+
 # convert county to region
 countyToRegion = function(countyNames) {
   load(paste0(globalDirectory, "kenya-prov-county-map.RData"))
   regionIs = match(as.character(countyNames), as.character(ctp[,1]))
   as.character(ctp[regionIs,2])
+}
+
+# convert constituency to county
+constituencyToCounty = function(constituencyNames) {
+  constituencies = adm2@data$CONSTITUEN
+  counties = adm2@data$COUNTY_NAM
+  matchI = match(constituencyNames, constituencies)
+  counties[matchI]
 }
 
 getUrbanRural = function(utmGrid) {
@@ -2286,7 +2480,7 @@ setThresholds = function() {
   list(counties=counties, threshes=threshes)
 }
 
-# for plotting administration data
+# for plotting administration data assuming plotVar is in alphabetical order of the area names
 # project: if FALSE, plot with lon/lat coordinates.  Otherwise, plot with projected coords 
 #          using projKenya function.  This can be used when plotting the projected `east' 
 #          and `north' variables in kenyaEAs for instance.
@@ -2310,10 +2504,12 @@ plotMapDat = function(plotVar=NULL, varCounties=NULL, zlim=NULL, project=FALSE, 
     }
   }
   if(is.null(varCounties)) {
-    if(length(mapDat) != 8) {
-      varCounties=sort(as.character(unique(mort$admin1)))
-    } else {
+    if(length(mapDat) == 8) {
       varCounties = sort(as.character(poppr$Region))
+    } else if(length(mapDat) == 273) {
+      varCounties = sort(as.character(mapDat@data$CONSTITUEN))
+    } else {
+      varCounties=sort(as.character(unique(mort$admin1)))
     }
   }
   
@@ -2328,6 +2524,8 @@ plotMapDat = function(plotVar=NULL, varCounties=NULL, zlim=NULL, project=FALSE, 
       regionNames = mapDat@data$NAME_1
     } else if(!is.null(mapDat@data$name_1)) {
       regionNames = as.character(mapDat@data$name_1)
+    } else if(!is.null(mapDat@data$CONSTITUEN)) {
+      regionNames = as.character(mapDat@data$CONSTITUEN)
     } else {
       stop("mapDat has unrecognized region names")
     }
@@ -2454,16 +2652,19 @@ plotMapDat = function(plotVar=NULL, varCounties=NULL, zlim=NULL, project=FALSE, 
 }
 
 # generate the population density surface along with urbanicity estimates
-makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("children", "women")) {
+# delta, mean.neighbor: argument passed to fields.rdist.near via getConstituency
+makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("children", "women"), 
+                             mean.neighbor=50, delta=.1, conMap=adm2) {
   # load population density data
   require(raster)
   
   # pop = raster("Kenya2014Pop/worldpop_total_1y_2014_00_00.tif", values= TRUE)
   load("../U5MR/Kenya2014Pop/pop.RData")
   load("../U5MR/lims.RData")
-  out = load("../U5MR/adminMapData.RData")
+  load(paste0(globalDirectory, "adminMapData.RData"))
   kenyaMap = adm0
   countyMap = adm1
+  constituencyMap = conMap
   
   # get a rectangular grid
   eastGrid = seq(eastLim[1], eastLim[2], by=kmRes)
@@ -2474,7 +2675,7 @@ makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("child
   lonLatGrid = projKenya(utmGrid, inverse=TRUE)
   
   # subset grid so it's in Kenya
-  polys = adm0@polygons
+  polys = kenyaMap@polygons
   kenyaPoly = polys[[1]]@Polygons[[77]]@coords
   inKenya = in.poly(lonLatGrid, kenyaPoly)
   utmGrid = utmGrid[inKenya,]
@@ -2484,13 +2685,19 @@ makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("child
   interpPopVals = extract(pop, SpatialPoints(lonLatGrid),method="bilinear")
   
   # compute counties associated with locations
-  counties = getRegion(lonLatGrid)$regionNames
+  # counties = getRegion(lonLatGrid)$regionNames
+  # constituencies = getConstituency(lonLatGrid, countyNames=counties)$constituencyNames
+  # counties = getCounty(lonLatGrid)
+  # provinces = getProvince(lonLatGrid)
+  constituencies = getConstituency(lonLatGrid, mean.neighbor=mean.neighbor, delta=delta)$constituencyNames
+  counties = constituencyToCounty(constituencies)
+  provinces = countyToRegion(counties)
   
   # determine which points are urban
-  newPop = data.frame(list(lon=lonLatGrid[,1], lat=lonLatGrid[,2], popOrig=interpPopVals, admin1=counties))
+  newPop = data.frame(list(lon=lonLatGrid[,1], lat=lonLatGrid[,2], popOrig=interpPopVals, region=provinces, admin1=counties, admin2=constituencies))
   threshes = setThresholds()
   popThreshes = sapply(1:nrow(newPop), function(i) {threshes$threshes[threshes$counties == newPop$admin1[i]]})
-  urban = newPop$popOrig > popThreshes
+  urban = newPop$popOrig > unlist(popThreshes)
   newPop$urban = urban
   
   newPop$east = utmGrid[,1]
@@ -2503,6 +2710,7 @@ makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("child
     
     # sort easpc by county name alphabetically
     counties=sort(unique(poppc$County))
+    
     sortI = sort(easpc$County, index.return=TRUE)$ix
     temp = easpc[sortI,]
     
@@ -2544,6 +2752,60 @@ makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("child
   }
   
   newPop
+}
+
+# generate the population density surface along with urbanicity estimates
+adjustPopGrid = function(popMat, poppcAdjusted=NULL) {
+  
+  # sort get population per stratum from poppcAdjusted
+  if("County" %in% names(poppcAdjusted)) {
+    counties=sort(unique(poppcAdjusted$County))
+  } else if("area" %in% names(poppcAdjusted)) {
+    counties=sort(unique(poppcAdjusted$area))
+  }
+  targetPopPerStratumUrban = poppcAdjusted$popUrb
+  targetPopPerStratumRural = poppcAdjusted$popRur
+  targetPopPerStratumTotal = poppcAdjusted$popTotal
+  
+  # generate 2 47 x nPixels matrices for urban and rural strata integrating pixels with respect to population density to get county estimates
+  getCountyStratumIntegrationMatrix = function(getUrban=TRUE) {
+    counties = as.character(counties)
+    
+    mat = t(sapply(counties, function(countyName) {
+      if("admin1" %in% names(popMat)) {
+        popMat$admin1 == countyName
+      } else {
+        popMat$area == countyName
+      }
+    }))
+    if("popOrig" %in% names(popMat)) {
+      mat = sweep(mat, 2, popMat$popOrig, "*")
+    } else {
+      mat = sweep(mat, 2, popMat$pop, "*")
+    }
+    
+    sweep(mat, 2, popMat$urban == getUrban, "*")
+  }
+  urbanIntegrationMat = getCountyStratumIntegrationMatrix()
+  ruralIntegrationMat = getCountyStratumIntegrationMatrix(FALSE)
+  
+  # calculate number of people per stratum by integrating the population density surface
+  urbanPopulations = rowSums(urbanIntegrationMat)
+  ruralPopulations = rowSums(ruralIntegrationMat)
+  
+  # adjust each row of the integration matrices to get the correct expected number of children per stratum
+  urbanIntegrationMat = sweep(urbanIntegrationMat, 1, targetPopPerStratumUrban / urbanPopulations, "*")
+  ruralIntegrationMat = sweep(ruralIntegrationMat, 1, targetPopPerStratumRural / ruralPopulations, "*")
+  ruralIntegrationMat[ruralPopulations == 0,] = 0
+  
+  # the column sums of the matrices give the correct modified population densities
+  if("popOrig" %in% names(popMat)) {
+    popMat$popOrig = colSums(urbanIntegrationMat) + colSums(ruralIntegrationMat)
+  } else {
+    popMat$pop = colSums(urbanIntegrationMat) + colSums(ruralIntegrationMat)
+  }
+  
+  popMat
 }
 
 # add in binomial variation to the probability sampling matrix
@@ -2589,7 +2851,7 @@ getValidationI = function(dat=NULL, dataType=c("mort", "ed"), allCountyNames=NUL
   
   if(pixelLevel) {
     # determine in which pixel each observation is located
-    pixelIndices = getPixelIndex(cbind(dat$east, dat$north), popMat=popMat)
+    pixelIndices = getPixelIndex(cbind(dat$east, dat$north), popMat=popMat, dat$admin1)
     uniquePixelIndices = sort(unique(pixelIndices))
     pixelUrban = popMat$urban[uniquePixelIndices]
     pixelCounty = popMat$area[uniquePixelIndices]
@@ -2653,7 +2915,7 @@ getValidationI = function(dat=NULL, dataType=c("mort", "ed"), allCountyNames=NUL
     if(pixelLevel) {
       clusterIndices = pixelIndices %in% uniquePixelIndices[foldIndices[[i]]]
       sampleMatrix[clusterIndices,i] = TRUE
-      pixelIndexList = c(pixelIndexList, list(uniquePixelIndices[foldIndices[[i]]]))
+      pixelIndexList = c(pixelIndexList, list(sort(uniquePixelIndices[foldIndices[[i]]])))
     } else {
       sampleMatrix[foldIndices[[i]],i] = TRUE
     }
@@ -2671,19 +2933,21 @@ getAveragePredictionDistance = function(areaLevel=c("Region", "County", "Pixel",
   areaLevel = match.arg(areaLevel)
 }
 
-getArea = function(areaLevel=c("Region", "County")) {
+getArea = function(areaLevel=c("Region", "County"), thisMap = NULL, nameVar=NULL, sortAreas=FALSE) {
   areaLevel = match.arg(areaLevel)
   require(shapefiles)
   
   # load shape files
   require(maptools)
-  if(areaLevel == "Region"){
-    thisMap = readShapePoly("../U5MR/mapData/kenya_region_shapefile/kenya_region_shapefile.shp", delete_null_obj=TRUE, force_ring=TRUE, repair=TRUE)
-  } else if(areaLevel == "County"){
-    out = load("../U5MR/adminMapData.RData")
-    thisMap = adm1
-  } else {
-    stop(paste0("Unrecognized area level: ", areaLevel))
+  if(is.null(thisMap)) {
+    if(areaLevel == "Region"){
+      thisMap = readShapePoly("../U5MR/mapData/kenya_region_shapefile/kenya_region_shapefile.shp", delete_null_obj=TRUE, force_ring=TRUE, repair=TRUE)
+    } else if(areaLevel == "County"){
+      out = load("../U5MR/adminMapData.RData")
+      thisMap = adm1
+    } else {
+      stop(paste0("Unrecognized area level: ", areaLevel))
+    }
   }
   
   getOneArea = function(poly) {
@@ -2714,12 +2978,21 @@ getArea = function(areaLevel=c("Region", "County")) {
   areas = sapply(thisMap@polygons, getOneArea)
   
   # sort results by area name
-  if(areaLevel == "Region") {
-    areaNames = as.character(thisMap@data$name)
-  } else if(areaLevel == "County") {
-    areaNames = as.character(thisMap@data$NAME_1)
+  if(is.null(nameVar)) {
+    if(areaLevel == "Region") {
+      nameVar = "name"
+      
+    } else if(areaLevel == "County") {
+      nameVar = "NAME_1"
+    }
   }
-  sortI = sort(areaNames, index.return=TRUE)$ix
+  
+  areaNames = as.character(thisMap@data[[nameVar]])
+  if(sortAreas) {
+    sortI = sort(areaNames, index.return=TRUE)$ix
+  } else {
+    sortI = 1:length(areaNames)
+  }
   areas = areas[sortI]
   names(areas) = areaNames[sortI]
   areas
@@ -3028,7 +3301,9 @@ adjustPopulationPerCountyTable = function(dataType=c("children", "women")) {
   newPopTable
 }
 
-rMyMultinomial = function(n, i, includeUrban=TRUE, urban=TRUE, popMat=NULL, easpa=NULL) {
+rMyMultinomial = function(n, i, includeUrban=TRUE, urban=TRUE, popMat=NULL, easpa=NULL, ensureAtLeast1=FALSE, 
+                          method=c("mult1", "mult", "indepMH"), minSample=1) {
+  method = match.arg(method)
   
   # set default inputs
   if(is.null(popMat)) {
@@ -3074,7 +3349,55 @@ rMyMultinomial = function(n, i, includeUrban=TRUE, urban=TRUE, popMat=NULL, easp
   if(sum(includeI) == 0)
     return(matrix(nrow=0, ncol=n))
   thesePixelProbs = popMat$pop[includeI]
-  rmultinom(n, nEA, prob=thesePixelProbs)
+  if(any(thesePixelProbs > 0)) {
+    if(!ensureAtLeast1) {
+      rmultinom(n, nEA, prob=thesePixelProbs)
+    } else {
+      rmultinom1(n, nEA, prob=thesePixelProbs, method=method, allowSizeLessThanK=TRUE, minSample=minSample)
+    }
+  } else {
+    matrix(0, nrow=length(thesePixelProbs), ncol=n)
+  }
+}
+
+# easpcon: this could either be total EAs per constistuency, or constituency crossed with urban or 
+#          rural if includeUrban is TRUE
+rMyMultinomialConstituency = function(n, i, easpcon, includeUrban=TRUE, urban=TRUE, popMat=NULL) {
+  
+  # set default inputs
+  if(is.null(popMat)) {
+    popMat = makeDefaultPopMat()
+    # lon: longitude
+    # lat: latitude
+    # east: easting (km)
+    # north: northing (km)
+    # pop: proportional to population density for each grid cell
+    # area: an id or area name in which the grid cell corresponding to each row resides
+    # urban: whether the grid cell is urban or rural
+    # constituency: the sub-area
+    # province: the super-area
+  }
+  
+  # get constituency names
+  constituencies = sort(unique(popMat$admin2))
+  
+  # determine which pixels and how many EAs are in this stratum
+  if(includeUrban) {
+    includeI = popMat$admin2 == constituencies[i] & popMat$urban == urban
+  }
+  else {
+    includeI = popMat$admin2 == constituencies[i]
+  }
+  nEA = easpcon[i,]
+  
+  # sample from the pixels if this stratum exists
+  if(sum(includeI) == 0){
+    if(any(nEA != 0))
+      stop(paste0("no valid pixels to put EAs in for constituency ", as.character(constituencies[i]), " and urban level ", urban))
+    return(matrix(nrow=0, ncol=n))
+  }
+  thesePixelProbs = popMat$pop[includeI]
+  sapply(nEA, rmultinom, n=1, prob=thesePixelProbs)
 }
 
 # Same as rMyMultinomial, except samples from independent binomial distributions 
@@ -3241,6 +3564,127 @@ rStratifiedMultnomial = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE) 
     
     # get the indices used to recombine into the full set of draws
     stratumIndices = c(sapply(1:length(areas), getSortIndices, popMat=popMat, includeUrban=includeUrban))
+    
+    # recombine into eaSamples
+    eaSamples[stratumIndices,] = stratumSamples
+  }
+  
+  # return results
+  eaSamples
+}
+
+# gives nPixels x n matrix of draws from the stratified multinomial with values 
+# corresponding to the value of |C^g| for each pixel, g (the number of EAs/pixel)
+rStratifiedMultnomialByConstituency = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE, constituencyPop=poppcon, 
+                                               ensureAtLeast1PerConstituency=TRUE, minSample=1) {
+  
+  # set default inputs
+  if(is.null(popMat)) {
+    popMat = makeDefaultPopMat()
+    # lon: longitude
+    # lat: latitude
+    # east: easting (km)
+    # north: northing (km)
+    # pop: proportional to population density for each grid cell
+    # area: an id or area name in which the grid cell corresponding to each row resides
+    # urban: whether the grid cell is urban or rural
+    # constituency: the sub-area
+    # province: the super-area
+  }
+  if(is.null(easpa)) {
+    easpa = makeDefaultEASPA()
+    # area: the name or id of the area
+    # EAUrb: the number of EAs in the urban part of the area
+    # EARur: the number of EAs in the rural part of the area
+    # EATotal: the number of EAs in the the area
+    # HHUrb: the number of households in the urban part of the area
+    # HHRur: the number of households in the rural part of the area
+    # HHTotal: the number of households in the the area
+    # popUrb: the number of people in the urban part of the area
+    # popRur: the number of people in the rural part of the area
+    # popTotal: the number of people in the the area
+  }
+  
+  # get area names
+  areas = sort(unique(popMat$area))
+  constituencies = sort(unique(popMat$constituency))
+  if(any(areas != easpa$area))
+    stop("area names and easpa do not match popMat or are not in the correct order")
+  
+  # we will need to draw separate multinomial for each stratum. Start by 
+  # creating matrix of all draws of |C^g|
+  eaSamples = matrix(NA, nrow=nrow(popMat), ncol=n)
+  
+  # create temporary popMat, except with one row for each constituency
+  popConstituencyMat = popMat[1:length(constituencies),]
+  popConstituencyMat$area = constituencyPop$County
+  popConstituencyMat$admin2 = constituencyPop$Constituency
+  if(includeUrban) {
+    popConstituencyMat$urban = FALSE
+    popConstituencyMat = rbind(popConstituencyMat, popConstituencyMat)
+    popConstituencyMat$urban[1:length(constituencies)] = TRUE
+    popConstituencyMat$pop[1:length(constituencies)] = constituencyPop$popUrb
+    popConstituencyMat$pop[(length(constituencies) + 1):(2 * length(constituencies))] = constituencyPop$popRur
+  } else {
+    popConstituencyMat$pop = constituencyPop$popTotal
+  }
+  
+  # now draw multinomials
+  if(includeUrban) {
+    # draw for each constituency in each area crossed with urban/rural
+    urbanSamplesCon = do.call("rbind", lapply(1:length(areas), rMyMultinomial, n=n, urban=TRUE, 
+                                           includeUrban=includeUrban, popMat=popConstituencyMat, easpa=easpa, 
+                                           ensureAtLeast1=ensureAtLeast1PerConstituency, method="mult", 
+                                           minSample=minSample))
+    ruralSamplesCon = do.call("rbind", lapply(1:length(areas), rMyMultinomial, n=n, urban=FALSE, 
+                                           includeUrban=includeUrban, popMat=popConstituencyMat, easpa=easpa, 
+                                           ensureAtLeast1=ensureAtLeast1PerConstituency, method="mult", 
+                                           minSample=minSample))
+    
+    # get the indices used to recombine into the full set of draws for the constituencies
+    urbanIndicesCon = unlist(sapply(1:length(areas), getSortIndices, urban=TRUE, popMat=popConstituencyMat, includeUrban=includeUrban))
+    ruralIndicesCon = unlist(sapply(1:length(areas), getSortIndices, urban=FALSE, popMat=popConstituencyMat, includeUrban=includeUrban)) - length(urbanIndicesCon)
+    
+    # recombine into eaSamples for the constituencies
+    urbanSamplesCon[urbanIndicesCon,] = urbanSamplesCon
+    ruralSamplesCon[ruralIndicesCon,] = ruralSamplesCon
+    
+    # draw for each pixel crossed with urban/rural
+    urbanSamples = do.call("rbind", lapply(1:length(constituencies), rMyMultinomialConstituency, n=n, urban=TRUE, 
+                                           includeUrban=includeUrban, popMat=popMat, easpcon=urbanSamplesCon))
+    ruralSamples = do.call("rbind", lapply(1:length(constituencies), rMyMultinomialConstituency, n=n, urban=FALSE, 
+                                           includeUrban=includeUrban, popMat=popMat, easpcon=ruralSamplesCon))
+    
+    # get the indices used to recombine into the full set of draws
+    tempPopMat = popMat
+    tempPopMat$area = tempPopMat$admin2
+    urbanIndices = unlist(sapply(1:length(constituencies), getSortIndices, urban=TRUE, popMat=tempPopMat, includeUrban=includeUrban))
+    ruralIndices = unlist(sapply(1:length(constituencies), getSortIndices, urban=FALSE, popMat=tempPopMat, includeUrban=includeUrban))
+    
+    # recombine into eaSamples
+    eaSamples[urbanIndices,] = urbanSamples
+    eaSamples[ruralIndices,] = ruralSamples
+  } else {
+    # draw for each constituency in each area crossed with urban/rural
+    samplesCon = do.call("rbind", lapply(1:length(areas), rMyMultinomial, n=n, urban=TRUE, 
+                                         includeUrban=includeUrban, popMat=popConstituencyMat, easpa=easpa, 
+                                         ensureAtLeast1=ensureAtLeast1PerConstituency, method="mult", 
+                                         minSample=minSample))
+    
+    # get the indices used to recombine into the full set of draws for the constituencies
+    indicesCon = unlist(sapply(1:length(areas), getSortIndices, popMat=popConstituencyMat, includeUrban=includeUrban))
+    
+    # recombine into eaSamples for the constituencies
+    samplesCon[indicesCon,] = samplesCon
+    
+    # draw for each pixel in each constituency
+    stratumSamples = rbind(sapply(1:length(constituencies), n=n, rMyMultinomialConstituency, 
+                                  includeUrban=includeUrban, popMat=popMat, easpcon=samplesCon))
+    
+    # get the indices used to recombine into the full set of draws
+    tempPopMat = popMat
+    tempPopMat$area = tempPopMat$admin2
+    stratumIndices = c(sapply(1:length(constituencies), getSortIndices, popMat=tempPopMat, includeUrban=includeUrban))
     
     # recombine into eaSamples
     eaSamples[stratumIndices,] = stratumSamples
@@ -3422,9 +3866,9 @@ rStratifiedBinomial1 = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE, v
 logitNormMean = function(muSigmaMat, parClust=NULL, logisticApproximation=TRUE, ...) {
   if(length(muSigmaMat) > 2) {
     if(is.null(parClust))
-      apply(muSigmaMat, 1, logitNormMean, ...)
+      apply(muSigmaMat, 1, logitNormMean, logisticApproximation=logisticApproximation, ...)
     else
-      parApply(parClust, muSigmaMat, 1, logitNormMean, ...)
+      parApply(parClust, muSigmaMat, 1, logitNormMean, logisticApproximation=logisticApproximation, ...)
   }
   else {
     mu = muSigmaMat[1]
@@ -3448,7 +3892,9 @@ logitNormMean = function(muSigmaMat, parClust=NULL, logisticApproximation=TRUE, 
 }
 
 dbinom1 = function(x, size, prob) {
-  dbinom(x, size, prob) * (1 / (1 - pbinom(0, size, prob)))
+  out = dbinom(x, size, prob) * (1 / (1 - pbinom(0, size, prob)))
+  out[(x < 1) | (x > size)] = 0
+  out
 }
 
 qbinom1 = function(q, size, prob) {
@@ -3461,6 +3907,25 @@ rbinom1 = function(n, size, prob) {
   q = runif(n)
   out = qbinom1(q, size, prob)
   out[prob == 0] = 1 # this is a limiting case and is necessary due to numerical round off
+  out
+}
+
+dbinomTrunc = function(x, size, prob, low=1, high=size) {
+  out = dbinom(x, size, prob) * (1 / (1 - (pbinom(low-1, size, prob) + 1 - pbinom(high, size, prob))))
+  out[(x < low) | (x > high)] = 0
+  out
+}
+
+qbinomTrunc = function(q, size, prob, low=1, high=size) {
+  q = q * (1 - (pbinom(low-1, size, prob) + 1 - pbinom(high, size, prob))) + pbinom(low-1, size, prob)
+  qbinom(q, size, prob)
+}
+
+# random binomial draws conditional on the number of successes being at least low and no higher than high
+rbinomTrunc = function(n, size, prob, low=1, high=size) {
+  q = runif(n)
+  out = qbinomTrunc(q, size, prob, low, high)
+  out[prob == 0] = low # this is a limiting case and is necessary due to numerical round off
   out
 }
 
@@ -3481,12 +3946,217 @@ rpois1 = function(n, prob) {
   out
 }
 
+# random multinomial draws conditional on the number of each type bing at least one
+# maxSize: the maximum number of elements in a matrix drawn from the proposal distribution. 
+#          
+rmultinom1 = function(n=1, size, prob, maxSize=5000*5000, method=c("mult1", "mult", "indepMH"), verbose=FALSE, minSample=100, 
+                      maxExpectedSizeBeforeSwitch=1000*1e7, init=NULL, burnIn=floor(n/4), filterEvery=10, zeroProbZeroSamples=TRUE, 
+                      allowSizeLessThanK=FALSE) {
+  method = match.arg(method)
+  prob = prob*(1/sum(prob))
+  
+  if(zeroProbZeroSamples && any(prob == 0)) {
+    zero = prob == 0
+    out = matrix(0, nrow=length(prob), ncol=n)
+    
+    if(sum(!zero) > 0) {
+      out[!zero,] = rmultinom1(n, size, prob[!zero], maxSize, method, verbose, minSample, maxExpectedSizeBeforeSwitch, init, burnIn, 
+                               filterEvery, zeroProbZeroSamples, allowSizeLessThanK)
+    }
+    
+    return(out)
+  }
+  
+  k = length(prob)
+  if(allowSizeLessThanK && (size <= k)) {
+    return(replicate(n, as.numeric(1:k %in% sample(1:k, size, replace=FALSE))))
+  } else if(size < k) {
+    stop("size < k but rmultinom1 requires at least 1 sample per multinomial type")
+  }
+  
+  maxSamples = floor(maxSize / k)
+  averageProbMult = prod((size/k)*prob)
+  
+  # if(method == "auto") {
+  #   # decide what method to use automatically if requested by user
+  #   averagex = 1 + (size-k)*prob
+  #   averageProbMult1 = (size-k) / (prod(averagex))
+  #   
+  #   if(averageProbMult > averageProbMult1) {
+  #     method = "mult"
+  #   } else {
+  #     method = "mult1"
+  #   }
+  # }
+  
+  if(method != "indepMH")
+    samples = matrix(NA, nrow=k, ncol=n)
+  else
+    samples = matrix(NA, nrow=k, ncol=round(n*filterEvery))
+  if(method == "mult1") {
+    averagex = 1 + (size-k)*prob
+    averageProb = (size-k) / (prod(averagex))
+    
+    while(any(is.na(samples))) {
+      # calculate the number of remaining samples
+      samplesLeft = sum(apply(samples, 2, function(x) {any(is.na(x))}))
+      
+      # approximate expected number of samples so that, after some are rejected, we will 
+      # have the right number of samples
+      expectedSamples = ceiling(samplesLeft/averageProb)
+      
+      if(expectedSamples*k > maxExpectedSizeBeforeSwitch) {
+        warning("too many samples expected with method=='mult1'. Switching to method=='indepMH'")
+        return(rmultinom1(n, size, prob, maxSize, method="indepMH", verbose, minSample, 
+                          maxExpectedSizeBeforeSwitch, init, burnIn, filterEvery, 
+                          zeroProbZeroSamples, allowSizeLessThanK))
+      }
+      
+      # sample expectedSamples times a fudge factor, but make sure we don't get past memory limit
+      thisNumberOfSamples = max(minSample, min(maxSamples, expectedSamples * 1.1))
+      if(verbose)
+        print(paste0("Sampling ", thisNumberOfSamples, ". Sampled ", n-samplesLeft, "/", n, ". Expected remaining samples: ", expectedSamples))
+      thisSamples = 1 + rmultinom(thisNumberOfSamples, size-k, prob=prob)
+      
+      # calculate accept probabilities
+      thisProbs = (size-k) / apply(thisSamples, 2, prod)
+      if(verbose) {
+        print(paste0("Max sampled accept prob: ", max(thisProbs), ". Mean sampled accept prob: ", mean(thisProbs)))
+        print(paste0("Max theoretical accept prob: ", 1, ". Mean 'theoretical' accept prob: ", averageProb))
+      }
+      
+      # reject relevant samples
+      u = runif(thisNumberOfSamples)
+      thisSamples = thisSamples[,u<thisProbs]
+      
+      # remove excess samples if necessary
+      totalSamples = ncol(thisSamples) + n - samplesLeft
+      if(totalSamples > n) {
+        thisSamples = thisSamples[,1:samplesLeft]
+      }
+      
+      # add in accepted samples, if any
+      if(ncol(thisSamples) > 0) {
+        samples[,(n-samplesLeft+1):(n-samplesLeft+ncol(thisSamples))] = thisSamples
+      } else {
+        warning(paste0("no samples accepted this round out of ", thisNumberOfSamples, " total..."))
+      }
+    }
+  } else if(method == "mult") {
+    
+    while(any(is.na(samples))) {
+      # calculate the number of remaining samples
+      samplesLeft = sum(apply(samples, 2, function(x) {any(is.na(x))}))
+      
+      # approximate expected number of samples so that, after some are rejected, we will 
+      # have the right number of samples
+      expectedSamples = ceiling(samplesLeft/averageProbMult)
+      
+      if(expectedSamples*k > maxExpectedSizeBeforeSwitch) {
+        warning("too many samples expected with method=='mult'. Switching to method=='mult1'")
+        return(rmultinom1(n, size, prob, maxSize, method="mult1", verbose, minSample, maxExpectedSizeBeforeSwitch, 
+                          init, burnIn, filterEvery, 
+                          zeroProbZeroSamples, allowSizeLessThanK))
+      }
+      
+      # sample expectedSamples times a fudge factor, but make sure we don't get past memory limit
+      thisNumberOfSamples = max(minSample, min(maxSamples, expectedSamples * 1.1))
+      if(verbose)
+        print(paste0("Sampling ", thisNumberOfSamples, ". Sampled ", n-samplesLeft, "/", n, ". Expected remaining samples: ", expectedSamples))
+      thisSamples = matrix(rmultinom(thisNumberOfSamples, size, prob=prob), ncol=thisNumberOfSamples)
+      
+      # reject relevant samples
+      accept = apply(thisSamples, 2, function(x) {all(x>0)})
+      thisSamples = matrix(thisSamples[,accept], nrow=length(prob))
+      
+      # remove excess samples if necessary
+      totalSamples = ncol(thisSamples) + n - samplesLeft
+      if(totalSamples > n) {
+        thisSamples = matrix(thisSamples[,1:samplesLeft], nrow=length(prob))
+      }
+      
+      # add in accepted samples, if any
+      if(ncol(thisSamples) > 0) {
+        samples[,(n-samplesLeft+1):(n-samplesLeft+ncol(thisSamples))] = thisSamples
+      } else {
+        warning(paste0("no samples accepted this round out of ", thisNumberOfSamples, " total..."))
+      }
+    }
+  } else if(method == "indepMH") {
+    # we use the mult1 method for independent proposals with independent Metropolis-Hastings
+    # (https://www.statlect.com/fundamentals-of-statistics/Metropolis-Hastings-algorithm#hid9)
+    
+    # initialize at something reasonable, if not set by user
+    if(is.null(init)) {
+      init = 1 + floor(size*prob)
+      while(sum(init) > size) {
+        tooMuchBy = sum(init) - size
+        numberReducible = sum(init > 1)
+        reduceNumber = min(tooMuchBy, numberReducible)
+        init[init > 1][1:reduceNumber] = init[init > 1][1:reduceNumber] - 1
+      }
+    }
+    if(sum(init) != size)
+      stop("sum(init) != size")
+    
+    # approximate target log-density
+    lp <- log(prob)
+    lf <- function(x) {
+      if(any(x < 1) || sum(x) != size)
+        return(-Inf)
+      sum(lp*x - lfactorial(x))
+    }
+    
+    # true proposal log-density
+    lq = function(x) {
+      if(sum(x) != size)
+        return(-Inf)
+      sum(lp*(x-1) - lfactorial(x-1)) + lfactorial(size-k)
+    }
+    
+    # proposal function
+    q <- function(x) {
+      1 + rmultinom(1, size-k, prob)
+    }
+    
+    # do the sampling
+    tmp <- init
+    ar <- 0
+    for (i in 1:burnIn) {
+      proposal <- q(tmp)
+      p <- exp((lf(proposal) - lq(proposal)) - (lf(tmp) - lq(tmp)))
+      if (runif(1) < p) {
+        tmp <- proposal
+      }
+    }
+    for (i in 1:ncol(samples)) {
+      proposal <- q(tmp)
+      p <- exp((lf(proposal) - lq(proposal)) - (lf(tmp) - lq(tmp)))
+      if (runif(1) < p) {
+        tmp <- proposal
+        ar <- ar + 1
+      }
+      samples[,i] <- tmp
+    }
+    
+    # calculated acceptance percentage
+    if(verbose) {
+      print(paste0("acceptance percentage: ", ar/ncol(samples)))
+    }
+    
+    # filter out samples to reduce autocorrelation
+    samples = samples[,seq(from=1, to=ncol(samples), by=filterEvery)]
+  }
+  
+  samples
+}
+
 # calculate the expected value of a summation under a Poisson distribution
 expectSummationPoisson = function() {
   1
 }
 
-getPixelIndex = function(eastNorth, popMat=NULL) {
+getPixelIndex = function(eastNorth, popMat=NULL, clusterAreas=NULL, enforceSameArea=TRUE) {
   
   if(is.null(popMat)) {
     popMat = makeDefaultPopMat()
@@ -3499,8 +4169,26 @@ getPixelIndex = function(eastNorth, popMat=NULL) {
     # urban: whether the grid cell is urban or rural
   }
   
-  # construct distance matrix. For each observation location, get closest pixel
+  # construct distance matrix
   distMat = rdist(eastNorth, cbind(popMat$east, popMat$north))
+  
+  # For each observation location, get closest pixel (that is in the same area, if necessary)
+  if(enforceSameArea) {
+    if(is.null(clusterAreas))
+      stop("clusterAreas must be included if enforceSameArea is set to TRUE")
+    
+    # set distance between clusters and pixels that are in different areas to be infinite
+    if("admin1" %in% names(popMat)) {
+      differentArea = outer(clusterAreas, popMat$admin1, FUN=function(x, y) {x != y})
+    } else if("area" %in% names(popMat)) {
+      differentArea = outer(clusterAreas, popMat$area, FUN=function(x, y) {x != y})
+    } else {
+      stop("popMat must have either 'admin1' or 'area' as a variable")
+    }
+    
+    distMat[differentArea] = Inf
+  }
+  
   apply(distMat, 1, which.min)
 }
 
@@ -3514,13 +4202,11 @@ getPixelLevelTruth = function(dat=NULL, popMat=NULL, targetPop=c("children", "wo
     if(is.null(dat)) {
       dat = ed
     }
-    load("../U5MR/popGridAdjustedWomen.RData")
   } else if(targetPop == "children") {
     resultNameRoot="Mort"
     if(is.null(dat)) {
       dat = mort
     }
-    load("../U5MR/popGridAdjusted.RData")
   }
   
   # set popMat if necessary (we only need the pixel grid here, not population density)
@@ -3536,7 +4222,7 @@ getPixelLevelTruth = function(dat=NULL, popMat=NULL, targetPop=c("children", "wo
   }
   
   # Get the pixel indices associated with each cluster in the dataset
-  pixelI = getPixelIndex(cbind(dat$east, dat$north), popMat)
+  pixelI = getPixelIndex(cbind(dat$east, dat$north), popMat, dat$admin1)
   
   # aggregate dataset by pixel
   y = aggregate(dat$y, by=list(pixelI=pixelI), FUN=sum)
@@ -3544,6 +4230,7 @@ getPixelLevelTruth = function(dat=NULL, popMat=NULL, targetPop=c("children", "wo
   p = y[,2]/n[,2]
   p[is.na(p)] = 0
   nClusters = aggregate(dat$n, by=list(pixelI=pixelI), FUN=length)
+  
   uniquePixelI = y[,1]
   y = y[,2]
   n = n[,2]
@@ -3557,6 +4244,401 @@ getPixelLevelTruth = function(dat=NULL, popMat=NULL, targetPop=c("children", "wo
   results[sortI,]
 }
 
+# aggregate the dataset by county 
+# dat: mort by default
+# easpa: the usual definition
+getConstituencyLevelTruth = function(dat=NULL, constituencyPop=poppcon, targetPop=c("children", "women")) {
+  # load in relevant data for the given example
+  if(targetPop == "women") {
+    resultNameRoot="Ed"
+    if(is.null(dat)) {
+      dat = ed
+    }
+  } else if(targetPop == "children") {
+    resultNameRoot="Mort"
+    if(is.null(dat)) {
+      dat = mort
+    }
+  }
+  
+  # aggregate dataset by stratum
+  y = aggregate(dat$y, by=list(County=dat$admin2, urban=dat$urban), FUN=sum, drop=FALSE)
+  n = aggregate(dat$n, by=list(County=dat$admin2, urban=dat$urban), FUN=sum, drop=FALSE)
+  
+  pStratified = y[,3]/n[,3]
+  pStratified[is.na(pStratified)] = 0
+  
+  # get weighted average of urban/rural strata in each county
+  urbanProp = constituencyPop$popUrb/constituencyPop$popTotal
+  pRural = pStratified[1:273]
+  pUrban = pStratified[274:546]
+  pWeighted = (1 - urbanProp) * pRural + urbanProp * pUrban
+  
+  # get stratified numerators and denominators
+  yRural = y[1:273,3]
+  yRural[is.na(yRural)] = 0
+  yUrban = y[274:546,3]
+  yTotal = yRural + yUrban
+  nRural = n[1:273,3]
+  nRural[is.na(nRural)] = 0
+  nUrban = n[274:546,3]
+  nTotal = nRural + nUrban
+  
+  # get non-weighted empirical proportion
+  p = yTotal / nTotal
+  p[is.na(p)] = 0
+  
+  nClusters = aggregate(dat$n, by=list(County=dat$admin1, urban=dat$urban), FUN=length, drop=FALSE)
+  nClustersUrban = nClusters[274:546,3]
+  nClustersRural = nClusters[1:273,3]
+  nClustersRural[is.na(nClustersRural)] = 0
+  nClustersTotal = nClustersUrban + nClustersRural
+  
+  constituency = constituencyPop$Constituency
+  county = constituencyPop$County
+  
+  # get survey weighted direct estimates
+  constituencyDirect = modDirect(dat, dataType=tolower(resultNameRoot), level="constituency")
+  constituencyStratumDirect = modDirect(dat, dataType=tolower(resultNameRoot), level="constituencyStratum")
+  
+  # return results
+  results = data.frame(County=county, Constituency=constituency, urbanProp=urbanProp, 
+                       pStratified=pWeighted, p=p, pUrban=pUrban, pRural=pRural, 
+                       pDirect=constituencyDirect$est, pDirectUrban=constituencyStratumDirect$urbanResults$est, pDirectRural=constituencyStratumDirect$ruralResults$est, 
+                       pDirectLogit=constituencyDirect$logit.est, pDirectUrbanLogit=constituencyStratumDirect$urbanResults$logit.est, pDirectRuralLogit=constituencyStratumDirect$ruralResults$logit.est, 
+                       varDirectLogit=constituencyDirect$var.est, varDirectUrbanLogit=constituencyStratumDirect$urbanResults$var.est, varDirectRuralLogit=constituencyStratumDirect$ruralResults$var.est, 
+                       yUrban=yUrban, yRural=yRural, yTotal=yTotal, 
+                       nUrban=nUrban, nRural=nRural, nTotal=nTotal, 
+                       nClustersUrban=nClustersUrban, nClustersRural=nClustersRural, nClustersTotal=nClustersTotal)
+  results[is.na(results)] = 0
+  sortI = sort(as.character(constituency), index.return=TRUE)$ix
+  results[sortI,]
+}
+
+# aggregate the dataset by county 
+# dat: mort by default
+# easpa: the usual definition
+getCountyLevelTruth = function(dat=NULL, easpa=NULL, targetPop=c("children", "women")) {
+  # load in relevant data for the given example
+  if(targetPop == "women") {
+    resultNameRoot="Ed"
+    if(is.null(dat)) {
+      dat = ed
+    }
+  } else if(targetPop == "children") {
+    resultNameRoot="Mort"
+    if(is.null(dat)) {
+      dat = mort
+    }
+  }
+  
+  # set easpa if necessary
+  if(is.null(easpa)) {
+    easpa = makeDefaultEASPA(validationClusterI=validationClusterI, useClustersAsEAs=!is.null(validationClusterI))
+    # area: the name or id of the area
+    # EAUrb: the number of EAs in the urban part of the area
+    # EARur: the number of EAs in the rural part of the area
+    # EATotal: the number of EAs in the the area
+    # HHUrb: the number of households in the urban part of the area
+    # HHRur: the number of households in the rural part of the area
+    # HHTotal: the number of households in the the area
+    # popUrb: the number of people in the urban part of the area
+    # popRur: the number of people in the rural part of the area
+    # popTotal: the number of people in the the area
+  }
+  
+  # aggregate dataset by stratum
+  y = aggregate(dat$y, by=list(County=dat$admin1, urban=dat$urban), FUN=sum, drop=FALSE)
+  n = aggregate(dat$n, by=list(County=dat$admin1, urban=dat$urban), FUN=sum, drop=FALSE)
+  
+  pStratified = y[,3]/n[,3]
+  pStratified[is.na(pStratified)] = 0
+  
+  # get weighted average of urban/rural strata in each county
+  urbanProp = easpa$popUrb/easpa$popTotal
+  pRural = pStratified[1:47]
+  pUrban = pStratified[48:94]
+  pWeighted = (1 - urbanProp) * pRural + urbanProp * pUrban
+  
+  # get stratified numerators and denominators
+  yRural = y[1:47,3]
+  yRural[is.na(yRural)] = 0
+  yUrban = y[48:94,3]
+  yTotal = yRural + yUrban
+  nRural = n[1:47,3]
+  nRural[is.na(nRural)] = 0
+  nUrban = n[48:94,3]
+  nTotal = nRural + nUrban
+  
+  # get non-weighted empirical proportion
+  p = yTotal / nTotal
+  p[is.na(p)] = 0
+  
+  nClusters = aggregate(dat$n, by=list(County=dat$admin1, urban=dat$urban), FUN=length, drop=FALSE)
+  nClustersUrban = nClusters[48:94,3]
+  nClustersRural = nClusters[1:47,3]
+  nClustersRural[is.na(nClustersRural)] = 0
+  nClustersTotal = nClustersUrban + nClustersRural
+  
+  uniqueCounty = easpa$area
+  
+  # get survey weighted direct estimates
+  countyDirect = modDirect(dat, dataType=tolower(resultNameRoot), level="county")
+  stratumDirect = modDirect(dat, dataType=tolower(resultNameRoot), level="stratum")
+  
+  # return results
+  results = data.frame(County=uniqueCounty, urbanProp=urbanProp, 
+                       pStratified=pWeighted, p=p, pUrban=pUrban, pRural=pRural, 
+                       pDirect=countyDirect$est, pDirectUrban=stratumDirect$urbanResults$est, pDirectRural=stratumDirect$ruralResults$est, 
+                       pDirectLogit=countyDirect$logit.est, pDirectUrbanLogit=stratumDirect$urbanResults$logit.est, pDirectRuralLogit=stratumDirect$ruralResults$logit.est, 
+                       varDirectLogit=countyDirect$var.est, varDirectUrbanLogit=stratumDirect$urbanResults$var.est, varDirectRuralLogit=stratumDirect$ruralResults$var.est, 
+                       yUrban=yUrban, yRural=yRural, yTotal=yTotal, 
+                       nUrban=nUrban, nRural=nRural, nTotal=nTotal, 
+                       nClustersUrban=nClustersUrban, nClustersRural=nClustersRural, nClustersTotal=nClustersTotal)
+  results[is.na(results)] = 0
+  sortI = sort(uniqueCounty, index.return=TRUE)$ix
+  results[sortI,]
+}
+
+# aggregate the dataset by Province 
+# dat: mort by default
+# easpa: the usual definition
+getProvinceLevelTruth = function(dat=NULL, easpa=NULL, targetPop=c("children", "women")) {
+  # load in relevant data for the given example
+  if(targetPop == "women") {
+    resultNameRoot="Ed"
+    if(is.null(dat)) {
+      dat = ed
+    }
+  } else if(targetPop == "children") {
+    resultNameRoot="Mort"
+    if(is.null(dat)) {
+      dat = mort
+    }
+  }
+  
+  # set easpa if necessary
+  if(is.null(easpa)) {
+    easpa = makeDefaultEASPA(validationClusterI=validationClusterI, useClustersAsEAs=!is.null(validationClusterI))
+    # area: the name or id of the area
+    # EAUrb: the number of EAs in the urban part of the area
+    # EARur: the number of EAs in the rural part of the area
+    # EATotal: the number of EAs in the the area
+    # HHUrb: the number of households in the urban part of the area
+    # HHRur: the number of households in the rural part of the area
+    # HHTotal: the number of households in the the area
+    # popUrb: the number of people in the urban part of the area
+    # popRur: the number of people in the rural part of the area
+    # popTotal: the number of people in the the area
+  }
+  
+  # get provinces
+  datProvinces = countyToRegion(dat$admin1)
+  easpaProvinces = countyToRegion(easpa$area)
+  
+  # calculate the proportion urban population for each province
+  popUrban = aggregate(easpa$popUrb, by=list(Province=easpaProvinces), FUN=sum)
+  popTotal = aggregate(easpa$popTotal, by=list(Province=easpaProvinces), FUN=sum)
+  urbanProp = popUrban[,2] / popTotal[,2]
+  
+  # aggregate dataset by stratum
+  y = aggregate(dat$y, by=list(Province=datProvinces, urban=dat$urban), FUN=sum, drop=FALSE)
+  n = aggregate(dat$n, by=list(Province=datProvinces, urban=dat$urban), FUN=sum, drop=FALSE)
+  
+  pStratified = y[,3]/n[,3]
+  pStratified[is.na(pStratified)] = 0
+  
+  # get weighted average of urban/rural strata in each county
+  pRural = pStratified[1:8]
+  pUrban = pStratified[9:16]
+  pWeighted = (1 - urbanProp) * pRural + urbanProp * pUrban
+  
+  # get stratified numerators and denominators
+  yRural = y[1:8,3]
+  yRural[is.na(yRural)] = 0
+  yUrban = y[9:16,3]
+  yTotal = yRural + yUrban
+  nRural = n[1:8,3]
+  nRural[is.na(nRural)] = 0
+  nUrban = n[9:16,3]
+  nTotal = nRural + nUrban
+  
+  # get non-weighted empirical proportion
+  p = yTotal / nTotal
+  p[is.na(p)] = 0
+  
+  nClusters = aggregate(dat$n, by=list(Province=datProvinces, urban=dat$urban), FUN=length, drop=FALSE)
+  nClustersUrban = nClusters[9:16,3]
+  nClustersRural = nClusters[1:8,3]
+  nClustersRural[is.na(nClustersRural)] = 0
+  nClustersTotal = nClustersUrban + nClustersRural
+  
+  uniqueProvince = nClusters[1:8,1]
+  
+  # return results
+  results = data.frame(Province=uniqueProvince, urbanProp=urbanProp, 
+                       pStratified=pWeighted, p=p, pUrban=pUrban, pRural=pRural, 
+                       yUrban=yUrban, yRural=yRural, yTotal=yTotal, 
+                       nUrban=nUrban, nRural=nRural, nTotal=nTotal, 
+                       nClustersUrban=nClustersUrban, nClustersRural=nClustersRural, nClustersTotal=nClustersTotal)
+  sortI = sort(uniqueProvince, index.return=TRUE)$ix
+  results[sortI,]
+}
+
+# combine constituencies that have area smaller than 25km^2 with larger constituencies within the same county
+combineConstituencies = function(mapDat, nameVar="CONSTITUEN", threshold=25) {
+  # first calculate the area of each constituency
+  areas = getArea(thisMap=mapDat, nameVar=nameVar)
+  
+  # if any constituencies have too small of an area, combine them with the largest nearby constituency
+  smallAreas = which(areas < threshold)
+  
+  # now determine which areas are bordering each other, making sure they are in the same county
+  require(spdep)
+  borderList = poly2nb(mapDat, queen=FALSE, row.names=mapDat@data[[nameVar]], snap=.0005)
+  
+  # remove between county borders so we don't combine those constituencies
+  counties = mapDat$COUNTY_NAM
+  for(i in 1:length(borderList)) {
+    thisCounty = counties[i]
+    thisBorderList = borderList[[i]]
+    otherCounties = counties[thisBorderList]
+    borderList[[i]] = thisBorderList[otherCounties == thisCounty]
+  }
+  
+  IDs = 1:length(borderList)
+  for(i in 1:length(smallAreas)) {
+    thisIOriginal = smallAreas[i]
+    thisI = IDs[thisIOriginal]
+    
+    # determine which area this area must be combined with
+    borderI = borderList[[thisI]]
+    borderingAreas = areas[borderI]
+    combineI = borderI[which.max(borderingAreas)]
+    
+    # combine the areas: add total area
+    areas[combineI] = areas[combineI] + areas[thisI]
+    areas = areas[-thisI]
+    borderList[[combineI]] = sort(unique(c(borderList[[combineI]], borderList[[thisI]])))
+    
+    ## update the indices in borderList, IDs
+    # for any reference to thisI, include combineI as a neighbor, and remove thisI as a neighbor
+    for(j in 1:length(borderList)) {
+      if(thisI %in% borderList[[j]]) {
+        if(j != combineI)
+          borderList[[j]] = sort(unique(c(borderList[[j]], combineI)))
+        borderList[[j]] = borderList[[j]][borderList[[j]] != thisI]
+      }
+    }
+    borderList[[combineI]] = borderList[[combineI]][borderList[[combineI]] != combineI]
+    
+    # remove thisI-th element of borderList, and shift indices after thisI back by 1
+    borderList = borderList[-thisI]
+    borderList = lapply(borderList, function(x) {x[x > thisI] = x[x > thisI] - 1; x})
+    
+    # updated IDs vector
+    IDs[thisIOriginal] = combineI
+    IDs[IDs > thisI] = IDs[IDs > thisI] - 1
+    # smallAreas[smallAreas > thisIOriginal] = smallAreas[smallAreas > thisIOriginal] - 1
+  }
+  
+  out = unionSpatialPolygons(mapDat, IDs)
+  temp = remove.holes(out)
+  
+  # update the data attribute
+  mapDat@data = mapDat@data[,-10] # remove Shape_Leng, since it will no longer be accurate
+  newData = mapDat@data
+  newData = cbind(temp@data, newData[1:nrow(temp@data),])
+  newData$CONSTITUEN = as.character(newData$CONSTITUEN)
+  for(i in 1:nrow(newData)) {
+    thisEntry = newData[i,]
+    newEntry = thisEntry
+    theseIs = which(IDs == i)
+    
+    if(length(theseIs) == 1) {
+      # if no constituencies were combined to create this area, we can just use the corresponding old data entry
+      
+      newEntry[,2:ncol(newEntry)] = mapDat@data[theseIs,]
+    } else {
+      # If constituencies were combined to create this area, we have to update the shape area and constituency name
+      
+      newEntry[,2:ncol(newEntry)] = mapDat@data[theseIs[1],]
+      
+      for(j in 2:length(theseIs)) {
+        constituencyData = mapDat@data[theseIs[j],]
+        newEntry$CONSTITUEN = paste(newEntry$CONSTITUEN, constituencyData$CONSTITUEN, sep=" + ")
+        newEntry$Shape_Area = newEntry$Shape_Area + constituencyData$Shape_Area
+      }
+    }
+    
+    newData[i,] = newEntry
+    newData[i,]$CONSTITUEN = as.character(newEntry$CONSTITUEN) # somehow it got converted to a factor...
+  }
+  
+  # re-sort the data attribute, since unionSpatialPolygons scrambled the polygons
+  temp@data = newData[as.numeric(names(out)),]
+  
+  # diagnostic/test plotting
+  if(FALSE) {
+    plot(adm0)
+    for(i in 1:length(temp)) {
+      # if(i %% 10 == 0) {
+      #   browser()
+      # }
+      plot(temp[i,], add=TRUE)
+    }
+  }
+  
+  temp
+}
+
+# make sure borders of polygons in mapDat are within that of border
+makeInBorder = function(mapDat, border=adm0) {
+  out = intersect(mapDat, border)
+  
+  if(FALSE) {
+    plot(border)
+    for(i in 1:length(out)) {
+      # if(i %% 10 == 0) {
+      #   browser()
+      # }
+      plot(out[i,], add=TRUE)
+    }
+  }
+  
+  out
+}
+
+# remove gaps between constituencies, making sure constituencies are only 
+# expanded within the counties they are in
+removeConstituencyGaps = function(mapDat=adm2) {
+  require(rmapshaper)
+  
+  # first expand constituencies
+  # mapDat = st_buffer(mapDat, expansion)
+  ms_simplify(mapDat, keep=1)
+}
+
+# assuming normality, get the true coverage of a CI given the nominal coverage and the amount of shrinkage of the CI
+getTrueCoverage = function(nominal=.8, shrinkage=.05) {
+  upperProb = 1 - (1 - nominal) / 2
+  lowerProb = 1 - upperProb
+  shrinkagefrac = 1 - shrinkage
+  pnorm(shrinkagefrac * qnorm(upperProb)) - pnorm(shrinkagefrac * qnorm(lowerProb))
+}
+
+# plot illustration of effective shrinkage on true versus nominal coverage
+plotTrueVersusUnderCoverage = function(shrinkage=.1) {
+  xs = seq(.1, .95, by=.01)
+  plot(xs, 100*getTrueCoverage(xs, shrinkage=shrinkage), type="l", col="blue", ylab="Coverage (Percent)", xlab="Nominal Coverage", main="Nominal versus nominal coverage")
+  abline(a=0, b=100, lty=2)
+  
+  plot(xs, 100*(xs - getTrueCoverage(xs, shrinkage=shrinkage)), type="l", col="blue", ylab="Undercoverage (Percent)", xlab="Nominal Coverage", main="Undercoverage")
+  abline(a=0, b=0)
+  
+  plot(xs, 100*(xs - getTrueCoverage(xs, shrinkage=shrinkage)) / xs, type="l", col="blue", ylab="Relative Undercoverage (Percent)", xlab="Nominal Coverage", main="Relative undercoverage")
+  abline(a=0, b=0)
+}
 
 
 

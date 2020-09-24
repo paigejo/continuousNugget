@@ -18,6 +18,7 @@ library(edfun) # for drawing from empirical distributions quickly
 library(data.table)
 library(sampling)
 library(haven)
+library(survey)
 
 codeDirectory <<- "~/git/continuousNugget/code/"
 figDirectory <<- "~/git/continuousNugget/figures/"
@@ -60,6 +61,7 @@ source('code/generateSimDataSets.R')
 source('code/simStudy.R')
 source('code/test.R')
 source('code/plotGenerator.R')
+source('code/modDirect.R')
 
 # set some basic parameters to hold constant throughout analysis
 kenyaLonRange = c(33.5, 42)
@@ -104,6 +106,7 @@ load(paste0(globalDirectory, "kenyaEAs.RData"))
 load(paste0(globalDirectory, "kenyaData.RData"))
 
 # load 5km population density grid (of neonatals) over Kenya
+load(paste0(globalDirectory, "popGrid.RData"))
 load(paste0(globalDirectory, "popGridAdjusted.RData"))
 
 # load limits
