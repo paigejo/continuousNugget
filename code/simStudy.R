@@ -617,13 +617,20 @@ genClustDatFromEAIsLong = function(eaDat, eaIs, eaDatLong, HHIs, sampleWeights, 
   
   # aggregate the long format to the short format
   # TODO: figure out what columns are in the cluster data and how to aggregate
-  clustDat = clustDatLong[, .(lon=lon[1], lat=lat[1], pop=pop[1], popOrig=popOrig[1], 
-                              admin1=admin1[1], region=region[1], 
+  # clustDat = clustDatLong[, .(lon=lon[1], lat=lat[1], pop=pop[1], popOrig=popOrig[1], 
+  #                             admin1=admin1[1], region=region[1], 
+  #                             east=east[1], north=north[1], urban=urban[1], nHH=nHH[1], 
+  #                             numWomen=sum(numWomen), numChildren=sum(numChildren), 
+  #                             died=sum(died), 
+  #                             probsHH=probsHH[1], trueProbDeathNoNug=trueProbDeathNoNug[1], 
+  #                             trueProbDeath=trueProbDeath[1]), 
+  #                         by=eaIs]
+  clustDat = clustDatLong[, .(lon=lon[1], lat=lat[1], 
+                              popOverall=popOverall[1], popTarget=popTarget[1], 
+                              admin1=admin1[1], admin2=admin2[1], region=region[1], 
                               east=east[1], north=north[1], urban=urban[1], nHH=nHH[1], 
-                              numWomen=sum(numWomen), numChildren=sum(numChildren), 
-                              died=sum(died), 
-                              probsHH=probsHH[1], trueProbDeathNoNug=trueProbDeathNoNug[1], 
-                              trueProbDeath=trueProbDeath[1]), 
+                              n=sum(n), y=sum(y), 
+                              plcpb=plcpb[1], pLcpb=pLcpb[1], pLCpb=pLCpb[1], pLCPb=pLCPb[1], pLCPB=pLCPB[1]), 
                           by=eaIs]
   
   clustDat$samplingWeight = sampleWeights[,i]
@@ -651,6 +658,7 @@ simClustersEmpirical = function(eaDat, eaDatLong, nsim=1, seed=NULL, urbanOverSa
   if(!("data.table" %in% class(eaDat)))
     eaDat = as.data.table(eaDat)
   eaDat = cbind(eaIs=1:nrow(eaDat), eaDat)
+  admin1 = eaDat$admin1
   
   if(!fixedPerStrata) {
     # set number of clusters empirically if not otherwise set, scale by a factor depending on how much to oversample urban areas
@@ -854,11 +862,11 @@ simClustersEmpirical = function(eaDat, eaDatLong, nsim=1, seed=NULL, urbanOverSa
       }
     }
   }
-  probsHH = probsEA * (25 / eaDat[["nHH"]])
+  probsHH = probsEA * (nHHSampled / eaDat[["nHH"]])
   
   # calculate the sampling weights. Each child has probability of being sampled same as its household, 
   # calculate the child's weight then multiply by number in HH or EA
-  sampleWeightsLong = eaDatLong[["numChildren"]] / probsHH[eaDatLong[["eaIs"]]]
+  sampleWeightsLong = eaDatLong[["n"]] / probsHH[eaDatLong[["eaIs"]]]
   # sampleWeights = eaDat[["numChildren"]] / probsHH
   # sampleWeightsEA = sampleWeights
   # sampleWeights = matrix(sampleWeights[eaIs], ncol=nsim)
@@ -1313,6 +1321,160 @@ simDatEmpirical = function(empiricalDistributions, eaDat, clustDat=NULL, nsim=1,
   list(eaDat=eaDat, clustDat=clustList)
 }
 
+# function for simulating data given enumeration areas and their info.  Simulate using 
+# SPDE or LatticeKrig model on logit scale.  Note that this function has some notable differences with simDat:
+# 1. allows for multiple simulations, although each of them share the same simulate EA data
+# 2. uses simClusters3 instead of simClusters2, which enables oversampling in urban or rural areas
+# empiricalDistributions: the set of empirical distributions for households per cluster, 
+#                         mothers per household, and children per mother stratified by urban
+# urbanOverSample: ratio of probabilities passed to the sample function between urban and rural sampling probabilities
+#                  (see simClusters3 for more details)
+# eaDatShort: enumeration area data set in "short form" were each row is a cluster. 
+#             "long form" is where each row is a household.
+# urbanProps: see simClusters2
+# counties: a vector of county names giving the order with which to simulate the data
+# nsim: number of simulations
+# margVar: marginal variance of the spatial process, excluding household end cluster effects. 
+#          If 0, no spatial component is included
+# beta0: intercept of logit model for mortality rate
+# gamma: effect of urban on logit scale for logit model for mortality rate
+# tausq: cluster effect variance for logit model of mortality rate
+# womenFrac: proportion of total population in each cluster that is a woman
+# numClusters: number of clusters in the faux cluster data set
+# seed: random number generator seed
+simDatLCPB = function(nsim=1, margVar=0.243, tausq=0.463, 
+                      gamma=0.009, effRange=406.51, beta0=-3.922, 
+                      urbanOverSamplefrac=0, seed=NULL, 
+                      fullEADat=NULL, HHoldVar=0, nHHSampled=25, 
+                      easpa=NULL, popMat=NULL, adjustedPopMat=NULL, 
+                      includeUrban=TRUE, clusterLevel=TRUE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
+                      regionLevel=TRUE, nationalLevel=TRUE, 
+                      doLcpb=TRUE, doLCpb=TRUE, doLCPb=TRUE, constituencyPop=poppcon, 
+                      ensureAtLeast1PerConstituency=TRUE, clustDat=NULL) {
+  if(!is.null(seed))
+    set.seed(seed)
+  
+  ## set default inputs
+  # construct default household and population count per county table
+  if(is.null(easpa)) {
+    easpa = makeDefaultEASPA()
+    # area: the name or id of the area
+    # EAUrb: the number of EAs in the urban part of the area
+    # EARur: the number of EAs in the rural part of the area
+    # EATotal: the number of EAs in the the area
+    # HHUrb: the number of households in the urban part of the area
+    # HHRur: the number of households in the rural part of the area
+    # HHTotal: the number of households in the the area
+    # popUrb: the number of people in the urban part of the area
+    # popRur: the number of people in the rural part of the area
+    # popTotal: the number of people in the the area
+  }
+  totalEAs = sum(easpa$EATotal)
+  totalHouseholds = sum(easpa$HHTotal)
+  
+  # construct overall population density surface
+  if(is.null(popMat)) {
+    popMat = makeDefaultPopMat()
+    # lon: longitude
+    # lat: latitude
+    # east: easting (km)
+    # north: northing (km)
+    # pop: proportional to population density for each grid cell
+    # area: an id or area name in which the grid cell corresponding to each row resides
+    # urban: whether the grid cell is urban or rural
+  }
+  
+  # construct target population density surface, adjusted based on known or estimated stratum populations (or "faux" stratum populations)
+  if(is.null(adjustedPopMat)) {
+    adjustedPopMat = adjustPopGrid(popMat, poppcAdjusted=easpa)
+  }
+  
+  ### generate Binomial probabilities from transformed logit scale GP
+  # generate SPDE simulations
+  pixelCoords = cbind(popMat$east, popMat$north)
+  print("Simulating nationwide mortality rates and data")
+  if(margVar != 0) {
+    SPDEArgs = list(coords=pixelCoords, nsim=1, margVar=margVar, effRange=effRange, kenya=TRUE)
+    simVals = do.call("simSPDE", SPDEArgs)
+  } else {
+    simVals = matrix(rep(0, nrow(eaCoords)), ncol=1)
+  }
+  
+  # add in intercept
+  simVals = simVals + beta0
+  
+  # add in urban effect
+  simVals = sweep(simVals, 1, gamma*popMat$urban, "+")
+  
+  # simulate nugget/cluster effect
+  epsc = matrix(rnorm(totalEAs, sd=sqrt(tausq)), ncol=1)
+  
+  # transform back to original scale for the pixel level probabilities
+  probsNoNug = expit(simVals)
+  
+  # simulate the enumeration areas
+  uDraws = simVals
+  sigmaEpsilonDraws = sqrt(tausq)
+  
+  outLCPB = modLCPB(uDraws=cbind(uDraws, uDraws), sigmaEpsilonDraws=cbind(sigmaEpsilonDraws, sigmaEpsilonDraws), 
+                    easpa=easpa, popMat=popMat, adjustedPopMat=adjustedPopMat, empiricalDistributions=NULL, 
+                    includeUrban=includeUrban, clusterLevel=clusterLevel, pixelLevel=pixelLevel, 
+                    constituencyLevel=constituencyLevel, countyLevel=countyLevel, 
+                    regionLevel=regionLevel, nationalLevel=nationalLevel, doModifiedPixelLevel=FALSE, 
+                    doLcpb=doLcpb, doLCpb=doLCpb, doLCPb=doLCPb, constituencyPop=poppcon, 
+                    ensureAtLeast1PerConstituency=TRUE, urbanEffect=gamma, 
+                    returnEAinfo=TRUE, epsc=cbind(epsc, epsc))
+  eaDat = outLCPB$eaDat
+  
+  ### simulate binomial data for each enumeration area
+  # first generate the number of households
+  numHouseholds = eaDat$nHH
+  
+  # now expand the eaDat table to be in the long format, were each row is a house
+  rowsLong = rep(1:nrow(eaDat), numHouseholds)
+  eaDatLong = eaDat[rowsLong, ]
+  eaDatLong$eaIs = rowsLong
+  eaUrbanLong = eaDatLong$urban
+  
+  # function for randomly spreading people among households in long form data:
+  extendThisDat = function(xs, nHH) {
+    revenMultinom = function(sizeK) {
+      size = sizeK[1]
+      k = sizeK[2]
+      prob = rep(1/k, k)
+      rmultinom(1, size, prob)
+    }
+    unlist(apply(cbind(xs, nHH), 1, revenMultinom))
+  }
+  
+  # generate how many of the target population are in each cluster
+  lived = extendThisDat(eaDat$n - eaDat$y, numHouseholds)
+  died = extendThisDat(eaDat$y, numHouseholds)
+  eaDatLong$n = died + lived
+  eaDatLong$y = died
+  eaDatLong$nHH = 1
+  eaDatLong$pLCPB = eaDatLong$y / eaDatLong$n
+  eaDatLong$pLCPB[eaDatLong$n == 0] = eaDatLong$pLCPb[eaDatLong$n == 0]
+  
+  ### sample clusters and households within EAs
+  # first generate clusters
+  # if(is.null(clustDat))
+  #   clustDat = simClusters2(eaDat, numClusters, urbanProps, counties, seed=NULL)
+  if(is.null(clustDat)) {
+    print("simulation cluster locations:")
+    # clustDat = simClusters3(eaDat, numClusters, urbanOverSample, nsim)
+    clustDat = simClustersEmpirical(eaDat, eaDatLong, nsim, NULL, urbanOverSamplefrac, nHHSampled)
+  }
+  
+  # return simulated data
+  print("finishing up...")
+  
+  # return cluster data in Andrea's format:
+  clustList = genAndreaFormatFromEAIsLong(eaDat, clustDat$eaIs, eaDatLong, clustDat$HHIs, clustDat$sampleWeights)
+  
+  list(eaDat=eaDat, clustDat=clustList, aggregatedPop=outLCPB[-length(outLCPB)])
+}
+
 simNsFull = function(n=1, includeUrban=TRUE, easpa=makeDefaultEASPA(), empiricalDistributions=NULL) {
   if(is.null(empiricalDistributions)) {
     out = load(paste0(globalDirectory, "empiricalDistributions.RData"))
@@ -1466,3 +1628,34 @@ simDatSPDE = function(eaDat, clustDat=NULL, nsim=1, margVar=1, effRange=300,
   
   list(eaDat=eaDat, clustDat=clustList)
 }
+
+## TODO: add in multiple seeds, one population for each
+runSimStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9, 
+                       maxDataSets=NULL) {
+  tausq = sigmaEpsilon^2
+  set.seed(seed)
+  
+  # make strings representing the simulation with and without cluster effects
+  dataID = paste0("Beta", round(beta0, 4), "rho", round(rho, 4), "sigmaEps", 
+                  round(sigmaEpsilon, 4), "gamma", round(gamma, 4))
+  
+  # load data (overSampDat, SRSDat)
+  out = load(paste0(dataSaveDirectory, "simDataMulti", dataID, ".RData"))
+  eaDat = SRSDat$eaDat
+  clustDat = SRSDat$clustDat
+  
+  if(is.null(maxDataSets)) {
+    maxDataSets = length(clustDat)
+  }
+  
+  # calculate the true aggregated prevalences and risks
+  
+  # run the models
+  for(i in 1:maxDataSets) {
+    
+  }
+}
+
+
+
+

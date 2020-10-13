@@ -3576,7 +3576,7 @@ rStratifiedMultnomial = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE) 
 # gives nPixels x n matrix of draws from the stratified multinomial with values 
 # corresponding to the value of |C^g| for each pixel, g (the number of EAs/pixel)
 rStratifiedMultnomialByConstituency = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE, constituencyPop=poppcon, 
-                                               ensureAtLeast1PerConstituency=TRUE, minSample=1) {
+                                               ensureAtLeast1PerConstituency=FALSE, minSample=1) {
   
   # set default inputs
   if(is.null(popMat)) {

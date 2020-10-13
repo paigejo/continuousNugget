@@ -98,6 +98,7 @@ load(paste0(globalDirectory, "clustpc.RData"))
 load(paste0(globalDirectory, "clustpr.RData"))
 load(paste0(globalDirectory, "poppc.RData"))
 load(paste0(globalDirectory, "poppr.RData"))
+load(paste0(globalDirectory, "poppcon.RData"))
 load(paste0(globalDirectory, "poppcMort.RData"))
 load(paste0(globalDirectory, "easpcMort.RData"))
 

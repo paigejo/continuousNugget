@@ -95,11 +95,145 @@ generateSimDataSets = function(nsim=10, rho=0.243, sigmaEpsilon=sqrt(0.463),
   invisible(NULL)
 }
 
+# simulate and save datasets used for the simulation study with the given model parameters from LCPB model
+# NOTE: paired with the dataset using the passed parameters will be another dataset from the 
+#       same model without a nugget/cluster effect
+# nsim: number of surveys taken from the true latent population in the standard size survey collections
+# nsimBig: number of surveys taken from the true latent population in the large size survey collections
+# seeds: random number seeds used for making the latent population and generating surveys respectively
+# beta0: latent gaussian model intercept
+# rho: marginal variance of the spatial field
+# tausq: the nugget/cluster effect variance
+# gamma: latent gaussian model urban effect
+# HHoldVar: household effect variance
+# effRange: spatial range
+# urbanOverSamplefrac: the proportion with which to inflate the amount of urban samples in the surveys
+generateSimDataSetsLCPB = function(nsim=10, rho=0.243, sigmaEpsilon=sqrt(0.463), 
+                               gamma = 0.009, effRange = 406.51, beta0=-3.922, 
+                               figureSaveDirectory="~/git/continuousNugget/figures/simDataSets/", 
+                               dataSaveDirectory="~/git/continuousNugget/savedOutput/simDataSets/", seed=123) {
+  tausq = sigmaEpsilon^2
+  set.seed(seed)
+  
+  # make strings representing the simulation with and without cluster effects
+  dataID = paste0("Beta", round(beta0, 4), "rho", round(rho, 4), "sigmaEps", 
+                  round(sigmaEpsilon, 4), "gamma", round(gamma, 4))
+  
+  # there should be 1 true population, but many simulated cluster surveys
+  # load(paste0(globalDirectory, "empiricalDistributions.RData"))
+  # simulatedEAs = simDatEmpirical(empiricalDistributions, kenyaEAs, clustDat=NULL, nsim=1, 
+  #                                beta0=beta0, margVar=rho, urbanOverSamplefrac=0, 
+  #                                tausq=tausq, gamma=gamma, HHoldVar=0, effRange=effRange)
+  simulatedEAs = simDatLCPB(nsim=1, margVar=rho, tausq=sigmaEpsilon^2, 
+                            gamma=gamma, effRange=effRange, beta0=beta0, 
+                            urbanOverSamplefrac=urbanOverSamplefrac, HHoldVar=HHoldVar, 
+                            includeUrban=TRUE, clusterLevel=TRUE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
+                            regionLevel=TRUE, nationalLevel=TRUE, 
+                            doLcpb=TRUE, doLCpb=TRUE, doLCPb=TRUE, 
+                            ensureAtLeast1PerConstituency=TRUE)
+  kenyaEAs = simulatedEAs$eaDat
+  kenyaEAs$eaIs = 1:nrow(kenyaEAs)
+  kenyaEAsLong = kenyaEAs[rep(1:nrow(kenyaEAs), kenyaEAs$nHH),]
+  
+  # simulate the cluster sampling and add to the data sets
+  overSampClustDat = simClustersEmpirical(kenyaEAs, kenyaEAsLong, nsim, NULL, urbanOverSamplefrac, verbose=FALSE)
+  clustList = genAndreaFormatFromEAIs(simulatedEAs$eaDat, overSampClustDat$eaIs, overSampClustDat$sampleWeights)
+  overSampDat = list(eaDat=kenyaEAs, clustDat=clustList, aggregatedPop=simulatedEAs$aggregatedPop)
+  
+  SRSClustDat = simClustersEmpirical(kenyaEAs, kenyaEAsLong, nsim, NULL, SRS=TRUE, verbose=FALSE)
+  clustList = genAndreaFormatFromEAIs(kenyaEAs, SRSClustDat$eaIs, SRSClustDat$sampleWeights)
+  SRSDat = list(eaDat=kenyaEAs, clustDat=clustList, aggregatedPop=simulatedEAs$aggregatedPop) # the only thing different is the sampling of the clusters
+  
+  # plot the first simulation of the over sampled and simple random sample data sets
+  clustDat = SRSDat$clustDat[[1]]
+  # clustDat = overSampDat$clustDat[[1]]
+  eaDat = overSampDat$eaDat
+  pdf(paste0(figureSaveDirectory, "/unstratifiedSimulation", dataID, ".pdf"), width=8, height=8)
+  par(mfrow =c(2, 2), mar=c(5, 4, 4, 8))
+  obsCoords = cbind(clustDat$east, clustDat$north)
+  obsNs = clustDat$n
+  obsCounts = clustDat$y
+  zlim = c(0, quantile(c(eaDat$pLCPB, clustDat$pLCPB, 
+                         eaDat$pLCPb), probs=.975))
+  quilt.plot(eaDat$east, eaDat$north, eaDat$pLCPB, main="Population Prevalences (LCPB)", 
+             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+  plotMapDat(project=TRUE)
+  quilt.plot(obsCoords, obsCounts/obsNs, main="Sample Prevalences (LCPB)", 
+             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+  plotMapDat(project=TRUE)
+  quilt.plot(eaDat$east, eaDat$north, eaDat$pLCPb, main="Population Risks (LCPb)", 
+             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+  plotMapDat(project=TRUE)
+  quilt.plot(obsCoords, clustDat$pLCPb, main="Sample Risks (LCPb)", 
+             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+  plotMapDat(project=TRUE)
+  quilt.plot(eaDat$east, eaDat$north, eaDat$pLCpb, main="Population Risks (LCpb)", 
+             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+  plotMapDat(project=TRUE)
+  quilt.plot(obsCoords, clustDat$pLCpb, main="Sample Risks (LCpb)", 
+             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+  plotMapDat(project=TRUE)
+  quilt.plot(eaDat$east, eaDat$north, eaDat$pLcpb, main="Population Risks (Lcpb)", 
+             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+  plotMapDat(project=TRUE)
+  quilt.plot(obsCoords, clustDat$pLcpb, main="Sample Risks (Lcpb)", 
+             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+  plotMapDat(project=TRUE)
+  dev.off()
+  
+  # plot the first simulation of the over sampled and simple random sample data sets
+  clustDat = overSampDat$clustDat[[1]]
+  # clustDat = overSampDat$clustDat[[1]]
+  eaDat = overSampDat$eaDat
+  pdf(paste0(figureSaveDirectory, "/stratifiedSimulation", dataID, ".pdf"), width=8, height=8)
+  par(mfrow =c(2, 2), mar=c(5, 4, 4, 8))
+  obsCoords = cbind(clustDat$east, clustDat$north)
+  obsNs = clustDat$n
+  obsCounts = clustDat$y
+  zlim = c(0, quantile(c(eaDat$pLCPB, clustDat$pLCPB, 
+                         eaDat$pLCPb), probs=.975))
+  quilt.plot(eaDat$east, eaDat$north, eaDat$pLCPB, main="Population Prevalences (LCPB)", 
+             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+  plotMapDat(project=TRUE)
+  quilt.plot(obsCoords, obsCounts/obsNs, main="Sample Prevalences (LCPB)", 
+             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+  plotMapDat(project=TRUE)
+  quilt.plot(eaDat$east, eaDat$north, eaDat$pLCPb, main="Population Risks (LCPb)", 
+             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+  plotMapDat(project=TRUE)
+  quilt.plot(obsCoords, clustDat$pLCPb, main="Sample Risks (LCPb)", 
+             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+  plotMapDat(project=TRUE)
+  quilt.plot(eaDat$east, eaDat$north, eaDat$pLCpb, main="Population Risks (LCpb)", 
+             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+  plotMapDat(project=TRUE)
+  quilt.plot(obsCoords, clustDat$pLCpb, main="Sample Risks (LCpb)", 
+             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+  plotMapDat(project=TRUE)
+  quilt.plot(eaDat$east, eaDat$north, eaDat$pLcpb, main="Population Risks (Lcpb)", 
+             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+  plotMapDat(project=TRUE)
+  quilt.plot(obsCoords, clustDat$pLcpb, main="Sample Risks (Lcpb)", 
+             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+  plotMapDat(project=TRUE)
+  dev.off()
+  
+  save(overSampDat, SRSDat, file=paste0(dataSaveDirectory, "simDataMulti", dataID, ".RData"))
+  
+  invisible(NULL)
+}
+
+## TODO: modify function to take in vector of seeds, make different population replication 
+##       from same parameters for each seed
 generateAllDataSets = function() {
-  generateSimDataSets(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9)
-  generateSimDataSets(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9)
-  generateSimDataSets(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
-  generateSimDataSets(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
+  # generateSimDataSets(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9)
+  # generateSimDataSets(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9)
+  # generateSimDataSets(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
+  # generateSimDataSets(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
+  generateSimDataSetsLCPB(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9)
+  generateSimDataSetsLCPB(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9)
+  generateSimDataSetsLCPB(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
+  generateSimDataSetsLCPB(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
 }
 
 # simulate and save datasets used for the simulation study with the given model parameters
