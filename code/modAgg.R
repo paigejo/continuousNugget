@@ -355,8 +355,8 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
       householdDraws = out$householdDraws
       Ncs = out$childrenDraws
     } else {
-      Ncs = sampleNPoissonMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 
-                                      popMat=popMat, includeUrban=includeUrban, verbose=TRUE, returnEAinfo=returnEAinfo)
+      Ncs <- sampleNPoissonMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 
+                                       popMat=popMat, includeUrban=includeUrban, verbose=TRUE, returnEAinfo=returnEAinfo)
       householdDraws = NULL
     }
   } else if(doModifiedPixelLevel) {
@@ -1227,6 +1227,8 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     pixelAggregationPsTime = finishedPixelAggregationPsTime9 - finishedPixelAggregationZsTime8
     pixelAggregationTime = finishedPixelAggregationPsTime9 - finishedDrawingZsTime6
     clusterIntegrationTime = finishedClusterIntegrationTime10 - finishedPixelAggregationPsTime9
+    pixelAggregationLCpbTime = finishedPixelAggregationLCpbTime11 - finishedClusterIntegrationTime10
+    pixelAggregationLCPbTime = finishedPixelAggregationLCPbTime12 - finishedPixelAggregationLCpbTime11
     arealAggregationSetupTime = finishedArealAggregationSetupTime13 - finishedPixelAggregationLCPbTime12
     LCPBArealAggregationTime = finishedArealAggregationLCPBTime14 - finishedArealAggregationSetupTime13
     lcpbArealAggregationTime = finishedArealAggregationlcpbTime15 - finishedArealAggregationLCPBTime14
@@ -1237,8 +1239,8 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     
     lcpbTime = setupTime + clusterIntegrationTime + arealAggregationSetupTime + lcpbArealAggregationTime
     LcpbTime = setupTime + drawEAsTime + clusterIntegrationTime + arealAggregationSetupTime + LcpbArealAggregationTime + riskSubstitutionTime
-    LCpbTime = setupTime + drawEAsTime + drawClustersTime + getMusTime + arealAggregationSetupTime + LCpbArealAggregationTime + riskSubstitutionTime
-    LCPbTime = setupTime + drawEAsTime + drawClustersTime + getMusTime + pixelAggregationNsTime + drawNsTime + arealAggregationSetupTime + LCPbArealAggregationTime + riskSubstitutionTime
+    LCpbTime = setupTime + drawEAsTime + drawClustersTime + getMusTime + pixelAggregationLCpbTime + arealAggregationSetupTime + LCpbArealAggregationTime + riskSubstitutionTime
+    LCPbTime = setupTime + drawEAsTime + drawClustersTime + getMusTime + pixelAggregationNsTime + drawNsTime + pixelAggregationLCPbTime + arealAggregationSetupTime + LCPbArealAggregationTime + riskSubstitutionTime
     LCPBTime = setupTime + drawEAsTime + drawClustersTime + getMusTime + pixelAggregationTime + drawNsTime + drawZsTime + arealAggregationSetupTime + LCPBArealAggregationTime + riskSubstitutionTime
     
     totalTime = finishedArealAggregationRiskSubstitutionTime19 - startTime0
@@ -1246,7 +1248,8 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
                        setupTime=setupTime, drawEAsTime=drawEAsTime, clusterIntegrationTime=clusterIntegrationTime, 
                        drawClustersTime=drawClustersTime, drawNsTime=drawNsTime, getMusTime=getMusTime, drawZsTime=drawZsTime, 
                        pixelAggregationNsTime=pixelAggregationNsTime, pixelAggregationZsTime=pixelAggregationZsTime, pixelAggregationPsTime=pixelAggregationPsTime, 
-                       pixelAggregationTime=pixelAggregationTime, arealAggregationSetupTime=arealAggregationSetupTime, 
+                       pixelAggregationTime=pixelAggregationTime, pixelAggregationLCpbTime=pixelAggregationLCpbTime, 
+                       pixelAggregationLCPbTime=pixelAggregationLCPbTime, arealAggregationSetupTime=arealAggregationSetupTime, 
                        lcpbArealAggregationTime=lcpbArealAggregationTime, 
                        LcpbArealAggregationTime=LcpbArealAggregationTime, 
                        LCpbArealAggregationTime=LCpbArealAggregationTime, 
@@ -1257,17 +1260,18 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     timings = rbind(timings, timings / totalTime)
     row.names(timings) = c("Time (s)", "Prop Total")
     colnames(timings) = c("lcpbTime", "LcpbTime", "LCpbTime", "LCPbTime", "LCPBTime", 
-                           "setupTime", "drawEAsTime", "clusterIntegrationTime", 
-                           "drawClustersTime", "drawNsTime", "getMusTime", "drawZsTime", 
-                           "pixelAggregationNsTime", "pixelAggregationZsTime", "pixelAggregationPsTime", 
-                           "pixelAggregationTime", "arealAggregationSetupTime", 
-                           "lcpbArealAggregationTime", 
-                           "LcpbArealAggregationTime", 
-                           "LCpbArealAggregationTime", 
-                           "LCPbArealAggregationTime", 
-                           "LCPBArealAggregationTime", 
-                           "riskSubstitutionTime", 
-                           "totalTime")
+                          "setupTime", "drawEAsTime", "clusterIntegrationTime", 
+                          "drawClustersTime", "drawNsTime", "getMusTime", "drawZsTime", 
+                          "pixelAggregationNsTime", "pixelAggregationZsTime", "pixelAggregationPsTime", 
+                          "pixelAggregationTime", "pixelAggregationLCpbTime", "pixelAggregationLCPbTime", 
+                          "arealAggregationSetupTime", 
+                          "lcpbArealAggregationTime", 
+                          "LcpbArealAggregationTime", 
+                          "LCpbArealAggregationTime", 
+                          "LCPbArealAggregationTime", 
+                          "LCPBArealAggregationTime", 
+                          "riskSubstitutionTime", 
+                          "totalTime")
     
     timingslcpb = matrix(c(lcpbTime=lcpbTime, 
                            setupTime=setupTime, clusterIntegrationTime=clusterIntegrationTime, 
@@ -1293,25 +1297,26 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     
     timingsLCpb = matrix(c(LCpbTime=LCpbTime, 
                            setupTime=setupTime, drawEAsTime=drawEAsTime, drawClustersTime=drawClustersTime, getMusTime=getMusTime, 
-                           arealAggregationSetupTime=arealAggregationSetupTime, LCpbArealAggregationTime=LCpbArealAggregationTime, 
+                           pixelAggregationLCpbTime=pixelAggregationLCpbTime, arealAggregationSetupTime=arealAggregationSetupTime, 
+                           LCpbArealAggregationTime=LCpbArealAggregationTime, 
                            riskSubstitutionTime=riskSubstitutionTime), nrow=1)
     timingsLCpb = rbind(timingsLCpb, timingsLCpb / LCpbTime)
     row.names(timingsLCpb) = c("Time (s)", "Prop Total")
     colnames(timingsLCpb) = c("LCpbTime", 
                                "setupTime", "drawEAsTime", "drawClustersTime", "getMusTime", 
-                               "arealAggregationSetupTime", "LCpbArealAggregationTime", 
+                               "arealAggregationSetupTime", "pixelAggregationLCpbTime", "LCpbArealAggregationTime", 
                                "riskSubstitutionTime")
     
     timingsLCPb = matrix(c(LCPbTime=LCPbTime, 
                            setupTime=setupTime, drawEAsTime=drawEAsTime, drawClustersTime=drawClustersTime, getMusTime=getMusTime, 
                            pixelAggregationNsTime=pixelAggregationNsTime, drawNsTime=drawNsTime, 
-                           arealAggregationSetupTime=arealAggregationSetupTime, LCPbArealAggregationTime=LCPbArealAggregationTime, 
+                           pixelAggregationLCPbTime=pixelAggregationLCPbTime, arealAggregationSetupTime=arealAggregationSetupTime, LCPbArealAggregationTime=LCPbArealAggregationTime, 
                            riskSubstitutionTime=riskSubstitutionTime), nrow=1)
     timingsLCPb = rbind(timingsLCPb, timingsLCPb / LCPbTime)
     row.names(timingsLCPb) = c("Time (s)", "Prop Total")
     colnames(timingsLCPb) = c("LCPbTime", 
                                "setupTime", "drawEAsTime", "drawClustersTime", "getMusTime", 
-                               "pixelAggregationNsTime", "drawNsTime", 
+                               "pixelAggregationNsTime", "drawNsTime", "pixelAggregationLCPbTime", 
                                "arealAggregationSetupTime", "LCPbArealAggregationTime", 
                                "riskSubstitutionTime")
     
@@ -1337,12 +1342,21 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     
     ##### Extra steps: collect draws at each level and generate:
     ##### areas, preds, 
-    allMatrices = list(pixelMatricesLCPB=list(p=pg, Z=Zg, N=Ng), aggregatedResultsLCPB=aggregatedResults, 
-                       pixelMatriceslcpb=list(p=lcpb), aggregatedResultslcpb=aggregatedResultslcpb, 
-                       pixelMatricesLcpb=list(p=Lcpb), aggregatedResultsLcpb=aggregatedResultsLcpb, 
-                       pixelMatricesLCpb=list(p=LCpb), aggregatedResultsLCpb=aggregatedResultsLCpb, 
-                       pixelMatricesLCPb=list(p=LCPb), aggregatedResultsLCPb=aggregatedResultsLCPb, 
-                       allTimings=allTimings)
+    if(pixelLevel) {
+      allMatrices = list(pixelMatricesLCPB=list(p=pg, Z=Zg, N=Ng), aggregatedResultsLCPB=aggregatedResults, 
+                         pixelMatriceslcpb=list(p=lcpb), aggregatedResultslcpb=aggregatedResultslcpb, 
+                         pixelMatricesLcpb=list(p=Lcpb), aggregatedResultsLcpb=aggregatedResultsLcpb, 
+                         pixelMatricesLCpb=list(p=LCpb), aggregatedResultsLCpb=aggregatedResultsLCpb, 
+                         pixelMatricesLCPb=list(p=LCPb), aggregatedResultsLCPb=aggregatedResultsLCPb, 
+                         allTimings=allTimings)
+    } else {
+      allMatrices = list(aggregatedResultsLCPB=aggregatedResults, 
+                         aggregatedResultslcpb=aggregatedResultslcpb, 
+                         aggregatedResultsLcpb=aggregatedResultsLcpb, 
+                         aggregatedResultsLCpb=aggregatedResultsLCpb, 
+                         aggregatedResultsLCPb=aggregatedResultsLCPb, 
+                         allTimings=allTimings)
+    }
   } else {
     allTimings=NULL
     
@@ -2622,7 +2636,7 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
 #            the same in each list element. If easpaList is a data frame, 
 #            number of households per stratum is assumed constant
 sampleNPoissonMultinomial = function(nDraws = ncol(pixelIndexMat), pixelIndexMat=NULL, urbanMat=NULL, areaMat=NULL, easpaList=NULL, 
-                                     popMat=NULL, includeUrban=TRUE, verbose=TRUE, returnEAinfo=FALSE) {
+                                     popMat=NULL, includeUrban=TRUE, verbose=TRUE, returnEAinfo=FALSE, useRcpp=FALSE) {
   
   # set default inputs
   if(is.null(easpaList)) {
@@ -2757,9 +2771,11 @@ sampleNPoissonMultinomial = function(nDraws = ncol(pixelIndexMat), pixelIndexMat
     
     # draw households per EA (make sure there are any rural EAs)
     if(includeUrban) {
-      householdDrawsUrban = matrix(sapply(totalHouseholdsUrban[i,], rmultinom, n=1, prob=rep(1/totalEAsUrban[i], totalEAsUrban[i])), nrow=totalEAsUrban[i], ncol=nDraws) + 25
+      householdDrawsUrban <- matrix(sapply(totalHouseholdsUrban[i,], rmultinom, n=1, prob=rep(1/totalEAsUrban[i], totalEAsUrban[i])), nrow=totalEAsUrban[i], ncol=nDraws) + 25
+      # householdDrawsUrban <- rmultinomSizeVec_rcpp(totalHouseholdsUrban[i,], rep(1/totalEAsUrban[i], totalEAsUrban[i])) + 25
       if(totalEAsRural[i] != 0) {
-        householdDrawsRural = matrix(sapply(totalHouseholdsRural[i,], rmultinom, n=1, prob=rep(1/totalEAsRural[i], totalEAsRural[i])), nrow=totalEAsRural[i], ncol=nDraws) + 25
+        householdDrawsRural <- matrix(sapply(totalHouseholdsRural[i,], rmultinom, n=1, prob=rep(1/totalEAsRural[i], totalEAsRural[i])), nrow=totalEAsRural[i], ncol=nDraws) + 25
+        # householdDrawsRural <- rmultinomSizeVec_rcpp(totalHouseholdsRural[i,], rep(1/totalEAsRural[i], totalEAsRural[i])) + 25
       }
       
       # if we must return EA info, we must return the household draws for each EA:
@@ -2777,15 +2793,26 @@ sampleNPoissonMultinomial = function(nDraws = ncol(pixelIndexMat), pixelIndexMat
     if(includeUrban) {
       probsUrban = sweep(householdDrawsUrban, 2, 1 / colSums(householdDrawsUrban), "*")
       # childrenDrawsUrban[areaMatUrban==thisArea] = sapply(1:nDraws, function(j) {rmultinom(1, totalChildrenUrban[i,j], probsUrban[,j])})
-      childrenDraws[areaMat==thisArea & urbanMat] = sapply(1:nDraws, function(j) {rmultinom(1, totalChildrenUrban[i,j], probsUrban[,j])})
+      if(useRcpp) {
+        childrenDraws[areaMat==thisArea & urbanMat] <- rmultinomSizeVecProbMat_rcpp(totalChildrenUrban[i,], probsUrban)
+      } else {
+        childrenDraws[areaMat==thisArea & urbanMat] = sapply(1:nDraws, function(j) {rmultinom(1, totalChildrenUrban[i,j], probsUrban[,j])})
+      }
+      
       if(totalEAsRural[i] != 0) {
         probsRural = sweep(householdDrawsRural, 2, 1 / colSums(householdDrawsRural), "*")
         # childrenDrawsRural[areaMatRural==thisArea] = sapply(1:nDraws, function(j) {rmultinom(1, totalChildrenRural[i,j], probsRural[,j])})
-        childrenDraws[areaMat==thisArea & !urbanMat] = sapply(1:nDraws, function(j) {rmultinom(1, totalChildrenRural[i,j], probsRural[,j])})
+        if(useRcpp) {
+          childrenDraws[areaMat==thisArea & !urbanMat] <- rmultinomSizeVecProbMat_rcpp(totalChildrenRural[i,], probsRural)
+        } else {
+          childrenDraws[areaMat==thisArea & !urbanMat] = sapply(1:nDraws, function(j) {rmultinom(1, totalChildrenRural[i,j], probsRural[,j])})
+        }
+        
       }
     } else {
       probs = sweep(householdDraws, 2, 1 / colSums(householdDraws), "*")
-      childrenDraws[areaMat==thisArea] = sapply(1:nDraws, function(j) {rmultinom(1, totalChildren[i,j], probs[,j])})
+      # childrenDraws[areaMat==thisArea] = sapply(1:nDraws, function(j) {rmultinom(1, totalChildren[i,j], probs[,j])})
+      childrenDraws[areaMat==thisArea] = rmultinomSizeVecProbMat_rcpp(totalChildren[i,], probs)
     }
   }
   
@@ -3193,16 +3220,16 @@ resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilo
   thiseaspa = makeEASPAFromEADat(eaDat)
   
   # generate results for the specified data sets and return results (TODO: otherVariableNames)
-  resultsSPDE = fitSPDEKenyaDat(dat=thisData, dataType=c("mort", "ed"), 
-                  significanceCI=.8, 
-                  nPostSamples=1000, verbose=TRUE, seed=seed, 
-                  urbanEffect=TRUE, clusterEffect=TRUE, 
-                  leaveOutRegionName=NULL, doValidation=FALSE)
+  timeSPDE = system.time(resultsSPDE <- fitSPDEKenyaDat(dat=thisData, dataType=c("mort", "ed"), 
+                                                       significanceCI=.8, 
+                                                       nPostSamples=1000, verbose=TRUE, seed=seed, 
+                                                       urbanEffect=TRUE, clusterEffect=TRUE, 
+                                                       leaveOutRegionName=NULL, doValidation=FALSE))[3]
   # resultsSPDE = fitModelToDataSets(fitSPDE, dataSets, randomSeeds=randomSeeds, otherArgs=list(mesh=mesh), 
   #                                  maxDataSets=maxDataSets)
   
   # aggregate predictions of the SPDE model
-  timeAgg = system.time(agg <- modLCPB(uDraws=resultsSPDE$uDraws, resultsSPDE$sigmaEpsilonDraws, easpa=thiseaspa, 
+  timeAllAgg = system.time(agg <- modLCPB(uDraws=resultsSPDE$uDraws, resultsSPDE$sigmaEpsilonDraws, easpa=thiseaspa, 
                                        includeUrban=TRUE, clusterLevel=FALSE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
                                        regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=FALSE, 
                                        onlyDoModifiedPixelLevel=FALSE, 
@@ -3212,7 +3239,7 @@ resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilo
   
   # save results
   fileName = paste0("savedOutput/simStudyResults/resultsLCPB_", dataID, "maxDataSets", maxDataSets, ".RData")
-  save(agg, file=fileName)
+  save(agg, timeSPDE, timeAllAgg, file=fileName)
   
   agg
 }

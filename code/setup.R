@@ -19,6 +19,7 @@ library(data.table)
 library(sampling)
 library(haven)
 library(survey)
+# library(Rcpp)
 
 codeDirectory <<- "~/git/continuousNugget/code/"
 figDirectory <<- "~/git/continuousNugget/figures/"
@@ -62,6 +63,7 @@ source('code/simStudy.R')
 source('code/test.R')
 source('code/plotGenerator.R')
 source('code/modDirect.R')
+# Rcpp::sourceCpp("code/Rcpp/rmultinomProbMat_rcpp.cpp")
 
 # set some basic parameters to hold constant throughout analysis
 kenyaLonRange = c(33.5, 42)
