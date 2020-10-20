@@ -1,2 +1,2 @@
 #!/bin/bash
-sbatch --array=1-80 runLCPB.sbatch
+sbatch --array=1-80 runSPDE_LCPB.sbatch
