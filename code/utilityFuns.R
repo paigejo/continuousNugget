@@ -1363,7 +1363,7 @@ aggregatePixelPredictions = function(Zg, Ng, popMatAdjusted=NULL, useDensity=FAL
                                      country="Kenya", normalize=FALSE, lcpbSwitchedUrban=NULL) {
   
   if(is.null(popMatAdjusted)) {
-    popMatAdjusted = makeDefaultPopMat()
+    popMatAdjusted = makeDefaultPopMat(getAdjusted=TRUE)
     # lon: longitude
     # lat: latitude
     # east: easting (km)
@@ -1410,12 +1410,11 @@ aggregatePixelPredictions = function(Zg, Ng, popMatAdjusted=NULL, useDensity=FAL
   getIntegrationMatrix = function(areaNames, urbanProportions=NULL, normalize=FALSE) {
     popDensities = popMatAdjusted$pop
     equalDensities = rep(1, nrow(popMatAdjusted))
-    if(useDensity && normalize) {
+    if(useDensity) {
       densities = popDensities
-    } else if(!useDensity) {
+    } else {
       densities = equalDensities
-    } else
-      stop("case when useDensity == TRUE and normalize == FALSE is not currently supported")
+    }
     
     uniqueNames = sort(unique(areaNames))
     getMatrixHelper = function(i, thisUrban=NULL, thisUseDensity=useDensity, thisNormalize=normalize) {
@@ -3858,6 +3857,28 @@ rStratifiedBinomial1 = function(n, popMat=NULL, easpa=NULL, includeUrban=TRUE, v
   
   # return results
   eaSamples
+}
+
+# calculate the expected denominator per enumeration area in each stratum. 
+# Then return vector with the value of this expectation for each grid cell
+getExpectedNperEA = function(easpa, popMat=popGrid) {
+  # calculate the expected denominator per enumeration area in each stratum. 
+  nPerEAUrban = easpa$popUrb / easpa$EAUrb
+  nPerEARural = easpa$popRur / easpa$EARur
+  
+  # expanded the expected denominator values victor to be of length equal 
+  # to the number of grid cells
+  uniqueCounties = sort(unique(popMat$area))
+  outUrban = numeric(nrow(popMat))
+  outRural = numeric(nrow(popMat))
+  for(i in 1:length(uniqueCounties)) {
+    urbanI = getSortIndices(i, urban=TRUE, popMat=popMat, includeUrban=TRUE)
+    ruralI = getSortIndices(i, urban=FALSE, popMat=popMat, includeUrban=TRUE)
+    outUrban[urbanI] = nPerEAUrban[i]
+    outRural[ruralI] = nPerEARural[i]
+  }
+  
+  outUrban + outRural
 }
 
 # taken from logitnorm package.  Calculates the mean of a distribution whose 

@@ -921,9 +921,12 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     # aggregatedResultslcpb = aggregatePixelPredictions(lcpb*eaSamples, eaSamples, popGrid=popMat, useDensity=FALSE, 
     #                                                   countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
     #                                                   separateUrbanRural=TRUE, normalize=FALSE)
-    aggregatedResultslcpb = aggregatePixelPredictions(lcpb, eaSamples, popMatAdjusted=adjustedPopMat, useDensity=TRUE, 
+    # aggregatedResultslcpb = aggregatePixelPredictions(lcpb, eaSamples, popMatAdjusted=adjustedPopMat, useDensity=TRUE, 
+    #                                                   constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
+    #                                                   separateUrbanRural=TRUE, normalize=TRUE, lcpbSwitchedUrban=lcpbSwitchedUrban)
+    aggregatedResultslcpb = aggregatePixelPredictions(sweep(lcpb, 1, adjustedPopMat$pop, "*"), matrix(rep(adjustedPopMat$pop, nDraws), ncol=nDraws), popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
                                                       constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
-                                                      separateUrbanRural=TRUE, normalize=TRUE, lcpbSwitchedUrban=lcpbSwitchedUrban)
+                                                      separateUrbanRural=TRUE, normalize=FALSE, lcpbSwitchedUrban=lcpbSwitchedUrban)
     
     finishedArealAggregationlcpbTime15 = proc.time()[3]
     
@@ -931,7 +934,15 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     if(doLcpb) {
       # unlike for the lcpb model, we weight by the number of EAs per pixel rather than population density. 
       # 
-      aggregatedResultsLcpb = aggregatePixelPredictions(Lcpb*eaSamples, eaSamples, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
+      
+      # aggregatedResultsLcpb = aggregatePixelPredictions(Lcpb*eaSamples, eaSamples, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
+      #                                                   constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
+      #                                                   separateUrbanRural=TRUE, normalize=FALSE)
+      
+      # in order to get valid count estimates, we also need the expected denominator per EA in each stratum:
+      nPerEA = getExpectedNperEA(easpa, adjustedPopMat)
+      thisNSamples = sweep(eaSamples, 1, nPerEA, "*")
+      aggregatedResultsLcpb = aggregatePixelPredictions(Lcpb*thisNSamples, thisNSamples, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
                                                         constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
                                                         separateUrbanRural=TRUE, normalize=FALSE)
     } else {
@@ -942,7 +953,14 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     
     # LCpb model
     if(doLCpb) {
-      aggregatedResultsLCpb = aggregatePixelPredictions(LCpb*eaSamples, eaSamples, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
+      # aggregatedResultsLCpb = aggregatePixelPredictions(LCpb*eaSamples, eaSamples, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
+      #                                                   constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
+      #                                                   separateUrbanRural=TRUE, normalize=FALSE, lcpbSwitchedUrban=lcpbSwitchedUrban)
+      
+      # in order to get valid count estimates, we also need the expected denominator per EA in each stratum:
+      nPerEA = getExpectedNperEA(easpa, adjustedPopMat)
+      thisNSamples = sweep(eaSamples, 1, nPerEA, "*")
+      aggregatedResultsLCpb = aggregatePixelPredictions(LCpb*thisNSamples, thisNSamples, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
                                                         constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
                                                         separateUrbanRural=TRUE, normalize=FALSE, lcpbSwitchedUrban=lcpbSwitchedUrban)
     } else {
@@ -1455,6 +1473,7 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
     easpaMortClusterUrban = makeDefaultEASPA(dataType2, NULL, useClustersAsEAs=TRUE, usePixelUrban=FALSE)
     
     # do the pixel level validation
+    browser()
     timeAggregationPixel = system.time(fit2 <- modLCPB(uDraws=fit$uDraws, fit$sigmaEpsilonDraws, easpa=easpaMort, popMat=popMat, empiricalDistributions=NULL, 
                                                   includeUrban=urbanEffect, clusterLevel=FALSE, pixelLevel=TRUE, constituencyLevel=FALSE, countyLevel=FALSE, 
                                                   regionLevel=FALSE, nationalLevel=FALSE, doModifiedPixelLevel=FALSE, validationPixelI=truthTableFull$pixelI, 
@@ -1634,6 +1653,59 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
                     plotNameSuffix = "Risk", savePlots = TRUE)
       makeRankPlots(fit4$aggregatedResultsLCPB$constituencyMatrices$p, admin="admin2", 
                     plotNameSuffix = "CPAM", savePlots = TRUE)
+      
+      widths80lcpb = apply(fit4$aggregatedResultslcpb$constituencyMatrices$p, 1, function(x) {diff(quantile(x, prob=c(.1, .9)))})
+      widths80LCpb = apply(fit4$aggregatedResultsLCpb$constituencyMatrices$p, 1, function(x) {diff(quantile(x, prob=c(.1, .9)))})
+      widths80LCPB = apply(fit4$aggregatedResultsLCPB$constituencyMatrices$p, 1, function(x) {diff(quantile(x, prob=c(.1, .9)))})
+      mean((widths80LCPB - widths80lcpb) / widths80lcpb) # 0.03904018 (these comparisons are all using the logistic approximation for the lcpb model)
+      mean((widths80LCpb - widths80lcpb) / widths80lcpb) # -0.003937166
+      
+      widths80lcpbZ = apply(fit4$aggregatedResultslcpb$constituencyMatrices$Z, 1, function(x) {diff(quantile(x, prob=c(.1, .9)))})
+      widths80LCpbZ = apply(fit4$aggregatedResultsLCpb$constituencyMatrices$Z, 1, function(x) {diff(quantile(x, prob=c(.1, .9)))})
+      widths80LCPBZ = apply(fit4$aggregatedResultsLCPB$constituencyMatrices$Z, 1, function(x) {diff(quantile(x, prob=c(.1, .9)))})
+      mean((widths80LCPBZ - widths80lcpbZ) / widths80lcpbZ) # 0.1084088
+      mean((widths80LCpbZ - widths80lcpbZ) / widths80lcpbZ) # 0.06681593
+      
+      lcpbRR = fit4$aggregatedResultslcpb$constituencyMatrices$pUrban / fit4$aggregatedResultslcpb$constituencyMatrices$pRural
+      LCPBRR = fit4$aggregatedResultsLCPB$constituencyMatrices$pUrban / fit4$aggregatedResultsLCPB$constituencyMatrices$pRural
+      range(lcpbRR) # 0.4498809 2.4913617
+      range(LCPBRR[is.finite(LCPBRR)]) # 0.000000 9.040873
+      hist(lcpbRR)
+      hist(LCPBRR)
+      out = lcpbRR - LCPBRR
+      mean(out[is.finite(out)], na.rm=TRUE) # -0.01962926
+      
+      widths80lcpbRR = apply(fit4$aggregatedResultslcpb$constituencyMatrices$pUrban / fit4$aggregatedResultslcpb$constituencyMatrices$pRural, 1, function(x) {diff(quantile(x, prob=c(.1, .9), na.rm=TRUE))})
+      widths80LCpbRR = apply(fit4$aggregatedResultsLCpb$constituencyMatrices$pUrban / fit4$aggregatedResultsLCpb$constituencyMatrices$pRural, 1, function(x) {diff(quantile(x, prob=c(.1, .9), na.rm=TRUE))})
+      widths80LCPbRR = apply(fit4$aggregatedResultsLCPb$constituencyMatrices$pUrban / fit4$aggregatedResultsLCPb$constituencyMatrices$pRural, 1, function(x) {diff(quantile(x, prob=c(.1, .9), na.rm=TRUE))})
+      widths80LCPBRR = apply(fit4$aggregatedResultsLCPB$constituencyMatrices$pUrban / fit4$aggregatedResultsLCPB$constituencyMatrices$pRural, 1, function(x) {diff(quantile(x, prob=c(.1, .9), na.rm=TRUE))})
+      out = (widths80LCPBRR - widths80lcpbRR) / widths80lcpbRR
+      mean(out[is.finite(out)], na.rm=TRUE) # 4.908996
+      median(out[is.finite(out)], na.rm=TRUE) # 1.012442
+      
+      out = (widths80LCPbRR - widths80lcpbRR) / widths80lcpbRR
+      mean(out[is.finite(out)], na.rm=TRUE) # 2.219203
+      median(out[is.finite(out)], na.rm=TRUE) # 0.3092367
+      
+      out = (widths80LCpbRR - widths80lcpbRR) / widths80lcpbRR
+      mean(out[is.finite(out)], na.rm=TRUE) # 2.194338]
+      median(out[is.finite(out)], na.rm=TRUE) # 0.3021015
+      
+      widths80lcpbRR = apply(fit4$aggregatedResultslcpb$countyMatrices$pUrban / fit4$aggregatedResultslcpb$countyMatrices$pRural, 1, function(x) {diff(quantile(x, prob=c(.1, .9), na.rm=TRUE))})
+      widths80LCpbRR = apply(fit4$aggregatedResultsLCpb$countyMatrices$pUrban / fit4$aggregatedResultsLCpb$countyMatrices$pRural, 1, function(x) {diff(quantile(x, prob=c(.1, .9), na.rm=TRUE))})
+      widths80LCPbRR = apply(fit4$aggregatedResultsLCPb$countyMatrices$pUrban / fit4$aggregatedResultsLCPb$countyMatrices$pRural, 1, function(x) {diff(quantile(x, prob=c(.1, .9), na.rm=TRUE))})
+      widths80LCPBRR = apply(fit4$aggregatedResultsLCPB$countyMatrices$pUrban / fit4$aggregatedResultsLCPB$countyMatrices$pRural, 1, function(x) {diff(quantile(x, prob=c(.1, .9), na.rm=TRUE))})
+      out = (widths80LCPBRR - widths80lcpbRR) / widths80lcpbRR
+      mean(out[is.finite(out)], na.rm=TRUE) # 0.2112706
+      median(out[is.finite(out)], na.rm=TRUE) # 0.1803033
+      
+      out = (widths80LCPbRR - widths80lcpbRR) / widths80lcpbRR
+      mean(out[is.finite(out)], na.rm=TRUE) # 0.08914678
+      median(out[is.finite(out)], na.rm=TRUE) # 0.07005627
+      
+      out = (widths80LCpbRR - widths80lcpbRR) / widths80lcpbRR
+      mean(out[is.finite(out)], na.rm=TRUE) # 0.09089862
+      median(out[is.finite(out)], na.rm=TRUE) # 0.06804808
     }
     
     # obsUrban = truthTableFullCounty$urban
