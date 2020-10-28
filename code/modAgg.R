@@ -3310,7 +3310,7 @@ resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilo
   # get scores?
   
   # save results
-  fileName = paste0("savedOutput/simStudyResults/resultsLCPB_", dataID, "maxDataSets", maxDataSets, ".RData")
+  fileName = paste0("savedOutput/simStudyResults/resLCPB_", dataID, "repSamp", representativeSampling, "surveyI", surveyI, "Of", maxDataSets, ".RData")
   save(agg, timeSPDE, timeAllAgg, file=fileName)
   
   agg
