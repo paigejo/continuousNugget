@@ -30,11 +30,13 @@ getSPDE_LCPBCommandArgs = function(gamma=c(-1, 0), rho=(1/3)^2, sigmaEpsilon=sqr
                 thisRepresentativeSampling = representativeSampling[i7]
                 
                 if(thisBeta0 == -3.9 && thisGamma == -1) {
-                  thisBeta0 = -2.9
+                  thisThisBeta0 = -2.9
+                } else {
+                  thisThisBeta0 = thisBeta0
                 }
                 
                 spde_lcpbCommandArgs[[i]] = list(gamma=thisGamma, rho=thisRho, sigmaEpsilon=thisSigmaEpsilon, 
-                                                 effRange=thisEffRange, beta0=thisBeta0, surveyI=thisSurveyI, 
+                                                 effRange=thisEffRange, beta0=thisThisBeta0, surveyI=thisSurveyI, 
                                                  representativeSampling=thisRepresentativeSampling)
                 i=i+1
               }
@@ -73,11 +75,13 @@ getSPDE_LCPBSimStudyCommandArgs = function(gamma=c(-1, 0), rho=(1/3)^2, sigmaEps
                 thisRepresentativeSampling = representativeSampling[i6]
                 
                 if(thisBeta0 == -3.9 && thisGamma == -1) {
-                  thisBeta0 = -2.9
+                  thisThisBeta0 = -2.9
+                } else {
+                  thisThisBeta0 = thisBeta0
                 }
                 
                 spde_lcpbSimStudyCommandArgs[[i]] = list(gamma=thisGamma, rho=thisRho, sigmaEpsilon=thisSigmaEpsilon, 
-                                                 effRange=thisEffRange, beta0=thisBeta0, 
+                                                 effRange=thisEffRange, beta0=thisThisBeta0, 
                                                  representativeSampling=thisRepresentativeSampling)
                 i=i+1
               }
