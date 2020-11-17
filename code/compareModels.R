@@ -2454,10 +2454,13 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
   if(representativeSampling) {
     clustDat = SRSDat$clustDat
     eaDat = SRSDat$eaDat
+    aggregatedTruth = SRSDat$aggregatedPop
   } else {
     clustDat = overSampDat$clustDat
     eaDat = overSampDat$eaDat
+    aggregatedTruth = overSampDat$aggregatedPop
   }
+  aggregatedTruth = aggregatedTruth$aggregatedResultsLCPB$constituencyMatrices
   
   # get this population frame
   thiseaspa = makeEASPAFromEADat(eaDat)
@@ -2465,40 +2468,41 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
   # helper function for calculating scoring rules given an aggregation model
   getTheseScoringRules = function(aggregationResults, meanAggregationResults) {
     # overall predictions
-    constituencyPrevalenceMat = aggregationResults
-    constituencyCountMat = aggregationResults
-    constituencyRelativePrevalenceMat = aggregationResults
+    constituencyPrevalenceMat = aggregationResults$p
+    constituencyCountMat = aggregationResults$Z
+    constituencyRelativePrevalenceMat = aggregationResults$pUrban / aggregationResults$pRural
     
-    constituencyPrevalenceEst = rowMeans(meanAggregationResults)
-    constituencyCountEst = rowMeans(meanAggregationResults)
+    constituencyPrevalenceEst = rowMeans(meanAggregationResults$p)
+    constituencyCountEst = rowMeans(meanAggregationResults$Z)
+    constituencyRelativePrevalenceEst = rowMeans(constituencyRelativePrevalenceMat)
     
     # urban
-    constituencyPrevalenceMatUrban = aggregationResults
-    constituencyCountMatUrban = aggregationResults
+    constituencyPrevalenceMatUrban = aggregationResults$pUrban
+    constituencyCountMatUrban = aggregationResults$ZUrban
     
-    constituencyPrevalenceEstUrban = rowMeans(meanAggregationResults)
-    constituencyCountEstUrban = rowMeans(meanAggregationResults)
+    constituencyPrevalenceEstUrban = rowMeans(meanAggregationResults$pUrban)
+    constituencyCountEstUrban = rowMeans(meanAggregationResults$ZUrban)
     
     # rural
-    constituencyPrevalenceMatRural = aggregationResults
-    constituencyCountMatRural = aggregationResults
+    constituencyPrevalenceMatRural = aggregationResults$pRural
+    constituencyCountMatRural = aggregationResults$ZRural
     
-    constituencyPrevalenceEstRural = rowMeans(meanAggregationResults)
-    constituencyCountEstRural = rowMeans(meanAggregationResults)
+    constituencyPrevalenceEstRural = rowMeans(meanAggregationResults$pRural)
+    constituencyCountEstRural = rowMeans(meanAggregationResults$ZRural)
     
     ## Calculate scoring rules
     # overall
-    prevalenceScores = getScores(truthPrevalence, est=constituencyPrevalenceEst, estMat=constituencyPrevalenceMat)
-    countScores = getScores(truthCount, est=constituencyCountEst, estMat=constituencyCountMat)
-    relativePrevalenceScores = getScores(truthRelativePrevalence, est=constituencyRelativePrevalenceEst, estMat=constituencyRelativePrevalenceMat)
+    prevalenceScores = getScores(aggregatedTruth$p, est=constituencyPrevalenceEst, estMat=constituencyPrevalenceMat)
+    countScores = getScores(aggregatedTruth$Z, est=constituencyCountEst, estMat=constituencyCountMat)
+    relativePrevalenceScores = getScores(aggregatedTruth$pUrban/aggregatedTruth$pRural, est=constituencyRelativePrevalenceEst, estMat=constituencyRelativePrevalenceMat)
     
     # urban
-    prevalenceScoresUrban = getScores(truthPrevalenceUrban, est=constituencyPrevalenceEstUrban, estMat=constituencyPrevalenceMatUrban)
-    countScoresUrban = getScores(truthCountUrban, est=constituencyCountEstUrban, estMat=constituencyCountMatUrban)
+    prevalenceScoresUrban = getScores(aggregatedTruth$pUrban, est=constituencyPrevalenceEstUrban, estMat=constituencyPrevalenceMatUrban)
+    countScoresUrban = getScores(aggregatedTruth$ZUrban, est=constituencyCountEstUrban, estMat=constituencyCountMatUrban)
     
     # rural
-    prevalenceScoresRural = getScores(truthPrevalenceRural, est=constituencyPrevalenceEstRural, estMat=constituencyPrevalenceMatRural)
-    countScoresRural = getScores(truthCountRural, est=constituencyCountEstRural, estMat=constituencyCountMatRural)
+    prevalenceScoresRural = getScores(aggregatedTruth$pRural, est=constituencyPrevalenceEstRural, estMat=constituencyPrevalenceMatRural)
+    countScoresRural = getScores(aggregatedTruth$ZRural, est=constituencyCountEstRural, estMat=constituencyCountMatRural)
     
     list(prevalenceScores=prevalenceScores, countScores=countScores, relativePrevalenceScores=relativePrevalenceScores, 
          prevalenceScoresUrban=prevalenceScoresUrban, countScoresUrban=countScoresUrban, 
@@ -2512,11 +2516,11 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
     out = load(fileName)
     
     # calculate scoring rules for the survey
-    scoreslcpb = getTheseScoringRules(agg, agg)
-    scoresLcpb = getTheseScoringRules(agg, agg)
-    scoresLCpb = getTheseScoringRules(agg, agg)
-    scoresLCPb = getTheseScoringRules(agg, agg)
-    scoresLCPB = getTheseScoringRules(agg, agg)
+    scoreslcpb = getTheseScoringRules(agg$aggregatedResultslcpb$constituencyMatrices, agg$aggregatedResultslcpb$constituencyMatrices)
+    scoresLcpb = getTheseScoringRules(agg$aggregatedResultsLcpb$constituencyMatrices, agg$aggregatedResultsLcpb$constituencyMatrices)
+    scoresLCpb = getTheseScoringRules(agg$aggregatedResultsLCpb$constituencyMatrices, agg$aggregatedResultsLcpb$constituencyMatrices)
+    scoresLCPb = getTheseScoringRules(agg$aggregatedResultsLCPb$constituencyMatrices, agg$aggregatedResultsLcpb$constituencyMatrices)
+    scoresLCPB = getTheseScoringRules(agg$aggregatedResultsLCPB$constituencyMatrices, agg$aggregatedResultsLcpb$constituencyMatrices)
     
     ## combine like scores
     # lcpb

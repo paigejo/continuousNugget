@@ -79,7 +79,7 @@ getSPDE_LCPBSimStudyCommandArgs = function(gamma=c(-1, 0), rho=(1/3)^2, sigmaEps
     }
   }
   
-  save(spde_lcpbSimStudyCommandArgs, file="savedOutput/simDataSets/spde_lcpbSimStudyCommandArgs.RData")
+  save(spde_lcpbSimStudyCommandArgs, file="savedOutput/simStudyResults/spde_lcpbSimStudyCommandArgs.RData")
 }
 
 

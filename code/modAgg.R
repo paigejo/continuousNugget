@@ -3301,11 +3301,12 @@ resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilo
   #                                  maxDataSets=maxDataSets)
   
   # aggregate predictions of the SPDE model
+  browser()
   timeAllAgg = system.time(agg <- modLCPB(uDraws=resultsSPDE$uDraws, resultsSPDE$sigmaEpsilonDraws, easpa=thiseaspa, 
                                        includeUrban=TRUE, clusterLevel=FALSE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
                                        regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=FALSE, 
                                        onlyDoModifiedPixelLevel=FALSE, 
-                                       doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE))[3]
+                                       doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE, urbanEffect=resultsSPDE$fixedEffectSummary[2,1]))[3]
   
   # get scores?
   
