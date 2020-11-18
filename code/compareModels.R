@@ -2517,10 +2517,10 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
     
     # calculate scoring rules for the survey
     scoreslcpb = getTheseScoringRules(agg$aggregatedResultslcpb$constituencyMatrices, agg$aggregatedResultslcpb$constituencyMatrices)
-    scoresLcpb = getTheseScoringRules(agg$aggregatedResultsLcpb$constituencyMatrices, agg$aggregatedResultsLcpb$constituencyMatrices)
-    scoresLCpb = getTheseScoringRules(agg$aggregatedResultsLCpb$constituencyMatrices, agg$aggregatedResultsLcpb$constituencyMatrices)
-    scoresLCPb = getTheseScoringRules(agg$aggregatedResultsLCPb$constituencyMatrices, agg$aggregatedResultsLcpb$constituencyMatrices)
-    scoresLCPB = getTheseScoringRules(agg$aggregatedResultsLCPB$constituencyMatrices, agg$aggregatedResultsLcpb$constituencyMatrices)
+    scoresLcpb = getTheseScoringRules(agg$aggregatedResultsLcpb$constituencyMatrices, agg$aggregatedResultslcpb$constituencyMatrices)
+    scoresLCpb = getTheseScoringRules(agg$aggregatedResultsLCpb$constituencyMatrices, agg$aggregatedResultsLCpb$constituencyMatrices)
+    scoresLCPb = getTheseScoringRules(agg$aggregatedResultsLCPb$constituencyMatrices, agg$aggregatedResultsLCpb$constituencyMatrices)
+    scoresLCPB = getTheseScoringRules(agg$aggregatedResultsLCPB$constituencyMatrices, agg$aggregatedResultsLCpb$constituencyMatrices)
     
     ## combine like scores
     # lcpb

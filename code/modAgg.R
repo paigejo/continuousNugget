@@ -185,7 +185,7 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
                    onlyDoModifiedPixelLevel=FALSE, clustersPerPixel=NULL, 
                    doLcpb=FALSE, doLCpb=FALSE, doLCPb=FALSE, constituencyPop=poppcon, 
                    ensureAtLeast1PerConstituency=FALSE, urbanEffect=NULL, 
-                   returnEAinfo=FALSE, epsc=NULL) {
+                   returnEAinfo=FALSE, epsc=NULL, urbanEffectDraws=NULL) {
   nDraws = ncol(uDraws)
   
   startTime0 = proc.time()[3]
@@ -240,6 +240,13 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
       fastDistributions = c(fastDistributions, list(ecdf2edfun(empiricalDistributions[[i]])))
     }
     names(fastDistributions) = names(empiricalDistributions)
+  }
+  
+  if(!is.null(urbanEffect)) {
+    if(!is.null(urbanEffectDraws) && any(urbanEffectDraws != urbanEffect)) {
+      stop("noncompatible urbanEffect and urbanEffectDraws given as input. Use either one or the other")
+    }
+    urbanEffectDraws = rep(urbanEffect, ncol(uDraws))
   }
   
   # get area names
@@ -490,15 +497,15 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
   lcpbSwitchedUrban = NULL
   if(is.null(clustersPerPixel)) {
     lcpb = matrix(logitNormMean(cbind(c(as.matrix(uDraws)), rep(sigmaEpsilonDraws, each=nrow(uDraws)))), nrow=nrow(uDraws))
-    if(constituencyLevel && !is.null(urbanEffect)) {
+    if(constituencyLevel && !is.null(urbanEffectDraws)) {
       lcpbSwitchedUrban = lcpb
       zeroConUrban = constituencyPop$popUrb == 0
       zeroConRural = (constituencyPop$popRur == 0) & !(constituencyPop$County %in% c("Mombasa", "Nairobi"))
       allZeroCon = constituencyPop$Constituency[zeroConUrban | zeroConRural]
       uDrawsSwitchedUrban = uDraws
-      uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & popMat$urban,] = uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & popMat$urban,] - urbanEffect
-      uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & !popMat$urban,] = uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & !popMat$urban,] + urbanEffect
-      lcpbSwitchedUrban[popMat$admin2 %in% allZeroCon,] = matrix(logitNormMean(cbind(c(as.matrix(uDraws[popMat$admin2 %in% allZeroCon,])), rep(sigmaEpsilonDraws, each=sum(popMat$admin2 %in% allZeroCon)))), nrow=sum(popMat$admin2 %in% allZeroCon))
+      uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & popMat$urban,] = sweep(uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & popMat$urban,], 2, urbanEffectDraws, "-")
+      uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & !popMat$urban,] = sweep(uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & !popMat$urban,], 2, urbanEffectDraws, "+")
+      lcpbSwitchedUrban[popMat$admin2 %in% allZeroCon,] = matrix(logitNormMean(cbind(c(as.matrix(uDrawsSwitchedUrban[popMat$admin2 %in% allZeroCon,])), rep(sigmaEpsilonDraws, each=sum(popMat$admin2 %in% allZeroCon)))), nrow=sum(popMat$admin2 %in% allZeroCon))
     }
   } else {
     lcpb = matrix(logitNormMean(cbind(c(as.matrix(uDraws)[uniquePixelIndices,]), rep(sigmaEpsilonDraws, each=length(uniquePixelIndices)))), nrow=length(uniquePixelIndices))
@@ -3306,7 +3313,7 @@ resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilo
                                        includeUrban=TRUE, clusterLevel=FALSE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
                                        regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=FALSE, 
                                        onlyDoModifiedPixelLevel=FALSE, 
-                                       doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE, urbanEffect=resultsSPDE$fixedEffectSummary[2,1]))[3]
+                                       doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE, urbanEffectDraws=resultsSPDE$fixedEffectDraws[2,]))[3]
   
   # get scores?
   

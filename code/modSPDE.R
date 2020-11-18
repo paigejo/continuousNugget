@@ -931,7 +931,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
        interceptSummary=interceptSummary, fixedEffectSummary=fixedEffectSummary, rangeSummary=rangeSummary, 
        sdSummary=sdSummary, varSummary=varSummary, overdispersionSummary=overdispersionSummary, 
        parameterSummaryTable=parameterSummaryTable, 
-       uDraws=logit(predMat), obsMat=obsMatClustEffect, hyperMat=hyperMat, timings=timings, sigmaEpsilonDraws=sqrt(clusterVars), rhos=rhos)
+       uDraws=logit(predMat), fixedEffectDraws=latentMat[fixedIndices,], obsMat=obsMatClustEffect, hyperMat=hyperMat, timings=timings, sigmaEpsilonDraws=sqrt(clusterVars), rhos=rhos)
 }
 
 # this function generates results for the simulation study for the SPDE model
