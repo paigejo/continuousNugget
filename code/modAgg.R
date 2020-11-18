@@ -500,7 +500,7 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     if(constituencyLevel && !is.null(urbanEffectDraws)) {
       lcpbSwitchedUrban = lcpb
       zeroConUrban = constituencyPop$popUrb == 0
-      zeroConRural = (constituencyPop$popRur == 0) & !(constituencyPop$County %in% c("Mombasa", "Nairobi"))
+      zeroConRural = constituencyPop$popRur == 0
       allZeroCon = constituencyPop$Constituency[zeroConUrban | zeroConRural]
       uDrawsSwitchedUrban = uDraws
       uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & popMat$urban,] = sweep(uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & popMat$urban,], 2, urbanEffectDraws, "-")
@@ -3271,7 +3271,7 @@ sampleNPoissonMultinomialFixed = function(clustersPerPixel, nDraws=ncol(pixelInd
 # input arguments:
 #   argument specifying the dataset type
 resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), 
-                            effRange=400, beta0=-3.9, surveyI=1, 
+                            effRange=400, beta0=-2.9, surveyI=1, 
                             maxDataSets=NULL, seed=surveyI, representativeSampling=TRUE) {
   # make strings representing the simulation parameters
   dataID = paste0("Beta", round(beta0, 4), "rho", round(rho, 4), "sigmaEps", 
@@ -3308,7 +3308,7 @@ resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilo
   #                                  maxDataSets=maxDataSets)
   
   # aggregate predictions of the SPDE model
-  # browser()
+  browser()
   timeAllAgg = system.time(agg <- modLCPB(uDraws=resultsSPDE$uDraws, resultsSPDE$sigmaEpsilonDraws, easpa=thiseaspa, 
                                        includeUrban=TRUE, clusterLevel=FALSE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
                                        regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=FALSE, 
