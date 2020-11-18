@@ -3308,7 +3308,7 @@ resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilo
   #                                  maxDataSets=maxDataSets)
   
   # aggregate predictions of the SPDE model
-  browser()
+  # browser()
   timeAllAgg = system.time(agg <- modLCPB(uDraws=resultsSPDE$uDraws, resultsSPDE$sigmaEpsilonDraws, easpa=thiseaspa, 
                                        includeUrban=TRUE, clusterLevel=FALSE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
                                        regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=FALSE, 
