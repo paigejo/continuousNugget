@@ -919,6 +919,9 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     finishedArealAggregationSetupTime13 = proc.time()[3]
     
     # LCPB model
+    nSamplesLCPB = Ng
+    zSamplesLCPB = Zg
+    zSamplesLCPB[is.na(zSamplesLCPB)] = 0
     aggregatedResults = aggregatePixelPredictions(Zg, Ng, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
                                                   constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
                                                   separateUrbanRural=TRUE)
@@ -931,7 +934,9 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     # aggregatedResultslcpb = aggregatePixelPredictions(lcpb, eaSamples, popMatAdjusted=adjustedPopMat, useDensity=TRUE, 
     #                                                   constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
     #                                                   separateUrbanRural=TRUE, normalize=TRUE, lcpbSwitchedUrban=lcpbSwitchedUrban)
-    aggregatedResultslcpb = aggregatePixelPredictions(sweep(lcpb, 1, adjustedPopMat$pop, "*"), matrix(rep(adjustedPopMat$pop, nDraws), ncol=nDraws), popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
+    nSampleslcpb = matrix(rep(adjustedPopMat$pop, nDraws), ncol=nDraws)
+    zSampleslcpb = sweep(lcpb, 1, adjustedPopMat$pop, "*")
+    aggregatedResultslcpb = aggregatePixelPredictions(zSampleslcpb, nSampleslcpb, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
                                                       constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
                                                       separateUrbanRural=TRUE, normalize=FALSE, lcpbSwitchedUrban=lcpbSwitchedUrban)
     
@@ -948,11 +953,14 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
       
       # in order to get valid count estimates, we also need the expected denominator per EA in each stratum:
       nPerEA = getExpectedNperEA(easpa, adjustedPopMat)
-      thisNSamples = sweep(eaSamples, 1, nPerEA, "*")
-      aggregatedResultsLcpb = aggregatePixelPredictions(Lcpb*thisNSamples, thisNSamples, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
+      nSamplesLcpb = sweep(eaSamples, 1, nPerEA, "*")
+      zSamplesLcpb = Lcpb * nSamplesLcpb
+      aggregatedResultsLcpb = aggregatePixelPredictions(zSamplesLcpb, nSamplesLcpb, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
                                                         constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
                                                         separateUrbanRural=TRUE, normalize=FALSE)
     } else {
+      nSamplesLcpb = NULL
+      zSamplesLcpb = NULL
       aggregatedResultsLcpb = NULL
     }
     
@@ -965,12 +973,19 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
       #                                                   separateUrbanRural=TRUE, normalize=FALSE, lcpbSwitchedUrban=lcpbSwitchedUrban)
       
       # in order to get valid count estimates, we also need the expected denominator per EA in each stratum:
-      nPerEA = getExpectedNperEA(easpa, adjustedPopMat)
-      thisNSamples = sweep(eaSamples, 1, nPerEA, "*")
-      aggregatedResultsLCpb = aggregatePixelPredictions(LCpb*thisNSamples, thisNSamples, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
+      if(!doLcpb) {
+        nPerEA = getExpectedNperEA(easpa, adjustedPopMat)
+        nSamplesLcpb = sweep(eaSamples, 1, nPerEA, "*")
+      }
+      nSamplesLCpb = nSamplesLcpb
+      zSamplesLCpb = LCpb * nSamplesLCpb
+      zSamplesLCpb[is.na(zSamplesLCpb)] = 0
+      aggregatedResultsLCpb = aggregatePixelPredictions(zSamplesLCpb, nSamplesLCpb, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
                                                         constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
                                                         separateUrbanRural=TRUE, normalize=FALSE, lcpbSwitchedUrban=lcpbSwitchedUrban)
     } else {
+      nSamplesLCpb = NULL
+      zSamplesLCpb = NULL
       aggregatedResultsLCpb = NULL
     }
     
@@ -978,10 +993,15 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     
     # LCPb model
     if(doLCPb) {
-      aggregatedResultsLCPb = aggregatePixelPredictions(LCPb*Ng, Ng, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
+      nSamplesLCPb = Ng
+      zSamplesLCPb = LCPb*Ng
+      zSamplesLCPb[is.na(zSamplesLCPb)] = 0
+      aggregatedResultsLCPb = aggregatePixelPredictions(zSamplesLCPb, nSamplesLCPb, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
                                                         constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
                                                         separateUrbanRural=TRUE, normalize=FALSE, lcpbSwitchedUrban=lcpbSwitchedUrban)
     } else {
+      nSamplesLCPb = NULL
+      zSamplesLCPb = NULL
       aggregatedResultsLCPb = NULL
     }
     
@@ -1368,11 +1388,11 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     ##### Extra steps: collect draws at each level and generate:
     ##### areas, preds, 
     if(pixelLevel) {
-      allMatrices = list(pixelMatricesLCPB=list(p=pg, Z=Zg, N=Ng), aggregatedResultsLCPB=aggregatedResults, 
-                         pixelMatriceslcpb=list(p=lcpb), aggregatedResultslcpb=aggregatedResultslcpb, 
-                         pixelMatricesLcpb=list(p=Lcpb), aggregatedResultsLcpb=aggregatedResultsLcpb, 
-                         pixelMatricesLCpb=list(p=LCpb), aggregatedResultsLCpb=aggregatedResultsLCpb, 
-                         pixelMatricesLCPb=list(p=LCPb), aggregatedResultsLCPb=aggregatedResultsLCPb, 
+      allMatrices = list(pixelMatricesLCPB=list(p=pg, Z=zSamplesLCPB, N=nSamplesLCPB), aggregatedResultsLCPB=aggregatedResults, 
+                         pixelMatriceslcpb=list(p=lcpb, Z=zSampleslcpb, N=nSampleslcpb), aggregatedResultslcpb=aggregatedResultslcpb, 
+                         pixelMatricesLcpb=list(p=Lcpb, Z=zSamplesLcpb, N=nSamplesLcpb), aggregatedResultsLcpb=aggregatedResultsLcpb, 
+                         pixelMatricesLCpb=list(p=LCpb, Z=zSamplesLCpb, N=nSamplesLCpb), aggregatedResultsLCpb=aggregatedResultsLCpb, 
+                         pixelMatricesLCPb=list(p=LCPb, Z=zSamplesLCPb, N=nSamplesLCPb), aggregatedResultsLCPb=aggregatedResultsLCPb, 
                          allTimings=allTimings)
     } else {
       allMatrices = list(aggregatedResultsLCPB=aggregatedResults, 
@@ -1388,10 +1408,10 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     # for the if we only care about the modified pixel level predictions, just include those
     if(is.null(clustersPerPixel)) {
       allMatrices = list(pixelMatricesLCPB=list(p=pgMod, Z=ZgMod, N=NgMod), 
-                         pixelMatriceslcpb=list(p=lcpb), allTimings=allTimings)
+                         pixelMatriceslcpb=list(p=lcpb, Z=zSampleslcpb, N=nSampleslcpb), allTimings=allTimings)
     } else {
-      allMatrices = list(pixelMatricesLCPB=list(p=pg, Z=Zg, N=Ng), 
-                         pixelMatriceslcpb=list(p=lcpb), allTimings=allTimings)
+      allMatrices = list(pixelMatricesLCPB=list(p=pg, Z=zSamplesLCPB, N=nSamplesLCPB), 
+                         pixelMatriceslcpb=list(p=lcpb, Z=zSampleslcpb, N=nSampleslcpb), allTimings=allTimings)
     }
   }
   
@@ -3308,13 +3328,13 @@ resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilo
   #                                  maxDataSets=maxDataSets)
   
   # aggregate predictions of the SPDE model
-  # browser()
+  
   timeAllAgg = system.time(agg <- modLCPB(uDraws=resultsSPDE$uDraws, resultsSPDE$sigmaEpsilonDraws, easpa=thiseaspa, 
                                        includeUrban=TRUE, clusterLevel=FALSE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
                                        regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=FALSE, 
                                        onlyDoModifiedPixelLevel=FALSE, 
                                        doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE, urbanEffectDraws=resultsSPDE$fixedEffectDraws[2,]))[3]
-  
+  # browser()
   # get scores?
   
   # save results

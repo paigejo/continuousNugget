@@ -27,8 +27,10 @@ adm2 = combineConstituencies(adm2, threshold=50)
 adm2 = makeInBorder(adm2)
 adm2@data$Shape_Area = getArea(thisMap=adm2, nameVar="CONSTITUEN")
 
+regionMap = constructRegions()
+
 # test = removeConstituencyGaps(adm2)
-save(adm2, adm1, adm0, file=paste0(globalDirectory, "adminMapData.RData"))
+save(adm2, adm1, adm0, regionMap, file=paste0(globalDirectory, "adminMapData.RData"))
 load(paste0(globalDirectory, "adminMapData.RData"))
 
 # county to region mapping

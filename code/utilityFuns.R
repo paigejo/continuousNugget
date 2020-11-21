@@ -4661,6 +4661,44 @@ plotTrueVersusUnderCoverage = function(shrinkage=.1) {
   abline(a=0, b=0)
 }
 
+# combine relevant county polygons into regions (provinces)
+constructRegions = function() {
+  # load relevant packages
+  libs <- c("rgdal", "maptools", "gridExtra")
+  lapply(libs, require, character.only = TRUE)
+  
+  # this is the original map. Not sure why the north western region has been cut off partially
+  # regionMap = readShapePoly("../U5MR/mapData/kenya_region_shapefile/kenya_region_shapefile.shp", 
+  #                           delete_null_obj=TRUE, force_ring=TRUE, repair=TRUE)
+  
+  # load the county map
+  out = load("savedOutput/global/adminMapData.RData")
+  countyMap = adm1
+  
+  # load the county and province names
+  dat = mort
+  countyNames = sort(unique(as.character(dat$admin1))) # this is in the same order as in countyMap
+  regionNames = sort(unique(as.character(dat$region))) # this is in the same order as in countyMap
+  
+  # load which counties go to which regions
+  ctp = read.csv("data/mapData/kenya-prov-county-map.csv")
+  regionIs = match(as.character(countyNames), as.character(ctp[,1]))
+  correspondingRegions = as.character(ctp[regionIs,2])
+  countyToRegion = match(correspondingRegions, regionNames)
+  
+  # combine the spatial polygons for counties to regions
+  zeroBufferCountyMap = rgeos::gBuffer(countyMap, byid=TRUE, width=0) # not sure why this line is necessary, but it prevents this error:
+  # Error in rgeos::gUnaryUnion(spgeom = SpP, id = IDs) : 
+  #   TopologyException: Input geom 1 is invalid: Ring Self-intersection at or near point 37.307811739999998 -0.14557032 at 37.307811739999998 -0.14557032
+  regionMap = unionSpatialPolygons(zeroBufferCountyMap, countyToRegion)
+  
+  # set the region names
+  regionAttributes = attributes(regionMap)
+  regionAttributes$data = list(NAME_1 = regionNames)
+  attributes(regionMap) = regionAttributes
+  regionMap
+}
+
 
 
 
