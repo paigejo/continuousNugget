@@ -2467,41 +2467,58 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
   
   # helper function for calculating scoring rules given an aggregation model
   getTheseScoringRules = function(aggregationResults, meanAggregationResults) {
-    # overall predictions
+    # overall predictive distributions
     constituencyPrevalenceMat = aggregationResults$p
     constituencyCountMat = aggregationResults$Z
     constituencyRelativePrevalenceMat = aggregationResults$pUrban / aggregationResults$pRural
     
+    # make sure prevalence and relative prevalence only defined when there is both urban and rural population
+    hasUrbanPopulation = poppcon$popUrb != 0
+    hasRuralPopulation = poppcon$popRur != 0
+    definedRelativePrevalence = hasUrbanPopulation & hasRuralPopulation
+    hasUrbanPopulationSamples = aggregationResults$NUrban != 0
+    hasRuralPopulationSamples = aggregationResults$NRural != 0
+    definedRelativePrevalenceSamples = hasUrbanPopulationSamples & hasRuralPopulationSamples
+    
+    constituencyRelativePrevalenceMat[!definedRelativePrevalenceSamples] = NA
+    
+    # get central estimates
     constituencyPrevalenceEst = rowMeans(meanAggregationResults$p)
     constituencyCountEst = rowMeans(meanAggregationResults$Z)
-    constituencyRelativePrevalenceEst = rowMeans(constituencyRelativePrevalenceMat)
+    constituencyRelativePrevalenceEst = rowMeans(constituencyRelativePrevalenceMat, na.rm=TRUE)
     
     # urban
     constituencyPrevalenceMatUrban = aggregationResults$pUrban
     constituencyCountMatUrban = aggregationResults$ZUrban
     
-    constituencyPrevalenceEstUrban = rowMeans(meanAggregationResults$pUrban)
+    # make sure urban prevalence only defined when there is an urban population
+    constituencyPrevalenceMatUrban[hasUrbanPopulationSamples] = NA
+    
+    constituencyPrevalenceEstUrban = rowMeans(meanAggregationResults$pUrban, na.rm=TRUE)
     constituencyCountEstUrban = rowMeans(meanAggregationResults$ZUrban)
     
     # rural
     constituencyPrevalenceMatRural = aggregationResults$pRural
     constituencyCountMatRural = aggregationResults$ZRural
     
-    constituencyPrevalenceEstRural = rowMeans(meanAggregationResults$pRural)
+    # make sure rural prevalence only defined when there is an urban population
+    constituencyPrevalenceMatRural[hasRuralPopulationSamples] = NA
+    
+    constituencyPrevalenceEstRural = rowMeans(meanAggregationResults$pRural, na.rm=TRUE)
     constituencyCountEstRural = rowMeans(meanAggregationResults$ZRural)
     
     ## Calculate scoring rules
     # overall
     prevalenceScores = getScores(aggregatedTruth$p, est=constituencyPrevalenceEst, estMat=constituencyPrevalenceMat)
     countScores = getScores(aggregatedTruth$Z, est=constituencyCountEst, estMat=constituencyCountMat)
-    relativePrevalenceScores = getScores(aggregatedTruth$pUrban/aggregatedTruth$pRural, est=constituencyRelativePrevalenceEst, estMat=constituencyRelativePrevalenceMat)
+    relativePrevalenceScores = getScores((aggregatedTruth$pUrban/aggregatedTruth$pRural)[definedRelativePrevalence], est=constituencyRelativePrevalenceEst[definedRelativePrevalence], estMat=constituencyRelativePrevalenceMat[definedRelativePrevalence,])
     
     # urban
-    prevalenceScoresUrban = getScores(aggregatedTruth$pUrban, est=constituencyPrevalenceEstUrban, estMat=constituencyPrevalenceMatUrban)
+    prevalenceScoresUrban = getScores(aggregatedTruth$pUrban[hasUrbanPopulation], est=constituencyPrevalenceEstUrban[hasUrbanPopulation], estMat=constituencyPrevalenceMatUrban[hasUrbanPopulation,])
     countScoresUrban = getScores(aggregatedTruth$ZUrban, est=constituencyCountEstUrban, estMat=constituencyCountMatUrban)
     
     # rural
-    prevalenceScoresRural = getScores(aggregatedTruth$pRural, est=constituencyPrevalenceEstRural, estMat=constituencyPrevalenceMatRural)
+    prevalenceScoresRural = getScores(aggregatedTruth$pRural[hasRuralPopulation], est=constituencyPrevalenceEstRural[hasRuralPopulation], estMat=constituencyPrevalenceMatRural[hasRuralPopulation,])
     countScoresRural = getScores(aggregatedTruth$ZRural, est=constituencyCountEstRural, estMat=constituencyCountMatRural)
     
     list(prevalenceScores=prevalenceScores, countScores=countScores, relativePrevalenceScores=relativePrevalenceScores, 
