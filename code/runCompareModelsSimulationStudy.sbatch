@@ -9,4 +9,4 @@
 #SBATCH --mail-type=ALL       # Type of email notification- BEGIN,END,FAIL,ALL
 #SBATCH --mail-user=paigejo@uw.edu # Email to which notifications will be sent
 module load rgdal
-Rscript --verbose compareModelsSimulationStudy.R ${SLURM_ARRAY_TASK_ID} > runCompareModels_LCPB_${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}.Rout
+Rscript --verbose runCompareModelsSimulationStudy.R ${SLURM_ARRAY_TASK_ID} > runCompareModels_LCPB_${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}.Rout
