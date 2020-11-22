@@ -2492,7 +2492,7 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
     constituencyCountMatUrban = aggregationResults$ZUrban
     
     # make sure urban prevalence only defined when there is an urban population
-    constituencyPrevalenceMatUrban[hasUrbanPopulationSamples] = NA
+    constituencyPrevalenceMatUrban[!hasUrbanPopulationSamples] = NA
     
     constituencyPrevalenceEstUrban = rowMeans(meanAggregationResults$pUrban, na.rm=TRUE)
     constituencyCountEstUrban = rowMeans(meanAggregationResults$ZUrban)
@@ -2502,30 +2502,66 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
     constituencyCountMatRural = aggregationResults$ZRural
     
     # make sure rural prevalence only defined when there is an urban population
-    constituencyPrevalenceMatRural[hasRuralPopulationSamples] = NA
+    constituencyPrevalenceMatRural[!hasRuralPopulationSamples] = NA
     
     constituencyPrevalenceEstRural = rowMeans(meanAggregationResults$pRural, na.rm=TRUE)
     constituencyCountEstRural = rowMeans(meanAggregationResults$ZRural)
     
     ## Calculate scoring rules
     # overall
-    prevalenceScores = getScores(aggregatedTruth$p, est=constituencyPrevalenceEst, estMat=constituencyPrevalenceMat)
-    countScores = getScores(aggregatedTruth$Z, est=constituencyCountEst, estMat=constituencyCountMat)
-    relativePrevalenceScores = getScores((aggregatedTruth$pUrban/aggregatedTruth$pRural)[definedRelativePrevalence], est=constituencyRelativePrevalenceEst[definedRelativePrevalence], estMat=constituencyRelativePrevalenceMat[definedRelativePrevalence,])
+    prevalenceScores = getScores(aggregatedTruth$p[,1], est=constituencyPrevalenceEst, estMat=constituencyPrevalenceMat)
+    countScores = getScores(aggregatedTruth$Z[,1], est=constituencyCountEst, estMat=constituencyCountMat)
+    relativePrevalenceScores = getScores((aggregatedTruth$pUrban[,1]/aggregatedTruth$pRural[,1])[definedRelativePrevalence], est=constituencyRelativePrevalenceEst[definedRelativePrevalence], estMat=constituencyRelativePrevalenceMat[definedRelativePrevalence,])
     
     # urban
-    prevalenceScoresUrban = getScores(aggregatedTruth$pUrban[hasUrbanPopulation], est=constituencyPrevalenceEstUrban[hasUrbanPopulation], estMat=constituencyPrevalenceMatUrban[hasUrbanPopulation,])
-    countScoresUrban = getScores(aggregatedTruth$ZUrban, est=constituencyCountEstUrban, estMat=constituencyCountMatUrban)
+    prevalenceScoresUrban = getScores(aggregatedTruth$pUrban[hasUrbanPopulation,1], est=constituencyPrevalenceEstUrban[hasUrbanPopulation], estMat=constituencyPrevalenceMatUrban[hasUrbanPopulation,])
+    countScoresUrban = getScores(aggregatedTruth$ZUrban[,1], est=constituencyCountEstUrban, estMat=constituencyCountMatUrban)
     
     # rural
-    prevalenceScoresRural = getScores(aggregatedTruth$pRural[hasRuralPopulation], est=constituencyPrevalenceEstRural[hasRuralPopulation], estMat=constituencyPrevalenceMatRural[hasRuralPopulation,])
-    countScoresRural = getScores(aggregatedTruth$ZRural, est=constituencyCountEstRural, estMat=constituencyCountMatRural)
+    prevalenceScoresRural = getScores(aggregatedTruth$pRural[hasRuralPopulation,1], est=constituencyPrevalenceEstRural[hasRuralPopulation], estMat=constituencyPrevalenceMatRural[hasRuralPopulation,])
+    countScoresRural = getScores(aggregatedTruth$ZRural[,1], est=constituencyCountEstRural, estMat=constituencyCountMatRural)
     
     list(prevalenceScores=prevalenceScores, countScores=countScores, relativePrevalenceScores=relativePrevalenceScores, 
          prevalenceScoresUrban=prevalenceScoresUrban, countScoresUrban=countScoresUrban, 
          prevalenceScoresRural=prevalenceScoresRural, countScoresRural=countScoresRural)
   }
   
+  prevalenceScoreslcpb = c()
+  prevalenceScoresLcpb = c()
+  prevalenceScoresLCpb = c()
+  prevalenceScoresLCPb = c()
+  prevalenceScoresLCPB = c()
+  countScoreslcpb = c()
+  countScoresLcpb = c()
+  countScoresLCpb = c()
+  countScoresLCPb = c()
+  countScoresLCPB = c()
+  relativePrevalenceScoreslcpb = c()
+  relativePrevalenceScoresLcpb = c()
+  relativePrevalenceScoresLCpb = c()
+  relativePrevalenceScoresLCPb = c()
+  relativePrevalenceScoresLCPB = c()
+  
+  prevalenceScoresUrbanlcpb = c()
+  prevalenceScoresUrbanLcpb = c()
+  prevalenceScoresUrbanLCpb = c()
+  prevalenceScoresUrbanLCPb = c()
+  prevalenceScoresUrbanLCPB = c()
+  countScoresUrbanlcpb = c()
+  countScoresUrbanLcpb = c()
+  countScoresUrbanLCpb = c()
+  countScoresUrbanLCPb = c()
+  countScoresUrbanLCPB = c()
+  prevalenceScoresRurallcpb = c()
+  prevalenceScoresRuralLcpb = c()
+  prevalenceScoresRuralLCpb = c()
+  prevalenceScoresRuralLCPb = c()
+  prevalenceScoresRuralLCPB = c()
+  countScoresRurallcpb = c()
+  countScoresRuralLcpb = c()
+  countScoresRuralLCpb = c()
+  countScoresRuralLCPb = c()
+  countScoresRuralLCPB = c()
   for(thisSurveyI in surveyI) {
     browser()
     # load the predictions for this survey
