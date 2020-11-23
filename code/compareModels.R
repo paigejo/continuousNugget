@@ -2475,10 +2475,11 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
     # make sure prevalence and relative prevalence only defined when there is both urban and rural population
     hasUrbanPopulation = poppcon$popUrb != 0
     hasRuralPopulation = poppcon$popRur != 0
-    definedRelativePrevalence = hasUrbanPopulation & hasRuralPopulation
+    definedRelativePrevalence = hasUrbanPopulation & hasRuralPopulation & (aggregatedTruth$pRural[,1] != 0)
     hasUrbanPopulationSamples = aggregationResults$NUrban != 0
     hasRuralPopulationSamples = aggregationResults$NRural != 0
-    definedRelativePrevalenceSamples = hasUrbanPopulationSamples & hasRuralPopulationSamples
+    hasFiniteRelativePrevalenceSamples = aggregationResults$ZRural != 0
+    definedRelativePrevalenceSamples = hasUrbanPopulationSamples & hasRuralPopulationSamples & hasFiniteRelativePrevalenceSamples
     
     constituencyRelativePrevalenceMat[!definedRelativePrevalenceSamples] = NA
     
@@ -2509,17 +2510,17 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
     
     ## Calculate scoring rules
     # overall
-    prevalenceScores = getScores(aggregatedTruth$p[,1], est=constituencyPrevalenceEst, estMat=constituencyPrevalenceMat)
-    countScores = getScores(aggregatedTruth$Z[,1], est=constituencyCountEst, estMat=constituencyCountMat)
-    relativePrevalenceScores = getScores((aggregatedTruth$pUrban[,1]/aggregatedTruth$pRural[,1])[definedRelativePrevalence], est=constituencyRelativePrevalenceEst[definedRelativePrevalence], estMat=constituencyRelativePrevalenceMat[definedRelativePrevalence,])
+    prevalenceScores = getScores(aggregatedTruth$p[,1], est=constituencyPrevalenceEst, estMat=constituencyPrevalenceMat, doRandomReject=TRUE)
+    countScores = getScores(aggregatedTruth$Z[,1], est=constituencyCountEst, estMat=constituencyCountMat, doRandomReject=TRUE)
+    relativePrevalenceScores = getScores((aggregatedTruth$pUrban[,1]/aggregatedTruth$pRural[,1])[definedRelativePrevalence], est=constituencyRelativePrevalenceEst[definedRelativePrevalence], estMat=constituencyRelativePrevalenceMat[definedRelativePrevalence,], doRandomReject=TRUE)
     
     # urban
-    prevalenceScoresUrban = getScores(aggregatedTruth$pUrban[hasUrbanPopulation,1], est=constituencyPrevalenceEstUrban[hasUrbanPopulation], estMat=constituencyPrevalenceMatUrban[hasUrbanPopulation,])
-    countScoresUrban = getScores(aggregatedTruth$ZUrban[,1], est=constituencyCountEstUrban, estMat=constituencyCountMatUrban)
+    prevalenceScoresUrban = getScores(aggregatedTruth$pUrban[hasUrbanPopulation,1], est=constituencyPrevalenceEstUrban[hasUrbanPopulation], estMat=constituencyPrevalenceMatUrban[hasUrbanPopulation,], doRandomReject=TRUE)
+    countScoresUrban = getScores(aggregatedTruth$ZUrban[,1], est=constituencyCountEstUrban, estMat=constituencyCountMatUrban, doRandomReject=TRUE)
     
     # rural
-    prevalenceScoresRural = getScores(aggregatedTruth$pRural[hasRuralPopulation,1], est=constituencyPrevalenceEstRural[hasRuralPopulation], estMat=constituencyPrevalenceMatRural[hasRuralPopulation,])
-    countScoresRural = getScores(aggregatedTruth$ZRural[,1], est=constituencyCountEstRural, estMat=constituencyCountMatRural)
+    prevalenceScoresRural = getScores(aggregatedTruth$pRural[hasRuralPopulation,1], est=constituencyPrevalenceEstRural[hasRuralPopulation], estMat=constituencyPrevalenceMatRural[hasRuralPopulation,], doRandomReject=TRUE)
+    countScoresRural = getScores(aggregatedTruth$ZRural[,1], est=constituencyCountEstRural, estMat=constituencyCountMatRural, doRandomReject=TRUE)
     
     list(prevalenceScores=prevalenceScores, countScores=countScores, relativePrevalenceScores=relativePrevalenceScores, 
          prevalenceScoresUrban=prevalenceScoresUrban, countScoresUrban=countScoresUrban, 
@@ -2633,7 +2634,7 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
   countScoresRurallcpb = colMeans(countScoresRurallcpb)
   allScoreslcpb = list(prevalenceScores=prevalenceScoreslcpb, countScores=countScoreslcpb, relativePrevalenceScores=relativePrevalenceScoreslcpb, 
                        prevalenceScoresUrban=prevalenceScoresUrbanlcpb, countScoresUrban=countScoresUrbanlcpb, 
-                       countScoresRural=countScoresRurallcpb, countScoresRural=countScoresRurallcpb)
+                       prevalenceScoresRural=prevalenceScoresRurallcpb, countScoresRural=countScoresRurallcpb)
   
   # Lcpb
   prevalenceScoresLcpb = colMeans(prevalenceScoresLcpb)
@@ -2645,7 +2646,7 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
   countScoresRuralLcpb = colMeans(countScoresRuralLcpb)
   allScoresLcpb = list(prevalenceScores=prevalenceScoresLcpb, countScores=countScoresLcpb, relativePrevalenceScores=relativePrevalenceScoresLcpb, 
                        prevalenceScoresUrban=prevalenceScoresUrbanLcpb, countScoresUrban=countScoresUrbanLcpb, 
-                       countScoresRural=countScoresRuralLcpb, countScoresRural=countScoresRuralLcpb)
+                       prevalenceScoresRural=prevalenceScoresRuralLcpb, countScoresRural=countScoresRuralLcpb)
   
   # LCpb
   prevalenceScoresLCpb = colMeans(prevalenceScoresLCpb)
@@ -2657,7 +2658,7 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
   countScoresRuralLCpb = colMeans(countScoresRuralLCpb)
   allScoresLCpb = list(prevalenceScores=prevalenceScoresLCpb, countScores=countScoresLCpb, relativePrevalenceScores=relativePrevalenceScoresLCpb, 
                        prevalenceScoresUrban=prevalenceScoresUrbanLCpb, countScoresUrban=countScoresUrbanLCpb, 
-                       countScoresRural=countScoresRuralLCpb, countScoresRural=countScoresRuralLCpb)
+                       prevalenceScoresRural=prevalenceScoresRuralLCpb, countScoresRural=countScoresRuralLCpb)
   
   # LCPb
   prevalenceScoresLCPb = colMeans(prevalenceScoresLCPb)
@@ -2669,7 +2670,7 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
   countScoresRuralLCPb = colMeans(countScoresRuralLCPb)
   allScoresLCPb = list(prevalenceScores=prevalenceScoresLCPb, countScores=countScoresLCPb, relativePrevalenceScores=relativePrevalenceScoresLCPb, 
                        prevalenceScoresUrban=prevalenceScoresUrbanLCPb, countScoresUrban=countScoresUrbanLCPb, 
-                       countScoresRural=countScoresRuralLCPb, countScoresRural=countScoresRuralLCPb)
+                       prevalenceScoresRural=prevalenceScoresRuralLCPb, countScoresRural=countScoresRuralLCPb)
   
   # LCPB
   prevalenceScoresLCPB = colMeans(prevalenceScoresLCPB)
@@ -2681,7 +2682,7 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
   countScoresRuralLCPB = colMeans(countScoresRuralLCPB)
   allScoresLCPB = list(prevalenceScores=prevalenceScoresLCPB, countScores=countScoresLCPB, relativePrevalenceScores=relativePrevalenceScoresLCPB, 
                        prevalenceScoresUrban=prevalenceScoresUrbanLCPB, countScoresUrban=countScoresUrbanLCPB, 
-                       countScoresRural=countScoresRuralLCPB, countScoresRural=countScoresRuralLCPB)
+                       prevalenceScoresRural=prevalenceScoresRuralLCPB, countScoresRural=countScoresRuralLCPB)
   
   ## Save results
   fileName = paste0("savedOutput/simStudyResults/scoresLCPB_", dataID, "repSamp", representativeSampling, ".RData")
