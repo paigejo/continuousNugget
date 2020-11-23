@@ -2476,12 +2476,12 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
     hasUrbanPopulation = poppcon$popUrb != 0
     hasRuralPopulation = poppcon$popRur != 0
     definedRelativePrevalence = hasUrbanPopulation & hasRuralPopulation & (aggregatedTruth$pRural[,1] != 0)
-    hasUrbanPopulationSamples = meanAggregationResults$NUrban != 0
-    hasRuralPopulationSamples = meanAggregationResults$NRural != 0
+    hasUrbanPopulationSamples = aggregationResults$NUrban != 0
+    hasRuralPopulationSamples = aggregationResults$NRural != 0
     hasFiniteRelativePrevalenceSamples = aggregationResults$ZRural != 0
     definedRelativePrevalenceSamples = hasUrbanPopulationSamples & hasRuralPopulationSamples & hasFiniteRelativePrevalenceSamples
     
-    constituencyPrevalenceMat[meanAggregationResults$N == 0] = NA
+    constituencyPrevalenceMat[aggregationResults$N == 0] = NA
     constituencyRelativePrevalenceMat[!definedRelativePrevalenceSamples] = NA
     
     # get central estimates
@@ -2494,7 +2494,7 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
     constituencyCountMatUrban = aggregationResults$ZUrban
     
     # make sure urban prevalence only defined when there is an urban population
-    constituencyPrevalenceMatUrban[!hasUrbanPopulationSamples | meanAggregationResults$NUrban == 0] = NA
+    constituencyPrevalenceMatUrban[!hasUrbanPopulationSamples | aggregationResults$NUrban == 0] = NA
     
     constituencyPrevalenceEstUrban = rowMeans(meanAggregationResults$pUrban, na.rm=TRUE)
     constituencyCountEstUrban = rowMeans(meanAggregationResults$ZUrban)
@@ -2504,7 +2504,7 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
     constituencyCountMatRural = aggregationResults$ZRural
     
     # make sure rural prevalence only defined when there is an urban population
-    constituencyPrevalenceMatRural[!hasRuralPopulationSamples | meanAggregationResults$NRural == 0] = NA
+    constituencyPrevalenceMatRural[!hasRuralPopulationSamples | aAggregationResults$NRural == 0] = NA
     
     constituencyPrevalenceEstRural = rowMeans(meanAggregationResults$pRural, na.rm=TRUE)
     constituencyCountEstRural = rowMeans(meanAggregationResults$ZRural)
