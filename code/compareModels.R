@@ -2565,7 +2565,7 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
   countScoresRuralLCPb = c()
   countScoresRuralLCPB = c()
   for(thisSurveyI in surveyI) {
-    browser()
+    
     # load the predictions for this survey
     fileName = paste0("savedOutput/simStudyResults/resLCPB_", dataID, "repSamp", representativeSampling, "surveyI", thisSurveyI, "Of", maxDataSets, ".RData")
     out = load(fileName)
