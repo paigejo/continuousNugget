@@ -2504,7 +2504,7 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
     constituencyCountMatRural = aggregationResults$ZRural
     
     # make sure rural prevalence only defined when there is an urban population
-    constituencyPrevalenceMatRural[!hasRuralPopulationSamples | aAggregationResults$NRural == 0] = NA
+    constituencyPrevalenceMatRural[!hasRuralPopulationSamples | aggregationResults$NRural == 0] = NA
     
     constituencyPrevalenceEstRural = rowMeans(meanAggregationResults$pRural, na.rm=TRUE)
     constituencyCountEstRural = rowMeans(meanAggregationResults$ZRural)
