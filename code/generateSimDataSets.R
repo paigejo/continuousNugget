@@ -111,7 +111,7 @@ generateSimDataSets = function(nsim=10, rho=0.243, sigmaEpsilon=sqrt(0.463),
 generateSimDataSetsLCPB = function(nsim=10, rho=0.243, sigmaEpsilon=sqrt(0.463), 
                                gamma = 0.009, effRange = 406.51, beta0=-3.922, 
                                figureSaveDirectory="~/git/continuousNugget/figures/simDataSets/", 
-                               dataSaveDirectory="~/git/continuousNugget/savedOutput/simDataSets/", seed=123) {
+                               dataSaveDirectory="~/git/continuousNugget/savedOutput/simDataSets/", seed=1) {
   tausq = sigmaEpsilon^2
   set.seed(seed)
   
@@ -126,8 +126,8 @@ generateSimDataSetsLCPB = function(nsim=10, rho=0.243, sigmaEpsilon=sqrt(0.463),
   #                                tausq=tausq, gamma=gamma, HHoldVar=0, effRange=effRange)
   simulatedEAs = simDatLCPB(nsim=1, margVar=rho, tausq=sigmaEpsilon^2, 
                             gamma=gamma, effRange=effRange, beta0=beta0, 
-                            urbanOverSamplefrac=urbanOverSamplefrac, HHoldVar=HHoldVar, 
-                            includeUrban=TRUE, clusterLevel=TRUE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
+                            includeUrban=TRUE, clusterLevel=TRUE, pixelLevel=TRUE, 
+                            constituencyLevel=TRUE, countyLevel=TRUE, 
                             regionLevel=TRUE, nationalLevel=TRUE, 
                             doLcpb=TRUE, doLCpb=TRUE, doLCPb=TRUE, 
                             ensureAtLeast1PerConstituency=TRUE)
@@ -230,10 +230,10 @@ generateAllDataSets = function() {
   # generateSimDataSets(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9)
   # generateSimDataSets(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
   # generateSimDataSets(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
-  # generateSimDataSetsLCPB(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-2.9)
+  generateSimDataSetsLCPB(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-2.9)
   generateSimDataSetsLCPB(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9)
-  # generateSimDataSetsLCPB(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
-  # generateSimDataSetsLCPB(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
+  generateSimDataSetsLCPB(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
+  generateSimDataSetsLCPB(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
 }
 
 # simulate and save datasets used for the simulation study with the given model parameters

@@ -3333,7 +3333,8 @@ resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilo
                                        includeUrban=TRUE, clusterLevel=FALSE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
                                        regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=FALSE, 
                                        onlyDoModifiedPixelLevel=FALSE, 
-                                       doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE, urbanEffectDraws=resultsSPDE$fixedEffectDraws[2,]))[3]
+                                       doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE, urbanEffectDraws=resultsSPDE$fixedEffectDraws[2,], 
+                                       ensureAtLeast1PerConstituency=TRUE))[3]
   # browser()
   # get scores?
   

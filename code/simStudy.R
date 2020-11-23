@@ -1347,7 +1347,8 @@ simDatLCPB = function(nsim=1, margVar=0.243, tausq=0.463,
                       urbanOverSamplefrac=0, seed=NULL, 
                       fullEADat=NULL, HHoldVar=0, nHHSampled=25, 
                       easpa=NULL, popMat=NULL, adjustedPopMat=NULL, 
-                      includeUrban=TRUE, clusterLevel=TRUE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
+                      includeUrban=TRUE, clusterLevel=TRUE, pixelLevel=TRUE, 
+                      constituencyLevel=TRUE, countyLevel=TRUE, 
                       regionLevel=TRUE, nationalLevel=TRUE, 
                       doLcpb=TRUE, doLCpb=TRUE, doLCPb=TRUE, constituencyPop=poppcon, 
                       ensureAtLeast1PerConstituency=TRUE, clustDat=NULL) {
@@ -1422,7 +1423,7 @@ simDatLCPB = function(nsim=1, margVar=0.243, tausq=0.463,
                     constituencyLevel=constituencyLevel, countyLevel=countyLevel, 
                     regionLevel=regionLevel, nationalLevel=nationalLevel, doModifiedPixelLevel=FALSE, 
                     doLcpb=doLcpb, doLCpb=doLCpb, doLCPb=doLCPb, constituencyPop=poppcon, 
-                    ensureAtLeast1PerConstituency=TRUE, urbanEffect=gamma, 
+                    ensureAtLeast1PerConstituency=ensureAtLeast1PerConstituency, urbanEffect=gamma, 
                     returnEAinfo=TRUE, epsc=cbind(epsc, epsc))
   eaDat = outLCPB$eaDat
   
