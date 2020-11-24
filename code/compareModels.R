@@ -2443,7 +2443,7 @@ compareMixtureModeling = function(sigma2=.1^2, n=900, seed=1, nSamples=100, work
   dev.off()
 }
 
-compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), 
+compareModelsSimulationStudy = function(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), 
                                         effRange=400, beta0=-3.9, representativeSampling=FALSE, 
                                         maxDataSets=10, surveyI = 1:10) {
   
