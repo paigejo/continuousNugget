@@ -3336,11 +3336,18 @@ resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilo
                                        doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE, urbanEffectDraws=resultsSPDE$fixedEffectDraws[2,], 
                                        ensureAtLeast1PerConstituency=TRUE))[3]
   # browser()
-  # get scores?
+  # get relevant SPDE components
+  sigmaEpsilonDraws = resultsSPDE$sigmaEpsilonDraws
+  urbanEffectDraws=resultsSPDE$fixedEffectDraws[2,]
+  interceptDraws = urbanEffectDraws=resultsSPDE$fixedEffectDraws[1,]
+  parameterSummaryTable = resultsSPDE$parameterSummaryTable
   
   # save results
   fileName = paste0("savedOutput/simStudyResults/resLCPB_", dataID, "repSamp", representativeSampling, "surveyI", surveyI, "Of", maxDataSets, ".RData")
-  save(agg, timeSPDE, timeAllAgg, file=fileName)
+  save(agg, timeSPDE, timeAllAgg, 
+       sigmaEpsilonDraws, urbanEffectDraws, interceptDraws, 
+       parameterSummaryTable, 
+       file=fileName)
   
   agg
 }

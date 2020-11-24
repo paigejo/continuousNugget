@@ -2564,6 +2564,8 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
   countScoresRuralLCpb = c()
   countScoresRuralLCPb = c()
   countScoresRuralLCPB = c()
+  
+  parameterSummaryArray = c()
   for(thisSurveyI in surveyI) {
     
     # load the predictions for this survey
@@ -2622,6 +2624,9 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
     countScoresUrbanLCPB = rbind(countScoresUrbanLCPB, scoresLCPB$countScoresUrban)
     prevalenceScoresRuralLCPB = rbind(prevalenceScoresRuralLCPB, scoresLCPB$prevalenceScoresRural)
     countScoresRuralLCPB = rbind(countScoresRuralLCPB, scoresLCPB$countScoresRural)
+    
+    # parameter summaries
+    parameterSummaryArray = abind(parameterSummaryArray, parameterSummaryTable, along=3)
   }
   
   ## average scoring rules for each model
@@ -2685,9 +2690,14 @@ compareModelsSimulationStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(
                        prevalenceScoresUrban=prevalenceScoresUrbanLCPB, countScoresUrban=countScoresUrbanLCPB, 
                        prevalenceScoresRural=prevalenceScoresRuralLCPB, countScoresRural=countScoresRuralLCPB)
   
+  # parameter summaries
+  parameterSummaryArray = apply(parameterSummaryArray, c(1, 2), mean, na.rm=TRUE)
+  
   ## Save results
   fileName = paste0("savedOutput/simStudyResults/scoresLCPB_", dataID, "repSamp", representativeSampling, ".RData")
-  out = save(allScoreslcpb, allScoresLcpb, allScoresLCpb, allScoresLCPb, allScoresLCPB, file=fileName)
+  out = save(allScoreslcpb, allScoresLcpb, allScoresLCpb, 
+             allScoresLCPb, allScoresLCPB, parameterSummaryArray, 
+             file=fileName)
 }
 
 
