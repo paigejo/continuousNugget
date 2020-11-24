@@ -118,7 +118,7 @@ generateSimPopulationsLCPB = function(nsim=10, rho=0.243, sigmaEpsilon=sqrt(0.46
 # HHoldVar: household effect variance
 # effRange: spatial range
 # urbanOverSamplefrac: the proportion with which to inflate the amount of urban samples in the surveys
-generateSimDataSetsLCPB = function(nsim=10, rho=0.1111111, sigmaEpsilon=sqrt(1/2.5), 
+generateSimDataSetsLCPB = function(nsim=10, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), 
                                gamma=-1, effRange = 400, beta0=-2.9, 
                                figureSaveDirectory="~/git/continuousNugget/figures/simDataSets/", 
                                dataSaveDirectory="~/git/continuousNugget/savedOutput/simDataSets/", 
