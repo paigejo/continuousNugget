@@ -582,8 +582,8 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     # load shape files for plotting
     require(maptools)
     # regionMap = readShapePoly("../U5MR/mapData/kenya_region_shapefile/kenya_region_shapefile.shp", delete_null_obj=TRUE, force_ring=TRUE, repair=TRUE)
-    out = load("../LK-INLA/regionMap.RData")
-    out = load("../U5MR/adminMapData.RData")
+    # out = load("../LK-INLA/regionMap.RData")
+    # out = load("../U5MR/adminMapData.RData")
     kenyaMap = adm0
     countyMap = adm1
     
@@ -1152,8 +1152,8 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
       # load shape files for plotting
       require(maptools)
       # regionMap = readShapePoly("../U5MR/mapData/kenya_region_shapefile/kenya_region_shapefile.shp", delete_null_obj=TRUE, force_ring=TRUE, repair=TRUE)
-      out = load("../LK-INLA/regionMap.RData")
-      out = load("../U5MR/adminMapData.RData")
+      # out = load("../LK-INLA/regionMap.RData")
+      # out = load("../U5MR/adminMapData.RData")
       kenyaMap = adm0
       countyMap = adm1
       
@@ -3292,7 +3292,8 @@ sampleNPoissonMultinomialFixed = function(clustersPerPixel, nDraws=ncol(pixelInd
 #   argument specifying the dataset type
 resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), 
                             effRange=400, beta0=-2.9, surveyI=1, 
-                            maxDataSets=NULL, seed=surveyI, representativeSampling=TRUE) {
+                            maxDataSets=NULL, seed=surveyI, representativeSampling=FALSE, 
+                            fitRiskModel=FALSE) {
   # make strings representing the simulation parameters
   dataID = paste0("Beta", round(beta0, 4), "rho", round(rho, 4), "sigmaEps", 
                   round(sigmaEpsilon, 4), "gamma", round(gamma, 4))
@@ -3319,33 +3320,76 @@ resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilo
   thiseaspa = makeEASPAFromEADat(eaDat)
   
   # generate results for the specified data sets and return results (TODO: otherVariableNames)
-  timeSPDE = system.time(resultsSPDE <- fitSPDEKenyaDat(dat=thisData, dataType=c("mort", "ed"), 
-                                                       significanceCI=.8, 
-                                                       nPostSamples=1000, verbose=TRUE, seed=seed, 
-                                                       urbanEffect=TRUE, clusterEffect=TRUE, 
-                                                       leaveOutRegionName=NULL, doValidation=FALSE))[3]
-  # resultsSPDE = fitModelToDataSets(fitSPDE, dataSets, randomSeeds=randomSeeds, otherArgs=list(mesh=mesh), 
-  #                                  maxDataSets=maxDataSets)
+  if(fitRiskModel) {
+    timeSPDE = system.time(resultsSPDE <- fitSPDEKenyaDat(dat=thisData, dataType=c("mort", "ed"), 
+                                                          significanceCI=.8, 
+                                                          nPostSamples=1000, verbose=TRUE, seed=seed, 
+                                                          urbanEffect=TRUE, clusterEffect=TRUE, 
+                                                          leaveOutRegionName=NULL, doValidation=FALSE))[3]
+    # resultsSPDE = fitModelToDataSets(fitSPDE, dataSets, randomSeeds=randomSeeds, otherArgs=list(mesh=mesh), 
+    #                                  maxDataSets=maxDataSets)
+    
+    # get relevant SPDE components
+    uDraws = resultsSPDE$uDraws
+    sigmaEpsilonDraws = resultsSPDE$sigmaEpsilonDraws
+    urbanEffectDraws=resultsSPDE$fixedEffectDraws[2,]
+    interceptDraws = urbanEffectDraws=resultsSPDE$fixedEffectDraws[1,]
+    parameterSummaryTable = resultsSPDE$parameterSummaryTable
+    fixedEffectSummary = resultsSPDE$fixedEffectSummary[,c(1:2, 4, 3, 5)]
+    rangeSummary = resultsSPDE$rangeSummary
+    parameterSummaryTable = rbind(as.matrix(fixedEffectSummary), 
+                                  as.matrix(parameterSummaryTable))
+  } else {
+    startTime = proc.time()[3]
+    
+    # generate SPDE simulations
+    pixelCoords = cbind(popGrid$east, popGrid$north)
+    margVar = rho
+    if(margVar != 0) {
+      SPDEArgs = list(coords=pixelCoords, nsim=1000, margVar=margVar, effRange=effRange, kenya=TRUE)
+      uDraws = do.call("simSPDE", SPDEArgs)
+    } else {
+      uDraws = matrix(rep(0, nrow(eaCoords)), ncol=1)
+    }
+    
+    # add in intercept
+    uDraws = uDraws + beta0
+    
+    # add in urban effect
+    uDraws = sweep(uDraws, 1, gamma*popGrid$urban, "+")
+    
+    urbanEffectDraws = rep(gamma, 1000)
+    sigmaEpsilonDraws = rep(sigmaEpsilon, 1000)
+    parameterSummaryTable = rbind(c(beta0, 0, beta0, beta0, beta0), 
+                                  c(gamma, 0, gamma, gamma, gamma), 
+                                  c(rho+sigmaEpsilon^2, 0, rho+sigmaEpsilon^2, rho+sigmaEpsilon^2, rho+sigmaEpsilon^2), 
+                                  c(rho, 0, rho, rho, rho), 
+                                  c(sigmaEpsilon^2, 0, sigmaEpsilon^2, sigmaEpsilon^2, sigmaEpsilon^2), 
+                                  c(sqrt(rho+sigmaEpsilon^2), 0, sqrt(rho+sigmaEpsilon^2), sqrt(rho+sigmaEpsilon^2), sqrt(rho+sigmaEpsilon^2)), 
+                                  c(sqrt(rho), 0, sqrt(rho), sqrt(rho), sqrt(rho)), 
+                                  c(sigmaEpsilon, 0, sigmaEpsilon, sigmaEpsilon, sigmaEpsilon), 
+                                  c(effRange, 0, effRange, effRange, effRange))
+    rownames(parameterSummaryTable) = c("Intercept", "urbanEffect", "totalVar", "spatialVar", "errorVar", 
+                                        "totalSD", "spatialSD", "errorSD", "spatialRange")
+    colnames(parameterSummaryTable) = c("Est", "SD", "Qlower", "Q50", "Qupper")
+    
+    timeSPDE = proc.time()[3] - startTime
+  }
+  
+  browser()
   
   # aggregate predictions of the SPDE model
-  
-  timeAllAgg = system.time(agg <- modLCPB(uDraws=resultsSPDE$uDraws, resultsSPDE$sigmaEpsilonDraws, easpa=thiseaspa, 
+  timeAllAgg = system.time(agg <- modLCPB(uDraws=uDraws, sigmaEpsilonDraws, easpa=thiseaspa, 
                                        includeUrban=TRUE, clusterLevel=FALSE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
                                        regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=FALSE, 
                                        onlyDoModifiedPixelLevel=FALSE, 
-                                       doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE, urbanEffectDraws=resultsSPDE$fixedEffectDraws[2,], 
+                                       doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE, urbanEffectDraws=urbanEffectDraws, 
                                        ensureAtLeast1PerConstituency=TRUE))[3]
   # browser()
-  # get relevant SPDE components
-  sigmaEpsilonDraws = resultsSPDE$sigmaEpsilonDraws
-  urbanEffectDraws=resultsSPDE$fixedEffectDraws[2,]
-  interceptDraws = urbanEffectDraws=resultsSPDE$fixedEffectDraws[1,]
-  parameterSummaryTable = resultsSPDE$parameterSummaryTable
   
   # save results
   fileName = paste0("savedOutput/simStudyResults/resLCPB_", dataID, "repSamp", representativeSampling, "surveyI", surveyI, "Of", maxDataSets, ".RData")
   save(agg, timeSPDE, timeAllAgg, 
-       sigmaEpsilonDraws, urbanEffectDraws, interceptDraws, 
        parameterSummaryTable, 
        file=fileName)
   
