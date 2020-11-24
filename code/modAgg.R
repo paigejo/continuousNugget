@@ -3376,15 +3376,15 @@ resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilo
     timeSPDE = proc.time()[3] - startTime
   }
   
-  browser()
+  # browser()
   
   # aggregate predictions of the SPDE model
   timeAllAgg = system.time(agg <- modLCPB(uDraws=uDraws, sigmaEpsilonDraws, easpa=thiseaspa, 
-                                       includeUrban=TRUE, clusterLevel=FALSE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
-                                       regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=FALSE, 
-                                       onlyDoModifiedPixelLevel=FALSE, 
-                                       doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE, urbanEffectDraws=urbanEffectDraws, 
-                                       ensureAtLeast1PerConstituency=TRUE))[3]
+                                          includeUrban=TRUE, clusterLevel=FALSE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
+                                          regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=FALSE, 
+                                          onlyDoModifiedPixelLevel=FALSE, 
+                                          doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE, urbanEffectDraws=urbanEffectDraws, 
+                                          ensureAtLeast1PerConstituency=TRUE))[3]
   # browser()
   
   # save results
