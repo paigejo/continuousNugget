@@ -19,6 +19,7 @@ library(data.table)
 library(sampling)
 library(haven)
 library(survey)
+library(abind)
 # library(Rcpp)
 
 codeDirectory <<- "~/git/continuousNugget/code/"
