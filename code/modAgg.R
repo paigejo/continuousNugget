@@ -3318,7 +3318,7 @@ resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilo
   # get this data set and population frame
   thisData = clustDat[[surveyI]]
   thiseaspa = makeEASPAFromEADat(eaDat)
-  
+  browser()
   # generate results for the specified data sets and return results (TODO: otherVariableNames)
   if(fitRiskModel) {
     timeSPDE = system.time(resultsSPDE <- fitSPDEKenyaDat(dat=thisData, dataType=c("mort", "ed"), 

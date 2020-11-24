@@ -95,6 +95,16 @@ generateSimDataSets = function(nsim=10, rho=0.243, sigmaEpsilon=sqrt(0.463),
   invisible(NULL)
 }
 
+generateSimPopulationsLCPB = function(nsim=10, rho=0.243, sigmaEpsilon=sqrt(0.463), 
+                                      gamma = 0.009, effRange = 406.51, beta0=-3.922, 
+                                      figureSaveDirectory="~/git/continuousNugget/figures/simDataSets/", 
+                                      dataSaveDirectory="~/git/continuousNugget/savedOutput/simDataSets/", 
+                                      seed=1) {
+  set.seed(seed)
+  
+  
+}
+
 # simulate and save datasets used for the simulation study with the given model parameters from LCPB model
 # NOTE: paired with the dataset using the passed parameters will be another dataset from the 
 #       same model without a nugget/cluster effect
@@ -108,12 +118,15 @@ generateSimDataSets = function(nsim=10, rho=0.243, sigmaEpsilon=sqrt(0.463),
 # HHoldVar: household effect variance
 # effRange: spatial range
 # urbanOverSamplefrac: the proportion with which to inflate the amount of urban samples in the surveys
-generateSimDataSetsLCPB = function(nsim=10, rho=0.243, sigmaEpsilon=sqrt(0.463), 
-                               gamma = 0.009, effRange = 406.51, beta0=-3.922, 
+generateSimDataSetsLCPB = function(nsim=10, rho=0.1111111, sigmaEpsilon=sqrt(1/2.5), 
+                               gamma=-1, effRange = 400, beta0=-2.9, 
                                figureSaveDirectory="~/git/continuousNugget/figures/simDataSets/", 
-                               dataSaveDirectory="~/git/continuousNugget/savedOutput/simDataSets/", seed=1) {
+                               dataSaveDirectory="~/git/continuousNugget/savedOutput/simDataSets/", 
+                               seed=NULL) {
   tausq = sigmaEpsilon^2
-  set.seed(seed)
+  if(!is.null(seed)) {
+    set.seed(seed)
+  }
   
   # make strings representing the simulation with and without cluster effects
   dataID = paste0("Beta", round(beta0, 4), "rho", round(rho, 4), "sigmaEps", 
