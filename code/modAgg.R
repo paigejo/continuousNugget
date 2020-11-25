@@ -3291,7 +3291,7 @@ sampleNPoissonMultinomialFixed = function(clustersPerPixel, nDraws=ncol(pixelInd
 # input arguments:
 #   argument specifying the dataset type
 resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), 
-                            effRange=400, beta0=-2.9, surveyI=1, 
+                            effRange=150, beta0=-2.9, surveyI=1, 
                             maxDataSets=NULL, seed=surveyI, representativeSampling=FALSE, 
                             fitRiskModel=FALSE) {
   # make strings representing the simulation parameters
