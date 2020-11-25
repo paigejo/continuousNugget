@@ -4,7 +4,7 @@
 # make the command arguments file for resultsLCPB
 # TODO: add in seeds
 getSPDE_LCPBCommandArgs = function(gamma=c(-1, 0), rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), 
-                                   effRange=400, beta0=c(-3.9, 0), surveyI=1:10, representativeSampling=c(TRUE, FALSE)) {
+                                   effRange=150, beta0=c(-3.9, 0), surveyI=1:10, representativeSampling=c(TRUE, FALSE)) {
   
   spde_lcpbCommandArgs = list()
   i = 1

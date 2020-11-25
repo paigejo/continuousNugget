@@ -3293,7 +3293,7 @@ sampleNPoissonMultinomialFixed = function(clustersPerPixel, nDraws=ncol(pixelInd
 resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), 
                             effRange=150, beta0=-2.9, surveyI=1, 
                             maxDataSets=NULL, seed=surveyI, representativeSampling=FALSE, 
-                            fitRiskModel=FALSE) {
+                            fitRiskModel=TRUE) {
   # make strings representing the simulation parameters
   dataID = paste0("Beta", round(beta0, 4), "rho", round(rho, 4), "sigmaEps", 
                   round(sigmaEpsilon, 4), "gamma", round(gamma, 4))
