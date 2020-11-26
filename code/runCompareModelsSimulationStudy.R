@@ -3,4 +3,5 @@ source("setup.R")
 index = as.numeric(commandArgs(trailingOnly = TRUE))
 load("savedOutput/simStudyResults/spde_lcpbSimStudyCommandArgs.RData")
 argList = spde_lcpbSimStudyCommandArgs[[index]]
-invisible(do.call("compareModelsSimulationStudy", argList))
+# invisible(do.call("compareModelsSimulationStudy", argList))
+invisible(do.call("testCompareModelsSimulationStudy", argList))

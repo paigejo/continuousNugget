@@ -7,7 +7,7 @@
 #       and median effective range equal to a fifth of the spatial range 
 # or use inla.spde2.pcmatern (possibly allow (1/4,4) variance here rather than (1/2,2))
 # U and alpha are the threshold and probability of crossing the threshold for the variance prior
-getSPDEPrior = function(mesh, U=1, alpha=0.01, medianRange=NULL) {
+getSPDEPrior = function(mesh, U=1, alpha=0.05, medianRange=NULL) {
   size <- min(c(diff(range(mesh$loc[, 1])), diff(range(mesh$loc[, 2])))) # 1444.772
   # sigma0=1
   # range0 <- size/5
@@ -69,7 +69,8 @@ fitSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
                            nPostSamples=1000, verbose=TRUE, link=1, seed=123, 
                            urbanEffect=TRUE, clusterEffect=TRUE, 
                            leaveOutRegionName=NULL, kmres=5, doValidation=FALSE, previousFit=NULL, 
-                           family=c("binomial", "betabinomial"), leaveOutI=NULL) {
+                           family=c("binomial", "betabinomial"), leaveOutI=NULL, 
+                           improperCovariatePrior=TRUE) {
   # load observations
   family = match.arg(family)
   dataType = match.arg(dataType)
@@ -139,7 +140,7 @@ fitSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
             mesh, prior, 
             significanceCI, int.strategy, strategy, 
             nPostSamples, verbose, link, seed, 
-            family, obsNs, clusterEffect, predClusterI, doValidation, previousFit), 
+            family, obsNs, clusterEffect, predClusterI, doValidation, previousFit, improperCovariatePrior=improperCovariatePrior), 
     list(obsCoords=obsCoords, obsValues=obsValues, xObs=xObs, xPred=xPred, obsNs=obsNs, obsUrban=obsUrban, 
          predPts=predPts, predClusterI=predClusterI, kmres=kmres)
     )
@@ -571,7 +572,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                    significanceCI=.8, int.strategy="grid", strategy="laplace", 
                    nPostSamples=1000, verbose=TRUE, link=1, seed=NULL, 
                    family=c("normal", "binomial", "betabinomial"), obsNs=rep(1, length(obsValues)), clusterEffect=TRUE, 
-                   predClusterI=rep(TRUE, nrow(predCoords)), doValidation=FALSE, previousFit=NULL) {
+                   predClusterI=rep(TRUE, nrow(predCoords)), doValidation=FALSE, previousFit=NULL, improperCovariatePrior=TRUE) {
   family = match.arg(family)
   startTime = proc.time()[3]
   if(!is.null(seed))
@@ -676,9 +677,16 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
     modeControl$restart = TRUE
   }
   
+  # fixed effects priors: are they improper or not?
+  allQuantiles = c(0.5, (1-significanceCI) / 2, 1 - (1-significanceCI) / 2)
+  if(improperCovariatePrior) {
+    controlFixed=list(quantiles=allQuantiles, mean=0, prec=0)
+  } else {
+    controlFixed=list(quantiles=allQuantiles)
+  }
+  
   stack.full = stack.est
   stackDat = inla.stack.data(stack.full, spde=prior)
-  allQuantiles = c(0.5, (1-significanceCI) / 2, 1 - (1-significanceCI) / 2)
   
   # see: inla.doc("loggamma")
   # shape=.1, scale=10 for unit mean, variance 100 prior
@@ -691,7 +699,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                  family=family, verbose=verbose, control.inla=control.inla, 
                  control.compute=list(config=TRUE, cpo=doValidation, dic=doValidation, waic=doValidation), 
                  control.mode=modeControl, 
-                 control.fixed=list(quantiles=allQuantiles), 
+                 control.fixed=controlFixed, 
                  control.family=list(hyper = list(prec = list(prior="loggamma", param=c(0.1,0.1)))))
     } else {
       mod = inla(y ~ - 1 + f(field, model=prior), 
@@ -700,11 +708,11 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                  family=family, verbose=verbose, control.inla=control.inla, 
                  control.compute=list(config=TRUE, cpo=doValidation, dic=doValidation, waic=doValidation), 
                  control.mode=modeControl, 
-                 control.fixed=list(quantiles=allQuantiles), 
+                 control.fixed=controlFixed, 
                  control.family=list(hyper = list(prec = list(prior="loggamma", param=c(0.1,0.1)))))
     }
   } else if(family == "binomial" || family == "betabinomial") {
-    clusterList = list(param=c(1, 0.01), prior="pc.prec")
+    clusterList = list(param=c(1, 0.05), prior="pc.prec")
     if(!is.null(xObs) && clusterEffect) {
       mod = inla(y ~ - 1 + X + f(field, model=prior) + f(cluster, model="iid", hyper = list(prec = clusterList)), 
                  data = stackDat, 
@@ -712,7 +720,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                  family=family, verbose=verbose, control.inla=control.inla, 
                  control.compute=list(config=TRUE, cpo=doValidation, dic=doValidation, waic=doValidation), 
                  control.mode=modeControl, Ntrials=stackDat$Ntrials, 
-                 control.fixed=list(quantiles=allQuantiles), control.family = control.family)
+                 control.fixed=controlFixed, control.family = control.family)
     } else if(is.null(xObs) && clusterEffect) {
       mod = inla(y ~ - 1 + f(field, model=prior) + f(cluster, model="iid", hyper = list(prec = clusterList)), 
                  data = stackDat, 
@@ -720,7 +728,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                  family=family, verbose=verbose, control.inla=control.inla, 
                  control.compute=list(config=TRUE, cpo=doValidation, dic=doValidation, waic=doValidation), 
                  control.mode=modeControl, Ntrials=stackDat$Ntrials, 
-                 control.fixed=list(quantiles=allQuantiles), control.family = control.family)
+                 control.fixed=controlFixed, control.family = control.family)
     } else if(!is.null(xObs) && !clusterEffect) {
       mod = inla(y ~ - 1 + X + f(field, model=prior), 
                  data = stackDat, 
@@ -728,7 +736,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                  family=family, verbose=verbose, control.inla=control.inla, 
                  control.compute=list(config=TRUE, cpo=doValidation, dic=doValidation, waic=doValidation), 
                  control.mode=modeControl, Ntrials=stackDat$Ntrials, 
-                 control.fixed=list(quantiles=allQuantiles), control.family = control.family)
+                 control.fixed=controlFixed, control.family = control.family)
     } else if(is.null(xObs) && !clusterEffect) {
       mod = inla(y ~ - 1 + f(field, model=prior), 
                  data = stackDat, 
@@ -736,7 +744,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                  family=family, verbose=verbose, control.inla=control.inla, 
                  control.compute=list(config=TRUE, cpo=doValidation, dic=doValidation, waic=doValidation), 
                  control.mode=modeControl, Ntrials=stackDat$Ntrials, 
-                 control.fixed=list(quantiles=allQuantiles), control.family = control.family)
+                 control.fixed=controlFixed, control.family = control.family)
     }
   } else {
     stop(paste0("Unsupported family: ", family))

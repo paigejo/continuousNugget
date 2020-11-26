@@ -52,7 +52,7 @@ getSPDE_LCPBCommandArgs = function(gamma=c(-1, 0), rho=(1/3)^2, sigmaEpsilon=sqr
 
 # make the command arguments file for compareModelsSimulationStudy
 getSPDE_LCPBSimStudyCommandArgs = function(gamma=c(-1, 0), rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), 
-                                   effRange=400, beta0=c(-3.9, 0), representativeSampling=c(TRUE, FALSE)) {
+                                   effRange=150, beta0=c(-3.9, 0), representativeSampling=c(TRUE, FALSE)) {
   
   spde_lcpbSimStudyCommandArgs = list()
   i = 1

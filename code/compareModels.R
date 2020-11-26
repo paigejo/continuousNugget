@@ -2466,15 +2466,28 @@ compareModelsSimulationStudy = function(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt
   thiseaspa = makeEASPAFromEADat(eaDat)
   
   # helper function for calculating scoring rules given an aggregation model
-  getTheseScoringRules = function(aggregationResults, meanAggregationResults) {
+  getTheseScoringRules = function(aggregationResults, meanAggregationResults, 
+                                  thisLevel=c("constituency", "county", "province")) {
+    thisLevel = match.arg(thisLevel)
+    
     # overall predictive distributions
     constituencyPrevalenceMat = aggregationResults$p
     constituencyCountMat = aggregationResults$Z
     constituencyRelativePrevalenceMat = aggregationResults$pUrban / aggregationResults$pRural
     
     # make sure prevalence and relative prevalence only defined when there is both urban and rural population
-    hasUrbanPopulation = poppcon$popUrb != 0
-    hasRuralPopulation = poppcon$popRur != 0
+    if(thisLevel == "constituency") {
+      hasUrbanPopulation = poppcon$popUrb != 0
+      hasRuralPopulation = poppcon$popRur != 0
+    } else if(thisLevel == "county"){
+      sortI = sort(poppc$County, index.return=TRUE)$ix
+      hasUrbanPopulation = poppc$popUrb[sortI] != 0
+      hasRuralPopulation = poppc$popRur[sortI] != 0
+    } else if(thisLevel == "province") {
+      hasUrbanPopulation = poppr$popUrb != 0
+      hasRuralPopulation = poppr$popRur != 0
+    }
+    
     definedRelativePrevalence = hasUrbanPopulation & hasRuralPopulation & (aggregatedTruth$pRural[,1] != 0)
     hasUrbanPopulationSamples = aggregationResults$NUrban != 0
     hasRuralPopulationSamples = aggregationResults$NRural != 0
@@ -2700,4 +2713,378 @@ compareModelsSimulationStudy = function(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt
              file=fileName)
 }
 
+
+testCompareModelsSimulationStudy = function(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), 
+                                        effRange=150, beta0=-2.9, representativeSampling=FALSE, 
+                                        maxDataSets=10, surveyI = 1:10, seed=42, fitRiskModel=TRUE, 
+                                        nsim=2) {
+  
+  tausq = sigmaEpsilon^2
+  if(!is.null(seed)) {
+    set.seed(seed)
+  }
+  
+  # make strings representing the simulation with and without cluster effects
+  dataID = paste0("Beta", round(beta0, 4), "rho", round(rho, 4), "sigmaEps", 
+                  round(sigmaEpsilon, 4), "gamma", round(gamma, 4))
+  
+  # there should be 1 true population, but many simulated cluster surveys
+  # load(paste0(globalDirectory, "empiricalDistributions.RData"))
+  # simulatedEAs = simDatEmpirical(empiricalDistributions, kenyaEAs, clustDat=NULL, nsim=1, 
+  #                                beta0=beta0, margVar=rho, urbanOverSamplefrac=0, 
+  #                                tausq=tausq, gamma=gamma, HHoldVar=0, effRange=effRange)
+  simulatedEAs = simDatLCPB(nsim=1, margVar=rho, tausq=sigmaEpsilon^2, 
+                            gamma=gamma, effRange=effRange, beta0=beta0, 
+                            includeUrban=TRUE, clusterLevel=TRUE, pixelLevel=TRUE, 
+                            constituencyLevel=TRUE, countyLevel=TRUE, 
+                            regionLevel=TRUE, nationalLevel=TRUE, 
+                            doLcpb=TRUE, doLCpb=TRUE, doLCPb=TRUE, 
+                            ensureAtLeast1PerConstituency=TRUE)
+  kenyaEAs = simulatedEAs$eaDat
+  kenyaEAs$eaIs = 1:nrow(kenyaEAs)
+  kenyaEAsLong = kenyaEAs[rep(1:nrow(kenyaEAs), kenyaEAs$nHH),]
+  
+  # simulate the cluster sampling and add to the data sets
+  overSampClustDat = simClustersEmpirical(kenyaEAs, kenyaEAsLong, 2, NULL, urbanOverSamplefrac, verbose=FALSE)
+  clustList = genAndreaFormatFromEAIs(simulatedEAs$eaDat, overSampClustDat$eaIs, overSampClustDat$sampleWeights)
+  overSampDat = list(eaDat=kenyaEAs, clustDat=clustList, aggregatedPop=simulatedEAs$aggregatedPop)
+  
+  SRSClustDat = simClustersEmpirical(kenyaEAs, kenyaEAsLong, 2, NULL, SRS=TRUE, verbose=FALSE)
+  clustList = genAndreaFormatFromEAIs(kenyaEAs, SRSClustDat$eaIs, SRSClustDat$sampleWeights)
+  SRSDat = list(eaDat=kenyaEAs, clustDat=clustList, aggregatedPop=simulatedEAs$aggregatedPop) # the only thing different is the sampling of the clusters
+  
+  dataID = paste0("Beta", round(beta0, 4), "rho", round(rho, 4), "sigmaEps", 
+                  round(sigmaEpsilon, 4), "gamma", round(gamma, 4))
+  
+  
+  if(representativeSampling) {
+    clustDat = SRSDat$clustDat
+    eaDat = SRSDat$eaDat
+    aggregatedTruth = SRSDat$aggregatedPop
+  } else {
+    clustDat = overSampDat$clustDat
+    eaDat = overSampDat$eaDat
+    aggregatedTruth = overSampDat$aggregatedPop
+  }
+  aggregatedTruth = aggregatedTruth$aggregatedResultsLCPB$constituencyMatrices
+  
+  # get this population frame
+  thiseaspa = makeEASPAFromEADat(eaDat)
+  
+  # helper function for calculating scoring rules given an aggregation model
+  getTheseScoringRules = function(aggregationResults, meanAggregationResults, 
+                                  thisLevel=c("constituency", "county", "province")) {
+    thisLevel = match.arg(thisLevel)
+    
+    # overall predictive distributions
+    constituencyPrevalenceMat = aggregationResults$p
+    constituencyCountMat = aggregationResults$Z
+    constituencyRelativePrevalenceMat = aggregationResults$pUrban / aggregationResults$pRural
+    
+    # make sure prevalence and relative prevalence only defined when there is both urban and rural population
+    if(thisLevel == "constituency") {
+      hasUrbanPopulation = poppcon$popUrb != 0
+      hasRuralPopulation = poppcon$popRur != 0
+    } else if(thisLevel == "county"){
+      sortI = sort(poppc$County, index.return=TRUE)$ix
+      hasUrbanPopulation = poppc$popUrb[sortI] != 0
+      hasRuralPopulation = poppc$popRur[sortI] != 0
+    } else if(thisLevel == "province") {
+      hasUrbanPopulation = poppr$popUrb != 0
+      hasRuralPopulation = poppr$popRur != 0
+    }
+    
+    definedRelativePrevalence = hasUrbanPopulation & hasRuralPopulation & (aggregatedTruth$pRural[,1] != 0)
+    hasUrbanPopulationSamples = aggregationResults$NUrban != 0
+    hasRuralPopulationSamples = aggregationResults$NRural != 0
+    hasFiniteRelativePrevalenceSamples = aggregationResults$ZRural != 0
+    definedRelativePrevalenceSamples = hasUrbanPopulationSamples & hasRuralPopulationSamples & hasFiniteRelativePrevalenceSamples
+    
+    constituencyPrevalenceMat[aggregationResults$N == 0] = NA
+    constituencyRelativePrevalenceMat[!definedRelativePrevalenceSamples] = NA
+    
+    # get central estimates
+    constituencyPrevalenceEst = rowMeans(meanAggregationResults$p)
+    constituencyCountEst = rowMeans(meanAggregationResults$Z)
+    constituencyRelativePrevalenceEst = rowMeans(constituencyRelativePrevalenceMat, na.rm=TRUE)
+    
+    # urban
+    constituencyPrevalenceMatUrban = aggregationResults$pUrban
+    constituencyCountMatUrban = aggregationResults$ZUrban
+    
+    # make sure urban prevalence only defined when there is an urban population
+    constituencyPrevalenceMatUrban[!hasUrbanPopulationSamples | aggregationResults$NUrban == 0] = NA
+    
+    constituencyPrevalenceEstUrban = rowMeans(meanAggregationResults$pUrban, na.rm=TRUE)
+    constituencyCountEstUrban = rowMeans(meanAggregationResults$ZUrban)
+    
+    # rural
+    constituencyPrevalenceMatRural = aggregationResults$pRural
+    constituencyCountMatRural = aggregationResults$ZRural
+    
+    # make sure rural prevalence only defined when there is an urban population
+    constituencyPrevalenceMatRural[!hasRuralPopulationSamples | aggregationResults$NRural == 0] = NA
+    
+    constituencyPrevalenceEstRural = rowMeans(meanAggregationResults$pRural, na.rm=TRUE)
+    constituencyCountEstRural = rowMeans(meanAggregationResults$ZRural)
+    
+    ## Calculate scoring rules
+    # overall
+    prevalenceScores = getScores(aggregatedTruth$p[,1], est=constituencyPrevalenceEst, estMat=constituencyPrevalenceMat, doRandomReject=TRUE)
+    countScores = getScores(aggregatedTruth$Z[,1], est=constituencyCountEst, estMat=constituencyCountMat, doRandomReject=TRUE)
+    relativePrevalenceScores = getScores((aggregatedTruth$pUrban[,1]/aggregatedTruth$pRural[,1])[definedRelativePrevalence], est=constituencyRelativePrevalenceEst[definedRelativePrevalence], estMat=constituencyRelativePrevalenceMat[definedRelativePrevalence,], doRandomReject=TRUE)
+    
+    # urban
+    prevalenceScoresUrban = getScores(aggregatedTruth$pUrban[hasUrbanPopulation,1], est=constituencyPrevalenceEstUrban[hasUrbanPopulation], estMat=constituencyPrevalenceMatUrban[hasUrbanPopulation,], doRandomReject=TRUE)
+    countScoresUrban = getScores(aggregatedTruth$ZUrban[,1], est=constituencyCountEstUrban, estMat=constituencyCountMatUrban, doRandomReject=TRUE)
+    
+    # rural
+    prevalenceScoresRural = getScores(aggregatedTruth$pRural[hasRuralPopulation,1], est=constituencyPrevalenceEstRural[hasRuralPopulation], estMat=constituencyPrevalenceMatRural[hasRuralPopulation,], doRandomReject=TRUE)
+    countScoresRural = getScores(aggregatedTruth$ZRural[,1], est=constituencyCountEstRural, estMat=constituencyCountMatRural, doRandomReject=TRUE)
+    
+    list(prevalenceScores=prevalenceScores, countScores=countScores, relativePrevalenceScores=relativePrevalenceScores, 
+         prevalenceScoresUrban=prevalenceScoresUrban, countScoresUrban=countScoresUrban, 
+         prevalenceScoresRural=prevalenceScoresRural, countScoresRural=countScoresRural)
+  }
+  
+  prevalenceScoreslcpb = c()
+  prevalenceScoresLcpb = c()
+  prevalenceScoresLCpb = c()
+  prevalenceScoresLCPb = c()
+  prevalenceScoresLCPB = c()
+  countScoreslcpb = c()
+  countScoresLcpb = c()
+  countScoresLCpb = c()
+  countScoresLCPb = c()
+  countScoresLCPB = c()
+  relativePrevalenceScoreslcpb = c()
+  relativePrevalenceScoresLcpb = c()
+  relativePrevalenceScoresLCpb = c()
+  relativePrevalenceScoresLCPb = c()
+  relativePrevalenceScoresLCPB = c()
+  
+  prevalenceScoresUrbanlcpb = c()
+  prevalenceScoresUrbanLcpb = c()
+  prevalenceScoresUrbanLCpb = c()
+  prevalenceScoresUrbanLCPb = c()
+  prevalenceScoresUrbanLCPB = c()
+  countScoresUrbanlcpb = c()
+  countScoresUrbanLcpb = c()
+  countScoresUrbanLCpb = c()
+  countScoresUrbanLCPb = c()
+  countScoresUrbanLCPB = c()
+  prevalenceScoresRurallcpb = c()
+  prevalenceScoresRuralLcpb = c()
+  prevalenceScoresRuralLCpb = c()
+  prevalenceScoresRuralLCPb = c()
+  prevalenceScoresRuralLCPB = c()
+  countScoresRurallcpb = c()
+  countScoresRuralLcpb = c()
+  countScoresRuralLCpb = c()
+  countScoresRuralLCPb = c()
+  countScoresRuralLCPB = c()
+  
+  parameterSummaryArray = c()
+  for(thisSurveyI in surveyI[surveyI <= maxDataSets]) {
+    
+    # fit risk model and generate spatial risk draws
+    # get this data set and population frame
+    thisData = clustDat[[thisSurveyI]]
+    thiseaspa = makeEASPAFromEADat(eaDat)
+    # browser()
+    # generate results for the specified data sets and return results (TODO: otherVariableNames)
+    if(fitRiskModel) {
+      timeSPDE = system.time(resultsSPDE <- fitSPDEKenyaDat(dat=thisData, dataType=c("mort", "ed"), 
+                                                            significanceCI=.8, 
+                                                            nPostSamples=1000, verbose=TRUE, 
+                                                            urbanEffect=TRUE, clusterEffect=TRUE, 
+                                                            leaveOutRegionName=NULL, doValidation=FALSE))[3]
+      # resultsSPDE = fitModelToDataSets(fitSPDE, dataSets, randomSeeds=randomSeeds, otherArgs=list(mesh=mesh), 
+      #                                  maxDataSets=maxDataSets)
+      
+      # get relevant SPDE components
+      uDraws = resultsSPDE$uDraws
+      sigmaEpsilonDraws = resultsSPDE$sigmaEpsilonDraws
+      urbanEffectDraws=resultsSPDE$fixedEffectDraws[2,]
+      interceptDraws = urbanEffectDraws=resultsSPDE$fixedEffectDraws[1,]
+      parameterSummaryTable = resultsSPDE$parameterSummaryTable
+      fixedEffectSummary = resultsSPDE$fixedEffectSummary[,c(1:2, 4, 3, 5)]
+      rangeSummary = resultsSPDE$rangeSummary
+      parameterSummaryTable = rbind(as.matrix(fixedEffectSummary), 
+                                    as.matrix(parameterSummaryTable))
+    } else {
+      startTime = proc.time()[3]
+      
+      # generate SPDE simulations
+      pixelCoords = cbind(popGrid$east, popGrid$north)
+      margVar = rho
+      if(margVar != 0) {
+        SPDEArgs = list(coords=pixelCoords, nsim=1000, margVar=margVar, effRange=effRange, kenya=TRUE)
+        uDraws = do.call("simSPDE", SPDEArgs)
+      } else {
+        uDraws = matrix(rep(0, nrow(eaCoords)), ncol=1)
+      }
+      
+      # add in intercept
+      uDraws = uDraws + beta0
+      
+      # add in urban effect
+      uDraws = sweep(uDraws, 1, gamma*popGrid$urban, "+")
+      
+      urbanEffectDraws = rep(gamma, 1000)
+      sigmaEpsilonDraws = rep(sigmaEpsilon, 1000)
+      parameterSummaryTable = rbind(c(beta0, 0, beta0, beta0, beta0), 
+                                    c(gamma, 0, gamma, gamma, gamma), 
+                                    c(rho+sigmaEpsilon^2, 0, rho+sigmaEpsilon^2, rho+sigmaEpsilon^2, rho+sigmaEpsilon^2), 
+                                    c(rho, 0, rho, rho, rho), 
+                                    c(sigmaEpsilon^2, 0, sigmaEpsilon^2, sigmaEpsilon^2, sigmaEpsilon^2), 
+                                    c(sqrt(rho+sigmaEpsilon^2), 0, sqrt(rho+sigmaEpsilon^2), sqrt(rho+sigmaEpsilon^2), sqrt(rho+sigmaEpsilon^2)), 
+                                    c(sqrt(rho), 0, sqrt(rho), sqrt(rho), sqrt(rho)), 
+                                    c(sigmaEpsilon, 0, sigmaEpsilon, sigmaEpsilon, sigmaEpsilon), 
+                                    c(effRange, 0, effRange, effRange, effRange))
+      rownames(parameterSummaryTable) = c("Intercept", "urbanEffect", "totalVar", "spatialVar", "errorVar", 
+                                          "totalSD", "spatialSD", "errorSD", "spatialRange")
+      colnames(parameterSummaryTable) = c("Est", "SD", "Qlower", "Q50", "Qupper")
+      
+      timeSPDE = proc.time()[3] - startTime
+    }
+    
+    # browser()
+    
+    # aggregate predictions of the SPDE model
+    timeAllAgg = system.time(agg <- modLCPB(uDraws=uDraws, sigmaEpsilonDraws, easpa=thiseaspa, 
+                                            includeUrban=TRUE, clusterLevel=FALSE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
+                                            regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=FALSE, 
+                                            onlyDoModifiedPixelLevel=FALSE, 
+                                            doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE, urbanEffectDraws=urbanEffectDraws, 
+                                            ensureAtLeast1PerConstituency=TRUE))[3]
+    
+    # calculate scoring rules for the survey
+    scoreslcpb = getTheseScoringRules(agg$aggregatedResultslcpb$constituencyMatrices, agg$aggregatedResultslcpb$constituencyMatrices)
+    scoresLcpb = getTheseScoringRules(agg$aggregatedResultsLcpb$constituencyMatrices, agg$aggregatedResultslcpb$constituencyMatrices)
+    scoresLCpb = getTheseScoringRules(agg$aggregatedResultsLCpb$constituencyMatrices, agg$aggregatedResultsLCpb$constituencyMatrices)
+    scoresLCPb = getTheseScoringRules(agg$aggregatedResultsLCPb$constituencyMatrices, agg$aggregatedResultsLCpb$constituencyMatrices)
+    scoresLCPB = getTheseScoringRules(agg$aggregatedResultsLCPB$constituencyMatrices, agg$aggregatedResultsLCpb$constituencyMatrices)
+    
+    ## combine like scores
+    # lcpb
+    prevalenceScoreslcpb = rbind(prevalenceScoreslcpb, scoreslcpb$prevalenceScores)
+    countScoreslcpb = rbind(countScoreslcpb, scoreslcpb$countScores)
+    relativePrevalenceScoreslcpb = rbind(relativePrevalenceScoreslcpb, scoreslcpb$relativePrevalenceScores)
+    prevalenceScoresUrbanlcpb = rbind(prevalenceScoresUrbanlcpb, scoreslcpb$prevalenceScoresUrban)
+    countScoresUrbanlcpb = rbind(countScoresUrbanlcpb, scoreslcpb$countScoresUrban)
+    prevalenceScoresRurallcpb = rbind(prevalenceScoresRurallcpb, scoreslcpb$prevalenceScoresRural)
+    countScoresRurallcpb = rbind(countScoresRurallcpb, scoreslcpb$countScoresRural)
+    
+    # Lcpb
+    prevalenceScoresLcpb = rbind(prevalenceScoresLcpb, scoresLcpb$prevalenceScores)
+    countScoresLcpb = rbind(countScoresLcpb, scoresLcpb$countScores)
+    relativePrevalenceScoresLcpb = rbind(relativePrevalenceScoresLcpb, scoresLcpb$relativePrevalenceScores)
+    prevalenceScoresUrbanLcpb = rbind(prevalenceScoresUrbanLcpb, scoresLcpb$prevalenceScoresUrban)
+    countScoresUrbanLcpb = rbind(countScoresUrbanLcpb, scoresLcpb$countScoresUrban)
+    prevalenceScoresRuralLcpb = rbind(prevalenceScoresRuralLcpb, scoresLcpb$prevalenceScoresRural)
+    countScoresRuralLcpb = rbind(countScoresRuralLcpb, scoresLcpb$countScoresRural)
+    
+    # LCpb
+    prevalenceScoresLCpb = rbind(prevalenceScoresLCpb, scoresLCpb$prevalenceScores)
+    countScoresLCpb = rbind(countScoresLCpb, scoresLCpb$countScores)
+    relativePrevalenceScoresLCpb = rbind(relativePrevalenceScoresLCpb, scoresLCpb$relativePrevalenceScores)
+    prevalenceScoresUrbanLCpb = rbind(prevalenceScoresUrbanLCpb, scoresLCpb$prevalenceScoresUrban)
+    countScoresUrbanLCpb = rbind(countScoresUrbanLCpb, scoresLCpb$countScoresUrban)
+    prevalenceScoresRuralLCpb = rbind(prevalenceScoresRuralLCpb, scoresLCpb$prevalenceScoresRural)
+    countScoresRuralLCpb = rbind(countScoresRuralLCpb, scoresLCpb$countScoresRural)
+    
+    # LCPb
+    prevalenceScoresLCPb = rbind(prevalenceScoresLCPb, scoresLCPb$prevalenceScores)
+    countScoresLCPb = rbind(countScoresLCPb, scoresLCPb$countScores)
+    relativePrevalenceScoresLCPb = rbind(relativePrevalenceScoresLCPb, scoresLCPb$relativePrevalenceScores)
+    prevalenceScoresUrbanLCPb = rbind(prevalenceScoresUrbanLCPb, scoresLCPb$prevalenceScoresUrban)
+    countScoresUrbanLCPb = rbind(countScoresUrbanLCPb, scoresLCPb$countScoresUrban)
+    prevalenceScoresRuralLCPb = rbind(prevalenceScoresRuralLCPb, scoresLCPb$prevalenceScoresRural)
+    countScoresRuralLCPb = rbind(countScoresRuralLCPb, scoresLCPb$countScoresRural)
+    
+    # LCPB
+    prevalenceScoresLCPB = rbind(prevalenceScoresLCPB, scoresLCPB$prevalenceScores)
+    countScoresLCPB = rbind(countScoresLCPB, scoresLCPB$countScores)
+    relativePrevalenceScoresLCPB = rbind(relativePrevalenceScoresLCPB, scoresLCPB$relativePrevalenceScores)
+    prevalenceScoresUrbanLCPB = rbind(prevalenceScoresUrbanLCPB, scoresLCPB$prevalenceScoresUrban)
+    countScoresUrbanLCPB = rbind(countScoresUrbanLCPB, scoresLCPB$countScoresUrban)
+    prevalenceScoresRuralLCPB = rbind(prevalenceScoresRuralLCPB, scoresLCPB$prevalenceScoresRural)
+    countScoresRuralLCPB = rbind(countScoresRuralLCPB, scoresLCPB$countScoresRural)
+    
+    # parameter summaries
+    parameterSummaryArray = abind(parameterSummaryArray, parameterSummaryTable, along=3)
+  }
+  
+  ## average scoring rules for each model
+  # lcpb
+  # browser()
+  # prevalenceScoreslcpb = colMeans(prevalenceScoreslcpb)
+  # countScoreslcpb = colMeans(countScoreslcpb)
+  # relativePrevalenceScoreslcpb = colMeans(relativePrevalenceScoreslcpb)
+  # prevalenceScoresUrbanlcpb = colMeans(prevalenceScoresUrbanlcpb)
+  # countScoresUrbanlcpb = colMeans(countScoresUrbanlcpb)
+  # prevalenceScoresRurallcpb = colMeans(prevalenceScoresRurallcpb)
+  # countScoresRurallcpb = colMeans(countScoresRurallcpb)
+  allScoreslcpb = list(prevalenceScores=prevalenceScoreslcpb, countScores=countScoreslcpb, relativePrevalenceScores=relativePrevalenceScoreslcpb, 
+                       prevalenceScoresUrban=prevalenceScoresUrbanlcpb, countScoresUrban=countScoresUrbanlcpb, 
+                       prevalenceScoresRural=prevalenceScoresRurallcpb, countScoresRural=countScoresRurallcpb)
+  
+  # Lcpb
+  # prevalenceScoresLcpb = colMeans(prevalenceScoresLcpb)
+  # countScoresLcpb = colMeans(countScoresLcpb)
+  # relativePrevalenceScoresLcpb = colMeans(relativePrevalenceScoresLcpb)
+  # prevalenceScoresUrbanLcpb = colMeans(prevalenceScoresUrbanLcpb)
+  # countScoresUrbanLcpb = colMeans(countScoresUrbanLcpb)
+  # prevalenceScoresRuralLcpb = colMeans(prevalenceScoresRuralLcpb)
+  # countScoresRuralLcpb = colMeans(countScoresRuralLcpb)
+  allScoresLcpb = list(prevalenceScores=prevalenceScoresLcpb, countScores=countScoresLcpb, relativePrevalenceScores=relativePrevalenceScoresLcpb, 
+                       prevalenceScoresUrban=prevalenceScoresUrbanLcpb, countScoresUrban=countScoresUrbanLcpb, 
+                       prevalenceScoresRural=prevalenceScoresRuralLcpb, countScoresRural=countScoresRuralLcpb)
+  
+  # LCpb
+  # prevalenceScoresLCpb = colMeans(prevalenceScoresLCpb)
+  # countScoresLCpb = colMeans(countScoresLCpb)
+  # relativePrevalenceScoresLCpb = colMeans(relativePrevalenceScoresLCpb)
+  # prevalenceScoresUrbanLCpb = colMeans(prevalenceScoresUrbanLCpb)
+  # countScoresUrbanLCpb = colMeans(countScoresUrbanLCpb)
+  # prevalenceScoresRuralLCpb = colMeans(prevalenceScoresRuralLCpb)
+  # countScoresRuralLCpb = colMeans(countScoresRuralLCpb)
+  allScoresLCpb = list(prevalenceScores=prevalenceScoresLCpb, countScores=countScoresLCpb, relativePrevalenceScores=relativePrevalenceScoresLCpb, 
+                       prevalenceScoresUrban=prevalenceScoresUrbanLCpb, countScoresUrban=countScoresUrbanLCpb, 
+                       prevalenceScoresRural=prevalenceScoresRuralLCpb, countScoresRural=countScoresRuralLCpb)
+  
+  # LCPb
+  # prevalenceScoresLCPb = colMeans(prevalenceScoresLCPb)
+  # countScoresLCPb = colMeans(countScoresLCPb)
+  # relativePrevalenceScoresLCPb = colMeans(relativePrevalenceScoresLCPb)
+  # prevalenceScoresUrbanLCPb = colMeans(prevalenceScoresUrbanLCPb)
+  # countScoresUrbanLCPb = colMeans(countScoresUrbanLCPb)
+  # prevalenceScoresRuralLCPb = colMeans(prevalenceScoresRuralLCPb)
+  # countScoresRuralLCPb = colMeans(countScoresRuralLCPb)
+  allScoresLCPb = list(prevalenceScores=prevalenceScoresLCPb, countScores=countScoresLCPb, relativePrevalenceScores=relativePrevalenceScoresLCPb, 
+                       prevalenceScoresUrban=prevalenceScoresUrbanLCPb, countScoresUrban=countScoresUrbanLCPb, 
+                       prevalenceScoresRural=prevalenceScoresRuralLCPb, countScoresRural=countScoresRuralLCPb)
+  
+  # LCPB
+  # prevalenceScoresLCPB = colMeans(prevalenceScoresLCPB)
+  # countScoresLCPB = colMeans(countScoresLCPB)
+  # relativePrevalenceScoresLCPB = colMeans(relativePrevalenceScoresLCPB)
+  # prevalenceScoresUrbanLCPB = colMeans(prevalenceScoresUrbanLCPB)
+  # countScoresUrbanLCPB = colMeans(countScoresUrbanLCPB)
+  # prevalenceScoresRuralLCPB = colMeans(prevalenceScoresRuralLCPB)
+  # countScoresRuralLCPB = colMeans(countScoresRuralLCPB)
+  allScoresLCPB = list(prevalenceScores=prevalenceScoresLCPB, countScores=countScoresLCPB, relativePrevalenceScores=relativePrevalenceScoresLCPB, 
+                       prevalenceScoresUrban=prevalenceScoresUrbanLCPB, countScoresUrban=countScoresUrbanLCPB, 
+                       prevalenceScoresRural=prevalenceScoresRuralLCPB, countScoresRural=countScoresRuralLCPB)
+  
+  # parameter summaries
+  parameterSummaryArray = apply(parameterSummaryArray, c(1, 2), mean, na.rm=TRUE)
+  
+  ## Save results
+  fileName = paste0("savedOutput/simStudyResults/scoresLCPB_", dataID, "repSamp", representativeSampling, ".RData")
+  out = save(allScoreslcpb, allScoresLcpb, allScoresLCpb, 
+             allScoresLCPb, allScoresLCPB, parameterSummaryArray, 
+             file=fileName)
+}
 
