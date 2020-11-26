@@ -2728,49 +2728,6 @@ testCompareModelsSimulationStudy = function(gamma=-1, rho=(1/3)^2, sigmaEpsilon=
   dataID = paste0("Beta", round(beta0, 4), "rho", round(rho, 4), "sigmaEps", 
                   round(sigmaEpsilon, 4), "gamma", round(gamma, 4))
   
-  # there should be 1 true population, but many simulated cluster surveys
-  # load(paste0(globalDirectory, "empiricalDistributions.RData"))
-  # simulatedEAs = simDatEmpirical(empiricalDistributions, kenyaEAs, clustDat=NULL, nsim=1, 
-  #                                beta0=beta0, margVar=rho, urbanOverSamplefrac=0, 
-  #                                tausq=tausq, gamma=gamma, HHoldVar=0, effRange=effRange)
-  simulatedEAs = simDatLCPB(nsim=1, margVar=rho, tausq=sigmaEpsilon^2, 
-                            gamma=gamma, effRange=effRange, beta0=beta0, 
-                            includeUrban=TRUE, clusterLevel=TRUE, pixelLevel=TRUE, 
-                            constituencyLevel=TRUE, countyLevel=TRUE, 
-                            regionLevel=TRUE, nationalLevel=TRUE, 
-                            doLcpb=TRUE, doLCpb=TRUE, doLCPb=TRUE, 
-                            ensureAtLeast1PerConstituency=TRUE)
-  kenyaEAs = simulatedEAs$eaDat
-  kenyaEAs$eaIs = 1:nrow(kenyaEAs)
-  kenyaEAsLong = kenyaEAs[rep(1:nrow(kenyaEAs), kenyaEAs$nHH),]
-  
-  # simulate the cluster sampling and add to the data sets
-  overSampClustDat = simClustersEmpirical(kenyaEAs, kenyaEAsLong, 2, NULL, urbanOverSamplefrac, verbose=FALSE)
-  clustList = genAndreaFormatFromEAIs(simulatedEAs$eaDat, overSampClustDat$eaIs, overSampClustDat$sampleWeights)
-  overSampDat = list(eaDat=kenyaEAs, clustDat=clustList, aggregatedPop=simulatedEAs$aggregatedPop)
-  
-  SRSClustDat = simClustersEmpirical(kenyaEAs, kenyaEAsLong, 2, NULL, SRS=TRUE, verbose=FALSE)
-  clustList = genAndreaFormatFromEAIs(kenyaEAs, SRSClustDat$eaIs, SRSClustDat$sampleWeights)
-  SRSDat = list(eaDat=kenyaEAs, clustDat=clustList, aggregatedPop=simulatedEAs$aggregatedPop) # the only thing different is the sampling of the clusters
-  
-  dataID = paste0("Beta", round(beta0, 4), "rho", round(rho, 4), "sigmaEps", 
-                  round(sigmaEpsilon, 4), "gamma", round(gamma, 4))
-  
-  
-  if(representativeSampling) {
-    clustDat = SRSDat$clustDat
-    eaDat = SRSDat$eaDat
-    aggregatedTruth = SRSDat$aggregatedPop
-  } else {
-    clustDat = overSampDat$clustDat
-    eaDat = overSampDat$eaDat
-    aggregatedTruth = overSampDat$aggregatedPop
-  }
-  aggregatedTruth = aggregatedTruth$aggregatedResultsLCPB$constituencyMatrices
-  
-  # get this population frame
-  thiseaspa = makeEASPAFromEADat(eaDat)
-  
   # helper function for calculating scoring rules given an aggregation model
   getTheseScoringRules = function(aggregationResults, meanAggregationResults, 
                                   thisLevel=c("constituency", "county", "province")) {
@@ -2887,9 +2844,52 @@ testCompareModelsSimulationStudy = function(gamma=-1, rho=(1/3)^2, sigmaEpsilon=
   parameterSummaryArray = c()
   for(thisSurveyI in surveyI[surveyI <= maxDataSets]) {
     
+    # there should be 1 true population, but many simulated cluster surveys
+    # load(paste0(globalDirectory, "empiricalDistributions.RData"))
+    # simulatedEAs = simDatEmpirical(empiricalDistributions, kenyaEAs, clustDat=NULL, nsim=1, 
+    #                                beta0=beta0, margVar=rho, urbanOverSamplefrac=0, 
+    #                                tausq=tausq, gamma=gamma, HHoldVar=0, effRange=effRange)
+    simulatedEAs = simDatLCPB(nsim=1, margVar=rho, tausq=sigmaEpsilon^2, 
+                              gamma=gamma, effRange=effRange, beta0=beta0, 
+                              includeUrban=TRUE, clusterLevel=TRUE, pixelLevel=TRUE, 
+                              constituencyLevel=TRUE, countyLevel=TRUE, 
+                              regionLevel=TRUE, nationalLevel=TRUE, 
+                              doLcpb=TRUE, doLCpb=TRUE, doLCPb=TRUE, 
+                              ensureAtLeast1PerConstituency=TRUE)
+    kenyaEAs = simulatedEAs$eaDat
+    kenyaEAs$eaIs = 1:nrow(kenyaEAs)
+    kenyaEAsLong = kenyaEAs[rep(1:nrow(kenyaEAs), kenyaEAs$nHH),]
+    
+    # simulate the cluster sampling and add to the data sets
+    overSampClustDat = simClustersEmpirical(kenyaEAs, kenyaEAsLong, 2, NULL, urbanOverSamplefrac, verbose=FALSE)
+    clustList = genAndreaFormatFromEAIs(simulatedEAs$eaDat, overSampClustDat$eaIs, overSampClustDat$sampleWeights)
+    overSampDat = list(eaDat=kenyaEAs, clustDat=clustList, aggregatedPop=simulatedEAs$aggregatedPop)
+    
+    SRSClustDat = simClustersEmpirical(kenyaEAs, kenyaEAsLong, 2, NULL, SRS=TRUE, verbose=FALSE)
+    clustList = genAndreaFormatFromEAIs(kenyaEAs, SRSClustDat$eaIs, SRSClustDat$sampleWeights)
+    SRSDat = list(eaDat=kenyaEAs, clustDat=clustList, aggregatedPop=simulatedEAs$aggregatedPop) # the only thing different is the sampling of the clusters
+    
+    dataID = paste0("Beta", round(beta0, 4), "rho", round(rho, 4), "sigmaEps", 
+                    round(sigmaEpsilon, 4), "gamma", round(gamma, 4))
+    
+    
+    if(representativeSampling) {
+      clustDat = SRSDat$clustDat
+      eaDat = SRSDat$eaDat
+      aggregatedTruth = SRSDat$aggregatedPop
+    } else {
+      clustDat = overSampDat$clustDat
+      eaDat = overSampDat$eaDat
+      aggregatedTruth = overSampDat$aggregatedPop
+    }
+    aggregatedTruth = aggregatedTruth$aggregatedResultsLCPB$constituencyMatrices
+    
+    # get this population frame
+    thiseaspa = makeEASPAFromEADat(eaDat)
+    
     # fit risk model and generate spatial risk draws
     # get this data set and population frame
-    thisData = clustDat[[thisSurveyI]]
+    thisData = clustDat[[1]]
     thiseaspa = makeEASPAFromEADat(eaDat)
     # browser()
     # generate results for the specified data sets and return results (TODO: otherVariableNames)
