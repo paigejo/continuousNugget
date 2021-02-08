@@ -233,7 +233,7 @@ generateSimDataSetsLCPB = function(nsim=10, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5
   
   save(overSampDat, SRSDat, file=paste0(dataSaveDirectory, "simDataMulti", dataID, ".RData"))
   
-  invisible(NULL)
+  invisible(list(simulatedEAs=simulatedEAs, overSampDat=overSampDat, SRSDat=SRSDat))
 }
 
 ## TODO: modify function to take in vector of seeds, make different population replication 

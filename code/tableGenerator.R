@@ -123,6 +123,85 @@ generateValidationTables = function(dat=NULL, dataType=c("mort", "ed"),
   xtable(allPixelLevelResultsLCPB, digits=3)
 }
 
+makeAllSimulationStudyTables = function() {
+  out = load("savedOutput/simStudyResults/spde_lcpbSimStudyCommandArgs.RData")
+  order = c(2, 1, 6, 5, 4, 3, 8, 7)
+  
+  for(i in 1:length(order)) {
+    thisI = order[i]
+    theseArguments = spde_lcpbSimStudyCommandArgs[[thisI]]
+    print(do.call("makeSimulationStudyTable", theseArguments))
+    browser()
+  }
+  
+  invisible(NULL)
+}
+
+makeSimulationStudyTable = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), 
+                                     effRange=150, beta0=-3.9, representativeSampling=FALSE, 
+                                     maxDataSets=10, surveyI = 1:10) {
+  
+  # get file id
+  dataID = paste0("Beta", round(beta0, 4), "rho", round(rho, 4), "sigmaEps", 
+                  round(sigmaEpsilon, 4), "gamma", round(gamma, 4))
+  # out = load(paste0("savedOutput/simDataSets/simDataMulti", dataID, ".RData"))
+  fileName = paste0("savedOutput/simStudyResults/scoresLCPB_", dataID, "repSamp", representativeSampling, ".RData")
+  # save(allScoreslcpb, allScoresLcpb, allScoresLCpb, allScoresLCPb, allScoresLCPB, file=fileName)
+  
+  # load the scoring rules
+  out = load(file=fileName)
+  
+  # make the tables
+  # require(kableExtra)
+  require(xtable)
+  
+  # first the prevalence scores
+  tabPrevalence = rbind(colMeans(allScoreslcpb$prevalenceScores), 
+                        colMeans(allScoresLCpb$prevalenceScores), 
+                        colMeans(allScoresLCPB$prevalenceScores))[,-c(2,3)]
+  
+  tabCounts = rbind(colMeans(allScoreslcpb$countScores), 
+                    colMeans(allScoresLCpb$countScores), 
+                    colMeans(allScoresLCPB$countScores))[,-c(2,3)]
+  
+  tabRelativePrevalence = rbind(colMeans(allScoreslcpb$relativePrevalenceScores), 
+                                colMeans(allScoresLCpb$relativePrevalenceScores), 
+                                colMeans(allScoresLCPB$relativePrevalenceScores))[,-c(2,3)]
+  
+  factorsPrevalence = c(100, 10^3, 10^3, 100, 100)
+  factorsCounts = c(1, 10^(-2), 1, 100, 1)
+  factorsRelativePrevalence = c(100, 10, 10, 100, 100)
+  digitsPrevalence = c()
+  
+  rownames(tabPrevalence) = c("S", "SC", "SCP")
+  rownames(tabCounts) = c("S", "SC", "SCP")
+  rownames(tabRelativePrevalence) = c("S", "SC", "SCP")
+  
+  # xtable(sweep(tabPrevalence, 2, factorsPrevalence, "*"))
+  # xtable(sweep(tabCounts, 2, factorsCounts, "*"))
+  # xtable(sweep(tabRelativePrevalence, 2, factorsRelativePrevalence, "*"))
+  
+  tab = rbind(tabPrevalence, tabCounts, tabRelativePrevalence)
+  factors = c(1, 1, 1, 100, 1)
+  tab = sweep(tab, 2, factors, "*")
+  # xtable(tab, digits=4)
+  
+  # try using kableExtra
+  require(kableExtra)
+  tab[,4] = round(tab[,4])
+  tab[4:6,] = round(tab[4:6,])
+  tab = as.data.frame(tab)
+  tab = cbind(c(rep(c("S", "SC", "SCP"), 3)), tab)
+  names(tab)[1] = ""
+  rownames(tab) = NULL
+  labelRoot = paste0("Beta", round(beta0, 4), "gamma", round(gamma, 4), "repSample", representativeSampling)
+  thisLabel = paste0("tab:thirdProject:simulationStudy", labelRoot)
+  print(tab %>% kable("latex", escape = F, booktabs = TRUE, format.args=list(drop0trailing=TRUE, scientific=FALSE), 
+  align=c("l", rep("r", ncol(tab) - 1)), digits=3, caption="", label=thisLabel) %>% pack_rows(
+    index = c("Prevalence" = 3, "Total Deaths" = 3, "Relative Prevalence" = 3)
+  ))
+}
+
 
 
 

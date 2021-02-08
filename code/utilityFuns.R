@@ -1360,7 +1360,7 @@ aggregatePixelPredictions = function(Zg, Ng, popMatAdjusted=NULL, useDensity=FAL
                                      constituencyLevel=TRUE, countyLevel=TRUE, regionLevel=TRUE, nationalLevel=TRUE, 
                                      constituencyPopTotal=NULL, countyPopTotal=NULL, regionPopTotal=NULL, nationalPopTotal=NULL, 
                                      constituencyPopUrban=NULL, countyPopUrban=NULL, regionPopUrban=NULL, nationalPopUrban=NULL, 
-                                     country="Kenya", normalize=FALSE, lcpbSwitchedUrban=NULL) {
+                                     country="Kenya", normalize=FALSE, lcpbSwitchedUrban=NULL, fillZeroAreas=FALSE) {
   
   if(is.null(popMatAdjusted)) {
     popMatAdjusted = makeDefaultPopMat(getAdjusted=TRUE)
@@ -1489,7 +1489,7 @@ aggregatePixelPredictions = function(Zg, Ng, popMatAdjusted=NULL, useDensity=FAL
       ZAggregated = A %*% Zg
       NAggregated = A %*% Ng
       pAggregated = ZAggregated / NAggregated
-      pAggregated[ZAggregated == 0] = 0
+      pAggregated[NAggregated == 0] = NA
       
       list(p=pAggregated, Z=ZAggregated, N=NAggregated, A=A)
     } else {
@@ -1528,19 +1528,19 @@ aggregatePixelPredictions = function(Zg, Ng, popMatAdjusted=NULL, useDensity=FAL
         # the aggregated empirical proportions
         NAggregated = A %*% Ng
         pAggregated = ZAggregated / NAggregated
-        pAggregated[NAggregated == 0] = 0
+        pAggregated[NAggregated == 0] = NA
         
         NAggregatedUrban = AUrban %*% Ng
         pAggregatedUrban = ZAggregatedUrban / NAggregatedUrban
-        pAggregatedUrban[NAggregatedUrban == 0] = 0
+        pAggregatedUrban[NAggregatedUrban == 0] = NA
         
         NAggregatedRural = ARural %*% Ng
         pAggregatedRural = ZAggregatedRural / NAggregatedRural
-        pAggregatedRural[NAggregatedRural == 0] = 0
+        pAggregatedRural[NAggregatedRural == 0] = NA
       }
       
       # if zero population denominator in an area, use the risk prediction instead of the prevalence
-      if(!is.null(lcpbSwitchedUrban)) {
+      if(!is.null(lcpbSwitchedUrban) && fillZeroAreas) {
         if(any(zeroUrbanAreas | zeroRuralAreas)) {
           warning("replacing predictions of some areas with zero population in a stratum with risk predictions for whole area")
         }
@@ -2487,7 +2487,7 @@ setThresholds = function() {
 plotMapDat = function(plotVar=NULL, varCounties=NULL, zlim=NULL, project=FALSE, cols=tim.colors(), 
                       legend.mar=7, new=FALSE, plotArgs=NULL, main=NULL, xlim=NULL, xlab=NULL, scaleFun = function(x) {x}, scaleFunInverse = function(x) {x}, 
                       ylim=NULL, ylab=NULL, n.ticks=5, min.n=5, ticks=NULL, tickLabels=NULL, asp=1, legend.width=1.2, mapDat = NULL, addColorBar=TRUE, 
-                      legendArgs=list(), leaveRoomForLegend=TRUE, kenyaLatRange=c(-4.6, 5), kenyaLonRange=c(33.5, 42.0), ...) {
+                      legendArgs=list(), leaveRoomForLegend=TRUE, kenyaLatRange=c(-4.6, 5), kenyaLonRange=c(33.5, 42.0), forceColorsInRange=FALSE, ...) {
   # load necessary data
   if(is.null(mapDat)) {
     if(length(plotVar) == 47) {
@@ -2516,6 +2516,11 @@ plotMapDat = function(plotVar=NULL, varCounties=NULL, zlim=NULL, project=FALSE, 
   if(!is.null(plotVar)) {
     if(is.null(zlim)) {
       zlim = range(plotVar)
+    }
+    
+    if(forceColorsInRange) {
+      plotVar[plotVar > zlim[2]] = zlim[2]
+      plotVar[plotVar < zlim[1]] = zlim[1]
     }
     
     # get region names from map data
@@ -2600,10 +2605,15 @@ plotMapDat = function(plotVar=NULL, varCounties=NULL, zlim=NULL, project=FALSE, 
       # get index of plotVar corresponding to this county
       thisI = which(varCounties == regionNames[i])
       
+      # if there is no matching region name, do nothing
+      if(length(thisI) == 0) {
+        return(NULL)
+      }
+      
       # get color to plot
       vals = c(zlim, scaleFun(plotVar[thisI]))
-      vals = vals-vals[1]
-      vals = vals/(vals[2] - vals[1])
+      vals = vals-zlim[1]
+      vals = vals/(zlim[2] - zlim[1])
       col = cols[round(vals[3]*(length(cols)-1))+1]
       
       if(!project)
@@ -2647,6 +2657,75 @@ plotMapDat = function(plotVar=NULL, varCounties=NULL, zlim=NULL, project=FALSE, 
     # image.plot(zlim=zlim, nlevel=length(cols), legend.only=TRUE, horizontal=FALSE, 
     #            col=cols, add = TRUE)
   }
+  invisible(NULL)
+}
+
+# for plotting administration area names (for use with plotMapDat)
+# varAreas: the names of the areas we wish to plot
+# mapDat: spatial polygon file containing information on the areas
+# ...: additional arguments to the text function
+addMapLabels = function(varAreas=NULL, mapDat = NULL, offsets=NULL, ...) {
+  if(is.null(varAreas) && is.null(mapDat)) {
+    stop("Must include either varAreas or mapDat")
+  }
+  
+  # load necessary data
+  if(is.null(mapDat)) {
+    if(length(varAreas) == 47) {
+      # out = load("../U5MR/adminMapData.RData")
+      mapDat = adm1
+    } else if(length(varAreas) == 8) {
+      # shape file found at: https://jlinden.carto.com/tables/kenya_region_shapefile/public
+      require(maptools)
+      mapDat = readShapePoly("../U5MR/mapData/kenya_region_shapefile/kenya_region_shapefile.shp", delete_null_obj=TRUE, force_ring=TRUE, repair=TRUE)
+    } else if(length(varAreas) == 273) {
+      mapDat = adm2
+    } else {
+      out = load("../U5MR/adminMapData.RData")
+      mapDat = adm0
+    }
+  }
+  if(is.null(varAreas)) {
+    if(length(mapDat) == 8) {
+      varAreas = sort(as.character(poppr$Region))
+    } else if(length(mapDat) == 273) {
+      varAreas = sort(as.character(mapDat@data$CONSTITUEN))
+    } else if(length(mapDat) == 47) {
+      varAreas=sort(as.character(unique(mort$admin1)))
+    } else {
+      stop("unspecified varAreas (default for input mapDat not implemented)")
+    }
+  }
+  
+  # determine the names of the mapDat areas
+  if(!is.null(mapDat@data$NAME_1)) {
+    regionNames = mapDat@data$NAME_1
+  } else if(!is.null(mapDat@data$name_1)) {
+    regionNames = as.character(mapDat@data$name_1)
+  } else if(!is.null(mapDat@data$CONSTITUEN)) {
+    regionNames = as.character(mapDat@data$CONSTITUEN)
+  } else {
+    stop("mapDat has unrecognized area names")
+  }
+  
+  # make sure county names are consistent for mapDat == adm1
+  regionNames[regionNames == "Elgeyo-Marakwet"] = "Elgeyo Marakwet"
+  regionNames[regionNames == "Trans Nzoia"] = "Trans-Nzoia"
+  
+  # make sure county names are consistent for plotting regions rather than counties
+  regionNames[regionNames == "North-Eastern"] = "North Eastern"
+  
+  # plot map labels
+  xs = coordinates(mapDat)
+  includeI = match(varAreas, regionNames)
+  xs = xs[includeI,]
+  
+  if(!is.null(offsets)) {
+    xs = xs + offsets
+  }
+  
+  text(xs, as.character(varAreas), ...)
+  
   invisible(NULL)
 }
 
@@ -4697,6 +4776,55 @@ constructRegions = function() {
   regionAttributes$data = list(NAME_1 = regionNames)
   attributes(regionMap) = regionAttributes
   regionMap
+}
+
+# get average number of EAs per constituency
+meanEAsPerCon = function(numToPrint=0) {
+  easpa = makeDefaultEASPA()
+  # area: the name or id of the area
+  # EAUrb: the number of EAs in the urban part of the area
+  # EARur: the number of EAs in the rural part of the area
+  # EATotal: the number of EAs in the the area
+  # HHUrb: the number of households in the urban part of the area
+  # HHRur: the number of households in the rural part of the area
+  # HHTotal: the number of households in the the area
+  # popUrb: the number of people in the urban part of the area
+  # popRur: the number of people in the rural part of the area
+  # popTotal: the number of people in the the area
+  
+  
+  countyI = match(poppcon$County, easpc$County)
+  easInUrbanStratum = easpc$EAUrb[countyI]
+  easInRuralStratum = easpc$EARur[countyI]
+  popInUrbanStratum = poppc$popUrb[countyI]
+  popInRuralStratum = poppc$popRur[countyI]
+  
+  out = aggregate(poppcon$popUrb, by=list(County=poppcon$County), FUN=sum)
+  sortI = sort(poppc$County, index.return=TRUE)$ix
+  cbind(out, poppc[sortI,])
+  
+  popFractionUrb = poppcon$popUrb / popInUrbanStratum
+  popFractionRur = poppcon$popRur / popInRuralStratum
+  popFractionRur[!is.finite(popFractionRur)] = 0
+  meanUrbanEAs = easInUrbanStratum * popFractionUrb
+  meanRuralEAs = easInRuralStratum * popFractionRur
+  meanTotalEAs = meanUrbanEAs + meanRuralEAs
+  
+  out = cbind(poppcon, meanUrbanEAs=meanUrbanEAs, meanRuralEAs=meanRuralEAs, meanTotalEAs=meanTotalEAs)
+  
+  if(numToPrint > 0) {
+    # print numToPrint constituencis with the smallest number of EAs
+    sortI = sort(meanUrbanEAs, index.return=TRUE)$ix
+    print(out[sortI[1:numToPrint],])
+    
+    sortI = sort(meanRuralEAs, index.return=TRUE)$ix
+    print(out[sortI[1:numToPrint],])
+    
+    sortI = sort(meanTotalEAs, index.return=TRUE)$ix
+    print(out[sortI[1:numToPrint],])
+  }
+  
+  out
 }
 
 

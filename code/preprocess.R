@@ -27,10 +27,8 @@ adm2 = combineConstituencies(adm2, threshold=50)
 adm2 = makeInBorder(adm2)
 adm2@data$Shape_Area = getArea(thisMap=adm2, nameVar="CONSTITUEN")
 
-regionMap = constructRegions()
-
 # test = removeConstituencyGaps(adm2)
-save(adm2, adm1, adm0, regionMap, file=paste0(globalDirectory, "adminMapData.RData"))
+save(adm2, adm1, adm0, file=paste0(globalDirectory, "adminMapData.RData"))
 load(paste0(globalDirectory, "adminMapData.RData"))
 
 # county to region mapping
@@ -168,9 +166,35 @@ for(i in 1:nrow(poppcon)) {
   }
 }
 
+# normalize population within each stratum to sum to the stratum population
+countyI = match(poppcon$County, easpc$County) # county -> constituency
+popInUrbanStratum = poppc$popUrb[countyI]
+popInRuralStratum = poppc$popRur[countyI]
+
+sortI = match(poppc$County, out$County) # sorted county -> county
+out = aggregate(poppcon$popUrb, by=list(County=poppcon$County), FUN=sum)[sortI,]
+normFactorUrban = popInUrbanStratum / out$x[countyI]
+normFactorUrban[is.na(normFactorUrban)] = 0
+poppcon$popUrb = poppcon$popUrb * normFactorUrban
+
+# # test to make sure we did it right:
+# out = aggregate(poppcon$popUrb, by=list(County=poppcon$County), FUN=sum)[sortI,]
+# cbind(out, poppc)
+
+out = aggregate(poppcon$popRur, by=list(County=poppcon$County), FUN=sum)[sortI,]
+normFactorRural = popInRuralStratum / out$x[countyI]
+normFactorRural[is.na(normFactorRural)] = 0
+poppcon$popRur = poppcon$popRur * normFactorRural
+
+# # test to make sure we did it right:
+# out = aggregate(poppcon$popRur, by=list(County=poppcon$County), FUN=sum)[sortI,]
+# cbind(out, poppc)
+
 # normalize population so it sums to the total population of Kenya in urban/rural areas. Also calculate total population
 poppcon$popUrb = poppcon$popUrb * (sum(poppc$popUrb) / sum(poppcon$popUrb))
+poppcon$popUrb[is.na(poppcon$popUrb)] = 0
 poppcon$popRur = poppcon$popRur * (sum(poppc$popRur) / sum(poppcon$popRur))
+poppcon$popRur[is.na(poppcon$popRur)] = 0
 poppcon$popTotal = poppcon$popUrb + poppcon$popRur
 
 save(poppcon, file=paste0(globalDirectory, "poppcon.RData"))

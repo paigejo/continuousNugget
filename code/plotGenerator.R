@@ -2543,6 +2543,16 @@ makeBlueSequentialColors = function(n, ggplot=FALSE) {
     scale_colour_continuous_sequential(h1=245, c1=50, cmax=75, l1=20, l2=98, p1=0.8, rev=TRUE, n_interp=n)
 }
 
+makeGreenSequentialColors = function(n, ggplot=FALSE) {
+  # library("colorspace")
+  # pal <-choose_palette()
+  # sequential_hcl(n, h1=260, c1=80, l1=30, l2=90, p1=1.5, rev=TRUE)
+  if(!ggplot)
+    sequential_hcl(n, h1=128, c1=100, l1=72, l2=95, p1=1.0, rev=TRUE)
+  else
+    scale_colour_continuous_sequential(h1=128, c1=100, l1=72, l2=95, p1=1.0, rev=TRUE, n_interp=n)
+}
+
 makeBlueYellowSequentialColors = function(n, ggplot=FALSE) {
   # library("colorspace")
   # pal <-choose_palette()
@@ -2568,6 +2578,23 @@ makeRedGreenDivergingColors = function(n, ggplot=FALSE) {
     sequential_hcl(n, h1=265, h2=101, c1=100, l1=50, l2=92, p1=0.6, p2=1.5)
   else
     scale_colour_continuous_sequential(h1=265, h2=101, c1=100, l1=50, l2=92, p1=0.6, p2=1.5, n_interp=n)
+}
+
+# given continuous color scale and range, chooses colors based on a set of values
+getColorsFromScale = function(vals, valRange=range(vals), cols, scaleFun=function(x) {x}, 
+                              forceValuesInRange=FALSE) {
+  if(forceValuesInRange) {
+    vals[vals < valRange[1]] = valRange[1]
+    vals[vals > valRange[2]] = valRange[2]
+  }
+  
+  valRange = scaleFun(valRange)
+  vals = scaleFun(vals)
+  vals = vals - valRange[1]
+  vals = vals/(valRange[2] - valRange[1])
+  col = cols[round(vals*(length(cols)-1))+1]
+  
+  col
 }
 
 myPairs = function(x, labels, panel = points, ..., horInd = 1:nc, verInd = 1:nc, 

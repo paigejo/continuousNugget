@@ -64,6 +64,7 @@ source('code/simStudy.R')
 source('code/test.R')
 source('code/plotGenerator.R')
 source('code/modDirect.R')
+source('code/nmr.R')
 # Rcpp::sourceCpp("code/Rcpp/rmultinomProbMat_rcpp.cpp")
 
 # set some basic parameters to hold constant throughout analysis

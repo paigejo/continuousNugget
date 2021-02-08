@@ -185,7 +185,7 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
                    onlyDoModifiedPixelLevel=FALSE, clustersPerPixel=NULL, 
                    doLcpb=FALSE, doLCpb=FALSE, doLCPb=FALSE, constituencyPop=poppcon, 
                    ensureAtLeast1PerConstituency=FALSE, urbanEffect=NULL, 
-                   returnEAinfo=FALSE, epsc=NULL, urbanEffectDraws=NULL) {
+                   returnEAinfo=FALSE, epsc=NULL, urbanEffectDraws=NULL, logisticApproximation=TRUE) {
   nDraws = ncol(uDraws)
   
   startTime0 = proc.time()[3]
@@ -496,8 +496,9 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
   # uses the logistic approximation for speedup. Even if dolcpb is FALSE we still use this for calculating the mean (central predictions)
   lcpbSwitchedUrban = NULL
   if(is.null(clustersPerPixel)) {
-    lcpb = matrix(logitNormMean(cbind(c(as.matrix(uDraws)), rep(sigmaEpsilonDraws, each=nrow(uDraws)))), nrow=nrow(uDraws))
+    lcpb = matrix(logitNormMean(cbind(c(as.matrix(uDraws)), rep(sigmaEpsilonDraws, each=nrow(uDraws))), logisticApproximation=logisticApproximation), nrow=nrow(uDraws))
     if(constituencyLevel && !is.null(urbanEffectDraws)) {
+      # if urbanEffect or urbanEffectDraws is supplied, replace predictions in constituencies with no people with risk
       lcpbSwitchedUrban = lcpb
       zeroConUrban = constituencyPop$popUrb == 0
       zeroConRural = constituencyPop$popRur == 0
@@ -505,10 +506,10 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
       uDrawsSwitchedUrban = uDraws
       uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & popMat$urban,] = sweep(uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & popMat$urban,], 2, urbanEffectDraws, "-")
       uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & !popMat$urban,] = sweep(uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & !popMat$urban,], 2, urbanEffectDraws, "+")
-      lcpbSwitchedUrban[popMat$admin2 %in% allZeroCon,] = matrix(logitNormMean(cbind(c(as.matrix(uDrawsSwitchedUrban[popMat$admin2 %in% allZeroCon,])), rep(sigmaEpsilonDraws, each=sum(popMat$admin2 %in% allZeroCon)))), nrow=sum(popMat$admin2 %in% allZeroCon))
+      lcpbSwitchedUrban[popMat$admin2 %in% allZeroCon,] = matrix(logitNormMean(cbind(c(as.matrix(uDrawsSwitchedUrban[popMat$admin2 %in% allZeroCon,])), rep(sigmaEpsilonDraws, each=sum(popMat$admin2 %in% allZeroCon))), logisticApproximation=logisticApproximation), nrow=sum(popMat$admin2 %in% allZeroCon))
     }
   } else {
-    lcpb = matrix(logitNormMean(cbind(c(as.matrix(uDraws)[uniquePixelIndices,]), rep(sigmaEpsilonDraws, each=length(uniquePixelIndices)))), nrow=length(uniquePixelIndices))
+    lcpb = matrix(logitNormMean(cbind(c(as.matrix(uDraws)[uniquePixelIndices,]), rep(sigmaEpsilonDraws, each=length(uniquePixelIndices))), logisticApproximation=logisticApproximation), nrow=length(uniquePixelIndices))
   }
   
   finishedClusterIntegrationTime10 = proc.time()[3]
@@ -577,7 +578,7 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     }
     
     # this takes a veeeeery long time. Just use the logistic approximation instead
-    lcpb = matrix(logitNormMean(cbind(c(as.matrix(uDraws)), rep(sigmaEpsilonDraws, each=nrow(uDraws)))), nrow=nrow(uDraws))
+    lcpb = matrix(logitNormMean(cbind(c(as.matrix(uDraws)), rep(sigmaEpsilonDraws, each=nrow(uDraws))), logisticApproximation=logisticApproximation), nrow=nrow(uDraws))
     
     # load shape files for plotting
     require(maptools)
@@ -1091,7 +1092,7 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
       ## lcpb
       # aggregatedResultslcpb = aggregatePixelPredictions(lcpb, Ng, popGrid=popMat, useDensity=TRUE, countyLevel=countyLevel, 
       #                                               regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=TRUE)
-      lcpbc = matrix(logitNormMean(cbind(c(logit(as.matrix(uc))), rep(sigmaEpsilonDraws, each=nrow(uc)))), nrow=nrow(uc))
+      lcpbc = matrix(logitNormMean(cbind(c(logit(as.matrix(uc))), rep(sigmaEpsilonDraws, each=nrow(uc))), logisticApproximation=logisticApproximation), nrow=nrow(uc))
       # this takes quite a while (15 mins?)
       aggregatedResultslcpb = aggregateEAPredictions(lcpbc, Ncs, areaMat, urbanMat, easpa=easpa, countyLevel=countyLevel, 
                                                      regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=TRUE)
@@ -1414,7 +1415,7 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
                          pixelMatriceslcpb=list(p=lcpb, Z=zSampleslcpb, N=nSampleslcpb), allTimings=allTimings)
     }
   }
-  
+  # browser()
   if(!returnEAinfo) {
     allMatrices
   } else {
@@ -1425,8 +1426,9 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
                        popTarget=popGridAdjusted$popOrig[theseI], pixelIs=theseI, 
                        nHH=householdDraws[,1], n=Ncs[,1], y=Zc[,1], 
                        plcpb=lcpb[theseI,1], pLcpb=lcpb[theseI,1], pLCpb=muc[,1], pLCPb=muc[,1], pLCPB=Zc[,1]/Ncs[,1])
-    eaDat$pLCPB[eaDat$n == 0] = muc[eaDat$n == 0,1]
-    c(allMatrices, list(eaDat=eaDat))
+    # eaDat$pLCPB[eaDat$n == 0] = muc[eaDat$n == 0,1]
+    eaDat$pLCPB[eaDat$n == 0] = NA
+    c(allMatrices, list(eaDat=eaDat, eaSamples=eaSamples))
   }
 }
 

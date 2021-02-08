@@ -1426,6 +1426,7 @@ simDatLCPB = function(nsim=1, margVar=0.243, tausq=0.463,
                     ensureAtLeast1PerConstituency=ensureAtLeast1PerConstituency, urbanEffect=gamma, 
                     returnEAinfo=TRUE, epsc=cbind(epsc, epsc))
   eaDat = outLCPB$eaDat
+  eaSamples = outLCPB$eaSamples
   
   ### simulate binomial data for each enumeration area
   # first generate the number of households
@@ -1473,7 +1474,7 @@ simDatLCPB = function(nsim=1, margVar=0.243, tausq=0.463,
   # return cluster data in Andrea's format:
   clustList = genAndreaFormatFromEAIsLong(eaDat, clustDat$eaIs, eaDatLong, clustDat$HHIs, clustDat$sampleWeights)
   
-  list(eaDat=eaDat, clustDat=clustList, aggregatedPop=outLCPB[-length(outLCPB)])
+  list(eaDat=eaDat, eaSamples=eaSamples, clustDat=clustList, aggregatedPop=outLCPB[-length(outLCPB)])
 }
 
 simNsFull = function(n=1, includeUrban=TRUE, easpa=makeDefaultEASPA(), empiricalDistributions=NULL) {

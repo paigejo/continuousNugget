@@ -1,0 +1,302 @@
+# In this script, we look at a simple example of a real area, attempting 
+# to estimate NMR accounting for EA level random variation
+
+## do the setup
+longRangeWajir = c(39, 41)
+latRangeWajir = c(0.25, 3.6)
+constituenciesW = poppcon$Constituency[poppcon$County=="Wajir"]
+offsets = matrix(0, nrow=6, ncol=2)
+offsets[1,2] = .1 # shift label for Eldas slightly higher
+offsets[6,1] = .15 # shift label for Wajir West slightly farther east
+easpcon = meanEAsPerCon()
+easpcon = easpcon[easpcon$County=="Wajir",]
+popGridWajir = popGrid[popGrid$admin1=="Wajir",]
+
+# plotMapDat(mapDat=adm0, lwd=.5, new=TRUE)
+# plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], border="green")
+
+# plot population density (1km x 1km)
+popCols=makeBlueSequentialColors(64)
+ruralCols=makeGreenSequentialColors(64)
+urbanCols = popCols
+
+# generate the fine scale pop density grid
+popGridFine = makeInterpPopGrid(kmRes=1, mean.neighbor=500, delta=.05)
+popGridFine = popGridFine[popGridFine$admin1 == "Wajir",]
+
+# normalize to have the correct population within the county
+popGridFine$popOrig = popGridFine$popOrig * (poppc$popTotal[poppc$County=="Wajir"] / sum(popGridFine$popOrig))
+popRange = c(.1, max(popGridFine$popOrig))
+
+## done with setup. Make plots
+
+# plot population density on fine grid
+pdf(file="figures/simpleExample/wajirPopDensity.pdf", width=4, height=5)
+par(mar=c(4.1, 4.1, 1.1, 4.5))
+plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
+           kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
+           leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
+popTicks = c(1, 10, 100, 1000)
+popTickLabels = as.character(popTicks)
+image.plot(zlim=log(popRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
+           col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
+           legend.cex=.5, legend.width=1)
+quilt.plot(popGridFine$lon, popGridFine$lat, log(popGridFine$popOrig), 
+           col=popCols, nx=230, ny=380, add.legend = FALSE, add=TRUE, 
+           zlim=log(popRange))
+plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+dev.off()
+
+# now plot the urban pixels
+png(file="figures/simpleExample/wajirUrban.png", width=400, height=500)
+par(mar=c(4.1, 4.1, 1.1, 4.5))
+plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
+           kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
+           leaveRoomForLegend=FALSE, legend.mar=0, addColorBar=FALSE)
+plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+popInWajir = popGrid$admin1 == "Wajir"
+quilt.plot(popGrid$lon[popInWajir], popGrid$lat[popInWajir], popGrid$urban[popInWajir], col=c(rgb(0, 0, 0, 0), "blue"), nx=60, ny=100, add.legend = FALSE, add=TRUE)
+offsets = matrix(0, nrow=6, ncol=2)
+offsets[1,2] = .1 # shift label for Eldas slightly higher
+offsets[6,1] = .15 # shift label for Wajir West slightly farther east
+addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.7)
+dev.off()
+
+# pdf version:
+pdf(file="figures/simpleExample/wajirUrban.pdf", width=4, height=5)
+par(mar=c(4.1, 4.1, 1.1, 4.5))
+plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
+           kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
+           leaveRoomForLegend=FALSE, legend.mar=0, addColorBar=FALSE)
+plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+popInWajir = popGrid$admin1 == "Wajir"
+quilt.plot(popGrid$lon[popInWajir], popGrid$lat[popInWajir], popGrid$urban[popInWajir], col=c(rgb(0, 0, 0, 0), "blue"), nx=60, ny=100, add.legend = FALSE, add=TRUE)
+offsets = matrix(0, nrow=6, ncol=2)
+offsets[1,2] = .1 # shift label for Eldas slightly higher
+offsets[6,1] = .15 # shift label for Wajir West slightly farther east
+addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+dev.off()
+
+# now plot urban fraction as a function of constituency
+pdf(file="figures/simpleExample/wajirUrbanFrac.pdf", width=4, height=5)
+par(mar=c(4.1, 4.1, 1.1, 4.5))
+urbanFraction = (poppcon$popUrb/poppcon$popTotal)[poppcon$County=="Wajir"]
+ruralUrbanCols=makeGreenBlueSequentialColors(32)
+# theseCols = getColorsFromScale(urbanFraction, c(.02, .7), ruralUrbanCols, forceValuesInRange=TRUE)
+plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
+           kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
+           leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
+plotMapDat(plotVar=log(urbanFraction), varCounties=constituenciesW, mapDat=adm2, lwd=.5, 
+           cols=ruralUrbanCols, zlim=log(c(.0045, .7)), forceColorsInRange=TRUE, 
+           legend.width=1, legend.cex=.5, legend.mar=5, 
+           axis.args=list(cex.axis=1, tck=-.7, hadj=-.1), 
+           ticks=log(c(.02, .07, .2, .7)), tickLabels=c(.02, .07, .2, .7))
+# image.plot(zlim=log(popRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
+#            col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
+#            legend.cex=.5, legend.width=1)
+addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+dev.off()
+
+
+# now plot urban fraction as a function of constituency
+pdf(file="figures/simpleExample/wajirUrbanFrac.pdf", width=4, height=5)
+par(mar=c(4.1, 4.1, 1.1, 4.5))
+urbanFraction = (poppcon$popUrb/poppcon$popTotal)[poppcon$County=="Wajir"]
+ruralUrbanCols=makeGreenBlueSequentialColors(32)
+# theseCols = getColorsFromScale(urbanFraction, c(.02, .7), ruralUrbanCols, forceValuesInRange=TRUE)
+plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
+           kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
+           leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
+plotMapDat(plotVar=log(urbanFraction), varCounties=constituenciesW, mapDat=adm2, lwd=.5, 
+           cols=ruralUrbanCols, zlim=log(c(.0045, .7)), forceColorsInRange=TRUE, 
+           legend.width=1, legend.cex=.5, legend.mar=5, 
+           axis.args=list(cex.axis=1, tck=-.7, hadj=-.1), 
+           ticks=log(c(.02, .07, .2, .7)), tickLabels=c(.02, .07, .2, .7))
+# image.plot(zlim=log(popRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
+#            col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
+#            legend.cex=.5, legend.width=1)
+addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+dev.off()
+
+# plot expected number of urban EAs per constituency
+
+pdf(file="figures/simpleExample/wajirUrbanEAs.pdf", width=4, height=5)
+par(mar=c(4.1, 4.1, 1.1, 4.5))
+meanUrbanEAs = easpcon$meanUrbanEAs
+plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
+           kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
+           leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
+plotMapDat(plotVar=log(meanUrbanEAs), varCounties=constituenciesW, mapDat=adm2, lwd=.5, 
+           cols=urbanCols, zlim=log(c(2, 200)), forceColorsInRange=TRUE, 
+           legend.width=1, legend.cex=.5, legend.mar=5, 
+           axis.args=list(cex.axis=1, tck=-.7, hadj=-.1), 
+           ticks=log(c(2, 5, 50, 150)), tickLabels=c(2, 5, 50, 150))
+# image.plot(zlim=log(popRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
+#            col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
+#            legend.cex=.5, legend.width=1)
+addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+dev.off()
+
+# plot expected number of rural EAs per constituency
+
+pdf(file="figures/simpleExample/wajirRuralEAs.pdf", width=4, height=5)
+par(mar=c(4.1, 4.1, 1.1, 4.5))
+meanRuralEAs = easpcon$meanRuralEAs
+plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
+           kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
+           leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
+plotMapDat(plotVar=log(meanRuralEAs), varCounties=constituenciesW, mapDat=adm2, lwd=.5, 
+           cols=ruralCols, zlim=log(c(2, 200)), forceColorsInRange=TRUE, 
+           legend.width=1, legend.cex=.5, legend.mar=5, 
+           axis.args=list(cex.axis=1, tck=-.7, hadj=-.1), 
+           ticks=log(c(2, 5, 50, 150)), tickLabels=c(2, 5, 50, 150))
+# image.plot(zlim=log(popRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
+#            col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
+#            legend.cex=.5, legend.width=1)
+addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+dev.off()
+
+# plot expected number of rural EAs per constituency
+
+pdf(file="figures/simpleExample/wajirRuralEAsSelfScaled.pdf", width=4, height=5)
+par(mar=c(4.1, 4.1, 1.1, 4.5))
+meanRuralEAs = easpcon$meanRuralEAs
+plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
+           kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
+           leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
+plotMapDat(plotVar=log(meanRuralEAs), varCounties=constituenciesW, mapDat=adm2, lwd=.5, 
+           cols=ruralCols, zlim=log(c(40, 200)), forceColorsInRange=TRUE, 
+           legend.width=1, legend.cex=.5, legend.mar=5, 
+           axis.args=list(cex.axis=1, tck=-.7, hadj=-.1), 
+           ticks=log(c(40, 80, 160)), tickLabels=c(40, 80, 160))
+# image.plot(zlim=log(popRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
+#            col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
+#            legend.cex=.5, legend.width=1)
+addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+dev.off()
+
+# simulate EA locations for example
+simDat = generateSimDataSetsLCPB(nsim=1, seed=123, 
+                                 dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/")
+simulatedEAs = simDat$simulatedEAs
+eaSamples = simDat$simulatedEAs$eaSamples
+SRSDat = simDat$SRSDat # or overSampDat?
+eaDat = SRSDat$eaDat
+eaDat = eaDat[eaDat$admin1 == "Wajir",]
+eaSamples = eaSamples[popGrid$admin1=="Wajir",1]
+
+# plot EA locations
+pdf(file="figures/simpleExample/wajirSimEALocs.pdf", width=4, height=5)
+par(mar=c(4.1, 4.1, 1.1, 4.5))
+plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
+           kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
+           leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
+plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+points(eaDat$lon, eaDat$lat, pch=19, cex=.2, col=rgb(1, 0, 0, .2))
+addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+dev.off()
+
+# same but with counts per pixel
+pdf(file="figures/simpleExample/wajirSimEAsPerPixel.pdf", width=4, height=5)
+par(mar=c(4.1, 4.1, 1.1, 4.5))
+plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
+           kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
+           leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
+eaRange = c(1, 60)
+quilt.plot(popGrid$lon[popGrid$admin1=="Wajir"], 
+           popGrid$lat[popGrid$admin1=="Wajir"], 
+           log(eaSamples), 
+           col=popCols[-(1:5)], nx=45, ny=60, add.legend = FALSE, add=TRUE, 
+           zlim=log(eaRange))
+plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+eaTicks = c(1, 5, 10, 50)
+eaTickLabels = as.character(eaTicks)
+image.plot(zlim=log(eaRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
+           col=popCols[-(1:5)], add=TRUE, axis.args=list(at=log(eaTicks), labels=eaTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
+           legend.cex=.5, legend.width=1)
+addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+dev.off()
+
+# check pixel constituencies
+pdf(file="figures/simpleExample/wajirPixelConstituencyCheck.pdf", width=4, height=5)
+par(mar=c(4.1, 4.1, 1.1, 4.5))
+plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
+           kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
+           leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
+tempVals = factor(popGrid$admin2[popGrid$admin1=="Wajir"])
+tempVals = as.numeric(tempVals)
+quilt.plot(popGrid$lon[popGrid$admin1=="Wajir"], 
+           popGrid$lat[popGrid$admin1=="Wajir"], 
+           tempVals, 
+           col=rainbow(6), nx=45, ny=60, add.legend = TRUE, add=TRUE, 
+           FUN=max)
+plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+dev.off()
+
+# plot the number of sampled EAs per constituency
+out = aggregate(eaSamples, by=list(constituency=popGridWajir$admin2), FUN=sum)
+pdf(file="figures/simpleExample/wajirSimEAs.pdf", width=4, height=5)
+par(mar=c(4.1, 4.1, 1.1, 4.5))
+nEAs = out$x
+plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
+           kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
+           leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
+plotMapDat(plotVar=log(nEAs), varCounties=constituenciesW, mapDat=adm2, lwd=.5, 
+           cols=urbanCols, zlim=log(c(70, 220)), forceColorsInRange=TRUE, 
+           legend.width=1, legend.cex=.5, legend.mar=5, 
+           axis.args=list(cex.axis=1, tck=-.7, hadj=-.1), 
+           ticks=log(c(80, 120, 160, 200)), tickLabels=c(80, 120, 160, 200))
+# image.plot(zlim=log(popRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
+#            col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
+#            legend.cex=.5, legend.width=1)
+addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+dev.off()
+
+urbanPixels = popGridWajir$urban
+eaSamplesUrban = eaSamples
+eaSamplesRural = eaSamples
+eaSamplesUrban[!urbanPixels] = 0
+eaSamplesRural[urbanPixels] = 0
+
+# plot the number of sampled Urban EAs per constituency
+out = aggregate(eaSamplesUrban, by=list(constituency=popGridWajir$admin2), FUN=sum)
+pdf(file="figures/simpleExample/wajirSimEAsUrban.pdf", width=4, height=5)
+par(mar=c(4.1, 4.1, 1.1, 4.5))
+nEAs = out$x
+plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
+           kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
+           leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
+plotMapDat(plotVar=log(nEAs), varCounties=constituenciesW, mapDat=adm2, lwd=.5, 
+           cols=urbanCols, zlim=log(c(2, 200)), forceColorsInRange=TRUE, 
+           legend.width=1, legend.cex=.5, legend.mar=5, 
+           axis.args=list(cex.axis=1, tck=-.7, hadj=-.1), 
+           ticks=log(c(2, 5, 50, 150)), tickLabels=c(2, 5, 50, 150))
+# image.plot(zlim=log(popRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
+#            col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
+#            legend.cex=.5, legend.width=1)
+addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+dev.off()
+
+# plot the number of sampled Urban EAs per constituency
+out = aggregate(eaSamplesRural, by=list(constituency=popGridWajir$admin2), FUN=sum)
+pdf(file="figures/simpleExample/wajirSimEAsRural.pdf", width=4, height=5)
+par(mar=c(4.1, 4.1, 1.1, 4.5))
+nEAs = out$x
+plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
+           kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
+           leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
+plotMapDat(plotVar=log(nEAs), varCounties=constituenciesW, mapDat=adm2, lwd=.5, 
+           cols=ruralCols, zlim=log(c(40, 200)), forceColorsInRange=TRUE, 
+           legend.width=1, legend.cex=.5, legend.mar=5, 
+           axis.args=list(cex.axis=1, tck=-.7, hadj=-.1), 
+           ticks=log(c(40, 80, 160)), tickLabels=c(40, 80, 160))
+# image.plot(zlim=log(popRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
+#            col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
+#            legend.cex=.5, legend.width=1)
+addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+dev.off()
+
+
+

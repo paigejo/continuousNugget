@@ -1,12 +1,12 @@
 # scrip for getting all NMR results for the application
 
-getMortResults = function(seed=123) {
+getMortResults = function(seed=123, logisticApproximation=FALSE, nPostSamples=5000) {
   set.seed(seed)
   
   # first for the risk model
   timeSPDE = system.time(resultsSPDE <- fitSPDEKenyaDat(dat=mort, dataType="mort", 
                                                         significanceCI=.8, 
-                                                        nPostSamples=1000, verbose=TRUE, seed=NULL, 
+                                                        nPostSamples=nPostSamples, verbose=TRUE, seed=NULL, 
                                                         urbanEffect=TRUE, clusterEffect=TRUE, 
                                                         leaveOutRegionName=NULL, doValidation=FALSE))[3]
   
@@ -15,20 +15,23 @@ getMortResults = function(seed=123) {
                                           includeUrban=TRUE, clusterLevel=FALSE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
                                           regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=FALSE, 
                                           onlyDoModifiedPixelLevel=FALSE, 
-                                          doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE, urbanEffect=resultsSPDE$fixedEffectDraws[2,]))[3]
+                                          doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE, # urbanEffectDraws=resultsSPDE$fixedEffectDraws[2,], 
+                                          logisticApproximation=logisticApproximation))[3]
   
   # save results
-  save(resultsSPDE, timeSPDE, timeAllAgg, file="savedOutput/application/mortResultsRisk.RData")
-  save(agg, timeSPDE, timeAllAgg, file="savedOutput/application/mortResultsAgg.RData")
+  logisticText = ifelse(!logisticApproximation, "NoLogisticApprox", "")
+  save(resultsSPDE, timeSPDE, timeAllAgg, file=paste0("savedOutput/application/mortResultsRisk", logisticText, ".RData"))
+  save(agg, timeSPDE, timeAllAgg, file=paste0("savedOutput/application/mortResultsAgg", logisticText, ".RData"))
   
   invisible(NULL)
 }
 
 # Make plots for the neonatal mortality application
-makeMortPlots = function() {
+makeMortPlots = function(logisticApproximation=FALSE) {
   # first load the model predictions
-  out = load("savedOutput/application/mortResultsAgg.RData")
-  browser()
+  logisticText = ifelse(!logisticApproximation, "NoLogisticApprox", "")
+  out = load(paste0("savedOutput/application/mortResultsAgg", logisticText, ".RData"))
+  
   # calculate the range of predictions and CI widths
   rangePrevalencePredPixel = c()
   rangePrevalencePredConstituency = c()
@@ -92,12 +95,13 @@ makeMortPlots = function() {
       rangeCountCIWidthPixelLCpb = range(countCIWidthPixelLCpb, na.rm=TRUE)
     } else if(thisLevel == "constituency") {
       urbanConstituencies = poppcon$County == "Nairobi" | poppcon$County == "Mombasa"
+      undefinedRelativePrevalenceConstituencies = (poppcon$popUrb == 0) | (poppcon$popRur == 0)
       rangePrevalencePredConstituency = range(c(rangePrevalencePredConstituency, 
                                                 rowMeans(agg$aggregatedResultsLCpb$constituencyMatrices$p, na.rm=TRUE)))
       rangeCountPredConstituency = range(c(rangeCountPredConstituency, 
                                            rowMeans(agg$aggregatedResultsLCpb$constituencyMatrices$Z)), na.rm=TRUE)
       relativePrevalencePredConstituency = rowMeans(agg$aggregatedResultsLCPB$constituencyMatrices$pUrban/agg$aggregatedResultsLCPB$constituencyMatrices$pRural, na.rm=TRUE)
-      relativePrevalencePredConstituency[urbanConstituencies] = NA
+      relativePrevalencePredConstituency[undefinedRelativePrevalenceConstituencies] = NA
       rangeRelativePrevalencePredConstituency = range(relativePrevalencePredConstituency[is.finite(relativePrevalencePredConstituency)], na.rm=TRUE)
       
       prevalenceCIWidthConstituency = apply(agg$aggregatedResultsLCPB$constituencyMatrices$p, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
@@ -105,20 +109,20 @@ makeMortPlots = function() {
       rangePrevalenceCIWidthConstituency = range(prevalenceCIWidthConstituency)
       rangeCountCIWidthConstituency = range(countCIWidthConstituency)
       relativePrevalenceCIWidthConstituency = apply(agg$aggregatedResultsLCPB$constituencyMatrices$pUrban/agg$aggregatedResultsLCPB$constituencyMatrices$pRural, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
-      relativePrevalenceCIWidthConstituency[urbanConstituencies] = NA
+      relativePrevalenceCIWidthConstituency[undefinedRelativePrevalenceConstituencies] = NA
       rangeRelativePrevalenceCIWidthConstituency = range(relativePrevalenceCIWidthConstituency[is.finite(relativePrevalenceCIWidthConstituency)], na.rm=TRUE)
       
       # get credible interval widths for the lcpb model
       prevalenceCIWidthConstituencylcpb = apply(agg$aggregatedResultslcpb$constituencyMatrices$p, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       countCIWidthConstituencylcpb = apply(agg$aggregatedResultslcpb$constituencyMatrices$Z, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       relativePrevalenceCIWidthConstituencylcpb = apply(agg$aggregatedResultslcpb$constituencyMatrices$pUrban/agg$aggregatedResultslcpb$constituencyMatrices$pRural, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
-      relativePrevalenceCIWidthConstituencylcpb[urbanConstituencies] = NA
+      relativePrevalenceCIWidthConstituencylcpb[undefinedRelativePrevalenceConstituencies] = NA
       
       # do the same for the LCpb model
       prevalenceCIWidthConstituencyLCpb = apply(agg$aggregatedResultsLCpb$constituencyMatrices$p, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       countCIWidthConstituencyLCpb = apply(agg$aggregatedResultsLCpb$constituencyMatrices$Z, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       relativePrevalenceCIWidthConstituencyLCpb = apply(agg$aggregatedResultsLCpb$constituencyMatrices$pUrban/agg$aggregatedResultsLCpb$constituencyMatrices$pRural, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
-      relativePrevalenceCIWidthConstituencyLCpb[urbanConstituencies] = NA
+      relativePrevalenceCIWidthConstituencyLCpb[undefinedRelativePrevalenceConstituencies] = NA
     } else if(thisLevel == "county") {
       urbanCounties = sort(poppc$County) == "Nairobi" | sort(poppc$County) == "Mombasa"
       rangePrevalencePredCounty = range(c(rangePrevalencePredCounty, 
@@ -207,12 +211,13 @@ makeMortPlots = function() {
   constituencyMean = rowMeans(agg$aggregatedResultsLCpb$constituencyMatrices$p)
   countyMean = rowMeans(agg$aggregatedResultsLCpb$countyMatrices$p)
   provinceMean = rowMeans(agg$aggregatedResultsLCpb$regionMatrices$p)
+  meanRange = range(pixelMean, constituencyMean, countyMean, provinceMean)
   widthRange = range(c(rangePrevalencePredPixel, 
                       rangePrevalencePredConstituency, 
                       rangePrevalencePredCounty, 
                       rangePrevalencePredProvince))
-  
-  png(paste0(figDirectory, "application/prevalenceMean.png"), width=1000, height=1000)
+  browser()
+  png(paste0(figDirectory, "application/prevalenceMean", logisticText, ".png"), width=1000, height=1000)
   par(mfrow=c(2,2), oma=c( 0,0,4,7), mar=c(6.1, 6.5, 1.1, 2.5))
   
   # pixel level
@@ -276,7 +281,7 @@ makeMortPlots = function() {
                        rangePrevalenceCIWidthProvince))
   widthRangePixel = rangePrevalenceCIWidthPixel
   
-  png(paste0(figDirectory, "application/prevalenceCIWidth.png"), width=1000, height=1000)
+  png(paste0(figDirectory, "application/prevalenceCIWidth", logisticText, ".png"), width=1000, height=1000)
   par(mfrow=c(2,2), oma=c( 0,0,4,7), mar=c(6.1, 8.5, 1.1, 3.5))
   
   # pixel level
@@ -344,7 +349,7 @@ makeMortPlots = function() {
   meanRangeCounty = rangeCountPredCounty
   meanRangeProvince = rangeCountPredProvince
   
-  png(paste0(figDirectory, "application/countMean.png"), width=1000, height=1000)
+  png(paste0(figDirectory, "application/countMean", logisticText, ".png"), width=1000, height=1000)
   par(mfrow=c(2,2), oma=c( 0,0,4,7), mar=c(6.1, 8.5, 1.1, 3.5))
   
   # pixel level
@@ -414,7 +419,7 @@ makeMortPlots = function() {
   widthRangeCounty = rangeCountCIWidthCounty
   widthRangeProvince = rangeCountCIWidthProvince
   
-  png(paste0(figDirectory, "application/countWidth.png"), width=1000, height=1000)
+  png(paste0(figDirectory, "application/countWidth", logisticText, ".png"), width=1000, height=1000)
   par(mfrow=c(2,2), oma=c( 0,0,4,7), mar=c(6.1, 8.5, 1.1, 3.5))
   
   # pixel level
@@ -485,7 +490,7 @@ makeMortPlots = function() {
                       rangeRelativePrevalencePredProvince))
   urbDivergingCols = makeGreenBlueDivergingColors(64, center=1, valRange=meanRange)
   
-  png(paste0(figDirectory, "application/relativePrevalence.png"), width=1500, height=1000)
+  png(paste0(figDirectory, "application/relativePrevalence", logisticText, ".png"), width=1500, height=1000)
   par(mfrow=c(2,3), oma=c( 0,4,4,7), mar=c(6.1, 6.5, 1.1, 2.5))
   
   # constituency level
@@ -581,7 +586,7 @@ makeMortPlots = function() {
   ## prevalence uncertainty
   
   # absolute prevalence uncertainty
-  pdf(paste0(figDirectory, "application/prevalenceWidthBoxplot.pdf"), width=6, height=6)
+  pdf(paste0(figDirectory, "application/prevalenceWidthBoxplot", logisticText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   pixels = length(prevalenceCIWidthPixel)
@@ -613,7 +618,7 @@ makeMortPlots = function() {
   dev.off()
   
   # relative prevalence uncertainty
-  pdf(paste0(figDirectory, "application/prevalenceRelWidthBoxplot.pdf"), width=6, height=6)
+  pdf(paste0(figDirectory, "application/prevalenceRelWidthBoxplot", logisticText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   pixels = length(prevalenceCIWidthPixel)
@@ -661,7 +666,7 @@ makeMortPlots = function() {
   ## count uncertainty
   
   # absolute count uncertainty
-  pdf(paste0(figDirectory, "application/countWidthBoxplot.pdf"), width=6, height=6)
+  pdf(paste0(figDirectory, "application/countWidthBoxplot", logisticText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   pixels = length(countCIWidthPixel)
@@ -693,7 +698,7 @@ makeMortPlots = function() {
   dev.off()
   
   # relative count uncertainty
-  pdf(paste0(figDirectory, "application/countRelWidthBoxplot.pdf"), width=6, height=6)
+  pdf(paste0(figDirectory, "application/countRelWidthBoxplot", logisticText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   pixels = length(countCIWidthPixel)
@@ -741,7 +746,7 @@ makeMortPlots = function() {
   ## relative prevalence uncertainty
   
   # absolute relative prevalence uncertainty
-  pdf(paste0(figDirectory, "application/relativePrevalenceWidthBoxplot.pdf"), width=9, height=6)
+  pdf(paste0(figDirectory, "application/relativePrevalenceWidthBoxplot", logisticText, ".pdf"), width=9, height=6)
   par(mfrow=c(2,3), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   constituencies = length(relativePrevalenceCIWidthConstituency)
