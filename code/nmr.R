@@ -41,6 +41,10 @@ makeMortPlots = function(logisticApproximation=FALSE) {
   rangePrevalenceCIWidthConstituency = c()
   rangePrevalenceCIWidthCounty = c()
   rangePrevalenceCIWidthProvince = c()
+  rangePrevalenceSDPixel = c()
+  rangePrevalenceSDConstituency = c()
+  rangePrevalenceSDCounty = c()
+  rangePrevalenceSDProvince = c()
   
   rangeCountPredPixel = c()
   rangeCountPredConstituency = c()
@@ -50,6 +54,10 @@ makeMortPlots = function(logisticApproximation=FALSE) {
   rangeCountCIWidthConstituency = c()
   rangeCountCIWidthCounty = c()
   rangeCountCIWidthProvince = c()
+  rangeCountSDPixel = c()
+  rangeCountSDConstituency = c()
+  rangeCountSDCounty = c()
+  rangeCountSDProvince = c()
   
   rangeRelativePrevalencePredConstituency = c()
   rangeRelativePrevalencePredCounty = c()
@@ -57,6 +65,9 @@ makeMortPlots = function(logisticApproximation=FALSE) {
   rangeRelativePrevalenceCIWidthConstituency = c()
   rangeRelativePrevalenceCIWidthCounty = c()
   rangeRelativePrevalenceCIWidthProvince = c()
+  rangeRelativePrevalenceSDConstituency = c()
+  rangeRelativePrevalenceSDCounty = c()
+  rangeRelativePrevalenceSDProvince = c()
   
   # make the color scales
   areaLevels = c("pixel", "constituency", "county", "province")
@@ -78,6 +89,14 @@ makeMortPlots = function(logisticApproximation=FALSE) {
       rangePrevalenceCIWidthPixel = range(prevalenceCIWidthPixel, na.rm=TRUE)
       rangeCountCIWidthPixel = range(countCIWidthPixel, na.rm=TRUE)
       
+      prevalenceSDPixel = apply(agg$pixelMatricesLCPB$p, 1, sd, na.rm=TRUE)
+      countSDPixel = apply(agg$pixelMatricesLCPB$Z, 1, sd, na.rm=TRUE)
+      nPerPixel = rowSums(agg$pixelMatricesLCPB$N)
+      prevalenceSDPixel[nPerPixel <= 1000*1] = NA
+      countSDPixel[nPerPixel <= 1000*1 | countSDPixel < 1] = NA
+      rangePrevalenceSDPixel = range(prevalenceSDPixel, na.rm=TRUE)
+      rangeCountSDPixel = range(countSDPixel, na.rm=TRUE)
+      
       # do the same but for the lcpb model
       prevalenceCIWidthPixellcpb = apply(agg$pixelMatriceslcpb$p, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       countCIWidthPixellcpb = apply(agg$pixelMatriceslcpb$Z, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
@@ -86,6 +105,13 @@ makeMortPlots = function(logisticApproximation=FALSE) {
       rangePrevalenceCIWidthPixellcpb = range(prevalenceCIWidthPixellcpb, na.rm=TRUE)
       rangeCountCIWidthPixellcpb = range(countCIWidthPixellcpb, na.rm=TRUE)
       
+      prevalenceSDPixellcpb = apply(agg$pixelMatriceslcpb$p, 1, sd, na.rm=TRUE)
+      countSDPixellcpb = apply(agg$pixelMatriceslcpb$Z, 1, sd, na.rm=TRUE)
+      prevalenceSDPixellcpb[nPerPixel <= 1000*1] = NA
+      countSDPixellcpb[nPerPixel <= 1000*1 | countSDPixellcpb < 1] = NA
+      rangePrevalenceSDPixellcpb = range(prevalenceSDPixellcpb, na.rm=TRUE)
+      rangeCountSDPixellcpb = range(countSDPixellcpb, na.rm=TRUE)
+      
       # do the same but for the LCpb model
       prevalenceCIWidthPixelLCpb = apply(agg$pixelMatricesLCpb$p, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       countCIWidthPixelLCpb = apply(agg$pixelMatricesLCpb$Z, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
@@ -93,6 +119,13 @@ makeMortPlots = function(logisticApproximation=FALSE) {
       countCIWidthPixelLCpb[nPerPixel <= 1000*1 | countCIWidthPixelLCpb < 1] = NA
       rangePrevalenceCIWidthPixelLCpb = range(prevalenceCIWidthPixelLCpb, na.rm=TRUE)
       rangeCountCIWidthPixelLCpb = range(countCIWidthPixelLCpb, na.rm=TRUE)
+      
+      prevalenceSDPixelLCpb = apply(agg$pixelMatricesLCpb$p, 1, sd, na.rm=TRUE)
+      countSDPixelLCpb = apply(agg$pixelMatricesLCpb$Z, 1, sd, na.rm=TRUE)
+      prevalenceSDPixelLCpb[nPerPixel <= 1000*1] = NA
+      countSDPixelLCpb[nPerPixel <= 1000*1 | countSDPixelLCpb < 1] = NA
+      rangePrevalenceSDPixelLCpb = range(prevalenceSDPixelLCpb, na.rm=TRUE)
+      rangeCountSDPixelLCpb = range(countSDPixelLCpb, na.rm=TRUE)
     } else if(thisLevel == "constituency") {
       urbanConstituencies = poppcon$County == "Nairobi" | poppcon$County == "Mombasa"
       undefinedRelativePrevalenceConstituencies = (poppcon$popUrb == 0) | (poppcon$popRur == 0)
@@ -112,17 +145,35 @@ makeMortPlots = function(logisticApproximation=FALSE) {
       relativePrevalenceCIWidthConstituency[undefinedRelativePrevalenceConstituencies] = NA
       rangeRelativePrevalenceCIWidthConstituency = range(relativePrevalenceCIWidthConstituency[is.finite(relativePrevalenceCIWidthConstituency)], na.rm=TRUE)
       
+      prevalenceSDConstituency = apply(agg$aggregatedResultsLCPB$constituencyMatrices$p, 1, sd, na.rm=TRUE)
+      countSDConstituency = apply(agg$aggregatedResultsLCPB$constituencyMatrices$Z, 1, sd, na.rm=TRUE)
+      rangePrevalenceSDConstituency = range(prevalenceSDConstituency)
+      rangeCountSDConstituency = range(countSDConstituency)
+      relativePrevalenceSDConstituency = apply(agg$aggregatedResultsLCPB$constituencyMatrices$pUrban/agg$aggregatedResultsLCPB$constituencyMatrices$pRural, 1, sd, na.rm=TRUE)
+      relativePrevalenceSDConstituency[undefinedRelativePrevalenceConstituencies] = NA
+      rangeRelativePrevalenceSDConstituency = range(relativePrevalenceSDConstituency[is.finite(relativePrevalenceSDConstituency)], na.rm=TRUE)
+      
       # get credible interval widths for the lcpb model
       prevalenceCIWidthConstituencylcpb = apply(agg$aggregatedResultslcpb$constituencyMatrices$p, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       countCIWidthConstituencylcpb = apply(agg$aggregatedResultslcpb$constituencyMatrices$Z, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       relativePrevalenceCIWidthConstituencylcpb = apply(agg$aggregatedResultslcpb$constituencyMatrices$pUrban/agg$aggregatedResultslcpb$constituencyMatrices$pRural, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       relativePrevalenceCIWidthConstituencylcpb[undefinedRelativePrevalenceConstituencies] = NA
       
+      prevalenceSDConstituencylcpb = apply(agg$aggregatedResultslcpb$constituencyMatrices$p, 1, sd, na.rm=TRUE)
+      countSDConstituencylcpb = apply(agg$aggregatedResultslcpb$constituencyMatrices$Z, 1, sd, na.rm=TRUE)
+      relativePrevalenceSDConstituencylcpb = apply(agg$aggregatedResultslcpb$constituencyMatrices$pUrban/agg$aggregatedResultslcpb$constituencyMatrices$pRural, 1, sd, na.rm=TRUE)
+      relativePrevalenceSDConstituencylcpb[undefinedRelativePrevalenceConstituencies] = NA
+      
       # do the same for the LCpb model
       prevalenceCIWidthConstituencyLCpb = apply(agg$aggregatedResultsLCpb$constituencyMatrices$p, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       countCIWidthConstituencyLCpb = apply(agg$aggregatedResultsLCpb$constituencyMatrices$Z, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       relativePrevalenceCIWidthConstituencyLCpb = apply(agg$aggregatedResultsLCpb$constituencyMatrices$pUrban/agg$aggregatedResultsLCpb$constituencyMatrices$pRural, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       relativePrevalenceCIWidthConstituencyLCpb[undefinedRelativePrevalenceConstituencies] = NA
+      
+      prevalenceSDConstituencyLCpb = apply(agg$aggregatedResultsLCpb$constituencyMatrices$p, 1, sd, na.rm=TRUE)
+      countSDConstituencyLCpb = apply(agg$aggregatedResultsLCpb$constituencyMatrices$Z, 1, sd, na.rm=TRUE)
+      relativePrevalenceSDConstituencyLCpb = apply(agg$aggregatedResultsLCpb$constituencyMatrices$pUrban/agg$aggregatedResultsLCpb$constituencyMatrices$pRural, 1, sd, na.rm=TRUE)
+      relativePrevalenceSDConstituencyLCpb[undefinedRelativePrevalenceConstituencies] = NA
     } else if(thisLevel == "county") {
       urbanCounties = sort(poppc$County) == "Nairobi" | sort(poppc$County) == "Mombasa"
       rangePrevalencePredCounty = range(c(rangePrevalencePredCounty, 
@@ -141,17 +192,35 @@ makeMortPlots = function(logisticApproximation=FALSE) {
       relativePrevalenceCIWidthCounty[urbanCounties] = NA
       rangeRelativePrevalenceCIWidthCounty = range(relativePrevalenceCIWidthCounty[is.finite(relativePrevalenceCIWidthCounty)], na.rm=TRUE)
       
+      prevalenceSDCounty = apply(agg$aggregatedResultsLCPB$countyMatrices$p, 1, sd, na.rm=TRUE)
+      countSDCounty = apply(agg$aggregatedResultsLCPB$countyMatrices$Z, 1, sd, na.rm=TRUE)
+      rangePrevalenceSDCounty = range(prevalenceSDCounty)
+      rangeCountSDCounty = range(countSDCounty)
+      relativePrevalenceSDCounty = apply(agg$aggregatedResultsLCPB$countyMatrices$pUrban/agg$aggregatedResultsLCPB$countyMatrices$pRural, 1, sd, na.rm=TRUE)
+      relativePrevalenceSDCounty[urbanCounties] = NA
+      rangeRelativePrevalenceSDCounty = range(relativePrevalenceSDCounty[is.finite(relativePrevalenceSDCounty)], na.rm=TRUE)
+      
       # get credible interval widths for the lcpb model
       prevalenceCIWidthCountylcpb = apply(agg$aggregatedResultslcpb$countyMatrices$p, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       countCIWidthCountylcpb = apply(agg$aggregatedResultslcpb$countyMatrices$Z, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       relativePrevalenceCIWidthCountylcpb = apply(agg$aggregatedResultslcpb$countyMatrices$pUrban/agg$aggregatedResultslcpb$countyMatrices$pRural, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       relativePrevalenceCIWidthCountylcpb[urbanCounties] = NA
       
+      prevalenceSDCountylcpb = apply(agg$aggregatedResultslcpb$countyMatrices$p, 1, sd, na.rm=TRUE)
+      countSDCountylcpb = apply(agg$aggregatedResultslcpb$countyMatrices$Z, 1, sd, na.rm=TRUE)
+      relativePrevalenceSDCountylcpb = apply(agg$aggregatedResultslcpb$countyMatrices$pUrban/agg$aggregatedResultslcpb$countyMatrices$pRural, 1, sd, na.rm=TRUE)
+      relativePrevalenceSDCountylcpb[urbanCounties] = NA
+      
       # get credible interval widths for the LCpb model
       prevalenceCIWidthCountyLCpb = apply(agg$aggregatedResultsLCpb$countyMatrices$p, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       countCIWidthCountyLCpb = apply(agg$aggregatedResultsLCpb$countyMatrices$Z, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       relativePrevalenceCIWidthCountyLCpb = apply(agg$aggregatedResultsLCpb$countyMatrices$pUrban/agg$aggregatedResultsLCpb$countyMatrices$pRural, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       relativePrevalenceCIWidthCountyLCpb[urbanCounties] = NA
+      
+      prevalenceSDCountyLCpb = apply(agg$aggregatedResultsLCpb$countyMatrices$p, 1, sd, na.rm=TRUE)
+      countSDCountyLCpb = apply(agg$aggregatedResultsLCpb$countyMatrices$Z, 1, sd, na.rm=TRUE)
+      relativePrevalenceSDCountyLCpb = apply(agg$aggregatedResultsLCpb$countyMatrices$pUrban/agg$aggregatedResultsLCpb$countyMatrices$pRural, 1, sd, na.rm=TRUE)
+      relativePrevalenceSDCountyLCpb[urbanCounties] = NA
     } else if(thisLevel == "province") {
       urbanProvinces = sort(regionMap@data$NAME_1) == "Nairobi"
       rangePrevalencePredProvince = range(c(rangePrevalencePredProvince, 
@@ -170,17 +239,35 @@ makeMortPlots = function(logisticApproximation=FALSE) {
       relativePrevalenceCIWidthProvince[urbanProvinces] = NA
       rangeRelativePrevalenceCIWidthProvince = range(relativePrevalenceCIWidthProvince[is.finite(relativePrevalenceCIWidthProvince)], na.rm=TRUE)
       
+      prevalenceSDProvince = apply(agg$aggregatedResultsLCPB$regionMatrices$p, 1, sd, na.rm=TRUE)
+      countSDProvince = apply(agg$aggregatedResultsLCPB$regionMatrices$Z, 1, sd, na.rm=TRUE)
+      rangePrevalenceSDProvince = range(prevalenceSDProvince)
+      rangeCountSDProvince = range(countSDProvince)
+      relativePrevalenceSDProvince = apply(agg$aggregatedResultsLCPB$regionMatrices$pUrban/agg$aggregatedResultsLCPB$regionMatrices$pRural, 1, sd, na.rm=TRUE)
+      relativePrevalenceSDProvince[urbanProvinces] = NA
+      rangeRelativePrevalenceSDProvince = range(relativePrevalenceSDProvince[is.finite(relativePrevalenceSDProvince)], na.rm=TRUE)
+      
       # now calculate credible interval widths for the lcpb model
       prevalenceCIWidthProvincelcpb = apply(agg$aggregatedResultslcpb$regionMatrices$p, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       countCIWidthProvincelcpb = apply(agg$aggregatedResultslcpb$regionMatrices$Z, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       relativePrevalenceCIWidthProvincelcpb = apply(agg$aggregatedResultslcpb$regionMatrices$pUrban/agg$aggregatedResultslcpb$regionMatrices$pRural, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       relativePrevalenceCIWidthProvincelcpb[urbanProvinces] = NA
       
+      prevalenceSDProvincelcpb = apply(agg$aggregatedResultslcpb$regionMatrices$p, 1, sd, na.rm=TRUE)
+      countSDProvincelcpb = apply(agg$aggregatedResultslcpb$regionMatrices$Z, 1, sd, na.rm=TRUE)
+      relativePrevalenceSDProvincelcpb = apply(agg$aggregatedResultslcpb$regionMatrices$pUrban/agg$aggregatedResultslcpb$regionMatrices$pRural, 1, sd, na.rm=TRUE)
+      relativePrevalenceSDProvincelcpb[urbanProvinces] = NA
+      
       # now calculate credible interval widths for the LCpb model
       prevalenceCIWidthProvinceLCpb = apply(agg$aggregatedResultsLCpb$regionMatrices$p, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       countCIWidthProvinceLCpb = apply(agg$aggregatedResultsLCpb$regionMatrices$Z, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       relativePrevalenceCIWidthProvinceLCpb = apply(agg$aggregatedResultsLCpb$regionMatrices$pUrban/agg$aggregatedResultsLCpb$regionMatrices$pRural, 1, function(x) {diff(quantile(x, probs=c(.1, .9), na.rm=TRUE))})
       relativePrevalenceCIWidthProvinceLCpb[urbanProvinces] = NA
+      
+      prevalenceSDProvinceLCpb = apply(agg$aggregatedResultsLCpb$regionMatrices$p, 1, sd, na.rm=TRUE)
+      countSDProvinceLCpb = apply(agg$aggregatedResultsLCpb$regionMatrices$Z, 1, sd, na.rm=TRUE)
+      relativePrevalenceSDProvinceLCpb = apply(agg$aggregatedResultsLCpb$regionMatrices$pUrban/agg$aggregatedResultsLCpb$regionMatrices$pRural, 1, sd, na.rm=TRUE)
+      relativePrevalenceSDProvinceLCpb[urbanProvinces] = NA
     }
   }
   
@@ -216,7 +303,7 @@ makeMortPlots = function(logisticApproximation=FALSE) {
                       rangePrevalencePredConstituency, 
                       rangePrevalencePredCounty, 
                       rangePrevalencePredProvince))
-  browser()
+  # browser()
   png(paste0(figDirectory, "application/prevalenceMean", logisticText, ".png"), width=1000, height=1000)
   par(mfrow=c(2,2), oma=c( 0,0,4,7), mar=c(6.1, 6.5, 1.1, 2.5))
   
@@ -370,14 +457,14 @@ makeMortPlots = function(logisticApproximation=FALSE) {
   meanTickLabelsProvince = as.character(meanTicksProvince)
   image.plot(zlim=range(log(meanRangePixel)), nlevel=length(meanCols), legend.only=TRUE, horizontal=FALSE,
              col=meanCols, add = TRUE, axis.args=list(at=log(meanTicksPixel), labels=meanTickLabelsPixel, cex.axis=2, tck=-.7, hadj=-.1),
-             legend.mar = 0, legend.cex=2, legend.mean=3, smallplot= c(.97,1,.1,.9))
+             legend.mar = 0, legend.cex=2, smallplot= c(.97,1,.1,.9))
   
   # constituency level
   plotMapDat(plotVar=constituencyMean, mapDat=constituencyMap, new = TRUE, 
              main="", scaleFun=log, scaleFunInverse=exp, 
              cols=meanCols, zlim=log(meanRangeConstituency), ticks=meanTicksConstituency, tickLabels=meanTickLabelsConstituency, 
              xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = TRUE, 
-             legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.mean=3, 
+             legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), 
              plotArgs=list(cex.main=3, cex.axis=2, cex.lab=3), legend.mar=0, lwd=.5, border=rgb(.4,.4,.4), 
              xlab="", ylab="")
   plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
@@ -388,7 +475,7 @@ makeMortPlots = function(logisticApproximation=FALSE) {
              main="", scaleFun=log, scaleFunInverse=exp, 
              cols=meanCols, zlim=log(meanRangeCounty), ticks=meanTicksCounty, tickLabels=meanTickLabelsCounty, 
              xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = TRUE, 
-             legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.mean=3, 
+             legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), 
              plotArgs=list(cex.main=3, cex.axis=2, cex.lab=3), legend.mar=0, lwd=.5, border=rgb(.4,.4,.4))
   plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
   plotMapDat(mapDat=regionMap, lwd=2.5)
@@ -398,7 +485,7 @@ makeMortPlots = function(logisticApproximation=FALSE) {
              main="", scaleFun=log, scaleFunInverse=exp, 
              cols=meanCols, zlim=log(meanRangeProvince), ticks=meanTicksProvince, tickLabels=meanTickLabelsProvince, 
              xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = TRUE, 
-             legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.mean=3, 
+             legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), 
              plotArgs=list(cex.main=3, cex.axis=2, cex.lab=3), legend.mar=0, lwd=.5, border=rgb(.4,.4,.4), 
              ylab="")
   # plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
@@ -663,6 +750,52 @@ makeMortPlots = function(logisticApproximation=FALSE) {
   
   dev.off()
   
+  # relative prevalence uncertainty
+  pdf(paste0(figDirectory, "application/prevalenceRelSDBoxplot", logisticText, ".pdf"), width=6, height=6)
+  par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
+  
+  pixels = length(prevalenceSDPixel)
+  pixelDat = data.frame(modelName=c(rep("S", pixels), rep("SC", pixels), rep("SCP", pixels)), 
+                        width=c(100*(prevalenceSDPixellcpb-prevalenceSDPixellcpb)/prevalenceSDPixellcpb, 
+                                100*(prevalenceSDPixelLCpb-prevalenceSDPixellcpb)/prevalenceSDPixellcpb, 
+                                100*(prevalenceSDPixel-prevalenceSDPixellcpb)/prevalenceSDPixellcpb))
+  boxplot(width~modelName, data=pixelDat, ylab="", xlab="", 
+          main="Pixel", col="skyblue")
+  abline(h=0, lty=2)
+  mtext(side = 2, "Percent increase", line = 3, cex=1)
+  
+  constituencies = length(prevalenceSDConstituency)
+  constituencyDat = data.frame(modelName=c(rep("S", constituencies), rep("SC", constituencies), rep("SCP", constituencies)), 
+                               width=c(100*(prevalenceSDConstituencylcpb-prevalenceSDConstituencylcpb)/prevalenceSDConstituencylcpb, 
+                                       100*(prevalenceSDConstituencyLCpb-prevalenceSDConstituencylcpb)/prevalenceSDConstituencylcpb, 
+                                       100*(prevalenceSDConstituency-prevalenceSDConstituencylcpb)/prevalenceSDConstituencylcpb))
+  boxplot(width~modelName, data=constituencyDat, ylab="", xlab="", main="Constituency", col="skyblue")
+  abline(h=0, lty=2)
+  
+  counties = length(prevalenceSDCounty)
+  countyDat = data.frame(modelName=c(rep("S", counties), rep("SC", counties), rep("SCP", counties)), 
+                         width=c(100*(prevalenceSDCountylcpb-prevalenceSDCountylcpb)/prevalenceSDCountylcpb, 
+                                 100*(prevalenceSDCountyLCpb-prevalenceSDCountylcpb)/prevalenceSDCountylcpb, 
+                                 100*(prevalenceSDCounty-prevalenceSDCountylcpb)/prevalenceSDCountylcpb))
+  boxplot(width~modelName, data=countyDat, ylab="Percent Increase", xlab="", main="County", col="skyblue")
+  abline(h=0, lty=2)
+  mtext(side = 1, "Model", line = 3, cex=1)
+  mtext(side = 2, "Percent increase", line = 3, cex=1)
+  
+  provinces = length(prevalenceSDProvince)
+  provinceDat = data.frame(modelName=c(rep("S", provinces), rep("SC", provinces), rep("SCP", provinces)), 
+                           width=c(100*(prevalenceSDProvincelcpb-prevalenceSDProvincelcpb)/prevalenceSDProvincelcpb, 
+                                   100*(prevalenceSDProvinceLCpb-prevalenceSDProvincelcpb)/prevalenceSDProvincelcpb, 
+                                   100*(prevalenceSDProvince-prevalenceSDProvincelcpb)/prevalenceSDProvincelcpb))
+  boxplot(width~modelName, data=provinceDat, ylab="", xlab="", main="Province", col="skyblue")
+  abline(h=0, lty=2)
+  mtext(side = 1, "Model", line = 3, cex=1)
+  
+  # add title in the left margin
+  mtext(side = 3, "Prevalence Relative SD", line = 0.5, cex=1, outer=TRUE)
+  
+  dev.off()
+  
   ## count uncertainty
   
   # absolute count uncertainty
@@ -743,6 +876,51 @@ makeMortPlots = function(logisticApproximation=FALSE) {
   
   dev.off()
   
+  pdf(paste0(figDirectory, "application/countRelSDBoxplot", logisticText, ".pdf"), width=6, height=6)
+  par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
+  
+  pixels = length(countSDPixel)
+  pixelDat = data.frame(modelName=c(rep("S", pixels), rep("SC", pixels), rep("SCP", pixels)), 
+                        width=c(100*(countSDPixellcpb-countSDPixellcpb)/countSDPixellcpb, 
+                                100*(countSDPixelLCpb-countSDPixellcpb)/countSDPixellcpb, 
+                                100*(countSDPixel-countSDPixellcpb)/countSDPixellcpb))
+  boxplot(width~modelName, data=pixelDat, ylab="", xlab="", 
+          main="Pixel", col="skyblue")
+  abline(h=0, lty=2)
+  mtext(side = 2, "Percent increase", line = 3, cex=1)
+  
+  constituencies = length(countSDConstituency)
+  constituencyDat = data.frame(modelName=c(rep("S", constituencies), rep("SC", constituencies), rep("SCP", constituencies)), 
+                               width=c(100*(countSDConstituencylcpb-countSDConstituencylcpb)/countSDConstituencylcpb, 
+                                       100*(countSDConstituencyLCpb-countSDConstituencylcpb)/countSDConstituencylcpb, 
+                                       100*(countSDConstituency-countSDConstituencylcpb)/countSDConstituencylcpb))
+  boxplot(width~modelName, data=constituencyDat, ylab="", xlab="", main="Constituency", col="skyblue")
+  abline(h=0, lty=2)
+  
+  counties = length(countSDCounty)
+  countyDat = data.frame(modelName=c(rep("S", counties), rep("SC", counties), rep("SCP", counties)), 
+                         width=c(100*(countSDCountylcpb-countSDCountylcpb)/countSDCountylcpb, 
+                                 100*(countSDCountyLCpb-countSDCountylcpb)/countSDCountylcpb, 
+                                 100*(countSDCounty-countSDCountylcpb)/countSDCountylcpb))
+  boxplot(width~modelName, data=countyDat, ylab="Percent Increase", xlab="", main="County", col="skyblue")
+  abline(h=0, lty=2)
+  mtext(side = 1, "Model", line = 3, cex=1)
+  mtext(side = 2, "Percent increase", line = 3, cex=1)
+  
+  provinces = length(countSDProvince)
+  provinceDat = data.frame(modelName=c(rep("S", provinces), rep("SC", provinces), rep("SCP", provinces)), 
+                           width=c(100*(countSDProvincelcpb-countSDProvincelcpb)/countSDProvincelcpb, 
+                                   100*(countSDProvinceLCpb-countSDProvincelcpb)/countSDProvincelcpb, 
+                                   100*(countSDProvince-countSDProvincelcpb)/countSDProvincelcpb))
+  boxplot(width~modelName, data=provinceDat, ylab="", xlab="", main="Province", col="skyblue")
+  abline(h=0, lty=2)
+  mtext(side = 1, "Model", line = 3, cex=1)
+  
+  # add title in the left margin
+  mtext(side = 3, "Total Deaths Relative SD", line = 0.5, cex=1, outer=TRUE)
+  
+  dev.off()
+  
   ## relative prevalence uncertainty
   
   # absolute relative prevalence uncertainty
@@ -790,6 +968,60 @@ makeMortPlots = function(logisticApproximation=FALSE) {
                            width=c(100*(relativePrevalenceCIWidthProvincelcpb-relativePrevalenceCIWidthProvincelcpb)/relativePrevalenceCIWidthProvincelcpb, 
                                    100*(relativePrevalenceCIWidthProvinceLCpb-relativePrevalenceCIWidthProvincelcpb)/relativePrevalenceCIWidthProvincelcpb, 
                                    100*(relativePrevalenceCIWidthProvince-relativePrevalenceCIWidthProvincelcpb)/relativePrevalenceCIWidthProvincelcpb))
+  boxplot(width~modelName, data=provinceDat, ylab="", xlab="", main="", col="skyblue")
+  abline(h=0, lty=2)
+  mtext(side = 1, "Model", line = 3, cex=1)
+  
+  # add title in the top margin
+  mtext(side = 3, "Relative Prevalence", line = 0.5, cex=1, outer=TRUE)
+  
+  dev.off()
+  
+  # absolute relative prevalence uncertainty
+  pdf(paste0(figDirectory, "application/relativePrevalenceWidthBoxplotSD", logisticText, ".pdf"), width=9, height=6)
+  par(mfrow=c(2,3), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
+  
+  constituencies = length(relativePrevalenceSDConstituency)
+  constituencyDat = data.frame(modelName=c(rep("S", constituencies), rep("SC", constituencies), rep("SCP", constituencies)), 
+                               width=c(relativePrevalenceSDConstituencylcpb, relativePrevalenceSDConstituencyLCpb, relativePrevalenceSDConstituency))
+  boxplot(width~modelName, data=constituencyDat, ylab="SD", xlab="Model", main="Constituency", col="skyblue")
+  mtext(side = 2, "SD", line = 3, cex=1)
+  
+  counties = length(relativePrevalenceSDCounty)
+  countyDat = data.frame(modelName=c(rep("S", counties), rep("SC", counties), rep("SCP", counties)), 
+                         width=c(relativePrevalenceSDCountylcpb, relativePrevalenceSDCountyLCpb, relativePrevalenceSDCounty))
+  boxplot(width~modelName, data=countyDat, ylab="SD", xlab="Model", main="County", col="skyblue")
+  
+  provinces = length(relativePrevalenceSDProvince)
+  provinceDat = data.frame(modelName=c(rep("S", provinces), rep("SC", provinces), rep("SCP", provinces)), 
+                           width=c(relativePrevalenceSDProvincelcpb, relativePrevalenceSDProvinceLCpb, relativePrevalenceSDProvince))
+  boxplot(width~modelName, data=provinceDat, ylab="", xlab="", main="Province", col="skyblue")
+  
+  # relative relativePrevalence uncertainty
+  constituencies = length(relativePrevalenceSDConstituency)
+  constituencyDat = data.frame(modelName=c(rep("S", constituencies), rep("SC", constituencies), rep("SCP", constituencies)), 
+                               width=c(100*(relativePrevalenceSDConstituencylcpb-relativePrevalenceSDConstituencylcpb)/relativePrevalenceSDConstituencylcpb, 
+                                       100*(relativePrevalenceSDConstituencyLCpb-relativePrevalenceSDConstituencylcpb)/relativePrevalenceSDConstituencylcpb, 
+                                       100*(relativePrevalenceSDConstituency-relativePrevalenceSDConstituencylcpb)/relativePrevalenceSDConstituencylcpb))
+  boxplot(width~modelName, data=constituencyDat, ylab="", xlab="", main="", col="skyblue")
+  abline(h=0, lty=2)
+  mtext(side = 2, "Percent increase", line = 3, cex=1)
+  mtext(side = 1, "Model", line = 3, cex=1)
+  
+  counties = length(relativePrevalenceSDCounty)
+  countyDat = data.frame(modelName=c(rep("S", counties), rep("SC", counties), rep("SCP", counties)), 
+                         width=c(100*(relativePrevalenceSDCountylcpb-relativePrevalenceSDCountylcpb)/relativePrevalenceSDCountylcpb, 
+                                 100*(relativePrevalenceSDCountyLCpb-relativePrevalenceSDCountylcpb)/relativePrevalenceSDCountylcpb, 
+                                 100*(relativePrevalenceSDCounty-relativePrevalenceSDCountylcpb)/relativePrevalenceSDCountylcpb))
+  boxplot(width~modelName, data=countyDat, ylab="Percent Increase", xlab="", main="", col="skyblue")
+  abline(h=0, lty=2)
+  mtext(side = 1, "Model", line = 3, cex=1)
+  
+  provinces = length(relativePrevalenceSDProvince)
+  provinceDat = data.frame(modelName=c(rep("S", provinces), rep("SC", provinces), rep("SCP", provinces)), 
+                           width=c(100*(relativePrevalenceSDProvincelcpb-relativePrevalenceSDProvincelcpb)/relativePrevalenceSDProvincelcpb, 
+                                   100*(relativePrevalenceSDProvinceLCpb-relativePrevalenceSDProvincelcpb)/relativePrevalenceSDProvincelcpb, 
+                                   100*(relativePrevalenceSDProvince-relativePrevalenceSDProvincelcpb)/relativePrevalenceSDProvincelcpb))
   boxplot(width~modelName, data=provinceDat, ylab="", xlab="", main="", col="skyblue")
   abline(h=0, lty=2)
   mtext(side = 1, "Model", line = 3, cex=1)
