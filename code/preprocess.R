@@ -35,12 +35,92 @@ load(paste0(globalDirectory, "adminMapData.RData"))
 ctp = read.csv(paste0(dataDirectory, "mapData/kenya-prov-county-map.csv"))
 save(ctp, file=paste0(globalDirectory, "kenya-prov-county-map.RData"))
 
+# for precomputating populations of constituencies possibly crossed with urban/rural
+popGridFine = makeInterpPopGrid(kmRes=1, mean.neighbor=500, delta=.05)
+constituencies = sort(unique(popGridFine$admin2))
+newRows = popGridFine[1:(2*length(constituencies)),]
+newRows$popOrig = 0
+newRows[1:length(constituencies),]$urban = FALSE
+newRows[(length(constituencies) + 1):(2*length(constituencies)),]$urban = TRUE
+newRows$admin2 = rep(constituencies, 2)
+popGridFine = rbind(popGridFine, 
+                    newRows)
+out = aggregate(popGridFine$popOrig, by=list(constituency=as.character(popGridFine$admin2), urban=popGridFine$urban), FUN=sum, drop=FALSE)
+poppcon = data.frame(Constituency=constituencies, County=constituencyToCounty(constituencies), popUrb=out[(length(constituencies) + 1):(2*length(constituencies)), 3], 
+                     popRur=out[1:length(constituencies), 3])
+
+# make sure constituencies without any urban or rural population in the coarse grid have none in the fine grid as well
+for(i in 1:nrow(poppcon)) {
+  thisRow = poppcon[i,]
+  thisIUrb = (popGrid$admin2 == thisRow$Constituency) & (popGrid$urban == TRUE)
+  thisIRur = (popGrid$admin2 == thisRow$Constituency) & (popGrid$urban == FALSE)
+  if(sum(popGrid$popOrig[thisIUrb]) == 0) {
+    poppcon$popUrb[i] = 0
+  }
+  if(sum(popGrid$popOrig[thisIRur]) == 0) {
+    poppcon$popRur[i] = 0
+  }
+}
+
+# normalize population within each stratum to sum to the stratum population
+countyI = match(poppcon$County, easpc$County) # county -> constituency
+popInUrbanStratum = poppc$popUrb[countyI]
+popInRuralStratum = poppc$popRur[countyI]
+
+sortI = match(poppc$County, out$County) # sorted county -> county
+out = aggregate(poppcon$popUrb, by=list(County=poppcon$County), FUN=sum, drop=FALSE)[sortI,]
+normFactorUrban = popInUrbanStratum / out$x[countyI]
+normFactorUrban[is.na(normFactorUrban)] = 0
+poppcon$popUrb = poppcon$popUrb * normFactorUrban
+
+# # test to make sure we did it right:
+# out = aggregate(poppcon$popUrb, by=list(County=poppcon$County), FUN=sum)[sortI,]
+# cbind(out, poppc)
+
+out = aggregate(poppcon$popRur, by=list(County=poppcon$County), FUN=sum, drop=FALSE)[sortI,]
+normFactorRural = popInRuralStratum / out$x[countyI]
+normFactorRural[is.na(normFactorRural)] = 0
+poppcon$popRur = poppcon$popRur * normFactorRural
+
+# # test to make sure we did it right:
+# out = aggregate(poppcon$popRur, by=list(County=poppcon$County), FUN=sum)[sortI,]
+# cbind(out, poppc)
+
+# normalize population so it sums to the total population of Kenya in urban/rural areas. Also calculate total population
+poppcon$popUrb = poppcon$popUrb * (sum(poppc$popUrb) / sum(poppcon$popUrb))
+poppcon$popUrb[is.na(poppcon$popUrb)] = 0
+poppcon$popRur = poppcon$popRur * (sum(poppc$popRur) / sum(poppcon$popRur))
+poppcon$popRur[is.na(poppcon$popRur)] = 0
+poppcon$popTotal = poppcon$popUrb + poppcon$popRur
+
+save(poppcon, file=paste0(globalDirectory, "poppcon.RData"))
+
+# check that constituency crossed with urbanicity of the dataset make sense
+out = aggregate(mort$admin2, by=list(mort$admin2, mort$urban), FUN=length, drop=FALSE)
+out = cbind(out[1:273,1:3], out[274:546,3])
+out[is.na(out)] = 0
+names(out) = c("Constituency", "urban", "nClustRur", "nClustUrb")
+out = out[,c(1:2, 4, 3)]
+out$nClustTotal = out$nClustRur + out$nClustUrb
+
+cbind(poppcon[,1:2], out[,3:5]/poppcon[,3:5])[,5]
+
+# make adjusted poppcon (target population per constituency)
+easpcon = meanEAsPerCon()
+poppconAdjusted = easpcon
+poppconAdjusted$popUrb = poppconAdjusted$meanUrbanEAs * ecdfExpectation(empiricalDistributions$householdsUrban) * ecdfExpectation(empiricalDistributions$mothersUrban) * 
+  ecdfExpectation(empiricalDistributions$childrenUrban)
+poppconAdjusted$popRur = poppconAdjusted$meanRuralEAs * ecdfExpectation(empiricalDistributions$householdsRural) * ecdfExpectation(empiricalDistributions$mothersRural) * 
+  ecdfExpectation(empiricalDistributions$childrenRural)
+poppconAdjusted$popTotal = poppconAdjusted$popUrb + poppconAdjusted$popRur
+save(poppconAdjusted, file="savedOutput/global/poppconAdjusted.RData")
+
 # generate 5km population density grid over Kenya
-popGrid = makeInterpPopGrid(kmRes=5)
+popGrid = makeInterpPopGrid(kmRes=5, poppcon=poppcon)
 save(popGrid, file=paste0(globalDirectory, "popGrid.RData"))
-popGridAdjusted = makeInterpPopGrid(kmRes=5, adjustPopSurface=TRUE)
+popGridAdjusted = makeInterpPopGrid(kmRes=5, adjustPopSurface=TRUE, poppcon=poppcon)
 save(popGridAdjusted, file=paste0(globalDirectory, "popGridAdjusted.RData"))
-popGridAdjustedWomen = makeInterpPopGrid(kmRes=5, adjustPopSurface=TRUE, "women")
+popGridAdjustedWomen = makeInterpPopGrid(kmRes=5, adjustPopSurface=TRUE, "women", poppcon=poppcon)
 save(popGridAdjustedWomen, file=paste0(globalDirectory, "popGridAdjustedWomen.RData"))
 
 # empirical distributions
@@ -87,16 +167,16 @@ northLim = tmp[,2]
 save(eastLim, northLim, file=paste0(globalDirectory, "lims.RData"))
 load(paste0(globalDirectory, "lims.RData"))
 
-# simulate 1000 draws of N at each EA:
-# out = simNsFull(1, includeUrban=TRUE)
-out = simNsFull(1000, includeUrban=TRUE)
-NcsUrban = out$NcsUrban
-NcsRural = out$NcsRural
-save(NcsUrban, NcsRural, file=paste0(globalDirectory, "NcsUrbanRural.RData"))
-
-# Ncs = simNsFull(1, includeUrban=FALSE)
-Ncs = simNsFull(1000, includeUrban=FALSE)
-save(Ncs, file=paste0(globalDirectory, "Ncs.RData"))
+# # simulate 1000 draws of N at each EA:
+# # out = simNsFull(1, includeUrban=TRUE)
+# out = simNsFull(1000, includeUrban=TRUE)
+# NcsUrban = out$NcsUrban
+# NcsRural = out$NcsRural
+# save(NcsUrban, NcsRural, file=paste0(globalDirectory, "NcsUrbanRural.RData"))
+# 
+# # Ncs = simNsFull(1, includeUrban=FALSE)
+# Ncs = simNsFull(1000, includeUrban=FALSE)
+# save(Ncs, file=paste0(globalDirectory, "Ncs.RData"))
 
 # change urbanicity to take the pixel level values rather than the cluster level values:
 test = getPixelIndex(cbind(mort$east, mort$north), popGrid, mort$admin1)
@@ -138,74 +218,3 @@ easpcMort$HHTotal = easpcMort$EATotal*25
 
 save(poppcMort, file=paste0(globalDirectory, "poppcMort.RData"))
 save(easpcMort, file=paste0(globalDirectory, "easpcMort.RData"))
-
-# for precomputating populations of constituencies possibly crossed with urban/rural
-popGridFine = makeInterpPopGrid(kmRes=1, mean.neighbor=500, delta=.05)
-constituencies = sort(unique(popGridFine$admin2))
-newRows = popGridFine[1:(2*length(constituencies)),]
-newRows$popOrig = 0
-newRows[1:length(constituencies),]$urban = FALSE
-newRows[(length(constituencies) + 1):(2*length(constituencies)),]$urban = TRUE
-newRows$admin2 = rep(constituencies, 2)
-popGridFine = rbind(popGridFine, 
-                    newRows)
-out = aggregate(popGridFine$popOrig, by=list(constituency=as.character(popGridFine$admin2), urban=popGridFine$urban), FUN=sum)
-poppcon = data.frame(Constituency=constituencies, County=constituencyToCounty(constituencies), popUrb=out[(length(constituencies) + 1):(2*length(constituencies)), 3], 
-                     popRur=out[1:length(constituencies), 3])
-
-# make sure constituencies without any urban or rural population in the coarse grid have none in the fine grid as well
-for(i in 1:nrow(poppcon)) {
-  thisRow = poppcon[i,]
-  thisIUrb = (popGrid$admin2 == thisRow$Constituency) & (popGrid$urban == TRUE)
-  thisIRur = (popGrid$admin2 == thisRow$Constituency) & (popGrid$urban == FALSE)
-  if(sum(popGrid$popOrig[thisIUrb]) == 0) {
-    poppcon$popUrb[i] = 0
-  }
-  if(sum(popGrid$popOrig[thisIRur]) == 0) {
-    poppcon$popRur[i] = 0
-  }
-}
-
-# normalize population within each stratum to sum to the stratum population
-countyI = match(poppcon$County, easpc$County) # county -> constituency
-popInUrbanStratum = poppc$popUrb[countyI]
-popInRuralStratum = poppc$popRur[countyI]
-
-sortI = match(poppc$County, out$County) # sorted county -> county
-out = aggregate(poppcon$popUrb, by=list(County=poppcon$County), FUN=sum)[sortI,]
-normFactorUrban = popInUrbanStratum / out$x[countyI]
-normFactorUrban[is.na(normFactorUrban)] = 0
-poppcon$popUrb = poppcon$popUrb * normFactorUrban
-
-# # test to make sure we did it right:
-# out = aggregate(poppcon$popUrb, by=list(County=poppcon$County), FUN=sum)[sortI,]
-# cbind(out, poppc)
-
-out = aggregate(poppcon$popRur, by=list(County=poppcon$County), FUN=sum)[sortI,]
-normFactorRural = popInRuralStratum / out$x[countyI]
-normFactorRural[is.na(normFactorRural)] = 0
-poppcon$popRur = poppcon$popRur * normFactorRural
-
-# # test to make sure we did it right:
-# out = aggregate(poppcon$popRur, by=list(County=poppcon$County), FUN=sum)[sortI,]
-# cbind(out, poppc)
-
-# normalize population so it sums to the total population of Kenya in urban/rural areas. Also calculate total population
-poppcon$popUrb = poppcon$popUrb * (sum(poppc$popUrb) / sum(poppcon$popUrb))
-poppcon$popUrb[is.na(poppcon$popUrb)] = 0
-poppcon$popRur = poppcon$popRur * (sum(poppc$popRur) / sum(poppcon$popRur))
-poppcon$popRur[is.na(poppcon$popRur)] = 0
-poppcon$popTotal = poppcon$popUrb + poppcon$popRur
-
-save(poppcon, file=paste0(globalDirectory, "poppcon.RData"))
-
-# check that constituency crossed with urbanicity of the dataset make sense
-out = aggregate(mort$admin2, by=list(mort$admin2, mort$urban), FUN=length, drop=FALSE)
-out = cbind(out[1:273,1:3], out[274:546,3])
-out[is.na(out)] = 0
-names(out) = c("Constituency", "urban", "nClustRur", "nClustUrb")
-out = out[,c(1:2, 4, 3)]
-out$nClustTotal = out$nClustRur + out$nClustUrb
-
-cbind(poppcon[,1:2], out[,3:5]/poppcon[,3:5])[,5]
-

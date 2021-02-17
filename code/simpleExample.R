@@ -27,7 +27,7 @@ popGridFine = popGridFine[popGridFine$admin1 == "Wajir",]
 
 # normalize to have the correct population within the county
 popGridFine$popOrig = popGridFine$popOrig * (poppc$popTotal[poppc$County=="Wajir"] / sum(popGridFine$popOrig))
-popRange = c(.1, max(popGridFine$popOrig))
+popRange = range(popGridFine$popOrig)
 
 ## done with setup. Make plots
 
@@ -364,6 +364,14 @@ print(data.frame(Constituency=constituenciesW, pctDiff=percentDifference, urbanE
 # 4  Wajir North -0.04886100        4      123      127
 # 5  Wajir South -0.03683734        0      198      198
 # 6   Wajir West  0.04094348        0       88       88
+
+#  Constituency pctDiff urbanEAs ruralEAs totalEAs
+#         Eldas    -5.1        0       79       79
+#        Tarbaj     5.1        4      121      125
+#    Wajir East     1.7      155       43      198
+#   Wajir North    -4.9        4      123      127
+#   Wajir South    -3.7        0      198      198
+#    Wajir West     4.1        0       88       88
 
 ##### 
 

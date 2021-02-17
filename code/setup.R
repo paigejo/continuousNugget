@@ -105,6 +105,7 @@ load(paste0(globalDirectory, "poppr.RData"))
 load(paste0(globalDirectory, "poppcon.RData"))
 load(paste0(globalDirectory, "poppcMort.RData"))
 load(paste0(globalDirectory, "easpcMort.RData"))
+load(paste0(globalDirectory, "poppconAdjusted.RData"))
 
 # load enumeration areas and neonatal mortality data
 load(paste0(globalDirectory, "kenyaEAs.RData"))

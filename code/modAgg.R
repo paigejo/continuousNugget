@@ -1415,7 +1415,7 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
                          pixelMatriceslcpb=list(p=lcpb, Z=zSampleslcpb, N=nSampleslcpb), allTimings=allTimings)
     }
   }
-  # browser()
+  browser()
   if(!returnEAinfo) {
     allMatrices
   } else {

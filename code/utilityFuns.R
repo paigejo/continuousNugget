@@ -2731,8 +2731,10 @@ addMapLabels = function(varAreas=NULL, mapDat = NULL, offsets=NULL, ...) {
 
 # generate the population density surface along with urbanicity estimates
 # delta, mean.neighbor: argument passed to fields.rdist.near via getConstituency
+# poppcon: if not NULL, renormalizes population grid values to have these 
+#          populations per constituency
 makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("children", "women"), 
-                             mean.neighbor=50, delta=.1, conMap=adm2) {
+                             mean.neighbor=50, delta=.1, conMap=adm2, poppcon=NULL) {
   # load population density data
   require(raster)
   
@@ -2780,6 +2782,20 @@ makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("child
   
   newPop$east = utmGrid[,1]
   newPop$north = utmGrid[,2]
+  
+  # if necessary, renormalize population values within constituencies crossed with 
+  # urban/rural to be the correct value
+  if(!is.null(poppcon)) {
+    for(i in 1:nrow(poppcon)) {
+      thisCon = poppcon$Constituency[i]
+      substratumUrban = (constituencies == thisCon) & urban
+      substratumRural = (constituencies == thisCon) & !urban
+      factorUrban = poppcon$popUrb[i] / sum(newPop$popOrig[substratumUrban])
+      factorRural = poppcon$popRur[i] / sum(newPop$popOrig[substratumRural])
+      newPop$popOrig[substratumUrban] = newPop$popOrig[substratumUrban] * factorUrban
+      newPop$popOrig[substratumRural] = newPop$popOrig[substratumRural] * factorRural
+    }
+  }
   
   # if necessary, adjust the population surface so that it better represents the the child population density 
   # rather than the total population density
@@ -3706,7 +3722,7 @@ rStratifiedMultnomialByConstituency = function(n, popMat=NULL, easpa=NULL, inclu
   } else {
     popConstituencyMat$pop = constituencyPop$popTotal
   }
-  
+  browser()
   # now draw multinomials
   if(includeUrban) {
     # draw for each constituency in each area crossed with urban/rural

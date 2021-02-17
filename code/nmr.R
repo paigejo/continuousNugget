@@ -749,7 +749,7 @@ makeMortPlots = function(logisticApproximation=FALSE) {
   mtext(side = 3, "Prevalence 80% CI Relative Width", line = 0.5, cex=1, outer=TRUE)
   
   dev.off()
-  
+  browser()
   # relative prevalence uncertainty
   pdf(paste0(figDirectory, "application/prevalenceRelSDBoxplot", logisticText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
