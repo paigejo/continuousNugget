@@ -118,14 +118,31 @@ generateSimPopulationsLCPB = function(nsim=10, rho=0.243, sigmaEpsilon=sqrt(0.46
 # HHoldVar: household effect variance
 # effRange: spatial range
 # urbanOverSamplefrac: the proportion with which to inflate the amount of urban samples in the surveys
+# fixPopPerEA: if not NULL, fix the target population in each EA to be this number
+# spreadEAsInPixels: whether or not to draw exact EA locations uniformly from the pixel from which they are drawn, 
+#                    or just to take the centroid of the pixel. NOTE: setting this to TRUE may jitter the EAs out 
+#                    of the administrative area assigned to the pixel, but the area assigned to the EA will stay 
+#                    the same
 generateSimDataSetsLCPB = function(nsim=10, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), 
-                               gamma=-1, effRange = 400, beta0=-2.9, 
-                               figureSaveDirectory="~/git/continuousNugget/figures/simDataSets/", 
-                               dataSaveDirectory="~/git/continuousNugget/savedOutput/simDataSets/", 
-                               seed=NULL) {
+                                   gamma=-1, effRange = 400, beta0=-2.9, 
+                                   fixPopPerEA=NULL, fixHHPerEA=NULL, fixPopPerHH=NULL, 
+                                   logisticApproximation=TRUE, spreadEAsInPixels=TRUE, adjustedPopMat=NULL, 
+                                   figureSaveDirectory="~/git/continuousNugget/figures/simDataSets/", 
+                                   dataSaveDirectory="~/git/continuousNugget/savedOutput/simDataSets/", 
+                                   seed=NULL, inla.seed=0L, simPopOnly=FALSE, returnEAinfo=TRUE, 
+                                   easpa=NULL, popMat=NULL, constituencyPop=NULL, 
+                                   verbose=TRUE, stopOnFrameMismatch=TRUE, thisclustpc=NULL) {
   tausq = sigmaEpsilon^2
   if(!is.null(seed)) {
     set.seed(seed)
+  }
+  
+  if(nsim != 1 && !simPopOnly) {
+    stop("if nsim != 1, simPopOnly being FALSE not yet supported")
+  }
+  if(!simPopOnly && !returnEAinfo) {
+    warning("simPopOnly is FALSE, but returnEAinfo was set to FALSE Setting to TRUE instead")
+    returnEAinfo = TRUE
   }
   
   # make strings representing the simulation with and without cluster effects
@@ -137,103 +154,115 @@ generateSimDataSetsLCPB = function(nsim=10, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5
   # simulatedEAs = simDatEmpirical(empiricalDistributions, kenyaEAs, clustDat=NULL, nsim=1, 
   #                                beta0=beta0, margVar=rho, urbanOverSamplefrac=0, 
   #                                tausq=tausq, gamma=gamma, HHoldVar=0, effRange=effRange)
-  simulatedEAs = simDatLCPB(nsim=1, margVar=rho, tausq=sigmaEpsilon^2, 
-                            gamma=gamma, effRange=effRange, beta0=beta0, 
-                            includeUrban=TRUE, clusterLevel=TRUE, pixelLevel=TRUE, 
-                            constituencyLevel=TRUE, countyLevel=TRUE, 
-                            regionLevel=TRUE, nationalLevel=TRUE, 
-                            doLcpb=TRUE, doLCpb=TRUE, doLCPb=TRUE, 
-                            ensureAtLeast1PerConstituency=TRUE)
-  kenyaEAs = simulatedEAs$eaDat
-  kenyaEAs$eaIs = 1:nrow(kenyaEAs)
-  kenyaEAsLong = kenyaEAs[rep(1:nrow(kenyaEAs), kenyaEAs$nHH),]
+  simOut = simDatLCPB(nsim=nsim, margVar=rho, tausq=sigmaEpsilon^2, 
+                      gamma=gamma, effRange=effRange, beta0=beta0, 
+                      includeUrban=TRUE, adjustedPopMat=adjustedPopMat, 
+                      pixelLevel=TRUE, constituencyLevel=TRUE, 
+                      countyLevel=TRUE, regionLevel=TRUE, nationalLevel=TRUE, 
+                      doLcpb=FALSE, doLCpb=FALSE, doLCPb=TRUE, doIHME=TRUE, 
+                      ensureAtLeast1PerConstituency=TRUE, inla.seed=inla.seed, 
+                      spreadEAsInPixels=spreadEAsInPixels, 
+                      fixPopPerEA=fixPopPerEA, fixHHPerEA=fixHHPerEA, fixPopPerHH=fixPopPerHH, 
+                      logisticApproximation=logisticApproximation, 
+                      simPopOnly=simPopOnly, returnEAinfo=returnEAinfo, 
+                      verbose=verbose, stopOnFrameMismatch=stopOnFrameMismatch, 
+                      easpa=easpa, popMat=popMat, constituencyPop=constituencyPop)
   
-  # simulate the cluster sampling and add to the data sets
-  overSampClustDat = simClustersEmpirical(kenyaEAs, kenyaEAsLong, nsim, NULL, urbanOverSamplefrac, verbose=FALSE)
-  clustList = genAndreaFormatFromEAIs(simulatedEAs$eaDat, overSampClustDat$eaIs, overSampClustDat$sampleWeights)
-  overSampDat = list(eaDat=kenyaEAs, clustDat=clustList, aggregatedPop=simulatedEAs$aggregatedPop)
-  
-  SRSClustDat = simClustersEmpirical(kenyaEAs, kenyaEAsLong, nsim, NULL, SRS=TRUE, verbose=FALSE)
-  clustList = genAndreaFormatFromEAIs(kenyaEAs, SRSClustDat$eaIs, SRSClustDat$sampleWeights)
-  SRSDat = list(eaDat=kenyaEAs, clustDat=clustList, aggregatedPop=simulatedEAs$aggregatedPop) # the only thing different is the sampling of the clusters
-  
-  # plot the first simulation of the over sampled and simple random sample data sets
-  clustDat = SRSDat$clustDat[[1]]
-  # clustDat = overSampDat$clustDat[[1]]
-  eaDat = overSampDat$eaDat
-  pdf(paste0(figureSaveDirectory, "/unstratifiedSimulation", dataID, ".pdf"), width=8, height=8)
-  par(mfrow =c(2, 2), mar=c(5, 4, 4, 8))
-  obsCoords = cbind(clustDat$east, clustDat$north)
-  obsNs = clustDat$n
-  obsCounts = clustDat$y
-  zlim = c(0, quantile(c(eaDat$pLCPB, clustDat$pLCPB, 
-                         eaDat$pLCPb), probs=.975))
-  quilt.plot(eaDat$east, eaDat$north, eaDat$pLCPB, main="Population Prevalences (LCPB)", 
-             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-  plotMapDat(project=TRUE)
-  quilt.plot(obsCoords, obsCounts/obsNs, main="Sample Prevalences (LCPB)", 
-             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-  plotMapDat(project=TRUE)
-  quilt.plot(eaDat$east, eaDat$north, eaDat$pLCPb, main="Population Risks (LCPb)", 
-             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-  plotMapDat(project=TRUE)
-  quilt.plot(obsCoords, clustDat$pLCPb, main="Sample Risks (LCPb)", 
-             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-  plotMapDat(project=TRUE)
-  quilt.plot(eaDat$east, eaDat$north, eaDat$pLCpb, main="Population Risks (LCpb)", 
-             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-  plotMapDat(project=TRUE)
-  quilt.plot(obsCoords, clustDat$pLCpb, main="Sample Risks (LCpb)", 
-             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-  plotMapDat(project=TRUE)
-  quilt.plot(eaDat$east, eaDat$north, eaDat$pLcpb, main="Population Risks (Lcpb)", 
-             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-  plotMapDat(project=TRUE)
-  quilt.plot(obsCoords, clustDat$pLcpb, main="Sample Risks (Lcpb)", 
-             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-  plotMapDat(project=TRUE)
-  dev.off()
-  
-  # plot the first simulation of the over sampled and simple random sample data sets
-  clustDat = overSampDat$clustDat[[1]]
-  # clustDat = overSampDat$clustDat[[1]]
-  eaDat = overSampDat$eaDat
-  pdf(paste0(figureSaveDirectory, "/stratifiedSimulation", dataID, ".pdf"), width=8, height=8)
-  par(mfrow =c(2, 2), mar=c(5, 4, 4, 8))
-  obsCoords = cbind(clustDat$east, clustDat$north)
-  obsNs = clustDat$n
-  obsCounts = clustDat$y
-  zlim = c(0, quantile(c(eaDat$pLCPB, clustDat$pLCPB, 
-                         eaDat$pLCPb), probs=.975))
-  quilt.plot(eaDat$east, eaDat$north, eaDat$pLCPB, main="Population Prevalences (LCPB)", 
-             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-  plotMapDat(project=TRUE)
-  quilt.plot(obsCoords, obsCounts/obsNs, main="Sample Prevalences (LCPB)", 
-             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-  plotMapDat(project=TRUE)
-  quilt.plot(eaDat$east, eaDat$north, eaDat$pLCPb, main="Population Risks (LCPb)", 
-             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-  plotMapDat(project=TRUE)
-  quilt.plot(obsCoords, clustDat$pLCPb, main="Sample Risks (LCPb)", 
-             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-  plotMapDat(project=TRUE)
-  quilt.plot(eaDat$east, eaDat$north, eaDat$pLCpb, main="Population Risks (LCpb)", 
-             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-  plotMapDat(project=TRUE)
-  quilt.plot(obsCoords, clustDat$pLCpb, main="Sample Risks (LCpb)", 
-             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-  plotMapDat(project=TRUE)
-  quilt.plot(eaDat$east, eaDat$north, eaDat$pLcpb, main="Population Risks (Lcpb)", 
-             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-  plotMapDat(project=TRUE)
-  quilt.plot(obsCoords, clustDat$pLcpb, main="Sample Risks (Lcpb)", 
-             xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-  plotMapDat(project=TRUE)
-  dev.off()
-  
-  save(overSampDat, SRSDat, file=paste0(dataSaveDirectory, "simDataMulti", dataID, ".RData"))
-  
-  invisible(list(simulatedEAs=simulatedEAs, overSampDat=overSampDat, SRSDat=SRSDat))
+  if(!simPopOnly) {
+    kenyaEAs = simOut$eaDat
+    kenyaEAs$eaIs = 1:nrow(kenyaEAs)
+    kenyaEAsLong = kenyaEAs[rep(1:nrow(kenyaEAs), kenyaEAs$nHH),]
+    thisclustpc = simOut$thisclustpc 
+    
+    # simulate the cluster sampling and add to the data sets
+    overSampClustDat = simClustersEmpirical(kenyaEAs, kenyaEAsLong, nsim, NULL, urbanOverSamplefrac, verbose=FALSE, thisclustpc=thisclustpc)
+    clustList = genAndreaFormatFromEAIs(simOut$eaDat, overSampClustDat$eaIs, overSampClustDat$sampleWeights)
+    overSampDat = list(eaDat=kenyaEAs, clustDat=clustList, aggregatedPop=simOut$aggregatedPop)
+    
+    SRSClustDat = simClustersSRS(nsim, kenyaEAs, kenyaEAsLong, nEASampled=sum(thisclustpc$clustTotal))
+    clustList = genAndreaFormatFromEAIs(kenyaEAs, SRSClustDat$eaIs, SRSClustDat$sampleWeights)
+    SRSDat = list(eaDat=kenyaEAs, clustDat=clustList, aggregatedPop=simOut$aggregatedPop) # the only thing different is the sampling of the clusters
+    
+    # plot the first simulation of the over sampled and simple random sample data sets
+    clustDat = SRSDat$clustDat[[1]]
+    # clustDat = overSampDat$clustDat[[1]]
+    eaDat = overSampDat$eaDat
+    pdf(paste0(figureSaveDirectory, "/unstratifiedSimulation", dataID, ".pdf"), width=8, height=8)
+    par(mfrow =c(2, 2), mar=c(5, 4, 4, 8))
+    obsCoords = cbind(clustDat$east, clustDat$north)
+    obsNs = clustDat$n
+    obsCounts = clustDat$y
+    zlim = c(0, quantile(c(eaDat$pLCPB, clustDat$pLCPB, 
+                           eaDat$pLCPb), probs=.975))
+    quilt.plot(eaDat$east, eaDat$north, eaDat$pLCPB, main="Population Prevalences (LCPB)", 
+               xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+    plotMapDat(project=TRUE)
+    quilt.plot(obsCoords, obsCounts/obsNs, main="Sample Prevalences (LCPB)", 
+               xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+    plotMapDat(project=TRUE)
+    quilt.plot(eaDat$east, eaDat$north, eaDat$pLCPb, main="Population Risks (LCPb)", 
+               xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+    plotMapDat(project=TRUE)
+    quilt.plot(obsCoords, clustDat$pLCPb, main="Sample Risks (LCPb)", 
+               xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+    plotMapDat(project=TRUE)
+    quilt.plot(eaDat$east, eaDat$north, eaDat$pLCpb, main="Population Risks (LCpb)", 
+               xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+    plotMapDat(project=TRUE)
+    quilt.plot(obsCoords, clustDat$pLCpb, main="Sample Risks (LCpb)", 
+               xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+    plotMapDat(project=TRUE)
+    quilt.plot(eaDat$east, eaDat$north, eaDat$pLcpb, main="Population Risks (Lcpb)", 
+               xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+    plotMapDat(project=TRUE)
+    quilt.plot(obsCoords, clustDat$pLcpb, main="Sample Risks (Lcpb)", 
+               xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+    plotMapDat(project=TRUE)
+    dev.off()
+    
+    # plot the first simulation of the over sampled and simple random sample data sets
+    clustDat = overSampDat$clustDat[[1]]
+    # clustDat = overSampDat$clustDat[[1]]
+    eaDat = overSampDat$eaDat
+    pdf(paste0(figureSaveDirectory, "/stratifiedSimulation", dataID, ".pdf"), width=8, height=8)
+    par(mfrow =c(2, 2), mar=c(5, 4, 4, 8))
+    obsCoords = cbind(clustDat$east, clustDat$north)
+    obsNs = clustDat$n
+    obsCounts = clustDat$y
+    zlim = c(0, quantile(c(eaDat$pLCPB, clustDat$pLCPB, 
+                           eaDat$pLCPb), probs=.975))
+    quilt.plot(eaDat$east, eaDat$north, eaDat$pLCPB, main="Population Prevalences (LCPB)", 
+               xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+    plotMapDat(project=TRUE)
+    quilt.plot(obsCoords, obsCounts/obsNs, main="Sample Prevalences (LCPB)", 
+               xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+    plotMapDat(project=TRUE)
+    quilt.plot(eaDat$east, eaDat$north, eaDat$pLCPb, main="Population Risks (LCPb)", 
+               xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+    plotMapDat(project=TRUE)
+    quilt.plot(obsCoords, clustDat$pLCPb, main="Sample Risks (LCPb)", 
+               xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+    plotMapDat(project=TRUE)
+    quilt.plot(eaDat$east, eaDat$north, eaDat$pLCpb, main="Population Risks (LCpb)", 
+               xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+    plotMapDat(project=TRUE)
+    quilt.plot(obsCoords, clustDat$pLCpb, main="Sample Risks (LCpb)", 
+               xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+    plotMapDat(project=TRUE)
+    quilt.plot(eaDat$east, eaDat$north, eaDat$pLcpb, main="Population Risks (Lcpb)", 
+               xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+    plotMapDat(project=TRUE)
+    quilt.plot(obsCoords, clustDat$pLcpb, main="Sample Risks (Lcpb)", 
+               xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
+    plotMapDat(project=TRUE)
+    dev.off()
+    
+    save(overSampDat, SRSDat, file=paste0(dataSaveDirectory, "simDataMulti", dataID, ".RData"))
+    
+    return(invisible(list(simulatedEAs=simOut, overSampDat=overSampDat, SRSDat=SRSDat)))
+  } else {
+    invisible(simOut)
+  }
 }
 
 ## TODO: modify function to take in vector of seeds, make different population replication 

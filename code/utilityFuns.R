@@ -408,7 +408,9 @@ LKSimulator2 = function(coords, nsim=1, NC=5, effRange=(max(coords[,1])-min(coor
   fieldSims
 }
 
-simSPDE = function(coords, nsim=1, mesh=NULL, effRange=(max(coords[,1])-min(coords[,1]))/3, margVar=1, kenya=FALSE) {
+# inla.seed: seed input to inla.qsample. 0L sets seed intelligently, > 0 sets a 
+#            specific seed, < 0 keeps existing RNG
+simSPDE = function(coords, nsim=1, mesh=NULL, effRange=(max(coords[,1])-min(coords[,1]))/3, margVar=1, kenya=FALSE, inla.seed=0L) {
   # generate mesh grid if necessary
   if(is.null(mesh)) {
     if(kenya)
@@ -441,7 +443,7 @@ simSPDE = function(coords, nsim=1, mesh=NULL, effRange=(max(coords[,1])-min(coor
   A = inla.spde.make.A(mesh, coords)
   
   # generate simulations
-  simField = inla.qsample(nsim, Q)
+  simField = inla.qsample(nsim, Q, seed = inla.seed)
   simDat = as.matrix(A %*% simField)
   
   simDat
@@ -1377,8 +1379,17 @@ aggregatePixelPredictions = function(Zg, Ng, popMatAdjusted=NULL, useDensity=FAL
   
   predPts = cbind(popMatAdjusted$east, popMatAdjusted$north)
   predsUrban = popMatAdjusted$urban
-  predsConstituency = popMatAdjusted$constituency
-  predsCounty = popMatAdjusted$area
+  if("constituency" %in% names(popMatAdjusted)) {
+    predsConstituency = popMatAdjusted$constituency
+  } else if("admin2" %in% names(popMatAdjusted)) {
+    predsConstituency = popMatAdjusted$admin2
+  }
+  if("area" %in% names(popMatAdjusted)) {
+    predsCounty = popMatAdjusted$area
+  } else if("admin1" %in% names(popMatAdjusted)) {
+    predsCounty = popMatAdjusted$admin1
+  }
+  
   predsCountry = rep(country, length(predsCounty))
   if(is.null(popRegionNames) && regionLevel) {
     if(country != "Kenya")
@@ -2301,16 +2312,16 @@ getCounty = function(pts, project=FALSE) {
 # for computing what administrative regions the given points are in
 # project: project to longitude/latitude coordinates
 # mean.neighbor: argument passed to fields.rdist.near
-getConstituency = function(pts, project=FALSE, countyNames=NULL, delta=.05, mean.neighbor=50) {
+getConstituency = function(pts, project=FALSE, countyNames=NULL, delta=.05, mean.neighbor=50, conMap=adm2) {
   
   # project pts to lon/lat coordinate system if user specifies
   if(project)
     pts = projKenya(pts, inverse=TRUE)
   
-  constituencyNames = adm2@data$CONSTITUEN
+  constituencyNames = conMap@data$CONSTITUEN
   
   # get constituency map polygons and set helper function for testing if pts are in the constituencies
-  polys = adm2@polygons
+  polys = conMap@polygons
   inRegion = function(i) {
     countyPolys = polys[[i]]@Polygons
     inside = sapply(1:length(countyPolys), function(x) {in.poly(pts, countyPolys[[x]]@coords, inflation=0)})
@@ -2322,11 +2333,6 @@ getConstituency = function(pts, project=FALSE, countyNames=NULL, delta=.05, mean
   multipleRegs = apply(out, 1, function(vals) {sum(vals != 0) > 1})
   constituencyID = apply(out, 1, function(vals) {match(1, vals != 0)})
   constituencyNameVec = constituencyNames[constituencyID]
-  
-  # get counties for the points if need be
-  # if(is.null(countyNames)) {
-  #   countyNames = getRegion(pts, project)
-  # }
   
   # for all points not in a constituency polygon, determine the nearest constituency
   insideAny = apply(out, 1, function(x) {any(x != 0)})
@@ -2352,15 +2358,6 @@ getConstituency = function(pts, project=FALSE, countyNames=NULL, delta=.05, mean
       # nearbyCounties = c(nearbyCounties, list(countyNames[nearbyI[[i]]]))
       startI = endI + 1
     }
-    
-    # # remove points that aren't in the same county
-    # for(i in 1:length(nearbyI)) {
-    #   thisCounty = countyNames[problemPointsI[i]]
-    #   nearbyDistances[[i]] = nearbyDistances[[i]][nearbyCounties[[i]] == thisCounty]
-    #   nearbyI[[i]] = nearbyI[[i]][nearbyCounties[[i]] == thisCounty]
-    #   nearbyConstituencies[[i]] = nearbyConstituencies[[i]][nearbyCounties[[i]] == thisCounty]
-    #   nearbyCounties[[i]] = nearbyCounties[[i]][nearbyCounties[[i]] == thisCounty]
-    # }
     
     # sort nearby constituencies and indices by distance
     for(i in 1:length(nearbyI)) {
@@ -2729,12 +2726,16 @@ addMapLabels = function(varAreas=NULL, mapDat = NULL, offsets=NULL, ...) {
   invisible(NULL)
 }
 
-# generate the population density surface along with urbanicity estimates
+# generate the population density surface along with urbanicity estimates. 
+# If any constituencies have no pixel centroids in them, they are added as 
+# separate areal units in the pixellated grid.
 # delta, mean.neighbor: argument passed to fields.rdist.near via getConstituency
 # poppcon: if not NULL, renormalizes population grid values to have these 
-#          populations per constituency
+#          populations per constituency.
 makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("children", "women"), 
                              mean.neighbor=50, delta=.1, conMap=adm2, poppcon=NULL) {
+  thresholdUrbanBy = ifelse(is.null(poppcon), "county", "constituency")
+  
   # load population density data
   require(raster)
   
@@ -2761,8 +2762,6 @@ makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("child
   utmGrid = utmGrid[inKenya,]
   lonLatGrid = lonLatGrid[inKenya,]
   
-  # get population density at those coordinates
-  interpPopVals = extract(pop, SpatialPoints(lonLatGrid),method="bilinear")
   
   # compute counties associated with locations
   # counties = getRegion(lonLatGrid)$regionNames
@@ -2773,12 +2772,107 @@ makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("child
   counties = constituencyToCounty(constituencies)
   provinces = countyToRegion(counties)
   
+  # check to make sure every constituency has at least 2 pixels
+  constituenciesFactor = factor(constituencies, levels=sort(unique(conMap@data$CONSTITUEN)))
+  out = aggregate(constituencies, by=list(constituency=constituenciesFactor), FUN=length, drop=FALSE)
+  noPixels = is.na(out$x)
+  onePixel = out$x == 1
+  onePixelNames = out$constituency[onePixel]
+  badConstituencies = noPixels | onePixel
+  badConstituencyNames = as.character(out$constituency[badConstituencies])
+  if(any(badConstituencies)) {
+    if(is.null(poppcon)) {
+      # make sure we know the population of each constituency
+      stop("If any constituency has < 2 pixels, must specify poppcon")
+    } else {
+      # get centroids of the constituencies (or it's single pixel coordinates)
+      thisSpatialPolyList = as.SpatialPolygons.PolygonsList(conMap@polygons)
+      centroidsLonLat = matrix(ncol=2, nrow=nrow(conMap@data))
+      for(i in 1:nrow(conMap@data)) {
+        thisCon = conMap@data$CONSTITUEN[i]
+        if(thisCon %in% onePixelNames) {
+          thisCentroid = lonLatGrid[constituencies == thisCon,]
+        } else {
+          thisCentroid = coordinates(thisSpatialPolyList[i])
+        }
+        
+        centroidsLonLat[i,] = thisCentroid
+      }
+      
+      # sort to match results of aggregate (alphabetical order)
+      sortI = sort(conMap@data$CONSTITUEN, index.return=TRUE)$ix
+      centroidsLonLat = centroidsLonLat[sortI,]
+      
+      # remove the one pixel for constituencies with only one pixel 
+      # (we will add it in again later, twice: both urban and rural)
+      onePixel = which(constituencies %in% onePixelNames)
+      lonLatGrid = lonLatGrid[-onePixel,]
+      utmGrid = utmGrid[-onePixel,]
+      constituencies = constituencies[-onePixel]
+      counties = counties[-onePixel]
+      provinces = provinces[-onePixel]
+      
+      # add centroids of only the bad constituencies
+      centroidsLonLat = centroidsLonLat[badConstituencies,]
+      
+      # convert to east/north
+      centroidsEastNorth = projKenya(centroidsLonLat[,1], centroidsLonLat[,2], TRUE)
+      
+      # only add centroid if bad constituencies have any population in the stratum
+      hasUrbanPop = (poppcon$popUrb > 0)[badConstituencies]
+      hasRuralPop = (poppcon$popRur > 0)[badConstituencies]
+      centroidsLonLatUrban = centroidsLonLat[hasUrbanPop,]
+      centroidsLonLatRural = centroidsLonLat[hasRuralPop,]
+      
+      # add centroids to the matrices of pixellated grid coordinates. 
+      # Add them twice: once for urban, once for rural
+      lonLatGrid = rbind(lonLatGrid, centroidsLonLat[hasUrbanPop,], centroidsLonLat[hasRuralPop,])
+      utmGrid = rbind(utmGrid, centroidsEastNorth[hasUrbanPop,], centroidsEastNorth[hasRuralPop,])
+      
+      # add associated consituencies, counties, provinces to respective vectors
+      newConstituencies = c(badConstituencyNames[hasUrbanPop], badConstituencyNames[hasRuralPop])
+      newCounties = constituencyToCounty(newConstituencies)
+      newProvinces = countyToRegion(newCounties)
+      constituencies = c(constituencies, newConstituencies)
+      counties = c(counties, newCounties)
+      provinces = c(provinces, newProvinces)
+    }
+  }
+  
+  # get population density at those coordinates
+  interpPopVals = extract(pop, SpatialPoints(lonLatGrid),method="bilinear")
+  
+  if(any(badConstituencies)) {
+    # make sure population densities in the bad constituencies 
+    # are slightly different so one will be classified as urban and 
+    # the other as rural
+    nUnits = length(interpPopVals)
+    nNewRural = sum(hasRuralPop)
+    if(nNewRural >= 1) {
+      interpPopVals[(nUnits-nNewRural + 1):nUnits] = interpPopVals[(nUnits-nNewRural + 1):nUnits] / 2
+    }
+  }
+  
   # determine which points are urban
   newPop = data.frame(list(lon=lonLatGrid[,1], lat=lonLatGrid[,2], popOrig=interpPopVals, region=provinces, admin1=counties, admin2=constituencies))
-  threshes = setThresholds()
-  popThreshes = sapply(1:nrow(newPop), function(i) {threshes$threshes[threshes$counties == newPop$admin1[i]]})
-  urban = newPop$popOrig > unlist(popThreshes)
-  newPop$urban = urban
+  if(thresholdUrbanBy == "county") {
+    threshes = setThresholds()
+    popThreshes = sapply(1:nrow(newPop), function(i) {threshes$threshes[threshes$counties == newPop$admin1[i]]})
+    urban = newPop$popOrig >= unlist(popThreshes)
+    newPop$urban = urban
+  } else {
+    if(is.null(poppcon)) {
+      stop("if thresholdUrbanBy == 'constituency' must provide poppcon")
+    }
+    tempCon = poppcon
+    tempPop = newPop
+    names(tempCon) = c("subarea", "area", "popUrb", "popRur", "popTotal")
+    names(tempPop)[c(3, 5:6)] = c("pop", "area", "subareas")
+    threshes = SUMMER::setThresholdsSubarea(tempPop, poppsub = tempCon)
+    popThreshes = sapply(1:nrow(newPop), function(i) {threshes$threshes[threshes$subareas == newPop$admin2[i]]})
+    urban = newPop$popOrig >= unlist(popThreshes)
+    newPop$urban = urban
+  }
   
   newPop$east = utmGrid[,1]
   newPop$north = utmGrid[,2]
@@ -2811,14 +2905,20 @@ makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("child
     # calculate the number of children per stratum using true total eas and empirical children per ea from census data
     load("../U5MR/empiricalDistributions.RData")
     if(targetPop == "children") {
-      targetPopPerStratumUrban = temp$EAUrb * ecdfExpectation(empiricalDistributions$householdsUrban) * ecdfExpectation(empiricalDistributions$mothersUrban) * 
+      # targetPopPerStratumUrban = temp$EAUrb * ecdfExpectation(empiricalDistributions$householdsUrban) * ecdfExpectation(empiricalDistributions$mothersUrban) * 
+      #   ecdfExpectation(empiricalDistributions$childrenUrban)
+      # targetPopPerStratumRural = temp$EARur * ecdfExpectation(empiricalDistributions$householdsRural) * ecdfExpectation(empiricalDistributions$mothersRural) * 
+      #   ecdfExpectation(empiricalDistributions$childrenRural)
+      targetPopPerStratumUrban = temp$HHUrb * ecdfExpectation(empiricalDistributions$mothersUrban) * 
         ecdfExpectation(empiricalDistributions$childrenUrban)
-      targetPopPerStratumRural = temp$EARur * ecdfExpectation(empiricalDistributions$householdsRural) * ecdfExpectation(empiricalDistributions$mothersRural) * 
+      targetPopPerStratumRural = temp$HHRur * ecdfExpectation(empiricalDistributions$mothersRural) * 
         ecdfExpectation(empiricalDistributions$childrenRural)
     }
     else {
-      targetPopPerStratumUrban = temp$EAUrb * ecdfExpectation(empiricalDistributions$householdsUrban) * ecdfExpectation(empiricalDistributions$womenUrban)
-      targetPopPerStratumRural = temp$EARur * ecdfExpectation(empiricalDistributions$householdsRural) * ecdfExpectation(empiricalDistributions$womenRural)
+      # targetPopPerStratumUrban = temp$HHUrb * ecdfExpectation(empiricalDistributions$householdsUrban) * ecdfExpectation(empiricalDistributions$womenUrban)
+      # targetPopPerStratumRural = temp$HHRur * ecdfExpectation(empiricalDistributions$householdsRural) * ecdfExpectation(empiricalDistributions$womenRural)
+      targetPopPerStratumUrban = temp$HHUrb * ecdfExpectation(empiricalDistributions$womenUrban)
+      targetPopPerStratumRural = temp$HHRur * ecdfExpectation(empiricalDistributions$womenRural)
     }
     
     # generate 2 47 x nPixels matrices for urban and rural strata integrating pixels with respect to population density to get county estimates
@@ -2849,28 +2949,58 @@ makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("child
 }
 
 # generate the population density surface along with urbanicity estimates
-adjustPopGrid = function(popMat, poppcAdjusted=NULL) {
-  
-  # sort get population per stratum from poppcAdjusted
-  if("County" %in% names(poppcAdjusted)) {
-    counties=sort(unique(poppcAdjusted$County))
-  } else if("area" %in% names(poppcAdjusted)) {
-    counties=sort(unique(poppcAdjusted$area))
+# poppcAdjusted: either at the county or constituency level depending on adjustLevel
+adjustPopGrid = function(popMat, poppcAdjusted=NULL, adjustLevel=c("County", "Constituency")) {
+  adjustLevel = match.arg(adjustLevel)
+  areaNamePoppc = "area"
+  areaNamePopMat = "area"
+  if(adjustLevel == "County") {
+    if("County" %in% names(poppcAdjusted)) {
+      areaNamePoppc = "County"
+    } else if("admin1" %in% names(poppcAdjusted)) {
+      areaNamePoppc = "admin1"
+    }
+    
+    if("admin1" %in% names(popMat)) {
+      areaNamePopMat = "admin1"
+    }
+  } else if(adjustLevel == "Constituency") {
+    if("Constituency" %in% names(poppcAdjusted)) {
+      areaNamePoppc = "Constituency"
+    } else if("admin2" %in% names(poppcAdjusted)) {
+      areaNamePoppc = "admin2"
+    }
+    
+    if("admin2" %in% names(popMat)) {
+      areaNamePopMat = "admin2"
+    }
   }
-  targetPopPerStratumUrban = poppcAdjusted$popUrb
-  targetPopPerStratumRural = poppcAdjusted$popRur
-  targetPopPerStratumTotal = poppcAdjusted$popTotal
+  # sort get population per stratum from poppcAdjusted
+  # if("County" %in% names(poppcAdjusted)) {
+  #   sortI = sort(unique(poppcAdjusted$County), index.return=TRUE)$ix
+  #   areas=poppcAdjusted$County[sortI]
+  # } else if("area" %in% names(poppcAdjusted)) {
+  #   sortI = sort(unique(poppcAdjusted$area), index.return=TRUE)$ix
+  #   areas=poppcAdjusted$area[sortI]
+  # }
+  sortI = sort(unique(as.character(poppcAdjusted[[areaNamePoppc]])), index.return=TRUE)$ix
+  areas=poppcAdjusted[[areaNamePoppc]][sortI]
+  
+  targetPopPerStratumUrban = poppcAdjusted$popUrb[sortI]
+  targetPopPerStratumRural = poppcAdjusted$popRur[sortI]
+  targetPopPerStratumTotal = poppcAdjusted$popTotal[sortI]
   
   # generate 2 47 x nPixels matrices for urban and rural strata integrating pixels with respect to population density to get county estimates
   getCountyStratumIntegrationMatrix = function(getUrban=TRUE) {
-    counties = as.character(counties)
+    areas = as.character(areas)
     
-    mat = t(sapply(counties, function(countyName) {
-      if("admin1" %in% names(popMat)) {
-        popMat$admin1 == countyName
-      } else {
-        popMat$area == countyName
-      }
+    mat = t(sapply(areas, function(areaName) {
+      # if("admin1" %in% names(popMat)) {
+      #   popMat$admin1 == areaName
+      # } else {
+      #   popMat$area == areaName
+      # }
+      as.character(popMat[[areaNamePopMat]]) == as.character(areaName)
     }))
     if("popOrig" %in% names(popMat)) {
       mat = sweep(mat, 2, popMat$popOrig, "*")
@@ -2890,6 +3020,7 @@ adjustPopGrid = function(popMat, poppcAdjusted=NULL) {
   # adjust each row of the integration matrices to get the correct expected number of children per stratum
   urbanIntegrationMat = sweep(urbanIntegrationMat, 1, targetPopPerStratumUrban / urbanPopulations, "*")
   ruralIntegrationMat = sweep(ruralIntegrationMat, 1, targetPopPerStratumRural / ruralPopulations, "*")
+  urbanIntegrationMat[urbanPopulations == 0,] = 0
   ruralIntegrationMat[ruralPopulations == 0,] = 0
   
   # the column sums of the matrices give the correct modified population densities
@@ -3027,7 +3158,7 @@ getAveragePredictionDistance = function(areaLevel=c("Region", "County", "Pixel",
   areaLevel = match.arg(areaLevel)
 }
 
-getArea = function(areaLevel=c("Region", "County"), thisMap = NULL, nameVar=NULL, sortAreas=FALSE) {
+getArea = function(areaLevel=c("Region", "County", "Constituency"), thisMap = NULL, nameVar=NULL, sortAreas=FALSE) {
   areaLevel = match.arg(areaLevel)
   require(shapefiles)
   
@@ -3039,6 +3170,8 @@ getArea = function(areaLevel=c("Region", "County"), thisMap = NULL, nameVar=NULL
     } else if(areaLevel == "County"){
       out = load("../U5MR/adminMapData.RData")
       thisMap = adm1
+    } else if(areaLevel == "Constituency") {
+      stop("Please specify input thisMap to getArea")
     } else {
       stop(paste0("Unrecognized area level: ", areaLevel))
     }
@@ -3078,6 +3211,8 @@ getArea = function(areaLevel=c("Region", "County"), thisMap = NULL, nameVar=NULL
       
     } else if(areaLevel == "County") {
       nameVar = "NAME_1"
+    } else if(areaLevel == "Constituency") {
+      nameVar = "CONSTITUEN"
     }
   }
   
@@ -3371,14 +3506,20 @@ adjustPopulationPerCountyTable = function(dataType=c("children", "women")) {
   # calculate the number of childrenor women per stratum using true total eas and empirical children per ea from census data
   load(paste0(globalDirectory, "empiricalDistributions.RData"))
   if(dataType == "children") {
-    targetPopPerStratumUrban = easpc$EAUrb * ecdfExpectation(empiricalDistributions$householdsUrban) * ecdfExpectation(empiricalDistributions$mothersUrban) * 
+    # targetPopPerStratumUrban = easpc$EAUrb * ecdfExpectation(empiricalDistributions$householdsUrban) * ecdfExpectation(empiricalDistributions$mothersUrban) * 
+    #   ecdfExpectation(empiricalDistributions$childrenUrban)
+    # targetPopPerStratumRural = easpc$EARur * ecdfExpectation(empiricalDistributions$householdsRural) * ecdfExpectation(empiricalDistributions$mothersRural) * 
+    #   ecdfExpectation(empiricalDistributions$childrenRural)
+    targetPopPerStratumUrban = easpc$HHUrb * ecdfExpectation(empiricalDistributions$mothersUrban) * 
       ecdfExpectation(empiricalDistributions$childrenUrban)
-    targetPopPerStratumRural = easpc$EARur * ecdfExpectation(empiricalDistributions$householdsRural) * ecdfExpectation(empiricalDistributions$mothersRural) * 
+    targetPopPerStratumRural = easpc$HHRur * ecdfExpectation(empiricalDistributions$mothersRural) * 
       ecdfExpectation(empiricalDistributions$childrenRural)
   }
   else {
-    targetPopPerStratumUrban = easpc$EAUrb * ecdfExpectation(empiricalDistributions$householdsUrban) * ecdfExpectation(empiricalDistributions$womenUrban)
-    targetPopPerStratumRural = easpc$EARur * ecdfExpectation(empiricalDistributions$householdsRural) * ecdfExpectation(empiricalDistributions$womenRural)
+    # targetPopPerStratumUrban = easpc$EAUrb * ecdfExpectation(empiricalDistributions$householdsUrban) * ecdfExpectation(empiricalDistributions$womenUrban)
+    # targetPopPerStratumRural = easpc$EARur * ecdfExpectation(empiricalDistributions$householdsRural) * ecdfExpectation(empiricalDistributions$womenRural)
+    targetPopPerStratumUrban = easpc$HHUrb * ecdfExpectation(empiricalDistributions$womenUrban)
+    targetPopPerStratumRural = easpc$HHRur * ecdfExpectation(empiricalDistributions$womenRural)
   }
   
   
@@ -3722,7 +3863,7 @@ rStratifiedMultnomialByConstituency = function(n, popMat=NULL, easpa=NULL, inclu
   } else {
     popConstituencyMat$pop = constituencyPop$popTotal
   }
-  browser()
+  # browser()
   # now draw multinomials
   if(includeUrban) {
     # draw for each constituency in each area crossed with urban/rural
@@ -4837,6 +4978,55 @@ meanEAsPerCon = function(numToPrint=0) {
     print(out[sortI[1:numToPrint],])
     
     sortI = sort(meanTotalEAs, index.return=TRUE)$ix
+    print(out[sortI[1:numToPrint],])
+  }
+  
+  out
+}
+
+# get average number of households per constituency
+meanHHPerCon = function(numToPrint=0) {
+  easpa = makeDefaultEASPA()
+  # area: the name or id of the area
+  # EAUrb: the number of EAs in the urban part of the area
+  # EARur: the number of EAs in the rural part of the area
+  # EATotal: the number of EAs in the the area
+  # HHUrb: the number of households in the urban part of the area
+  # HHRur: the number of households in the rural part of the area
+  # HHTotal: the number of households in the the area
+  # popUrb: the number of people in the urban part of the area
+  # popRur: the number of people in the rural part of the area
+  # popTotal: the number of people in the the area
+  
+  
+  countyI = match(poppcon$County, easpc$County)
+  hhsInUrbanStratum = easpc$HHUrb[countyI]
+  hhsInRuralStratum = easpc$HHRur[countyI]
+  popInUrbanStratum = poppc$popUrb[countyI]
+  popInRuralStratum = poppc$popRur[countyI]
+  
+  out = aggregate(poppcon$popUrb, by=list(County=poppcon$County), FUN=sum)
+  sortI = sort(poppc$County, index.return=TRUE)$ix
+  cbind(out, poppc[sortI,])
+  
+  popFractionUrb = poppcon$popUrb / popInUrbanStratum
+  popFractionRur = poppcon$popRur / popInRuralStratum
+  popFractionRur[!is.finite(popFractionRur)] = 0
+  meanUrbanHHs = hhsInUrbanStratum * popFractionUrb
+  meanRuralHHs = hhsInRuralStratum * popFractionRur
+  meanTotalHHs = meanUrbanHHs + meanRuralHHs
+  
+  out = cbind(poppcon, meanUrbanHHs=meanUrbanHHs, meanRuralHHs=meanRuralHHs, meanTotalHHs=meanTotalHHs)
+  
+  if(numToPrint > 0) {
+    # print numToPrint constituencis with the smallest number of EAs
+    sortI = sort(meanUrbanHHs, index.return=TRUE)$ix
+    print(out[sortI[1:numToPrint],])
+    
+    sortI = sort(meanRuralHHs, index.return=TRUE)$ix
+    print(out[sortI[1:numToPrint],])
+    
+    sortI = sort(meanTotalHHs, index.return=TRUE)$ix
     print(out[sortI[1:numToPrint],])
   }
   

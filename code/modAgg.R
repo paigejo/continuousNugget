@@ -174,18 +174,95 @@ makeEASPAFromEADat = function(eaDat) {
   easpa
 }
 
+# checks to make sure the adjusted population density surface, easpa, and 
+# constituencyPop all match. Returns adjusted population density and frame 
+# or the original population density and frame if no adjustments were made. 
+# Also gives warnings and print statements if there were any mismatches
+# stopOnMismatch: if TRUE, throws an error on a mismatch. Otherwise, modifies the 
+#                 population density surfaces to match the population frames and 
+#                 just throws a warning
+checkPopFrameAndDensity = function(popMat, adjustedPopMat, easpa, constituencyPop, stopOnMismatch=TRUE) {
+  # first check the adjusted (target) population density
+  temp = adjustPopGrid(adjustedPopMat, easpa)
+  if("popOrig" %in% names(adjustedPopMat)) {
+    maxDiff = max(abs(temp$popOrig - adjustedPopMat$popOrig))
+    adjustedPopMat$popOrig = temp$popOrig
+  } else if("pop" %in% names(adjustedPopMat)) {
+    maxDiff = max(abs(temp$pop - adjustedPopMat$pop))
+    adjustedPopMat$pop = temp$pop
+  }
+  if(maxDiff > 1e-3) {
+    changedAdjustedPopMat = TRUE
+    print(paste0("input adjustedPopMat did not match with ", 
+                 "input easpa, which maximum pixel population", 
+                 "difference of ", maxDiff, ". Modifying ", 
+                 "adjustedPopMat accordingly."))
+    if(stopOnMismatch) {
+      stop(paste0("input adjustedPopMat did not match with ", 
+                  "input easpa, which maximum pixel population", 
+                  "difference of ", maxDiff, ". Modifying ", 
+                  "adjustedPopMat accordingly."))
+    }
+    warning(paste0("input adjustedPopMat did not match with ", 
+                   "input easpa, which maximum pixel population", 
+                   "difference of ", maxDiff, ". Modifying ", 
+                   "adjustedPopMat accordingly."))
+  } else {
+    changedAdjustedPopMat = FALSE
+  }
+  
+  # aggregate constituency level populations to the county level
+  # tempPoppc = constituencyPop
+  # types = sapply(tempPoppc, class)
+  # tempPoppc = tempPoppc[,!(types %in% c("factor", "character"))]
+  # tempPoppc = aggregate(tempPoppc, by=list(County=constituencyPop$County), FUN=sum)
+  
+  # do the same for general population density
+  temp = adjustPopGrid(popMat, constituencyPop, adjustLevel="Constituency")
+  if("popOrig" %in% names(popMat)) {
+    maxDiff = max(abs(temp$popOrig - popMat$popOrig))
+    popMat$popOrig = temp$popOrig
+  } else if("pop" %in% names(popMat)) {
+    maxDiff = max(abs(temp$pop - popMat$pop))
+    popMat$pop = temp$pop
+  }
+  if(maxDiff > 1e-3) {
+    changedPopMat = TRUE
+    print(paste0("input popMat did not match with ", 
+                 "input easpa, which maximum pixel population", 
+                 "difference of ", maxDiff, ". Modifying ", 
+                 "popMat accordingly."))
+    if(stopOnMismatch) {
+      stop(print(paste0("input popMat did not match with ", 
+                        "input easpa, which maximum pixel population", 
+                        "difference of ", maxDiff, ". Modifying ", 
+                        "popMat accordingly.")))
+    }
+    warning(print(paste0("input popMat did not match with ", 
+                         "input easpa, which maximum pixel population", 
+                         "difference of ", maxDiff, ". Modifying ", 
+                         "popMat accordingly.")))
+  } else {
+    changedPopMat = FALSE
+  }
+  
+  list(popMat=popMat, adjustedPopMat=adjustedPopMat, changed=list(changedPopMat=changedPopMat, changedAdjustedPopMat=changedAdjustedPopMat))
+}
+
 # in this model, we assume a binomial process for the EA locations. Follows algorithm 2 from the 
 # outline
 # validationPixelI: a set of indices of pixels for which we want predictions in validation.
 # urbanEffect: only used if constituency level results are desired. Helps produce urban/rural predictions in 
 #              constituencies without urban/rural pixels
 modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adjustedPopMat=NULL, empiricalDistributions=NULL, 
-                   includeUrban=TRUE, maxEmptyFraction=1, clusterLevel=TRUE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
-                   regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=TRUE, validationPixelI=NULL, validationClusterI=NULL, 
+                   includeUrban=TRUE, maxEmptyFraction=1, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
+                   regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=FALSE, validationPixelI=NULL, validationClusterI=NULL, 
                    onlyDoModifiedPixelLevel=FALSE, clustersPerPixel=NULL, 
-                   doLcpb=FALSE, doLCpb=FALSE, doLCPb=FALSE, constituencyPop=poppcon, 
-                   ensureAtLeast1PerConstituency=FALSE, urbanEffect=NULL, 
-                   returnEAinfo=FALSE, epsc=NULL, urbanEffectDraws=NULL, logisticApproximation=TRUE) {
+                   doLcpb=FALSE, doLCpb=FALSE, doLCPb=FALSE, doIHMEModel=FALSE, 
+                   constituencyPop=poppcon, ensureAtLeast1PerConstituency=FALSE, urbanEffect=NULL, 
+                   returnEAinfo=FALSE, epsc=NULL, urbanEffectDraws=NULL, logisticApproximation=TRUE, 
+                   fixPopPerEA=NULL, fixHHPerEA=NULL, fixPopPerHH=NULL, 
+                   verbose=FALSE, stopOnFrameMismatch=TRUE) {
   nDraws = ncol(uDraws)
   
   startTime0 = proc.time()[3]
@@ -207,6 +284,21 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     # popRur: the number of people in the rural part of the area
     # popTotal: the number of people in the the area
   }
+  if(!is.null(fixPopPerEA)) {
+    easpa$popUrb = easpa$EAUrb * fixPopPerEA
+    easpa$popRur = easpa$EARur * fixPopPerEA
+    easpa$popTotal = easpa$EATotal * fixPopPerEA
+  }
+  if(!is.null(fixHHPerEA)) {
+    easpa$HHUrb = easpa$EAUrb * fixHHPerEA
+    easpa$HHRur = easpa$EARur * fixHHPerEA
+    easpa$HHTotal = easpa$EATotal * fixHHPerEA
+  }
+  if(!is.null(fixPopPerHH)) {
+    if(fixPopPerHH * fixHHPerEA != fixPopPerEA) {
+      stop("fixPopPerHH * fixHHPerEA != fixPopPerEA")
+    }
+  }
   
   totalEAs = sum(easpa$EATotal)
   if(!is.null(clustersPerPixel)) {
@@ -227,6 +319,22 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     # area: an id or area name in which the grid cell corresponding to each row resides
     # urban: whether the grid cell is urban or rural
   }
+  
+  # construct population density surface, adjusted based on known or estimated stratum populations (or "faux" stratum populations)
+  if(is.null(adjustedPopMat)) {
+    adjustedPopMat = adjustPopGrid(popMat, poppcAdjusted=easpa)
+  }
+  
+  # check to make sure the adjusted population density surface, easpa, and constituencyPop all match
+  print("Checking population density and population frame for consistency")
+  checkedDensities = checkPopFrameAndDensity(popMat, adjustedPopMat, easpa, constituencyPop, stopOnMismatch=stopOnFrameMismatch)
+  popMat = checkedDensities$popMat
+  adjustedPopMat = checkedDensities$adjustedPopMat
+  changed = checkedDensities$changed # not used
+  if(!changed$changedPopMat && !changed$changedAdjustedPopMat) {
+    print("Population densities and population frames (target and general) are in agreement")
+  }
+  
   if(is.null(empiricalDistributions)) {
     out = load(paste0(globalDirectory, "empiricalDistributions.RData"))
     # list(households=householdDistribution, mothers=motherDistribution, children=childrenDistribution,
@@ -259,6 +367,9 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
   ##### Line 1: take draws from the binomial process for each stratum (each row of easpa)
   # get probabilities for each pixel (or at least something proportional within each stratum)
   pixelProbs = popMat$pop
+  if(verbose) {
+    print("Drawing EAs")
+  }
   
   # take draws from the stratified binomial process for each posterior sample
   if(is.null(clustersPerPixel)) {
@@ -325,6 +436,10 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
   ##### Line 2: draw cluster effects, epsilon
   # NOTE1: we assume there are many more EAs then sampled clusters, so that 
   #       the cluster effects for each EA, including those sampled, are iid
+  if(verbose) {
+    print("Drawing EA level random effects (nugget)")
+  }
+  
   if(!onlyDoModifiedPixelLevel || !is.null(clustersPerPixel)) {
     if(is.null(epsc)) {
       epsc = matrix(rnorm(totalEAs*nDraws, sd=rep(sigmaEpsilonDraws, each=totalEAs)), ncol=nDraws)
@@ -346,35 +461,60 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
   # } else {
   #   load(paste0(globalDirectory, "Ncs.RData"))
   # }
+  if(verbose) {
+    print("Drawing population denominators (N)")
+  }
+  
   if(!is.null(clustersPerPixel)) {
     if(is.null(validationPixelI))
       stop("clustersPerPixel must only be set for validation, but validationPixelI is NULL")
     
-    # in this case, every left out cluster has exactly 25 households. Simply sample children 
-    # with equal probability from each cluster/faux EA
-    Ncs = sampleNPoissonMultinomialFixed(clustersPerPixel, nDraws=nDraws, pixelIndices=pixelIndices, 
-                                         urbanVals=urbanVals, areaVals=areaVals, easpa=easpa, popMat=popMat, includeUrban=includeUrban, 
-                                         verbose=TRUE)
-  } else if(!onlyDoModifiedPixelLevel) {
-    if(returnEAinfo) {
-      out = sampleNPoissonMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 
-                                popMat=popMat, includeUrban=includeUrban, verbose=TRUE, returnEAinfo=returnEAinfo)
-      householdDraws = out$householdDraws
-      Ncs = out$childrenDraws
+    if(is.null(fixPopPerEA)) {
+      # in this case, every left out cluster has exactly 25 households. Simply sample children 
+      # with equal probability from each cluster/faux EA
+      Ncs = sampleNMultilevelMultinomialFixed(clustersPerPixel, nDraws=nDraws, pixelIndices=pixelIndices, 
+                                              urbanVals=urbanVals, areaVals=areaVals, easpa=easpa, popMat=popMat, includeUrban=includeUrban, 
+                                              verbose=verbose)
     } else {
-      Ncs <- sampleNPoissonMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 
-                                       popMat=popMat, includeUrban=includeUrban, verbose=TRUE, returnEAinfo=returnEAinfo)
-      householdDraws = NULL
+      Ncs = matrix(rep(fixPopPerEA, totalEAs*nDraws), ncol=nDraws)
     }
+  } else if(!onlyDoModifiedPixelLevel) {
+      if(returnEAinfo) {
+        out = sampleNMultilevelMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 
+                                           popMat=popMat, includeUrban=includeUrban, verbose=verbose, returnEAinfo=returnEAinfo)
+        if(!is.null(fixHHPerEA)) {
+          householdDraws = matrix(rep(fixHHPerEA, totalEAs*nDraws), ncol=nDraws)
+        } else {
+          householdDraws = out$householdDraws
+        }
+        
+        if(is.null(fixPopPerEA)) {
+          Ncs = out$childrenDraws
+        } else {
+          Ncs = matrix(rep(fixPopPerEA, totalEAs*nDraws), ncol=nDraws)
+        }
+      } else {
+        if(is.null(fixPopPerEA)) {
+          Ncs <- sampleNMultilevelMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 
+                                              popMat=popMat, includeUrban=includeUrban, verbose=verbose, returnEAinfo=returnEAinfo)
+          householdDraws = NULL
+        } else {
+          Ncs <- matrix(rep(fixPopPerEA, totalEAs*nDraws), ncol=nDraws)
+          householdDraws = NULL
+        }
+      }
   } else if(doModifiedPixelLevel) {
     NcsMod = sampleNPoissonBinomial(eaSamplesMod=eaSamplesMod, pixelIndexListMod=pixelIndexListMod, areaListMod=areaListMod, urbanListMod=urbanListMod, 
-                                    includeUrban=includeUrban, easpa=easpa, popMat=popMat)
+                                    includeUrban=includeUrban, easpa=easpa, popMat=popMat, verbose=verbose)
   }
   
   finishedDrawingNsTime4 = proc.time()[3]
   
   ##### do part of Line 7 in advance
   # calculate mu_{ic} for each EA in each pixel
+  if(verbose) {
+    print("Calculating risk at EA level")
+  }
   if(!is.null(clustersPerPixel)) {
     uc = uDraws[pixelIndices,]
     muc = expit(uc + epsc)
@@ -395,6 +535,9 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
   finishedCalculatingMusTime5 = proc.time()[3]
   
   # calculate Z_{ic} for each EA in each pixel
+  if(verbose) {
+    print("Drawing population numerators (Z)")
+  }
   if(!onlyDoModifiedPixelLevel || !is.null(clustersPerPixel)) {
     Zc = matrix(rbinom(n=totalEAs * nDraws, size=Ncs, prob=as.matrix(muc)), ncol=nDraws)
   }
@@ -456,6 +599,9 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
   ##### Line 5: We already did this, resulting in uDraws input
   
   ##### Line 6: aggregate population denominators for each grid cell to get N_{ig}
+  if(verbose) {
+    print("Aggregation population from EA to pixel level")
+  }
   if(!onlyDoModifiedPixelLevel || !is.null(clustersPerPixel)) {
     Ng <- sapply(1:ncol(Ncs), getPixelColumnFromEAs, vals=Ncs)
     Ng[is.na(Ng)] = 0
@@ -479,6 +625,10 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
   
   ##### Line 8: Calculate empirical mortality proportions for each grid cell, p_{ig}. 
   #####         Whenever Z_{ig} is 0, set p_{ig} to 0 as well
+  if(verbose) {
+    print("Calculating pixel level risks and prevalences")
+  }
+  
   if(!onlyDoModifiedPixelLevel) {
     pg = Zg / Ng
     pg[Zg == 0] = 0
@@ -494,19 +644,21 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
   ##### calculate results for the other models if necessary
   
   # uses the logistic approximation for speedup. Even if dolcpb is FALSE we still use this for calculating the mean (central predictions)
-  lcpbSwitchedUrban = NULL
+  # lcpbSwitchedUrban = NULL
   if(is.null(clustersPerPixel)) {
     lcpb = matrix(logitNormMean(cbind(c(as.matrix(uDraws)), rep(sigmaEpsilonDraws, each=nrow(uDraws))), logisticApproximation=logisticApproximation), nrow=nrow(uDraws))
     if(constituencyLevel && !is.null(urbanEffectDraws)) {
       # if urbanEffect or urbanEffectDraws is supplied, replace predictions in constituencies with no people with risk
-      lcpbSwitchedUrban = lcpb
-      zeroConUrban = constituencyPop$popUrb == 0
-      zeroConRural = constituencyPop$popRur == 0
-      allZeroCon = constituencyPop$Constituency[zeroConUrban | zeroConRural]
-      uDrawsSwitchedUrban = uDraws
-      uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & popMat$urban,] = sweep(uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & popMat$urban,], 2, urbanEffectDraws, "-")
-      uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & !popMat$urban,] = sweep(uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & !popMat$urban,], 2, urbanEffectDraws, "+")
-      lcpbSwitchedUrban[popMat$admin2 %in% allZeroCon,] = matrix(logitNormMean(cbind(c(as.matrix(uDrawsSwitchedUrban[popMat$admin2 %in% allZeroCon,])), rep(sigmaEpsilonDraws, each=sum(popMat$admin2 %in% allZeroCon))), logisticApproximation=logisticApproximation), nrow=sum(popMat$admin2 %in% allZeroCon))
+      # ACTUALLY DON'T, DOING THAT IS A BAD IDEA
+      
+      # lcpbSwitchedUrban = lcpb
+      # zeroConUrban = constituencyPop$popUrb == 0
+      # zeroConRural = constituencyPop$popRur == 0
+      # allZeroCon = constituencyPop$Constituency[zeroConUrban | zeroConRural]
+      # uDrawsSwitchedUrban = uDraws
+      # uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & popMat$urban,] = sweep(as.matrix(uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & popMat$urban,]), 2, urbanEffectDraws, "-")
+      # uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & !popMat$urban,] = sweep(as.matrix(uDrawsSwitchedUrban[(popMat$admin2 %in% allZeroCon) & !popMat$urban,]), 2, urbanEffectDraws, "+")
+      # lcpbSwitchedUrban[popMat$admin2 %in% allZeroCon,] = matrix(logitNormMean(cbind(c(as.matrix(uDrawsSwitchedUrban[popMat$admin2 %in% allZeroCon,])), rep(sigmaEpsilonDraws, each=sum(popMat$admin2 %in% allZeroCon))), logisticApproximation=logisticApproximation), nrow=sum(popMat$admin2 %in% allZeroCon))
     }
   } else {
     lcpb = matrix(logitNormMean(cbind(c(as.matrix(uDraws)[uniquePixelIndices,]), rep(sigmaEpsilonDraws, each=length(uniquePixelIndices))), logisticApproximation=logisticApproximation), nrow=length(uniquePixelIndices))
@@ -567,341 +719,22 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
   
   finishedPixelAggregationLCPbTime12 = proc.time()[3]
   
-  # just for testing purposes:
-  if(FALSE) {
-    mug = sapply(1:ncol(muc), getPixelColumnFromEAs, vals=muc, applyFun=function(x) {mean(x, na.rm=TRUE)})
-    mug[!is.finite(mug)] = NA
-    
-    if(doModifiedPixelLevel) {
-      mugMod = sapply(1:ncol(muc), getPixelColumnFromEAs, vals=mucMod, applyFun=function(x) {mean(x, na.rm=TRUE)}, doMod=TRUE)
-      mugMod[!is.finite(mugMod)] = NA
-    }
-    
-    # this takes a veeeeery long time. Just use the logistic approximation instead
-    lcpb = matrix(logitNormMean(cbind(c(as.matrix(uDraws)), rep(sigmaEpsilonDraws, each=nrow(uDraws))), logisticApproximation=logisticApproximation), nrow=nrow(uDraws))
-    
-    # load shape files for plotting
-    require(maptools)
-    # regionMap = readShapePoly("../U5MR/mapData/kenya_region_shapefile/kenya_region_shapefile.shp", delete_null_obj=TRUE, force_ring=TRUE, repair=TRUE)
-    # out = load("../LK-INLA/regionMap.RData")
-    # out = load("../U5MR/adminMapData.RData")
-    kenyaMap = adm0
-    countyMap = adm1
-    
-    meanCols=makeRedBlueDivergingColors(64, rev = TRUE)
-    sdCols=makeBlueYellowSequentialColors(64)
-    popCols=makePurpleYellowSequentialColors(64, rev=TRUE)
-    urbCols=makeGreenBlueSequentialColors(64)
-    
-    # plot means
-    png(paste0(figDirectory, "exploratoryAnalysis/pixelMean.png"), width=1500, height=600)
-    par(mfrow=c(1,3), oma=c( 0,0,0,7), mar=c(5.1, 5.1, 4.1, 2.5))
-    meanRange = quantile(probs=c(.005, .995), c(rowMeans(mug, na.rm=TRUE), rowMeans(pg, na.rm=TRUE), rowMeans(lcpb, na.rm=TRUE)), na.rm=TRUE)
-    quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(lcpb, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (lcpb model)"), cex.main=3, col=meanCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(mug, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (LCpb model)"), cex.main=3, col=meanCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(pg, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (LCPB model)"), cex.main=3, col=meanCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    
-    meanTicks = pretty(meanRange, n=5)[-1]
-    meanTickLabels = as.character(meanTicks)
-    image.plot(zlim=range(logit(meanRange)), nlevel=length(meanCols), legend.only=TRUE, horizontal=FALSE,
-               col=meanCols, add = TRUE, axis.args=list(at=logit(meanTicks), labels=meanTickLabels, cex.axis=2, tck=-.7, hadj=-.1), 
-               legend.mar = 0, legend.cex=2, legend.width=3, smallplot= c(.97,1,.1,.9))
-    dev.off()
-    
-    # compare means between pixel level sampling methods
-    png(paste0(figDirectory, "exploratoryAnalysis/pixelMeanMod.png"), width=1500, height=1200)
-    par(mfrow=c(2,3), oma=c( 0,0,0,7), mar=c(5.1, 5.1, 4.1, 2.5))
-    meanRange = quantile(probs=c(.005, .995), c(rowMeans(mug, na.rm=TRUE), rowMeans(mugMod, na.rm=TRUE), 
-                                                rowMeans(pg, na.rm=TRUE), rowMeans(pgMod, na.rm=TRUE), 
-                                                rowMeans(lcpb, na.rm=TRUE)), na.rm=TRUE)
-    quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(lcpb, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (lcpb model)"), cex.main=3, col=meanCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    
-    quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(mug, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (LCpb model)"), cex.main=3, col=meanCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    
-    quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(mugMod, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (LCpb model, mod.)"), cex.main=3, col=meanCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    
-    meanTicks = pretty(meanRange, n=5)[-1]
-    meanTickLabels = as.character(meanTicks)
-    image.plot(zlim=range(logit(meanRange)), nlevel=length(meanCols), legend.only=TRUE, horizontal=FALSE,
-               col=meanCols, add = TRUE, axis.args=list(at=logit(meanTicks), labels=meanTickLabels, cex.axis=2, tck=-.7, hadj=-.1), 
-               legend.mar = 0, legend.cex=2, legend.width=3, smallplot= c(.97,1,.1,.9))
-    
-    plot.new() # empty plot on bottom left
-    
-    quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(pg, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (LCPB model)"), cex.main=3, col=meanCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    
-    quilt.plot(popMat$lon, popMat$lat, logit(rowMeans(pgMod, na.rm=TRUE)), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=range(logit(meanRange)), nx=160, ny=160, main=TeX("Posterior mean (LCPB model, mod.)"), cex.main=3, col=meanCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    
-    meanTicks = pretty(meanRange, n=5)[-1]
-    meanTickLabels = as.character(meanTicks)
-    image.plot(zlim=range(logit(meanRange)), nlevel=length(meanCols), legend.only=TRUE, horizontal=FALSE,
-               col=meanCols, add = TRUE, axis.args=list(at=logit(meanTicks), labels=meanTickLabels, cex.axis=2, tck=-.7, hadj=-.1), 
-               legend.mar = 0, legend.cex=2, legend.width=3, smallplot= c(.97,1,.1,.9))
-    dev.off()
-    
-    # plot SDs
-    SDsUg = apply(lcpb, 1, sd, na.rm=TRUE)
-    SDsMug = apply(mug, 1, sd, na.rm=TRUE)
-    SDsPg = apply(pg, 1, sd, na.rm=TRUE)
-    allSDs = c(SDsUg, SDsMug, SDsPg)
-    sdRange = quantile(probs=c(.001, .995), allSDs, na.rm=TRUE)
-    png(paste0(figDirectory, "exploratoryAnalysis/pixelSD.png"), width=1500, height=600)
-    par(mfrow=c(1,3), oma=c( 0,0,0,7), mar=c(5.1, 5.1, 4.1, 2.5))
-    quilt.plot(popMat$lon, popMat$lat, log(SDsUg), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (lcpb model)"), cex.main=3, 
-               col=sdCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    quilt.plot(popMat$lon, popMat$lat, log(SDsMug), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (LCpb model)"), cex.main=3, 
-               col=sdCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    quilt.plot(popMat$lon, popMat$lat, log(SDsPg), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=log(sdRange), nx=160, ny=160, main=TeX("Posterior SD (LCPB model)"), cex.main=3, 
-               col=sdCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    
-    sdTicks = pretty(sdRange, n=5)[-1]
-    sdTickLabels = as.character(sdTicks)
-    image.plot(zlim=range(log(sdRange)), nlevel=length(sdCols), legend.only=TRUE, horizontal=FALSE,
-               col=sdCols, add = TRUE, axis.args=list(at=log(sdTicks), labels=sdTickLabels, cex.axis=2, tck=-.7, hadj=-.1), 
-               legend.mar = 0, legend.cex=2, legend.width=3, smallplot= c(.97,1,.1,.9))
-    dev.off()
-    
-    # compare SDs between pixel level sampling methods
-    SDsUg = apply(lcpb, 1, sd, na.rm=TRUE)
-    SDsMug = apply(mug, 1, sd, na.rm=TRUE)
-    SDsMugMod = sqrt(rowMeans(sweep(mugMod, 1, rowMeans(lcpb), "-")^2))
-    SDsPg = apply(pg, 1, sd, na.rm=TRUE)
-    SDsPgMod = sqrt(rowMeans(sweep(pgMod, 1, rowMeans(lcpb), "-")^2))
-    allSDs = c(SDsUg, SDsMug, SDsPg, SDsMugMod, SDsPgMod)
-    sdRangeMod = quantile(probs=c(.001, 1), allSDs, na.rm=TRUE)
-    png(paste0(figDirectory, "exploratoryAnalysis/pixelSDMod.png"), width=1500, height=1200)
-    par(mfrow=c(2,3), oma=c( 0,0,0,7), mar=c(5.1, 5.1, 4.1, 2.5))
-    quilt.plot(popMat$lon, popMat$lat, log(SDsUg), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=log(sdRangeMod), nx=160, ny=160, main=TeX("Posterior SD (lcpb model)"), cex.main=3, 
-               col=sdCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    
-    quilt.plot(popMat$lon, popMat$lat, log(SDsMug), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=log(sdRangeMod), nx=160, ny=160, main=TeX("Posterior SD (LCpb model)"), cex.main=3, 
-               col=sdCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    
-    quilt.plot(popMat$lon, popMat$lat, log(SDsMugMod), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=log(sdRangeMod), nx=160, ny=160, main=TeX("Posterior SD (LCpb model, mod.)"), cex.main=3, 
-               col=sdCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    
-    sdTicks = pretty(sdRangeMod, n=5)[-1]
-    sdTickLabels = as.character(sdTicks)
-    image.plot(zlim=range(log(sdRangeMod)), nlevel=length(sdCols), legend.only=TRUE, horizontal=FALSE,
-               col=sdCols, add = TRUE, axis.args=list(at=log(sdTicks), labels=sdTickLabels, cex.axis=2, tck=-.7, hadj=-.1), 
-               legend.mar = 0, legend.cex=2, legend.width=3, smallplot= c(.97,1,.1,.9))
-    
-    plot.new() # empty plot on bottom left
-    
-    quilt.plot(popMat$lon, popMat$lat, log(SDsPg), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=log(sdRangeMod), nx=160, ny=160, main=TeX("Posterior SD (LCPB model)"), cex.main=3, 
-               col=sdCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    
-    quilt.plot(popMat$lon, popMat$lat, log(SDsPgMod), FUN=function(x){mean(x, na.rm=TRUE)}, 
-               zlim=log(sdRangeMod), nx=160, ny=160, main=TeX("Posterior SD (LCPB model, mod.)"), cex.main=3, 
-               col=sdCols, add.legend=FALSE)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    
-    sdTicks = pretty(sdRangeMod, n=5)[-1]
-    sdTickLabels = as.character(sdTicks)
-    image.plot(zlim=range(log(sdRangeMod)), nlevel=length(sdCols), legend.only=TRUE, horizontal=FALSE,
-               col=sdCols, add = TRUE, axis.args=list(at=log(sdTicks), labels=sdTickLabels, cex.axis=2, tck=-.7, hadj=-.1), 
-               legend.mar = 0, legend.cex=2, legend.width=3, smallplot= c(.97,1,.1,.9))
-    dev.off()
-    
-    # pair plot of SDs
-    SDsUg = apply(lcpb, 1, sd, na.rm=TRUE)
-    SDsMug = apply(mug, 1, sd, na.rm=TRUE)
-    SDsMugMod = sqrt(rowMeans(sweep(mugMod, 1, rowMeans(lcpb), "-")^2))
-    SDsPg = apply(pg, 1, sd, na.rm=TRUE)
-    SDsPgMod = sqrt(rowMeans(sweep(pgMod, 1, rowMeans(lcpb), "-")^2))
-    allSDs = cbind(SDsUg, SDsMug, SDsPg, SDsMugMod, SDsPgMod)
-    sdRangeMod = quantile(probs=c(.001, 1), allSDs, na.rm=TRUE)
-    
-    my_line <- function(x,y,...){
-      abline(a = 0,b = 1,...)
-      points(x,y,..., col=theseCols)
-    }
-    
-    numberModels = 3
-    width = 3 * numberModels
-    valMat = cbind(SDsUg, SDsMugMod, SDsPgMod)
-    theseCols = rep(urbCols[1], nrow(valMat))
-    theseCols[popMat$urban] = urbCols[64]
-    zlim = quantile(probs=c(.001, 1), valMat, na.rm=TRUE)
-    lims = rep(list(zlim), numberModels)
-    pdf(file=paste0(figDirectory, "exploratoryAnalysis/pixelSDPairs.pdf"), width=width, height=width)
-    
-    lims = rep(list(zlim), numberModels)
-    modelNames = c("lcpb", "LCpb", "LCPB")
-    myPairs(valMat, 
-            modelNames, 
-            pch=19, cex=.2, lower.panel=my_line, upper.panel = my_line, 
-            main=paste0("Pixel level posterior SD comparisons"), 
-            lims=lims, oma=c(3,3,6,7))
-    legend("topleft", c("Urban", "Rural"), col=c(urbCols[64], urbCols[1]), pch=19)
-    dev.off()
-    
-    mean(SDsMugMod / SDsUg) # 1.417688
-    mean(SDsPgMod / SDsUg) # 3.464197
-    mean(SDsPgMod / SDsMugMod) # 2.403102
-    
-    mean(SDsMugMod[popMat$urban] / SDsUg[popMat$urban]) # 1.030838
-    mean(SDsPgMod[popMat$urban] / SDsUg[popMat$urban]) # 1.378257
-    mean(SDsPgMod[popMat$urban] / SDsMugMod[popMat$urban]) # 1.32478
-    
-    mean(SDsMugMod[!popMat$urban] / SDsUg[!popMat$urban]) # 1.425775
-    mean(SDsPgMod[!popMat$urban] / SDsUg[!popMat$urban]) # 3.507805
-    mean(SDsPgMod[!popMat$urban] / SDsMugMod[!popMat$urban]) # 2.425645
-    
-    # plot Ns, pop density
-    png(paste0(figDirectory, "exploratoryAnalysis/pixelN.png"), width=1500, height=600)
-    par(mfrow=c(1,3))
-    quilt.plot(popMat$lon, popMat$lat, popMat$pop, FUN=function(x){log10(mean(x, na.rm=TRUE)+.1)}, 
-               nx=160, ny=160, main=TeX("log_{10} Population surface"), cex.main=3, col=popCols, 
-               legend.cex=4, legend.width=3)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    quilt.plot(popMat$lon, popMat$lat, rowMeans(eaSamples), FUN=function(x){log10(mean(x, na.rm=TRUE)+.1)}, 
-               nx=160, ny=160, main=TeX("log_{10} Avg. Num. EAs (min 20/1000)"), cex.main=3, col=popCols, 
-               legend.cex=4, legend.width=3, zlim=c(log10(.1+20/1000), 3.1))
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    quilt.plot(popMat$lon, popMat$lat, rowMeans(Ng), FUN=function(x){log10(mean(x, na.rm=TRUE)+.1)}, 
-               nx=160, ny=160, main=TeX("Posterior Mean of $log_{10}(N)$"), cex.main=3, col=popCols, 
-               legend.cex=4, legend.width=3)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    dev.off()
-    
-    # compare Ns and pop density between pixel level sampling methods
-    densityRange = log10(.1+range(c(popMat$pop, rowMeans(Ng), rowMeans(NgMod))))
-    png(paste0(figDirectory, "exploratoryAnalysis/pixelNMod.png"), width=1500, height=1200)
-    par(mfrow=c(2,3), oma=c( 0,0,0,7), mar=c(5.1, 5.1, 4.1, 2.5))
-    quilt.plot(popMat$lon, popMat$lat, popMat$pop, FUN=function(x){log10(mean(x, na.rm=TRUE)+.1)}, 
-               nx=160, ny=160, main=TeX("log_{10} Population surface"), cex.main=3, col=popCols, 
-               legend.cex=4, legend.width=3, zlim=densityRange)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    
-    quilt.plot(popMat$lon, popMat$lat, rowMeans(eaSamples), FUN=function(x){log10(mean(x, na.rm=TRUE)+.1)}, 
-               nx=160, ny=160, main=TeX("log_{10} Avg. Num. EAs (min 20/1000)"), cex.main=3, col=popCols, 
-               legend.cex=4, legend.width=3, zlim=c(log10(.1+20/1000), 3.3))
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    
-    quilt.plot(popMat$lon, popMat$lat, rowMeans(eaSamplesMod), FUN=function(x){log10(mean(x, na.rm=TRUE)+.1)}, 
-               nx=160, ny=160, main=TeX("log_{10} Avg. Num. EAs (min 20/1000, mod.)"), cex.main=3, col=popCols, 
-               legend.cex=4, legend.width=3, zlim=c(log10(.1+20/1000), 3.3))
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    
-    plot.new() # empty plot on bottom left
-    
-    quilt.plot(popMat$lon, popMat$lat, rowMeans(Ng), FUN=function(x){log10(mean(x, na.rm=TRUE)+.1)}, 
-               nx=160, ny=160, main=TeX("Posterior Mean of $log_{10}(N)$"), cex.main=3, col=popCols, 
-               legend.cex=4, legend.width=3, zlim=densityRange)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    
-    quilt.plot(popMat$lon, popMat$lat, rowMeans(NgMod), FUN=function(x){log10(mean(x, na.rm=TRUE)+.1)}, 
-               nx=160, ny=160, main=TeX("Posterior Mean of $log_{10}(N)$ (mod.)"), cex.main=3, col=popCols, 
-               legend.cex=4, legend.width=3, zlim=densityRange)
-    plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
-    plotMapDat(mapDat=regionMap, lwd=2.5)
-    dev.off()
-    
-    
-    
-    ## new plots: testing all models
-    cols = rep("green", length(uniquePixelIndices))
-    cols[urbanPixels] = "blue"
-    my_line <- function(x,y,...){
-      abline(a = 0,b = 1,...)
-      points(x,y,..., col=cols)
-    }
-    testSDs = data.frame(apply(lcpb, 1, sd), apply(Lcpb, 1, sd), apply(LCpb, 1, sd), apply(LCPb, 1, sd), apply(pg, 1, sd))
-    
-    numberModels = 5
-    width = 3 * numberModels
-    pdf(file=paste0(figDirectory, "exploratoryAnalysis/pixelSDPairsAllExtended.pdf"), width=width, height=width)
-    myPairs(testSDs, pch=19, cex=.2, labels=c("lcpb", "Lcpb", "LCpb", "LCPb", "LCPB"), 
-            lower.panel=my_line, upper.panel = my_line, ylim=range(c(testSDs), na.rm=TRUE), 
-            xlim=range(c(testSDs), na.rm=TRUE), main="Prediction SD (Pixel Level)")
-    dev.off()
-    
-    pdf(file=paste0(figDirectory, "exploratoryAnalysis/pixelSDPairsAll.pdf"), width=width, height=width)
-    myPairs(testSDs, pch=19, cex=.2, labels=c("lcpb", "Lcpb", "LCpb", "LCPb", "LCPB"), 
-            lower.panel=my_line, upper.panel = my_line, main="Prediction SD (Pixel Level)")
-    dev.off()
-    
-    names(testSDs) = c("lcpb", "Lcpb", "LCpb", "LCPb", "LCPB")
-    pdf(file=paste0(figDirectory, "exploratoryAnalysis/pixelSDBoxplotAll.pdf"), width=5, height=5)
-    boxplot(testSDs, col="skyblue", pch=19, cex=.3, main="Predictive SDs (Pixel Level)", ylim=c(0, max(testSDs, na.rm=TRUE)))
-    dev.off()
-    
-    pdf(file=paste0(figDirectory, "exploratoryAnalysis/pixelVarPairsAllExtended.pdf"), width=width, height=width)
-    testVars = data.frame(apply(lcpb, 1, var), apply(Lcpb, 1, var), apply(LCpb, 1, var), apply(LCPb, 1, var), apply(pg, 1, var))
-    myPairs(testVars, pch=19, cex=.2, labels=c("lcpb", "Lcpb", "LCpb", "LCPb", "LCPB"), 
-            lower.panel=my_line, upper.panel = my_line, ylim=range(c(testVars), na.rm=TRUE), 
-            xlim=range(c(testVars), na.rm=TRUE), main="Prediction Variance (Pixel Level)")
-    dev.off()
-    
-    pdf(file=paste0(figDirectory, "exploratoryAnalysis/pixelVarPairsAll.pdf"), width=5, height=5)
-    myPairs(testVars, pch=19, cex=.2, labels=c("lcpb", "Lcpb", "LCpb", "LCPb", "LCPB"), 
-            lower.panel=my_line, upper.panel = my_line, main="Prediction Variance (Pixel Level)")
-    dev.off()
-    
-    names(testVars) = c("lcpb", "Lcpb", "LCpb", "LCPb", "LCPB")
-    pdf(file=paste0(figDirectory, "exploratoryAnalysis/pixelVarBoxplotAll.pdf"), width=5, height=5)
-    boxplot(testVars, col="skyblue", pch=19, cex=.3, main="Predictive Variances (Pixel Level)", ylim=c(0, max(testVars, na.rm=TRUE)))
-    dev.off()
+  if(doIHMEModel) {
+    IHME = matrix(expit(uDraws + rnorm(length(uDraws), 0, sd=rep(sigmaEpsilonDraws, each=nrow(uDraws)))), nrow=nrow(uDraws))
+  } else {
+    IHME = NULL
   }
+  
+  finishedPixelAggregationIHMETime12.5 = proc.time()[3]
   
   ##### Line 9: done aggregating to the pixel level
   
   ##### Line 10: aggregate from pixel level to relevant areal levels if necessary
   if(!onlyDoModifiedPixelLevel) {
+    if(verbose) {
+      print("Aggregating risks and prevalences to the areal level")
+    }
+    
     # subset eaSamples matrix to pixels of interest if need be
     if(!is.null(clustersPerPixel)) {
       eaSamples = eaSamples[uniquePixelIndices,]
@@ -910,11 +743,6 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     # lcpb model (always do this, since all models agree in expectation, and this has lowest variance)
     if(onlyDoModifiedPixelLevel && (constituencyLevel || countyLevel || regionLevel || nationalLevel)) {
       stop("onlyDoModifiedPixelLevel must be set to FALSE if dolcpb is set to TRUE and aggregations coarser than pixel level is desired")
-    }
-    
-    # construct population density surface, adjusted based on known or estimated stratum populations (or "faux" stratum populations)
-    if(is.null(adjustedPopMat)) {
-      adjustedPopMat = adjustPopGrid(popMat, poppcAdjusted=easpa)
     }
     
     finishedArealAggregationSetupTime13 = proc.time()[3]
@@ -934,12 +762,12 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     #                                                   separateUrbanRural=TRUE, normalize=FALSE)
     # aggregatedResultslcpb = aggregatePixelPredictions(lcpb, eaSamples, popMatAdjusted=adjustedPopMat, useDensity=TRUE, 
     #                                                   constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
-    #                                                   separateUrbanRural=TRUE, normalize=TRUE, lcpbSwitchedUrban=lcpbSwitchedUrban)
+    #                                                   separateUrbanRural=TRUE, normalize=TRUE)
     nSampleslcpb = matrix(rep(adjustedPopMat$pop, nDraws), ncol=nDraws)
     zSampleslcpb = sweep(lcpb, 1, adjustedPopMat$pop, "*")
     aggregatedResultslcpb = aggregatePixelPredictions(zSampleslcpb, nSampleslcpb, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
                                                       constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
-                                                      separateUrbanRural=TRUE, normalize=FALSE, lcpbSwitchedUrban=lcpbSwitchedUrban)
+                                                      separateUrbanRural=TRUE, normalize=FALSE)
     
     finishedArealAggregationlcpbTime15 = proc.time()[3]
     
@@ -971,7 +799,7 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     if(doLCpb) {
       # aggregatedResultsLCpb = aggregatePixelPredictions(LCpb*eaSamples, eaSamples, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
       #                                                   constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
-      #                                                   separateUrbanRural=TRUE, normalize=FALSE, lcpbSwitchedUrban=lcpbSwitchedUrban)
+      #                                                   separateUrbanRural=TRUE, normalize=FALSE)
       
       # in order to get valid count estimates, we also need the expected denominator per EA in each stratum:
       if(!doLcpb) {
@@ -983,7 +811,7 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
       zSamplesLCpb[is.na(zSamplesLCpb)] = 0
       aggregatedResultsLCpb = aggregatePixelPredictions(zSamplesLCpb, nSamplesLCpb, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
                                                         constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
-                                                        separateUrbanRural=TRUE, normalize=FALSE, lcpbSwitchedUrban=lcpbSwitchedUrban)
+                                                        separateUrbanRural=TRUE, normalize=FALSE)
     } else {
       nSamplesLCpb = NULL
       zSamplesLCpb = NULL
@@ -999,7 +827,7 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
       zSamplesLCPb[is.na(zSamplesLCPb)] = 0
       aggregatedResultsLCPb = aggregatePixelPredictions(zSamplesLCPb, nSamplesLCPb, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
                                                         constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
-                                                        separateUrbanRural=TRUE, normalize=FALSE, lcpbSwitchedUrban=lcpbSwitchedUrban)
+                                                        separateUrbanRural=TRUE, normalize=FALSE)
     } else {
       nSamplesLCPb = NULL
       zSamplesLCPb = NULL
@@ -1008,36 +836,57 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     
     finishedArealAggregationLCPbTime18 = proc.time()[3]
     
-    # determine which constituencies don't have urban or rural populations
-    if(constituencyLevel) {
-      zeroConstituenciesUrban = apply(aggregatedResults$constituencyMatrices$NUrban, 1, function(x) {all(x == 0)})
-      zeroConstituenciesRural = apply(aggregatedResults$constituencyMatrices$NRural, 1, function(x) {all(x == 0)})
+    # IHME model
+    if(doIHMEModel) {
+      nSamplesIHME = nSampleslcpb
+      zSamplesIHME = sweep(IHME, 1, adjustedPopMat$pop, "*")
+      aggregatedResultsIHME = aggregatePixelPredictions(zSamplesIHME, nSamplesIHME, popMatAdjusted=adjustedPopMat, useDensity=FALSE, 
+                                                        constituencyLevel=constituencyLevel, countyLevel=countyLevel, regionLevel=regionLevel, nationalLevel=nationalLevel, 
+                                                        separateUrbanRural=TRUE, normalize=FALSE)
+    } else {
+      nSamplesIHME = NULL
+      zSamplesIHME = NULL
+      aggregatedResultsIHME = NULL
     }
     
-    # use risk predictions rather than prevalence for constituency strata if there is no population denominator
-    if(constituencyLevel && (any(zeroConstituenciesUrban) || any(zeroConstituenciesRural))) {
-      # LCPB
-      aggregatedResults$constituencyMatrices$pUrban[zeroConstituenciesUrban,] = aggregatedResultslcpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,]
-      aggregatedResults$constituencyMatrices$pRural[zeroConstituenciesRural,] = aggregatedResultslcpb$constituencyMatrices$pRural[zeroConstituenciesRural,]
-      
-      # Lcpb
-      if(doLcpb) {
-        aggregatedResultsLcpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,] = aggregatedResultslcpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,]
-        aggregatedResultsLcpb$constituencyMatrices$pRural[zeroConstituenciesRural,] = aggregatedResultslcpb$constituencyMatrices$pRural[zeroConstituenciesRural,]
-      }
-      
-      # LCpb
-      if(doLCpb) {
-        aggregatedResultsLCpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,] = aggregatedResultslcpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,]
-        aggregatedResultsLCpb$constituencyMatrices$pRural[zeroConstituenciesRural,] = aggregatedResultslcpb$constituencyMatrices$pRural[zeroConstituenciesRural,]
-      }
-      
-      # LCPb
-      if(doLCPb) {
-        aggregatedResultsLCPb$constituencyMatrices$pUrban[zeroConstituenciesUrban,] = aggregatedResultslcpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,]
-        aggregatedResultsLCPb$constituencyMatrices$pRural[zeroConstituenciesRural,] = aggregatedResultslcpb$constituencyMatrices$pRural[zeroConstituenciesRural,]
-      }
-    }
+    finishedArealAggregationIHMETime18.5 = proc.time()[3]
+    
+    # determine which constituencies don't have urban or rural populations
+    # if(constituencyLevel) {
+    #   zeroConstituenciesUrban = apply(aggregatedResults$constituencyMatrices$NUrban, 1, function(x) {all(x == 0)})
+    #   zeroConstituenciesRural = apply(aggregatedResults$constituencyMatrices$NRural, 1, function(x) {all(x == 0)})
+    # }
+    # 
+    # # use risk predictions rather than prevalence for constituency strata if there is no population denominator
+    # if(constituencyLevel && (any(zeroConstituenciesUrban) || any(zeroConstituenciesRural))) {
+    #   # LCPB
+    #   aggregatedResults$constituencyMatrices$pUrban[zeroConstituenciesUrban,] = aggregatedResultslcpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,]
+    #   aggregatedResults$constituencyMatrices$pRural[zeroConstituenciesRural,] = aggregatedResultslcpb$constituencyMatrices$pRural[zeroConstituenciesRural,]
+    #   
+    #   # Lcpb
+    #   if(doLcpb) {
+    #     aggregatedResultsLcpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,] = aggregatedResultslcpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,]
+    #     aggregatedResultsLcpb$constituencyMatrices$pRural[zeroConstituenciesRural,] = aggregatedResultslcpb$constituencyMatrices$pRural[zeroConstituenciesRural,]
+    #   }
+    #   
+    #   # LCpb
+    #   if(doLCpb) {
+    #     aggregatedResultsLCpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,] = aggregatedResultslcpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,]
+    #     aggregatedResultsLCpb$constituencyMatrices$pRural[zeroConstituenciesRural,] = aggregatedResultslcpb$constituencyMatrices$pRural[zeroConstituenciesRural,]
+    #   }
+    #   
+    #   # LCPb
+    #   if(doLCPb) {
+    #     aggregatedResultsLCPb$constituencyMatrices$pUrban[zeroConstituenciesUrban,] = aggregatedResultslcpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,]
+    #     aggregatedResultsLCPb$constituencyMatrices$pRural[zeroConstituenciesRural,] = aggregatedResultslcpb$constituencyMatrices$pRural[zeroConstituenciesRural,]
+    #   }
+    #   
+    #   # IHME
+    #   if(doIHMEModel) {
+    #     aggregatedResultsIHME$constituencyMatrices$pUrban[zeroConstituenciesUrban,] = aggregatedResultslcpb$constituencyMatrices$pUrban[zeroConstituenciesUrban,]
+    #     aggregatedResultsIHME$constituencyMatrices$pRural[zeroConstituenciesRural,] = aggregatedResultslcpb$constituencyMatrices$pRural[zeroConstituenciesRural,]
+    #   }
+    # }
     
     finishedArealAggregationRiskSubstitutionTime19 = proc.time()[3]
     
@@ -1087,160 +936,6 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     NnationRural = aggregatedResults$nationalMatrices$NRural
     PnationRural = aggregatedResults$nationalMatrices$pRural
     
-    # plots for testing purposes
-    if(FALSE) {
-      ## lcpb
-      # aggregatedResultslcpb = aggregatePixelPredictions(lcpb, Ng, popGrid=popMat, useDensity=TRUE, countyLevel=countyLevel, 
-      #                                               regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=TRUE)
-      lcpbc = matrix(logitNormMean(cbind(c(logit(as.matrix(uc))), rep(sigmaEpsilonDraws, each=nrow(uc))), logisticApproximation=logisticApproximation), nrow=nrow(uc))
-      # this takes quite a while (15 mins?)
-      aggregatedResultslcpb = aggregateEAPredictions(lcpbc, Ncs, areaMat, urbanMat, easpa=easpa, countyLevel=countyLevel, 
-                                                     regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=TRUE)
-      
-      Ng2 = Ng
-      Ng2[Ng2 != 0] = 1
-      
-      # NOTE: the following MUST be INCORRECT. set useDensity to TRUE, and don't use eaSamples at all!
-      aggregatedResultslcpb2 = aggregatePixelPredictions(lcpb*eaSamples, eaSamples, popMatAdjusted=adjustedPopMat, useDensity=FALSE, countyLevel=countyLevel, 
-                                                         regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=FALSE)
-      
-      # county level
-      # Pcountylcpb = aggregatedResultslcpb$countyResults$Z
-      # PcountyUrbanlcpb = aggregatedResultslcpb$countyResults$ZUrban
-      # PcountyRurallcpb = aggregatedResultslcpb$countyResults$ZRural
-      
-      Pcountylcpb = aggregatedResultslcpb2$countyMatrices$p
-      PcountyUrbanlcpb2 = aggregatedResultslcpb$countyResults$pUrban
-      PcountyRurallcpb2 = aggregatedResultslcpb$countyResults$pRural
-      
-      # province level
-      Pregionlcpb = aggregatedResultslcpb$regionResults$Z
-      PregionUrbanlcpb = aggregatedResultslcpb$regionResults$ZUrban
-      PregionRurallcpb = aggregatedResultslcpb$regionResults$ZRural
-      
-      # national level
-      Pnationlcpb = aggregatedResultslcpb$nationalResults$Z
-      PnationUrbanlcpb = aggregatedResultslcpb$nationalResults$ZUrban
-      PnationRurallcpb = aggregatedResultslcpb$nationalResults$ZRural
-      
-      ## LCpb
-      # this takes quite a while (15 mins?)
-      aggregatedResultsLCpb = aggregateEAPredictions(lcpbc, Ncs, areaMat, urbanMat, easpa=easpa, countyLevel=countyLevel, 
-                                                     regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=TRUE)
-      mug2 = mug
-      mug2[!is.finite(mug2)] = 0
-      aggregatedResultsLCpb = aggregatePixelPredictions(mug*eaSamples, eaSamples, popMatAdjusted=adjustedPopMat, useDensity=FALSE, countyLevel=countyLevel, 
-                                                        regionLevel=regionLevel, separateUrbanRural=TRUE, normalize=FALSE)
-      
-      # county level
-      PcountyLCpb = aggregatedResultsLCpb$countyMatrices$p
-      PcountyUrbanLCpb = aggregatedResultsLCpb$countyResults$pUrban
-      PcountyRuralLCpb = aggregatedResultsLCpb$countyResults$pRural
-      
-      # province level
-      PregionLCpb = aggregatedResultsLCpb$regionResults$p
-      PregionUrbanLCpb = aggregatedResultsLCpb$regionResults$pUrban
-      PregionRuralLCpb = aggregatedResultsLCpb$regionResults$pRural
-      
-      # national level
-      PnationLCpb = aggregatedResultsLCpb$nationalResults$Z
-      PnationUrbanLCpb = aggregatedResultsLCpb$nationalResults$ZUrban
-      PnationRuralLCpb = aggregatedResultsLCpb$nationalResults$ZRural
-      
-      save(Pcountylcpb, PcountyLCpb, Pcounty, file=paste0(outputDirectory, "test/clusterTest.RData"))
-      out = load(paste0(outputDirectory, "test/clusterTest.RData"))
-      
-      # load shape files for plotting
-      require(maptools)
-      # regionMap = readShapePoly("../U5MR/mapData/kenya_region_shapefile/kenya_region_shapefile.shp", delete_null_obj=TRUE, force_ring=TRUE, repair=TRUE)
-      # out = load("../LK-INLA/regionMap.RData")
-      # out = load("../U5MR/adminMapData.RData")
-      kenyaMap = adm0
-      countyMap = adm1
-      
-      meanCols=makeRedBlueDivergingColors(64, rev = TRUE)
-      sdCols=makeBlueYellowSequentialColors(64)
-      popCols=makePurpleYellowSequentialColors(64, rev=TRUE)
-      
-      ## plot county results
-      # plot mean
-      # meanRange = range(c(rowMeans(Pcountylcpb, na.rm=TRUE), rowMeans(PcountyLCpb, na.rm=TRUE), rowMeans(Pcounty, na.rm=TRUE)), na.rm=TRUE)
-      # meanTicks = pretty(meanRange, n=5)
-      # meanTickLabels = as.character(meanTicks)
-      meanRange = quantile(probs=c(.005, .995), c(rowMeans(mug, na.rm=TRUE), rowMeans(pg, na.rm=TRUE), rowMeans(lcpb, na.rm=TRUE)), na.rm=TRUE)
-      meanTicks = pretty(meanRange, n=5)[-1]
-      meanTickLabels = as.character(meanTicks)
-      
-      png(paste0(figDirectory, "exploratoryAnalysis/LCPBpgMugMeanCounty.png"), width=1500, height=600)
-      par(mfrow=c(1,3), oma=c( 0,0,0,7), mar=c(5.1, 5.1, 4.1, 2.5))
-      
-      plotMapDat(plotVar=rowMeans(Pcountylcpb, na.rm=TRUE), new = TRUE, 
-                 main="Posterior mean (lcpb model)", scaleFun=logit, scaleFunInverse=expit, 
-                 cols=meanCols, zlim=logit(meanRange), ticks=meanTicks, tickLabels=meanTickLabels, 
-                 xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = FALSE, 
-                 legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.width=3, 
-                 plotArgs=list(cex.main=3, cex.axis=2, cex.lab=2), legend.mar=0, lwd=.5, border=rgb(.4,.4,.4))
-      plotMapDat(mapDat=regionMap, lwd=2.5)
-      
-      plotMapDat(plotVar=rowMeans(PcountyLCpb, na.rm=TRUE), new = TRUE, 
-                 main="Posterior mean (LCpb model)", scaleFun=logit, scaleFunInverse=expit, 
-                 cols=meanCols, zlim=logit(meanRange), ticks=meanTicks, tickLabels=meanTickLabels, 
-                 xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = FALSE, 
-                 legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.width=3, 
-                 plotArgs=list(cex.main=3, cex.axis=2, cex.lab=2), legend.mar=0, lwd=.5, border=rgb(.4,.4,.4))
-      plotMapDat(mapDat=regionMap, lwd=2.5)
-      
-      plotMapDat(plotVar=rowMeans(Pcounty, na.rm=TRUE), new = TRUE, 
-                 main="Posterior mean (LCPB model)", scaleFun=logit, scaleFunInverse=expit, 
-                 cols=meanCols, zlim=logit(meanRange), ticks=meanTicks, tickLabels=meanTickLabels, 
-                 xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = TRUE, 
-                 legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.width=3, 
-                 plotArgs=list(cex.main=3, cex.axis=2, cex.lab=2), legend.mar=0, lwd=.5, border=rgb(.4,.4,.4))
-      plotMapDat(mapDat=regionMap, lwd=2.5)
-      
-      # image.plot(zlim=range(logit(meanRange)), nlevel=length(meanCols), legend.only=TRUE, horizontal=FALSE,
-      #            col=meanCols, add = TRUE, axis.args=list(at=logit(meanTicks), labels=meanTickLabels, cex.axis=2, tck=-.7, hadj=-.1), 
-      #            legend.mar = 0, legend.cex=2, legend.width=3, smallplot= c(.97,1,.1,.9))
-      dev.off()
-      
-      # plot SDs
-      SDslcpb = apply(Pcountylcpb, 1, sd, na.rm=TRUE)
-      SDsLCpb = apply(PcountyLCpb, 1, sd, na.rm=TRUE)
-      SDsPcounty = apply(Pcounty, 1, sd, na.rm=TRUE)
-      allSDs = c(SDslcpb, SDsLCpb, SDsPcounty)
-      sdRange = range(allSDs, na.rm=TRUE)
-      sdTicks = pretty(sdRange, n=5)
-      sdTickLabels = as.character(sdTicks)
-      
-      png(paste0(figDirectory, "exploratoryAnalysis/LCPBpgMugSDCounty.png"), width=1500, height=600)
-      par(mfrow=c(1,3), oma=c( 0,0,0,7), mar=c(5.1, 5.1, 4.1, 2.5))
-      plotMapDat(plotVar=SDslcpb, new = TRUE, 
-                 main="Posterior SD (lcpb model)", scaleFun=log, scaleFunInverse=exp, 
-                 cols=sdCols, zlim=log(sdRange), ticks=sdTicks, tickLabels=sdTickLabels, 
-                 xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = FALSE, 
-                 legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.width=3, 
-                 plotArgs=list(cex.main=3, cex.axis=2, cex.lab=2), legend.mar=0, lwd=.5, border=rgb(.4,.4,.4))
-      plotMapDat(mapDat=regionMap, lwd=2.5)
-      
-      plotMapDat(plotVar=SDsLCpb, new = TRUE, 
-                 main="Posterior SD (LCpb model)", scaleFun=log, scaleFunInverse=exp, 
-                 cols=sdCols, zlim=log(sdRange), ticks=sdTicks, tickLabels=sdTickLabels, 
-                 xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = FALSE, 
-                 legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.width=3, 
-                 plotArgs=list(cex.main=3, cex.axis=2, cex.lab=2), legend.mar=0, lwd=.5, border=rgb(.4,.4,.4))
-      plotMapDat(mapDat=regionMap, lwd=2.5)
-      
-      plotMapDat(plotVar=SDsPcounty, new = TRUE, 
-                 main="Posterior SD (LCPB model)", scaleFun=log, scaleFunInverse=exp, 
-                 cols=sdCols, zlim=log(sdRange), ticks=sdTicks, tickLabels=sdTickLabels, 
-                 xlim=kenyaLonRange, ylim=kenyaLatRange, addColorBar = TRUE, 
-                 legendArgs=list(axis.args=list(cex.axis=2, tck=-.7, hadj=-.1), legend.cex=2, smallplot= c(.97,1,.1,.9)), legend.width=3, 
-                 plotArgs=list(cex.main=3, cex.axis=2, cex.lab=2), legend.mar=0, lwd=.5, border=rgb(.4,.4,.4))
-      plotMapDat(mapDat=regionMap, lwd=2.5)
-      
-      dev.off()
-    }
-    
     # aggregate timings to the time required for each model:
     # startTime0
     # finishedSetupTime1
@@ -1255,12 +950,14 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     # finishedClusterIntegrationTime10
     # finishedPixelAggregationLCpbTime11
     # finishedPixelAggregationLCPbTime12
+    # finishedPixelAggregationIHMETime12.5
     # finishedArealAggregationSetupTime13
     # finishedArealAggregationLCPBTime14
     # finishedArealAggregationlcpbTime15
     # finishedArealAggregationLcpbTime16
     # finishedArealAggregationLCpbTime17
     # finishedArealAggregationLCPbTime18
+    # finishedArealAggregationIHMETime18.5
     # finishedArealAggregationRiskSubstitutionTime19
     setupTime = finishedSetupTime1 - startTime0
     drawEAsTime = finishedDrawingEAsTime2 - finishedSetupTime1
@@ -1275,47 +972,54 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     clusterIntegrationTime = finishedClusterIntegrationTime10 - finishedPixelAggregationPsTime9
     pixelAggregationLCpbTime = finishedPixelAggregationLCpbTime11 - finishedClusterIntegrationTime10
     pixelAggregationLCPbTime = finishedPixelAggregationLCPbTime12 - finishedPixelAggregationLCpbTime11
-    arealAggregationSetupTime = finishedArealAggregationSetupTime13 - finishedPixelAggregationLCPbTime12
+    pixelAggregationIHMETime = finishedPixelAggregationIHMETime12.5 - finishedPixelAggregationLCPbTime12
+    arealAggregationSetupTime = finishedArealAggregationSetupTime13 - finishedPixelAggregationIHMETime12.5
     LCPBArealAggregationTime = finishedArealAggregationLCPBTime14 - finishedArealAggregationSetupTime13
     lcpbArealAggregationTime = finishedArealAggregationlcpbTime15 - finishedArealAggregationLCPBTime14
     LcpbArealAggregationTime = finishedArealAggregationLcpbTime16 - finishedArealAggregationlcpbTime15
     LCpbArealAggregationTime = finishedArealAggregationLCpbTime17 - finishedArealAggregationLcpbTime16
     LCPbArealAggregationTime = finishedArealAggregationLCPbTime18 - finishedArealAggregationLCpbTime17
-    riskSubstitutionTime = finishedArealAggregationRiskSubstitutionTime19 - finishedArealAggregationLCPbTime18
+    IHMEArealAggregationTime = finishedArealAggregationIHMETime18.5 - finishedArealAggregationLCPbTime18
+    riskSubstitutionTime = finishedArealAggregationRiskSubstitutionTime19 - finishedArealAggregationIHMETime18.5
     
     lcpbTime = setupTime + clusterIntegrationTime + arealAggregationSetupTime + lcpbArealAggregationTime
     LcpbTime = setupTime + drawEAsTime + clusterIntegrationTime + arealAggregationSetupTime + LcpbArealAggregationTime + riskSubstitutionTime
     LCpbTime = setupTime + drawEAsTime + drawClustersTime + getMusTime + pixelAggregationLCpbTime + arealAggregationSetupTime + LCpbArealAggregationTime + riskSubstitutionTime
     LCPbTime = setupTime + drawEAsTime + drawClustersTime + getMusTime + pixelAggregationNsTime + drawNsTime + pixelAggregationLCPbTime + arealAggregationSetupTime + LCPbArealAggregationTime + riskSubstitutionTime
     LCPBTime = setupTime + drawEAsTime + drawClustersTime + getMusTime + pixelAggregationTime + drawNsTime + drawZsTime + arealAggregationSetupTime + LCPBArealAggregationTime + riskSubstitutionTime
+    IHMETime = setupTime + pixelAggregationIHMETime + arealAggregationSetupTime + IHMEArealAggregationTime
     
     totalTime = finishedArealAggregationRiskSubstitutionTime19 - startTime0
-    timings = matrix(c(lcpbTime=lcpbTime, LcpbTime=LcpbTime, LCpbTime=LCpbTime, LCPbTime=LCPbTime, LCPBTime=LCPBTime, 
+    timings = matrix(c(lcpbTime=lcpbTime, LcpbTime=LcpbTime, LCpbTime=LCpbTime, LCPbTime=LCPbTime, LCPBTime=LCPBTime, IHMETime=IHMETime, 
                        setupTime=setupTime, drawEAsTime=drawEAsTime, clusterIntegrationTime=clusterIntegrationTime, 
                        drawClustersTime=drawClustersTime, drawNsTime=drawNsTime, getMusTime=getMusTime, drawZsTime=drawZsTime, 
                        pixelAggregationNsTime=pixelAggregationNsTime, pixelAggregationZsTime=pixelAggregationZsTime, pixelAggregationPsTime=pixelAggregationPsTime, 
                        pixelAggregationTime=pixelAggregationTime, pixelAggregationLCpbTime=pixelAggregationLCpbTime, 
-                       pixelAggregationLCPbTime=pixelAggregationLCPbTime, arealAggregationSetupTime=arealAggregationSetupTime, 
+                       pixelAggregationLCPbTime=pixelAggregationLCPbTime, pixelAggregationIHMETime=pixelAggregationIHMETime, 
+                       arealAggregationSetupTime=arealAggregationSetupTime, 
                        lcpbArealAggregationTime=lcpbArealAggregationTime, 
                        LcpbArealAggregationTime=LcpbArealAggregationTime, 
                        LCpbArealAggregationTime=LCpbArealAggregationTime, 
                        LCPbArealAggregationTime=LCPbArealAggregationTime, 
                        LCPBArealAggregationTime=LCPBArealAggregationTime, 
+                       IHMEArealAggregationTime=IHMEArealAggregationTime, 
                        riskSubstitutionTime=riskSubstitutionTime, 
                        totalTime = totalTime), nrow=1)
     timings = rbind(timings, timings / totalTime)
     row.names(timings) = c("Time (s)", "Prop Total")
-    colnames(timings) = c("lcpbTime", "LcpbTime", "LCpbTime", "LCPbTime", "LCPBTime", 
+    colnames(timings) = c("lcpbTime", "LcpbTime", "LCpbTime", "LCPbTime", "LCPBTime", "IHMETime", 
                           "setupTime", "drawEAsTime", "clusterIntegrationTime", 
                           "drawClustersTime", "drawNsTime", "getMusTime", "drawZsTime", 
                           "pixelAggregationNsTime", "pixelAggregationZsTime", "pixelAggregationPsTime", 
-                          "pixelAggregationTime", "pixelAggregationLCpbTime", "pixelAggregationLCPbTime", 
+                          "pixelAggregationTime", "pixelAggregationLCpbTime", 
+                          "pixelAggregationLCPbTime", "pixelAggregationIHMETime", 
                           "arealAggregationSetupTime", 
                           "lcpbArealAggregationTime", 
                           "LcpbArealAggregationTime", 
                           "LCpbArealAggregationTime", 
                           "LCPbArealAggregationTime", 
                           "LCPBArealAggregationTime", 
+                          "IHMEArealAggregationTime", 
                           "riskSubstitutionTime", 
                           "totalTime")
     
@@ -1379,12 +1083,24 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
                            "arealAggregationSetupTime", "LCPBArealAggregationTime", 
                            "riskSubstitutionTime")
     
+    timingsIHME = matrix(c(IHMETime=IHMETime, 
+                           setupTime=setupTime, pixelAggregationIHMETime=pixelAggregationIHMETime, 
+                           arealAggregationSetupTime=arealAggregationSetupTime, 
+                           IHMEArealAggregationTime=IHMEArealAggregationTime), nrow=1)
+    timingsIHME = rbind(timingsIHME, timingsIHME / IHMETime)
+    row.names(timingsIHME) = c("Time (s)", "Prop Total")
+    colnames(timingsIHME) = c("IHMETime", 
+                              "setupTime", "pixelAggregationIHMETime", 
+                              "arealAggregationSetupTime", 
+                              "IHMEArealAggregationTime")
+    
     allTimings = list(timings=timings, 
                       timingslcpb=timingslcpb, 
                       timingsLcpb=timingsLcpb, 
                       timingsLCpb=timingsLCpb, 
                       timingsLCPb=timingsLCPb, 
-                      timingsLCPB=timingsLCPB)
+                      timingsLCPB=timingsLCPB, 
+                      timingsIHME=timingsIHME)
     
     ##### Extra steps: collect draws at each level and generate:
     ##### areas, preds, 
@@ -1394,6 +1110,7 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
                          pixelMatricesLcpb=list(p=Lcpb, Z=zSamplesLcpb, N=nSamplesLcpb), aggregatedResultsLcpb=aggregatedResultsLcpb, 
                          pixelMatricesLCpb=list(p=LCpb, Z=zSamplesLCpb, N=nSamplesLCpb), aggregatedResultsLCpb=aggregatedResultsLCpb, 
                          pixelMatricesLCPb=list(p=LCPb, Z=zSamplesLCPb, N=nSamplesLCPb), aggregatedResultsLCPb=aggregatedResultsLCPb, 
+                         pixelMatricesIHME=list(p=IHME, Z=zSamplesIHME, N=nSamplesIHME), aggregatedResultsIHME=aggregatedResultsIHME, 
                          allTimings=allTimings)
     } else {
       allMatrices = list(aggregatedResultsLCPB=aggregatedResults, 
@@ -1401,10 +1118,12 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
                          aggregatedResultsLcpb=aggregatedResultsLcpb, 
                          aggregatedResultsLCpb=aggregatedResultsLCpb, 
                          aggregatedResultsLCPb=aggregatedResultsLCPb, 
+                         aggregatedResultsIHME=aggregatedResultsIHME, 
                          allTimings=allTimings)
     }
   } else {
     allTimings=NULL
+    stop("onlyDoModifiedPixelLevel set to TRUE is no longer supported")
     
     # for the if we only care about the modified pixel level predictions, just include those
     if(is.null(clustersPerPixel)) {
@@ -1415,20 +1134,43 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
                          pixelMatriceslcpb=list(p=lcpb, Z=zSampleslcpb, N=nSampleslcpb), allTimings=allTimings)
     }
   }
-  browser()
+  # browser()
   if(!returnEAinfo) {
     allMatrices
   } else {
-    theseI = pixelIndexMat[,1]
-    eaDat = data.frame(lon=popGrid$lon[theseI], lat=popGrid$lat[theseI], popOverall=popGrid$popOrig[theseI], 
-                       region=popGrid$region[theseI], admin1=popGrid$admin1[theseI], admin2=popGrid$admin2[theseI], 
-                       urban=popGrid$urban[theseI], east=popGrid$east[theseI], north=popGrid$north[theseI], 
-                       popTarget=popGridAdjusted$popOrig[theseI], pixelIs=theseI, 
-                       nHH=householdDraws[,1], n=Ncs[,1], y=Zc[,1], 
-                       plcpb=lcpb[theseI,1], pLcpb=lcpb[theseI,1], pLCpb=muc[,1], pLCPb=muc[,1], pLCPB=Zc[,1]/Ncs[,1])
-    # eaDat$pLCPB[eaDat$n == 0] = muc[eaDat$n == 0,1]
-    eaDat$pLCPB[eaDat$n == 0] = NA
-    c(allMatrices, list(eaDat=eaDat, eaSamples=eaSamples))
+    if(verbose) {
+      print("Obtaining EA level population frames")
+    }
+    # theseI = pixelIndexMat[,1]
+    # eaDat = data.frame(lon=popGrid$lon[theseI], lat=popGrid$lat[theseI], popOverall=popGrid$popOrig[theseI], 
+    #                    region=popGrid$region[theseI], admin1=popGrid$admin1[theseI], admin2=popGrid$admin2[theseI], 
+    #                    urban=popGrid$urban[theseI], east=popGrid$east[theseI], north=popGrid$north[theseI], 
+    #                    popTarget=popGridAdjusted$popOrig[theseI], pixelIs=theseI, 
+    #                    nHH=householdDraws[,1], n=Ncs[,1], y=Zc[,1], 
+    #                    plcpb=lcpb[theseI,1], pLcpb=lcpb[theseI,1], pLCpb=muc[,1], pLCPb=muc[,1], pLCPB=Zc[,1]/Ncs[,1])
+    # # eaDat$pLCPB[eaDat$n == 0] = muc[eaDat$n == 0,1]
+    # eaDat$pLCPB[eaDat$n == 0] = NA
+    
+    # return list of eaDat objects
+    getEADat = function(i) {
+      theseI = pixelIndexMat[,i]
+      
+      eaDat = data.frame(lon=popMat$lon[theseI], lat=popMat$lat[theseI], 
+                         region=popMat$region[theseI], admin1=popMat$area[theseI], admin2=popMat$admin2[theseI], 
+                         urban=popMat$urban[theseI], east=popMat$east[theseI], north=popMat$north[theseI], 
+                         popOverall=popMat$pop[theseI], popTarget=adjustedPopMat$pop[theseI], pixelIs=theseI, 
+                         nHH=householdDraws[,i], n=Ncs[,i], y=Zc[,i], N=Ncs[,i], Z=Zc[,i], 
+                         plcpb=lcpb[theseI,i], pLcpb=lcpb[theseI,i], pLCpb=muc[,i], pLCPb=muc[,i], pLCPB=Zc[,i]/Ncs[,i], pIHME=IHME[theseI,i])
+      
+      eaDat$pLCPB[eaDat$n == 0] = NA
+      
+      eaDat
+    }
+    
+    print("Constructing list of simulated EA data.frames")
+    eaDatList = lapply(1:nDraws, getEADat)
+    
+    c(allMatrices, list(eaDatList=eaDatList, eaSamples=eaSamples))
   }
 }
 
@@ -2725,7 +2467,7 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
        fullModelFit=previousFit)
 }
 
-# Use Poisson-Multinomial method to draw first from joint distribution of 
+# Take multilevel Multinomial draws first from joint distribution of 
 # number of households per EA given the total per stratum, and then from the joint 
 # distribution of the number of people (children) per household given 
 # the total per stratum
@@ -2736,7 +2478,7 @@ validateAggregationModelsKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
 #            per stratum. It is assumed that the number of EAs per stratum is 
 #            the same in each list element. If easpaList is a data frame, 
 #            number of households per stratum is assumed constant
-sampleNPoissonMultinomial = function(nDraws = ncol(pixelIndexMat), pixelIndexMat=NULL, urbanMat=NULL, areaMat=NULL, easpaList=NULL, 
+sampleNMultilevelMultinomial = function(nDraws = ncol(pixelIndexMat), pixelIndexMat=NULL, urbanMat=NULL, areaMat=NULL, easpaList=NULL, 
                                      popMat=NULL, includeUrban=TRUE, verbose=TRUE, returnEAinfo=FALSE, useRcpp=FALSE) {
   
   # set default inputs
@@ -2851,13 +2593,13 @@ sampleNPoissonMultinomial = function(nDraws = ncol(pixelIndexMat), pixelIndexMat
   
   # Draw the number of households per stratum area that will be randomly distributed (total minus the minimum 25)
   if(includeUrban) {
-    totalHouseholdsUrban = sweep(sapply(easpaList, function(x) {x$HHUrb}), 1, -25*totalEAsUrban, "+")
-    totalHouseholdsRural = sweep(sapply(easpaList, function(x) {x$HHRur}), 1, -25*totalEAsRural, "+")
-    totalChildrenUrban = sapply(easpaList, function(x) {x$popUrb})
-    totalChildrenRural = sapply(easpaList, function(x) {x$popRur})
+    totalHouseholdsUrban = sweep(matrix(sapply(easpaList, function(x) {x$HHUrb}), ncol=length(easpaList)), 1, -25*totalEAsUrban, "+")
+    totalHouseholdsRural = sweep(matrix(sapply(easpaList, function(x) {x$HHRur}), ncol=length(easpaList)), 1, -25*totalEAsRural, "+")
+    totalChildrenUrban = matrix(sapply(easpaList, function(x) {x$popUrb}), ncol=nDraws)
+    totalChildrenRural = matrix(sapply(easpaList, function(x) {x$popRur}), ncol=nDraws)
   } else {
-    totalHouseholds = sweep(sapply(easpaList, function(x) {x$HHTotal}), 1, -25*totalEAs, "+")
-    totalChildren = sapply(easpaList, function(x) {x$popHHTotal})
+    totalHouseholds = sweep(matrix(sapply(easpaList, function(x) {x$HHTotal}), ncol=length(easpaList)), 1, -25*totalEAs, "+")
+    totalChildren = matrix(sapply(easpaList, function(x) {x$popTotal}), ncol=nDraws)
   }
   
   # distribute the households throughout the enumeration areas with multinomial distribution, then 
@@ -3088,7 +2830,7 @@ sampleNPoissonBinomial = function(eaSamplesMod, pixelIndexListMod, areaListMod, 
   childrenDraws
 }
 
-# Same as sampleNPoissonMultinomial, except the number of EAs per pixel is fixed
+# Same as sampleNMultilevelMultinomial, except the number of EAs per pixel is fixed
 # n: the number of draws from the joint distribution of N
 # eaPixelSamples: this is eaSamples from modLCPB (nPixel x n matrix of number of EAs per pixel)
 # easpaList: a list of length n with each element being of the format given 
@@ -3096,7 +2838,7 @@ sampleNPoissonBinomial = function(eaSamplesMod, pixelIndexListMod, areaListMod, 
 #            per stratum. It is assumed that the number of EAs per stratum is 
 #            the same in each list element. If easpaList is a data frame, 
 #            number of households per stratum is assumed constant
-sampleNPoissonMultinomialFixed = function(clustersPerPixel, nDraws=ncol(pixelIndices), pixelIndices=NULL, 
+sampleNMultilevelMultinomialFixed = function(clustersPerPixel, nDraws=ncol(pixelIndices), pixelIndices=NULL, 
                                           urbanVals=NULL, areaVals=NULL, easpa=NULL, popMat=NULL, includeUrban=TRUE, 
                                           verbose=TRUE) {
   

@@ -67,7 +67,7 @@ fitSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
                            mesh=getSPDEMeshKenya(), prior=getSPDEPrior(mesh), 
                            significanceCI=.8, int.strategy="ccd", strategy="gaussian", 
                            nPostSamples=1000, verbose=TRUE, link=1, seed=123, 
-                           urbanEffect=TRUE, clusterEffect=TRUE, 
+                           urbanEffect=TRUE, clusterEffect=TRUE, popMat=popGrid, 
                            leaveOutRegionName=NULL, kmres=5, doValidation=FALSE, previousFit=NULL, 
                            family=c("binomial", "betabinomial"), leaveOutI=NULL, 
                            improperCovariatePrior=TRUE) {
@@ -103,8 +103,8 @@ fitSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
     dat = dat[!leaveOutI,]
   } else {
     # make prediction coordinates on a fine grid for plotting, and add coarser grid of testing points
-    predPts = cbind(popGrid$east, popGrid$north)
-    predsUrban = popGrid$urban
+    predPts = cbind(popMat$east, popMat$north)
+    predsUrban = popMat$urban
     predClusterI = rep(FALSE, nrow(predPts))
   }
   xPred = matrix(rep(1, nrow(predPts)), ncol=1)

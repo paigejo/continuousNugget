@@ -23,13 +23,20 @@ adm2@data$COUNTY_NAM[adm2@data$COUNTY_NAM == "Elgeyo-Marakwet" ] = "Elgeyo Marak
 adm2@data$COUNTY_NAM[adm2@data$COUNTY_NAM == "Tharaka - Nithi" ] = "Tharaka-Nithi"
 adm2@data$COUNTY_NAM[adm2@data$COUNTY_NAM == "Trans Nzoia" ] = "Trans-Nzoia"
 
-adm2 = combineConstituencies(adm2, threshold=50)
+# adm2 = combineConstituencies(adm2, threshold=50)
 adm2 = makeInBorder(adm2)
-adm2@data$Shape_Area = getArea(thisMap=adm2, nameVar="CONSTITUEN")
+adm2@data$Shape_Area = getArea(thisMap=adm2, areaLevel="Constituency")
 
 # test = removeConstituencyGaps(adm2)
 save(adm2, adm1, adm0, file=paste0(globalDirectory, "adminMapData.RData"))
 load(paste0(globalDirectory, "adminMapData.RData"))
+
+if(FALSE) {
+  # test mapping of shapefiles
+  plotMapDat(mapDat=adm2, new=TRUE)
+  plotMapDat(mapDat=adm1, new=TRUE)
+  plotMapDat(mapDat=adm0, new=TRUE)
+}
 
 # county to region mapping
 ctp = read.csv(paste0(dataDirectory, "mapData/kenya-prov-county-map.csv"))
@@ -49,26 +56,28 @@ out = aggregate(popGridFine$popOrig, by=list(constituency=as.character(popGridFi
 poppcon = data.frame(Constituency=constituencies, County=constituencyToCounty(constituencies), popUrb=out[(length(constituencies) + 1):(2*length(constituencies)), 3], 
                      popRur=out[1:length(constituencies), 3])
 
-# make sure constituencies without any urban or rural population in the coarse grid have none in the fine grid as well
-for(i in 1:nrow(poppcon)) {
-  thisRow = poppcon[i,]
-  thisIUrb = (popGrid$admin2 == thisRow$Constituency) & (popGrid$urban == TRUE)
-  thisIRur = (popGrid$admin2 == thisRow$Constituency) & (popGrid$urban == FALSE)
-  if(sum(popGrid$popOrig[thisIUrb]) == 0) {
-    poppcon$popUrb[i] = 0
-  }
-  if(sum(popGrid$popOrig[thisIRur]) == 0) {
-    poppcon$popRur[i] = 0
-  }
-}
+# 
+# # make sure constituencies without any urban or rural population in the coarse grid have none in the fine grid as well
+# for(i in 1:nrow(poppcon)) {
+#   thisRow = poppcon[i,]
+#   thisIUrb = (popGrid$admin2 == thisRow$Constituency) & (popGrid$urban == TRUE)
+#   thisIRur = (popGrid$admin2 == thisRow$Constituency) & (popGrid$urban == FALSE)
+#   if(sum(popGrid$popOrig[thisIUrb]) == 0) {
+#     poppcon$popUrb[i] = 0
+#   }
+#   if(sum(popGrid$popOrig[thisIRur]) == 0) {
+#     poppcon$popRur[i] = 0
+#   }
+# }
 
 # normalize population within each stratum to sum to the stratum population
 countyI = match(poppcon$County, easpc$County) # county -> constituency
 popInUrbanStratum = poppc$popUrb[countyI]
 popInRuralStratum = poppc$popRur[countyI]
 
+out = aggregate(poppcon$popUrb, by=list(County=poppcon$County), FUN=sum, drop=FALSE)
 sortI = match(poppc$County, out$County) # sorted county -> county
-out = aggregate(poppcon$popUrb, by=list(County=poppcon$County), FUN=sum, drop=FALSE)[sortI,]
+out = out[sortI,]
 normFactorUrban = popInUrbanStratum / out$x[countyI]
 normFactorUrban[is.na(normFactorUrban)] = 0
 poppcon$popUrb = poppcon$popUrb * normFactorUrban
@@ -96,37 +105,46 @@ poppcon$popTotal = poppcon$popUrb + poppcon$popRur
 save(poppcon, file=paste0(globalDirectory, "poppcon.RData"))
 
 # check that constituency crossed with urbanicity of the dataset make sense
-out = aggregate(mort$admin2, by=list(mort$admin2, mort$urban), FUN=length, drop=FALSE)
-out = cbind(out[1:273,1:3], out[274:546,3])
-out[is.na(out)] = 0
-names(out) = c("Constituency", "urban", "nClustRur", "nClustUrb")
-out = out[,c(1:2, 4, 3)]
-out$nClustTotal = out$nClustRur + out$nClustUrb
+# out = aggregate(mort$admin2, by=list(mort$admin2, mort$urban), FUN=length, drop=FALSE)
+# out = cbind(out[1:273,1:3], out[274:546,3])
+# out[is.na(out)] = 0
+# names(out) = c("Constituency", "urban", "nClustRur", "nClustUrb")
+# out = out[,c(1:2, 4, 3)]
+# out$nClustTotal = out$nClustRur + out$nClustUrb
 
 cbind(poppcon[,1:2], out[,3:5]/poppcon[,3:5])[,5]
-
-# make adjusted poppcon (target population per constituency)
-easpcon = meanEAsPerCon()
-poppconAdjusted = easpcon
-poppconAdjusted$popUrb = poppconAdjusted$meanUrbanEAs * ecdfExpectation(empiricalDistributions$householdsUrban) * ecdfExpectation(empiricalDistributions$mothersUrban) * 
-  ecdfExpectation(empiricalDistributions$childrenUrban)
-poppconAdjusted$popRur = poppconAdjusted$meanRuralEAs * ecdfExpectation(empiricalDistributions$householdsRural) * ecdfExpectation(empiricalDistributions$mothersRural) * 
-  ecdfExpectation(empiricalDistributions$childrenRural)
-poppconAdjusted$popTotal = poppconAdjusted$popUrb + poppconAdjusted$popRur
-save(poppconAdjusted, file="savedOutput/global/poppconAdjusted.RData")
-
-# generate 5km population density grid over Kenya
-popGrid = makeInterpPopGrid(kmRes=5, poppcon=poppcon)
-save(popGrid, file=paste0(globalDirectory, "popGrid.RData"))
-popGridAdjusted = makeInterpPopGrid(kmRes=5, adjustPopSurface=TRUE, poppcon=poppcon)
-save(popGridAdjusted, file=paste0(globalDirectory, "popGridAdjusted.RData"))
-popGridAdjustedWomen = makeInterpPopGrid(kmRes=5, adjustPopSurface=TRUE, "women", poppcon=poppcon)
-save(popGridAdjustedWomen, file=paste0(globalDirectory, "popGridAdjustedWomen.RData"))
 
 # empirical distributions
 empiricalDistributions = getSurveyEmpiricalDistributions2(maxAge=4) # maxAge is 4 years old because we want number of children in the 5 year period
 empiricalDistributions = c(empiricalDistributions, getSurveyEmpiricalDistributionsWomen())
 save(empiricalDistributions, file=paste0(globalDirectory, "empiricalDistributions.RData"))
+
+# make adjusted poppcon (target population per constituency)
+# easpcon = meanEAsPerCon()
+# poppconAdjusted = easpcon
+hhspcon = meanHHPerCon()
+poppconAdjusted = hhspcon
+# poppconAdjusted$popUrb = poppconAdjusted$meanUrbanEAs * ecdfExpectation(empiricalDistributions$householdsUrban) * ecdfExpectation(empiricalDistributions$mothersUrban) *
+#   ecdfExpectation(empiricalDistributions$childrenUrban)
+# poppconAdjusted$popRur = poppconAdjusted$meanRuralEAs * ecdfExpectation(empiricalDistributions$householdsRural) * ecdfExpectation(empiricalDistributions$mothersRural) *
+#   ecdfExpectation(empiricalDistributions$childrenRural)
+poppconAdjusted$popUrb = poppconAdjusted$meanUrbanHHs * ecdfExpectation(empiricalDistributions$mothersUrban) * 
+  ecdfExpectation(empiricalDistributions$childrenUrban)
+poppconAdjusted$popRur = poppconAdjusted$meanRuralHHs * ecdfExpectation(empiricalDistributions$mothersRural) * 
+  ecdfExpectation(empiricalDistributions$childrenRural)
+poppconAdjusted$popTotal = poppconAdjusted$popUrb + poppconAdjusted$popRur
+save(poppconAdjusted, file="savedOutput/global/poppconAdjusted.RData")
+
+# generate 5km population density grid over Kenya
+
+# make the 5 km resolution pixellated grid and get associated population densities, urbanicitites, 
+# counties, and constituencies using precomputed populations of constituencies from extra fine scale grid
+popGrid = makeInterpPopGrid(kmRes=5, poppcon=poppcon, conMap=adm2)
+save(popGrid, file=paste0(globalDirectory, "popGrid.RData"))
+popGridAdjusted = makeInterpPopGrid(kmRes=5, adjustPopSurface=TRUE, poppcon=poppcon, conMap=adm2)
+save(popGridAdjusted, file=paste0(globalDirectory, "popGridAdjusted.RData"))
+popGridAdjustedWomen = makeInterpPopGrid(kmRes=5, adjustPopSurface=TRUE, "women", poppcon=poppcon, conMap=adm2)
+save(popGridAdjustedWomen, file=paste0(globalDirectory, "popGridAdjustedWomen.RData"))
 
 # datasets (these were already created in readDat3)
 source("code/readDat3.R")
@@ -218,3 +236,31 @@ easpcMort$HHTotal = easpcMort$EATotal*25
 
 save(poppcMort, file=paste0(globalDirectory, "poppcMort.RData"))
 save(easpcMort, file=paste0(globalDirectory, "easpcMort.RData"))
+
+# adjust poppc to be the target population
+load(paste0(globalDirectory, "poppc.RData"))
+
+# calculate the number of children per stratum using true total eas and empirical children per ea from census data
+load("../U5MR/empiricalDistributions.RData")
+
+# targetPopPerStratumUrban = easpc$EAUrb * ecdfExpectation(empiricalDistributions$householdsUrban) * ecdfExpectation(empiricalDistributions$mothersUrban) *
+#   ecdfExpectation(empiricalDistributions$childrenUrban)
+# targetPopPerStratumRural = easpc$EARur * ecdfExpectation(empiricalDistributions$householdsRural) * ecdfExpectation(empiricalDistributions$mothersRural) *
+#   ecdfExpectation(empiricalDistributions$childrenRural)
+targetPopPerStratumUrban = easpc$HHUrb * ecdfExpectation(empiricalDistributions$mothersUrban) *
+  ecdfExpectation(empiricalDistributions$childrenUrban)
+targetPopPerStratumRural = easpc$HHRur * ecdfExpectation(empiricalDistributions$mothersRural) *
+  ecdfExpectation(empiricalDistributions$childrenRural)
+poppcAdjusted = poppc
+poppcAdjusted$popUrb = targetPopPerStratumUrban
+poppcAdjusted$popRur = targetPopPerStratumRural
+poppcAdjusted$popTotal = targetPopPerStratumUrban + targetPopPerStratumRural
+poppcAdjusted$pctTotal = round(100 * poppcAdjusted$popTotal / sum(poppcAdjusted$popTotal), digits=1)
+poppcAdjusted$pctUrb = round(100 * poppcAdjusted$popUrb / poppcAdjusted$popTotal, digits=1)
+save(poppcAdjusted, file=paste0(globalDirectory, "poppcAdjusted.RData"))
+
+
+
+
+
+

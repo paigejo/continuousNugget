@@ -20,6 +20,8 @@ library(sampling)
 library(haven)
 library(survey)
 library(abind)
+# install_github("https://github.com/richardli/SUMMER/tree/dev")
+library(SUMMER)
 # library(Rcpp)
 
 codeDirectory <<- "~/git/continuousNugget/code/"
@@ -105,7 +107,9 @@ load(paste0(globalDirectory, "poppr.RData"))
 load(paste0(globalDirectory, "poppcon.RData"))
 load(paste0(globalDirectory, "poppcMort.RData"))
 load(paste0(globalDirectory, "easpcMort.RData"))
+load(paste0(globalDirectory, "poppcAdjusted.RData"))
 load(paste0(globalDirectory, "poppconAdjusted.RData"))
+load(paste0(globalDirectory, "empiricalDistributions.RData"))
 
 # load enumeration areas and neonatal mortality data
 load(paste0(globalDirectory, "kenyaEAs.RData"))
