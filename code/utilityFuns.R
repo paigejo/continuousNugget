@@ -2324,12 +2324,12 @@ getConstituency = function(pts, project=FALSE, countyNames=NULL, delta=.05, mean
   polys = conMap@polygons
   inRegion = function(i) {
     countyPolys = polys[[i]]@Polygons
-    inside = sapply(1:length(countyPolys), function(x) {in.poly(pts, countyPolys[[x]]@coords, inflation=0)})
+    inside = matrix(sapply(1:length(countyPolys), function(x) {myin.poly(pts, countyPolys[[x]]@coords, inflation=0)}), ncol=length(countyPolys))
     insideAny = apply(inside, 1, any)
     
     return(insideAny*i)
   }
-  out = sapply(1:length(polys), inRegion)
+  out = matrix(sapply(1:length(polys), inRegion), ncol=length(polys))
   multipleRegs = apply(out, 1, function(vals) {sum(vals != 0) > 1})
   constituencyID = apply(out, 1, function(vals) {match(1, vals != 0)})
   constituencyNameVec = constituencyNames[constituencyID]
@@ -2732,8 +2732,11 @@ addMapLabels = function(varAreas=NULL, mapDat = NULL, offsets=NULL, ...) {
 # delta, mean.neighbor: argument passed to fields.rdist.near via getConstituency
 # poppcon: if not NULL, renormalizes population grid values to have these 
 #          populations per constituency.
+# mapDat: SpatialPolygons object
+# polygonSubsetI: index in mapDat 
 makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("children", "women"), 
-                             mean.neighbor=50, delta=.1, conMap=adm2, poppcon=NULL) {
+                             mean.neighbor=50, delta=.1, conMap=adm2, poppcon=NULL, 
+                             mapDat=NULL, polygonSubsetI=NULL) {
   thresholdUrbanBy = ifelse(is.null(poppcon), "county", "constituency")
   
   # load population density data
@@ -2750,36 +2753,71 @@ makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("child
   # get a rectangular grid
   eastGrid = seq(eastLim[1], eastLim[2], by=kmRes)
   northGrid = seq(northLim[1], northLim[2], by=kmRes)
-  utmGrid = make.surface.grid(list(east=eastGrid, north=northGrid))
+  
+  if(!is.null(polygonSubsetI)) {
+    # get range of the grid that we actually need
+    temp = mapDat@polygons[[polygonSubsetI]]
+    allPolygons = temp@Polygons
+    eastNorthCoords = do.call("rbind", lapply(1:length(allPolygons), function(i) {projKenya(allPolygons[[i]]@coords)}))
+    eastSubRange = range(eastNorthCoords[,1])
+    northSubRange = range(eastNorthCoords[,2])
+    
+    # subset grid to the range we need
+    eastGrid = eastGrid[eastGrid >= eastSubRange[1]]
+    eastGrid = eastGrid[eastGrid <= eastSubRange[2]]
+    northGrid = northGrid[northGrid >= northSubRange[1]]
+    northGrid = northGrid[northGrid <= northSubRange[2]]
+  }
+  
+  utmGrid = matrix(make.surface.grid(list(east=eastGrid, north=northGrid)), ncol=2)
   
   # project coordinates into lat/lon
-  lonLatGrid = projKenya(utmGrid, inverse=TRUE)
+  if(length(utmGrid) > 0) {
+    lonLatGrid = matrix(projKenya(utmGrid, inverse=TRUE), ncol=2)
+  } else {
+    warning(paste0("no grid cell centroid are in the areas of interest. ", 
+                   "Integration grid will be composed entirely of custom ", 
+                   "integration points at the centroids of the areas of interest"))
+    lonLatGrid = utmGrid
+  }
   
   # subset grid so it's in Kenya
   polys = kenyaMap@polygons
   kenyaPoly = polys[[1]]@Polygons[[77]]@coords
   inKenya = in.poly(lonLatGrid, kenyaPoly)
-  utmGrid = utmGrid[inKenya,]
-  lonLatGrid = lonLatGrid[inKenya,]
-  
+  utmGrid = matrix(utmGrid[inKenya,], ncol=2)
+  lonLatGrid = matrix(lonLatGrid[inKenya,], ncol=2)
   
   # compute counties associated with locations
   # counties = getRegion(lonLatGrid)$regionNames
   # constituencies = getConstituency(lonLatGrid, countyNames=counties)$constituencyNames
   # counties = getCounty(lonLatGrid)
   # provinces = getProvince(lonLatGrid)
-  constituencies = getConstituency(lonLatGrid, mean.neighbor=mean.neighbor, delta=delta)$constituencyNames
-  counties = constituencyToCounty(constituencies)
-  provinces = countyToRegion(counties)
+  if(length(lonLatGrid) > 0) {
+    constituencies = getConstituency(lonLatGrid, mean.neighbor=mean.neighbor, delta=delta)$constituencyNames
+    counties = constituencyToCounty(constituencies)
+    provinces = countyToRegion(counties)
+  } else {
+    constituencies = character(0)
+    counties = character(0)
+    provinces = character(0)
+  }
   
   # check to make sure every constituency has at least 2 pixels
   constituenciesFactor = factor(constituencies, levels=sort(unique(conMap@data$CONSTITUEN)))
-  out = aggregate(constituencies, by=list(constituency=constituenciesFactor), FUN=length, drop=FALSE)
+  if(length(lonLatGrid) > 0) {
+    out = aggregate(constituencies, by=list(constituency=constituenciesFactor), FUN=length, drop=FALSE)
+  } else {
+    out = data.frame(constituency=sort(unique(conMap@data$CONSTITUEN)), 
+                     x=NA)
+  }
   noPixels = is.na(out$x)
   onePixel = out$x == 1
+  onePixel[is.na(onePixel)] = FALSE
   onePixelNames = out$constituency[onePixel]
   badConstituencies = noPixels | onePixel
   badConstituencyNames = as.character(out$constituency[badConstituencies])
+  
   if(any(badConstituencies)) {
     if(is.null(poppcon)) {
       # make sure we know the population of each constituency
@@ -2788,6 +2826,7 @@ makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("child
       # get centroids of the constituencies (or it's single pixel coordinates)
       thisSpatialPolyList = as.SpatialPolygons.PolygonsList(conMap@polygons)
       centroidsLonLat = matrix(ncol=2, nrow=nrow(conMap@data))
+      
       for(i in 1:nrow(conMap@data)) {
         thisCon = conMap@data$CONSTITUEN[i]
         if(thisCon %in% onePixelNames) {
@@ -2806,11 +2845,13 @@ makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("child
       # remove the one pixel for constituencies with only one pixel 
       # (we will add it in again later, twice: both urban and rural)
       onePixel = which(constituencies %in% onePixelNames)
-      lonLatGrid = lonLatGrid[-onePixel,]
-      utmGrid = utmGrid[-onePixel,]
-      constituencies = constituencies[-onePixel]
-      counties = counties[-onePixel]
-      provinces = provinces[-onePixel]
+      if(length(onePixel) > 0) {
+        lonLatGrid = lonLatGrid[-onePixel,]
+        utmGrid = utmGrid[-onePixel,]
+        constituencies = constituencies[-onePixel]
+        counties = counties[-onePixel]
+        provinces = provinces[-onePixel]
+      }
       
       # add centroids of only the bad constituencies
       centroidsLonLat = centroidsLonLat[badConstituencies,]
@@ -2868,6 +2909,8 @@ makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("child
     tempPop = newPop
     names(tempCon) = c("subarea", "area", "popUrb", "popRur", "popTotal")
     names(tempPop)[c(3, 5:6)] = c("pop", "area", "subareas")
+    allSubareas = sort(unique(tempPop$subarea))
+    tempCon = tempCon[tempCon$subarea %in% allSubareas,]
     threshes = SUMMER::setThresholdsSubarea(tempPop, poppsub = tempCon)
     popThreshes = sapply(1:nrow(newPop), function(i) {threshes$threshes[threshes$subareas == newPop$admin2[i]]})
     urban = newPop$popOrig >= unlist(popThreshes)
@@ -2886,8 +2929,16 @@ makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("child
       substratumRural = (constituencies == thisCon) & !urban
       factorUrban = poppcon$popUrb[i] / sum(newPop$popOrig[substratumUrban])
       factorRural = poppcon$popRur[i] / sum(newPop$popOrig[substratumRural])
-      newPop$popOrig[substratumUrban] = newPop$popOrig[substratumUrban] * factorUrban
-      newPop$popOrig[substratumRural] = newPop$popOrig[substratumRural] * factorRural
+      if(is.finite(factorUrban)) {
+        newPop$popOrig[substratumUrban] = newPop$popOrig[substratumUrban] * factorUrban
+      } else if(!is.nan(factorUrban) && factorUrban == Inf) {
+        newPop$popOrig[substratumUrban] = poppcon$popUrb[i] / sum(substratumUrban)
+      }
+      if(is.finite(factorRural)) {
+        newPop$popOrig[substratumRural] = newPop$popOrig[substratumRural] * factorRural
+      } else if(!is.nan(factorRural) && factorRural == Inf) {
+        newPop$popOrig[substratumRural] = poppcon$popRur[i] / sum(substratumRural)
+      }
     }
   }
   
@@ -5032,6 +5083,26 @@ meanHHPerCon = function(numToPrint=0) {
   
   out
 }
+
+myin.poly = function (xd, xp, convex.hull = FALSE, inflation = 1e-07) 
+{
+  if (convex.hull) {
+    xp <- xp[chull(xp), ]
+  }
+  nd <- as.integer(nrow(xd))
+  np <- as.integer(nrow(xp))
+  if (convex.hull) {
+    xm <- matrix(c(mean(xp[, 1]), mean(xp[, 2])), nrow = np, 
+                 ncol = 2, byrow = TRUE)
+    xp <- (xp - xm) * (1 + inflation) + xm
+  }
+  ind <- .Fortran("inpoly", PACKAGE = "fields", nd = as.integer(nd), 
+                  as.single(matrix(xd[, 1], ncol=1)), as.single(matrix(xd[, 2], ncol=1)), np = np, as.single(xp[, 
+                                                                                1]), as.single(matrix(xp[, 2], ncol=1)), ind = as.integer(rep(-1, 
+                                                                                                                              nd)))$ind
+  as.logical(ind)
+}
+
 
 
 

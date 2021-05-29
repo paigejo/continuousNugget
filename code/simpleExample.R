@@ -7,6 +7,7 @@ latRangeWajir = c(0.25, 3.6)
 longRangeNorthWajir = c(39, 40.3)
 latRangeNorthWajir = c(2.45, 3.7)
 constituenciesW = poppcon$Constituency[poppcon$County=="Wajir"]
+constituencies = poppcon$Constituency
 offsets = matrix(0, nrow=6, ncol=2)
 offsets[1,2] = .1 # shift label for Eldas slightly higher
 offsets[6,1] = .15 # shift label for Wajir West slightly farther east
@@ -1430,10 +1431,10 @@ sigmaEpsilonDraws = spdeFitN$sigmaEpsilonDraws
 
 # apply aggregation models
 aggResultsN = modLCPB(uDraws, sigmaEpsilonDraws, easpaN, popMatN, 
-                     popMatSimpleAdjustedN, doLCPb=TRUE, doIHMEModel=TRUE, 
-                     constituencyPop=poppconN, ensureAtLeast1PerConstituency=TRUE, 
-                     logisticApproximation=FALSE, verbose=TRUE, 
-                     fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1)
+                      popMatSimpleAdjustedN, doLCPb=TRUE, doIHMEModel=TRUE, 
+                      constituencyPop=poppconN, ensureAtLeast1PerConstituency=TRUE, 
+                      logisticApproximation=FALSE, verbose=TRUE, 
+                      fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1)
 
 # get average number of EAs per area
 out = meanEAsPerCon()
@@ -1488,7 +1489,7 @@ countyResults = data.frame(Area="Nairobi", SmoothRisk=smoothRiskCIWidths, Risk=f
 combinedResults = rbind(constituencyResults, countyResults)
 print(combinedResults)
 combinedResults$Area = as.character(combinedResults$Area)
-combinedResults$Area[1:4] = as.character(1:4)
+# combinedResults$Area[1:4] = as.character(1:4)
 
 xtable(combinedResults, 
        digits= c(0, 0, 2, 2, 2, 2, 0, 0, 0, 0), 
@@ -1530,6 +1531,95 @@ rbind(prevalenceSDs, fineScaleRiskSDs, smoothRiskSDs, ihmeSDs)
 # pct difference
 (prevalenceSDs - smoothRiskSDs) / smoothRiskSDs
 mean((prevalenceSDs - smoothRiskSDs) / smoothRiskSDs)
+
+##### Do the same, but in all of Kenya ----
+if(FALSE) {
+  # obtain simulated data over all of Kenya
+  dat = simDatKenya$SRSDat$clustDat[[1]]
+  
+  # simulate results over all of Kenya
+  # (ONLY DO THIS ON THE CLUSTER)
+  nSamples = 10000
+  spdeFitKenya = fitSPDEKenyaDat(dat, nPostSamples=nSamples, popMat=popGrid)
+  
+  # obtain model output
+  uDraws = spdeFitKenya$uDraws
+  sigmaEpsilonDraws = spdeFitKenya$sigmaEpsilonDraws
+  
+  # apply aggregation models
+  aggResultsKenya = modLCPB(uDraws, sigmaEpsilonDraws, NULL, NULL, 
+                            NULL, doLCPb=TRUE, doIHMEModel=TRUE, 
+                            constituencyPop=poppcon, ensureAtLeast1PerConstituency=TRUE, 
+                            logisticApproximation=FALSE, verbose=TRUE, 
+                            fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1)
+  
+  save(aggResultsKenya, file="savedOutput/simpleExample/aggResultsKenya.RData")
+}
+
+# get results
+out = load("savedOutput/simpleExample/aggResultsKenya.RData")
+
+# get number of EAs per constituency
+out = meanEAsPerCon()
+nEAsTotal = out$meanTotalEAs
+
+# get average number of neonatals per area
+nPerCon = rowMeans(aggResultsKenya$aggregatedResultslcpb$constituencyMatrices$N)
+
+# calculate number of pixels per area (for understanding IHME model variance)
+out = aggregate(popMatSimpleAdjustedN$popOrig, by=list(pixels=popMatSimpleAdjustedN$admin2), FUN=length)
+nPixels = out$x
+
+# calculate number of EAs sampled per area (for understanding spatial variance)
+out = aggregate(dat$N[dat$admin1 == "Nairobi"], by=list(dat$admin2[dat$admin1 == "Nairobi"]), FUN=length)
+nEAsSampled = out$x
+
+# gather aggregation model output
+prevalenceSamples = aggResultsKenya$aggregatedResultsLCPB$constituencyMatrices$Z[,1:testnsim]
+fineScaleRiskSamples = aggResultsKenya$aggregatedResultsLCPb$constituencyMatrices$Z[,1:testnsim]
+smoothRiskSamples = aggResultsKenya$aggregatedResultslcpb$constituencyMatrices$Z[,1:testnsim]
+ihmeSamples = aggResultsKenya$aggregatedResultsIHME$constituencyMatrices$Z[,1:testnsim]
+
+prevalenceSamples = aggResultsKenya$aggregatedResultsLCPB$constituencyMatrices$p[,1:testnsim]
+fineScaleRiskSamples = aggResultsKenya$aggregatedResultsLCPb$constituencyMatrices$p[,1:testnsim]
+smoothRiskSamples = aggResultsKenya$aggregatedResultslcpb$constituencyMatrices$p[,1:testnsim]
+ihmeSamples = aggResultsKenya$aggregatedResultsIHME$constituencyMatrices$p[,1:testnsim]
+
+# 80% CIs
+prevalenceCIWidths = apply(prevalenceSamples, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+fineScaleRiskCIWidths = apply(fineScaleRiskSamples, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+smoothRiskCIWidths = apply(smoothRiskSamples, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+ihmeCIWidths = apply(ihmeSamples, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+constituencyResults = data.frame(Area=constituenciesN, SmoothRisk=smoothRiskCIWidths, Risk=fineScaleRiskCIWidths, Prevalence=prevalenceCIWidths, IHMERisk=ihmeCIWidths, EAs=nEAsTotal, EAsSampled=nEAsSampled, Pixels=nPixels, Neonatals=nPerCon)
+
+lcpbCounty = aggResultsKenya$aggregatedResultslcpb$countyMatrices$Z
+LCPbCounty = aggResultsKenya$aggregatedResultsLCPb$countyMatrices$Z
+LCPBCounty = aggResultsKenya$aggregatedResultsLCPB$countyMatrices$Z
+ihmeCounty = aggResultsKenya$aggregatedResultsIHME$countyMatrices$Z
+
+lcpbCounty = aggResultsKenya$aggregatedResultslcpb$countyMatrices$p
+LCPbCounty = aggResultsKenya$aggregatedResultsLCPb$countyMatrices$p
+LCPBCounty = aggResultsKenya$aggregatedResultsLCPB$countyMatrices$p
+ihmeCounty = aggResultsKenya$aggregatedResultsIHME$countyMatrices$p
+
+prevalenceCIWidths = apply(LCPBCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+fineScaleRiskCIWidths = apply(LCPbCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+smoothRiskCIWidths = apply(lcpbCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+ihmeCIWidths = apply(ihmeCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+countyResults = data.frame(Area="Nairobi", SmoothRisk=smoothRiskCIWidths, Risk=fineScaleRiskCIWidths, Prevalence=prevalenceCIWidths, IHMERisk=ihmeCIWidths, EAs=sum(nEAsTotal), EAsSampled=sum(nEAsSampled), Pixels=sum(nPixels), Neonatals=sum(nPerCon))
+
+combinedResults = rbind(constituencyResults, countyResults)
+print(combinedResults)
+combinedResults$Area = as.character(combinedResults$Area)
+combinedResults$Area[1:4] = as.character(1:4)
+
+xtable(combinedResults, 
+       digits= c(0, 0, 2, 2, 2, 2, 0, 0, 0, 0), 
+       display=c("d", "s", "e", "e", "e", "e", "d", "d", "d", "d"))
+
+# pct larger:
+(constituencyResults$Prevalence - constituencyResults$SmoothRisk) / constituencyResults$SmoothRisk
+mean((constituencyResults$Prevalence - constituencyResults$SmoothRisk) / constituencyResults$SmoothRisk)
 
 # Tests ----
 popMatSimpleAdjustedW2 = popGridAdjusted[popGridAdjusted$admin1 == "Wajir",]

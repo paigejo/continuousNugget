@@ -1,3 +1,32 @@
+# install requied packages if necessary
+if(FALSE) {
+  install.packages("Matrix")
+  install.packages("spam")
+  install.packages("fields")
+  install.packages("LatticeKrig")
+  install.packages("invgamma")
+  install.packages("latex2exp")
+  install.packages("xtable")
+  install.packages("profvis")
+  install.packages("geosphere")
+  install.packages("viridis")
+  install.packages("sp")
+  install.packages("raster")
+  install.packages("MCMCpack")
+  install.packages("numDeriv")
+  install.packages("INLA")
+  install.packages("edfun") # for drawing from empirical distributions quickly
+  install.packages("data.table")
+  install.packages("sampling")
+  install.packages("haven")
+  install.packages("survey")
+  install.packages("abind")
+  install.packages("devtools")
+  
+  library(devtools)
+  install_github("https://github.com/richardli/SUMMER/tree/dev")
+}
+
 # load required packages and R scripts
 library(Matrix)
 library(spam)
