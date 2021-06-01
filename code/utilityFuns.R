@@ -2191,7 +2191,7 @@ projKenya = function(lon, lat=NULL, inverse=FALSE) {
     lat = lon[,2]
     lon = lon[,1]
   }
-  browser()
+  
   if(!inverse) {
     # from lon/lat coords to easting/northing
     # rgdal:::showEPSG("+proj=longlat")
