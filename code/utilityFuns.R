@@ -2191,9 +2191,10 @@ projKenya = function(lon, lat=NULL, inverse=FALSE) {
     lat = lon[,2]
     lon = lon[,1]
   }
-  
+  browser()
   if(!inverse) {
     # from lon/lat coords to easting/northing
+    # rgdal:::showEPSG("+proj=longlat")
     lonLatCoords = SpatialPoints(cbind(lon, lat), proj4string=CRS("+proj=longlat"))
     coordsUTM = spTransform(lonLatCoords, CRS("+init=epsg:21097 +units=km"))
     out = attr(coordsUTM, "coords")
@@ -2881,7 +2882,14 @@ makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("child
   }
   
   # get population density at those coordinates
-  interpPopVals = extract(pop, SpatialPoints(lonLatGrid),method="bilinear")
+  if(!PROJ6) {
+    interpPopVals = extract(pop, SpatialPoints(lonLatGrid),method="bilinear")
+  } else {
+    proj4string(pop) = CRS(SRS_string="EPSG:4326")
+    interpPopVals = extract(pop, SpatialPoints(lonLatGrid, proj4string=CRS(SRS_string="EPSG:4326")), method="bilinear")
+    
+    # interpPopVals = extract(pop, SpatialPoints(lonLatGrid, proj4string=CRS("+init=epsg:4326")), method="bilinear")
+  }
   
   if(any(badConstituencies)) {
     # make sure population densities in the bad constituencies 

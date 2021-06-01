@@ -157,3 +157,13 @@ if(!exists("doParallel") || (exists("doParallel") && doParallel == FALSE)) {
   assign("cores", NULL, envir=.GlobalEnv)
   assign("cl", NULL, envir=.GlobalEnv)
 }
+
+# determine version of PROJ.4
+ver = rgdal::rgdal_extSoftVersion()
+theseNames = names(ver)
+thisI = which(grepl("PROJ", theseNames))
+PROJ6 <- as.numeric(substr(ver[thisI], 1, 1)) >= 6
+
+
+
+
