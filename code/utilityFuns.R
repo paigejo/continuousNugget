@@ -2886,6 +2886,7 @@ makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("child
     interpPopVals = extract(pop, SpatialPoints(lonLatGrid),method="bilinear")
   } else {
     proj4string(pop) = CRS(SRS_string="EPSG:4326")
+    pop@file@name = "/home/ahomei/j/johnpai/git/U5MR/Kenya2014Pop/worldpop_total_1y_2014_00_00.tif"
     interpPopVals = extract(pop, SpatialPoints(lonLatGrid, proj4string=CRS(SRS_string="EPSG:4326")), method="bilinear")
     
     # interpPopVals = extract(pop, SpatialPoints(lonLatGrid, proj4string=CRS("+init=epsg:4326")), method="bilinear")
