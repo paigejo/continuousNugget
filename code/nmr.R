@@ -1042,9 +1042,9 @@ getMortGridResolutuionResults = function(seed=123, logisticApproximation=FALSE, 
   poppconN = poppcon
   poppconN = poppconN[poppconN$County == "Nairobi", ]
   
-  resolutions = c(.5, 1, 2, 5, 10, 20)
-  deltas = c(.025, .05, .1, .1, .2, .4)
-  meanNeighbors = c(rep(500, 3), rep(50, 3))
+  resolutions = c(.1, .2, .5, 1, 2, 5, 10, 20)
+  deltas = c(.08, .015, .025, .05, .1, .1, .2, .4)
+  meanNeighbors = c(rep(500, 5), rep(50, 3))
   popGrids = list()
   popGridsAdjusted = list()
   for(i in 1:length(resolutions)) {
