@@ -22,6 +22,7 @@ if(FALSE) {
   install.packages("survey")
   install.packages("abind")
   install.packages("devtools")
+  install.packages("ggplot2")
   
   library(devtools)
   install_github("https://github.com/richardli/SUMMER/tree/dev")
@@ -52,6 +53,7 @@ library(abind)
 # install_github("https://github.com/richardli/SUMMER/tree/dev")
 library(SUMMER)
 # library(Rcpp)
+library(ggplot2)
 
 codeDirectory <<- "~/git/continuousNugget/code/"
 figDirectory <<- "~/git/continuousNugget/figures/"

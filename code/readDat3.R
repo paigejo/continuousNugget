@@ -66,9 +66,9 @@ sum(diedRural$v005[diedRural$b7 == 0]) / sum(ruralData$v005)
 mean(data$v140 == 1)
 mean(data$v025 == 1)
 
-# extract births in the range 2005 to 2010 (most recent five years)
-lowYear <- 2005
-highYear <- 2009
+# extract births in the range 2010 to 2014 (most recent five years)
+lowYear <- 2010
+highYear <- 2014
 subdata <- subdata[(subdata[,'b2'] >= lowYear & subdata[,'b2'] <= highYear),]
 
 # add a column for the stratification variable as an interaction between
@@ -85,6 +85,12 @@ clStrat = clStrat[!duplicated(clStrat), ]
 colnames(clStrat) = c("clusterID", "regionRural", "region", "urban", "samplingWeight")
 clStrat$urban =  clStrat$urban == 1
 
+# do the same for a yearly data set
+clStratYearly = subdata[,c("v001", "regionUral", "v024", "v025", "v005", "b2")]
+clStratYearly = clStratYearly[!duplicated(clStratYearly), ]
+colnames(clStratYearly) = c("clusterID", "regionRural", "region", "urban", "samplingWeight", "year")
+clStratYearly$urban =  clStratYearly$urban == 1
+
 # determine whether each child survived for at least one month
 lived = subdata$b7 > 0
 lived[is.na(lived)] = TRUE
@@ -95,13 +101,24 @@ n <- table(subdata[,'v001'])
 clusterid <- dimnames(n)[[1]]
 n.data = data.frame(clusterID=clusterid, n=as.vector(n))
 
+# get the number of birth by cluster and year
+nYearly <- table(subdata[,'v001'])
+nYearly <- aggregate(1:nrow(subdata), by=list(clustID=subdata[,'v001'], year=subdata[,'b2']), FUN=length, drop=FALSE)
+clusterid <- dimnames(nYearly)[[1]]
+n.dataYearly = data.frame(clusterID=nYearly$clustID, year=nYearly$year, n=nYearly$x)
+n.dataYearly$n[is.na(n.dataYearly$n)] = 0
+
 # get the number of deaths by cluster
 # y <- table(subdata[,'v001'])
 y = aggregate(died, list(subdata[,'v001']), sum)
 n.data$y = y$x
 
+yYearly = aggregate(died, by=list(clustID=subdata[,'v001'], year=subdata[,'b2']), sum, drop=FALSE)
+n.dataYearly$y = yYearly$x
+
 # add in strata
 mort <- merge(n.data, clStrat, by='clusterID', all=TRUE, sort=TRUE)
+mortYearly <- merge(n.dataYearly, clStratYearly, by=c('clusterID', 'year'), all=TRUE, sort=TRUE)
 
 # Read geographical information
 library(rgdal)
@@ -115,10 +132,17 @@ idx = match(mort$clusterID, geoObj$cId)
 mort$lon = geoObj$lon[idx]
 mort$lat = geoObj$lat[idx]
 
+idx = match(mortYearly$clusterID, geoObj$cId)
+mortYearly$lon = geoObj$lon[idx]
+mortYearly$lat = geoObj$lat[idx]
+
 # Missing geographical information is assigned value (0,0)
 # Remove these
 missIdx = which(mort$lon == 0)
 mort = mort[-missIdx,]
+
+missIdx = which(mortYearly$lon == 0)
+mortYearly = mortYearly[-missIdx,]
 
 library(SUMMER)
 library(foreign)
@@ -153,14 +177,23 @@ gpsI = match(data.frame(rbind(mort$lon, mort$lat)), data.frame(rbind(gpsDat$lon,
 mort$admin1 = gpsDat$admin1[gpsI]
 mort$region = gpsDat$region[gpsI]
 
+mortYearly$admin1 = gpsDat$admin1[gpsI]
+mortYearly$region = gpsDat$region[gpsI]
+
 # reset the county and province based on spatial polygons
 mort$admin1 = getCounty(cbind(mort$lon, mort$lat))
 mort$region = getProvince(cbind(mort$lon, mort$lat))
+
+mortYearly$admin1 = getCounty(cbind(mortYearly$lon, mortYearly$lat))
+mortYearly$region = getProvince(cbind(mortYearly$lon, mortYearly$lat))
 
 # get easting and northing using projection
 tmp = projKenya(mort$lon, mort$lat)
 mort$east = tmp[,1]
 mort$north = tmp[,2]
+tmp = projKenya(mortYearly$lon, mortYearly$lat)
+mortYearly$east = tmp[,1]
+mortYearly$north = tmp[,2]
 save(mort, file=paste0(globalDirectory, "kenyaData.RData"))
 
 # find average urban and rural neonatal mortality rates
