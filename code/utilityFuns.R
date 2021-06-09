@@ -2858,13 +2858,13 @@ makeInterpPopGrid = function(kmRes=5, adjustPopSurface=FALSE, targetPop=c("child
       centroidsLonLat = centroidsLonLat[badConstituencies,]
       
       # convert to east/north
-      centroidsEastNorth = projKenya(centroidsLonLat[,1], centroidsLonLat[,2], TRUE)
+      centroidsEastNorth = projKenya(centroidsLonLat[,1], centroidsLonLat[,2])
       
       # only add centroid if bad constituencies have any population in the stratum
       hasUrbanPop = (poppcon$popUrb > 0)[badConstituencies]
       hasRuralPop = (poppcon$popRur > 0)[badConstituencies]
-      centroidsLonLatUrban = centroidsLonLat[hasUrbanPop,]
-      centroidsLonLatRural = centroidsLonLat[hasRuralPop,]
+      # centroidsLonLatUrban = centroidsLonLat[hasUrbanPop,]
+      # centroidsLonLatRural = centroidsLonLat[hasRuralPop,]
       
       # add centroids to the matrices of pixellated grid coordinates. 
       # Add them twice: once for urban, once for rural

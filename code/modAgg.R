@@ -194,17 +194,17 @@ checkPopFrameAndDensity = function(popMat, adjustedPopMat, easpa, constituencyPo
   if(maxDiff > 1e-3) {
     changedAdjustedPopMat = TRUE
     print(paste0("input adjustedPopMat did not match with ", 
-                 "input easpa, which maximum pixel population ", 
+                 "input easpa, with maximum pixel population ", 
                  "difference of ", maxDiff, ". Modifying ", 
                  "adjustedPopMat accordingly."))
     if(stopOnMismatch) {
       stop(paste0("input adjustedPopMat did not match with ", 
-                  "input easpa, which maximum pixel population ", 
+                  "input easpa, with maximum pixel population ", 
                   "difference of ", maxDiff, ". Modifying ", 
                   "adjustedPopMat accordingly."))
     }
     warning(paste0("input adjustedPopMat did not match with ", 
-                   "input easpa, which maximum pixel population ", 
+                   "input easpa, with maximum pixel population ", 
                    "difference of ", maxDiff, ". Modifying ", 
                    "adjustedPopMat accordingly."))
   } else {

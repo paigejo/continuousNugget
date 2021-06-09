@@ -1033,7 +1033,7 @@ makeMortPlots = function(logisticApproximation=FALSE) {
 }
 
 # for now, just gets the results for Nairobi
-getMortGridResolutuionResults = function(seed=123, logisticApproximation=FALSE, nPostSamples=10000) {
+getMortGridResolutuionResults = function(seed=123) {
   set.seed(seed)
   
   # make sampling frame
@@ -1042,8 +1042,9 @@ getMortGridResolutuionResults = function(seed=123, logisticApproximation=FALSE, 
   poppconN = poppcon
   poppconN = poppconN[poppconN$County == "Nairobi", ]
   
+  # make population density grids
   resolutions = c(.1, .2, .5, 1, 2, 5, 10, 20)
-  deltas = c(.08, .015, .025, .05, .1, .1, .2, .4)
+  deltas = c(.005, .01, .025, .05, .1, .1, .2, .4)
   meanNeighbors = c(rep(500, 5), rep(50, 3))
   popGrids = list()
   popGridsAdjusted = list()
@@ -1079,26 +1080,28 @@ getMortGridResolutuionResults = function(seed=123, logisticApproximation=FALSE, 
   popMatCombined = do.call("rbind", popGrids)
   
   # fit SPDE cluster level risk model over all integration points
-  nSamples = 10000
-  spdeFitN = fitSPDEKenyaDat(mort, nPostSamples=nSamples, popMat=popMatCombined)
-  sigmaEpsilonDraws = spdeFitN$sigmaEpsilonDraws
+  spdeFitN = fitSPDEKenyaDat(mort, nPostSamples=10000, popMat=popMatCombined)
   
   # apply aggregation models at each resolution
+  nSamples = c(c(500, 1000), rep(10000, length(resolutions)-1))
   aggResultsN = list()
   for(i in 1:length(popGrids)) {
+    thisNSamples = nSamples[i]
+    
     # obtain the grids at this resolution
     thisPopMat = popGrids[[i]]
     thisPopMatAdjusted = popGridsAdjusted[[i]]
     
     # obtain model output at this resolution
     thisResolutionI = startIs[i]:endIs[i]
-    thisUDraws = spdeFitN$uDraws[thisResolutionI,]
+    thisUDraws = spdeFitN$uDraws[thisResolutionI,1:thisNSamples]
+    sigmaEpsilonDraws = spdeFitN$sigmaEpsilonDraws[1:thisNSamples]
+    print(paste0("Generating aggregation results for grid resolution ", resolutions[i]))
     
     thisAggResultsN = modLCPB(thisUDraws, sigmaEpsilonDraws, easpaN, thisPopMat, 
                               thisPopMatAdjusted, doLCPb=TRUE, doIHMEModel=TRUE, 
                               constituencyPop=poppconN, ensureAtLeast1PerConstituency=TRUE, 
                               logisticApproximation=FALSE, verbose=TRUE, 
-                              fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
                               stopOnFrameMismatch=FALSE)
     
     aggResultsN = c(aggResultsN, list(thisAggResultsN))
@@ -1111,26 +1114,25 @@ getMortGridResolutuionResults = function(seed=123, logisticApproximation=FALSE, 
 
 makeMortGridResolutionPlots = function() {
   out = load("savedOutput/application/gridResolutionTestNairobi.RData")
-  browser()
-  # Calculate RMSE, 80% Coverage
-  predsConstituency = matrix(nrow=length(truePrevalenceConstituencyKenya), ncol=length(resolutions))
+  
+  # Calculate predictions, variance, 80% Coverage interval width
+  predsConstituency = matrix(nrow=nrow(aggResultsN[[1]]$aggregatedResultsLCPB$constituencyMatrices$p), ncol=length(resolutions))
   residsConstituencySmoothRisk = list()
   residsConstituencyRisk = list()
   residsConstituencyPrevalence = list()
   residsConstituencyGriddedRisk = list()
   for(i in 1:length(resolutions)) {
     thesePreds = rowMeans(aggResultsN[[i]]$aggregatedResultslcpb$constituencyMatrices$p)
-    theseResidsSmoothRisk = sweep(aggResultsN[[i]]$aggregatedResultslcpb$constituencyMatrices$p, 1, truePrevalenceConstituencyKenya, "-")
-    theseResidsRisk = sweep(aggResultsN[[i]]$aggregatedResultsLCPb$constituencyMatrices$p, 1, truePrevalenceConstituencyKenya, "-")
-    theseResidsPrevalence = sweep(aggResultsN[[i]]$aggregatedResultsLCPB$constituencyMatrices$p, 1, truePrevalenceConstituencyKenya, "-")
-    theseResidsGriddedRisk = sweep(aggResultsN[[i]]$aggregatedResultsIHME$constituencyMatrices$p, 1, truePrevalenceConstituencyKenya, "-")
+    theseResidsSmoothRisk = sweep(aggResultsN[[i]]$aggregatedResultslcpb$constituencyMatrices$p, 1, thesePreds, "-")
+    theseResidsRisk = sweep(aggResultsN[[i]]$aggregatedResultsLCPb$constituencyMatrices$p, 1, thesePreds, "-")
+    theseResidsPrevalence = sweep(aggResultsN[[i]]$aggregatedResultsLCPB$constituencyMatrices$p, 1, thesePreds, "-")
+    theseResidsGriddedRisk = sweep(aggResultsN[[i]]$aggregatedResultsIHME$constituencyMatrices$p, 1, thesePreds, "-")
     predsConstituency[,i] = thesePreds
     residsConstituencySmoothRisk = c(residsConstituencySmoothRisk, list(theseResidsSmoothRisk))
     residsConstituencyRisk = c(residsConstituencyRisk, list(theseResidsRisk))
     residsConstituencyPrevalence = c(residsConstituencyPrevalence, list(theseResidsPrevalence))
     residsConstituencyGriddedRisk = c(residsConstituencyGriddedRisk, list(theseResidsGriddedRisk))
   }
-  residsConstituency = sweep(predsConstituency, 1, truePrevalenceConstituencyKenya, "-")
   
   lowConstituencySmoothRisk = sapply(residsConstituencySmoothRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=.1)})})
   lowConstituencyRisk = sapply(residsConstituencyRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=.1)})})
@@ -1151,19 +1153,9 @@ makeMortGridResolutionPlots = function() {
   meanCIWidthPrevalence = colMeans(CIWidthPrevalence)
   meanCIWidthGriddedRisk = colMeans(CIWidthGriddedRisk)
   
-  inCISmoothRisk = (0 <= highConstituencySmoothRisk) & (0 >= lowConstituencySmoothRisk)
-  inCIRisk = (0 <= highConstituencyRisk) & (0 >= lowConstituencyRisk)
-  inCIPrevalence = (0 <= highConstituencyPrevalence) & (0 >= lowConstituencyPrevalence)
-  inCIGriddedRisk = (0 <= highConstituencyGriddedRisk) & (0 >= lowConstituencyGriddedRisk)
-  
-  coverageSmoothRisk = colMeans(inCISmoothRisk)
-  coverageRisk = colMeans(inCIRisk)
-  coveragePrevalence = colMeans(inCIPrevalence)
-  coverageGriddedRisk = colMeans(inCIGriddedRisk)
-  
   # Plot central predictions versus resolution
   ylim = range(c(predsConstituency))
-  pdf("figures/gridResolutionTest/predictionVRes.pdf", width=5, height=5)
+  pdf("figures/application/gridResolutionTestPredictionVRes.pdf", width=5, height=5)
   cols = rainbow(4)
   thisFrame = data.frame(predsConstituency)
   boxplot(predsConstituency, names=resolutions, col="skyblue", 
@@ -1171,40 +1163,72 @@ makeMortGridResolutionPlots = function() {
   dev.off()
   
   # Plot CI Widths versus resolution and model
+  constituenciesN = poppcon$Constituency[poppcon$County=="Nairobi"]
   CIWidth = c(c(CIWidthSmoothRisk), c(CIWidthRisk), c(CIWidthPrevalence), c(CIWidthGriddedRisk))
   tempRes = resolutions[col(CIWidthSmoothRisk)]
   tempCon = factor(as.character(poppcon$Constituency[constituenciesN][col(CIWidthSmoothRisk)]))
   N=length(tempCon)
+  nIntegrationPoints = sapply(popGrids, function(x) {table(x$admin2)})
+  percentIncreaseWidthSmoothRisk = sweep(CIWidthSmoothRisk, 1, CIWidthSmoothRisk[,1], function(x,y){100*x/y - 100})
   CIWidthFrame = data.frame(Constituency=rep(tempCon, 4), 
                             Resolution=rep(tempRes, 4), 
                             Model=factor(c(rep("Smooth risk", N), rep("Risk", N), 
                                            rep("Prevalence", N), rep("Gridded risk", N)), 
                                          levels=c("Smooth risk", "Risk", "Prevalence", "Gridded risk")), 
-                            CIWidth=CIWidth)
+                            CIWidth=CIWidth, 
+                            nIntegrationPoints=rep(c(nIntegrationPoints), 4))
   
-  pdf("figures/gridResolutionTest/CIWidthVRes.pdf", width=7, height=5)
+  pdf("figures/application/gridResolutionTestCIWidthVRes.pdf", width=7, height=5)
+  ggplot(CIWidthFrame, aes(factor(Resolution), CIWidth, fill=factor(Model))) + 
+    geom_boxplot(position="dodge2") + ylim(0, max(CIWidth)) + 
+    labs(x="Grid resolution (km)", y="80% credible interval width", fill="Model") + 
+    theme_classic()
+  dev.off()
+  
+  pdf("figures/application/gridResolutionTestCIWidthVResLog.pdf", width=7, height=5)
   ggplot(CIWidthFrame, aes(factor(Resolution), CIWidth, fill=factor(Model))) + 
     geom_boxplot(position="dodge2") + scale_y_continuous(trans="log10") +
     labs(x="Grid resolution (km)", y="80% credible interval width", fill="Model") + 
     theme_classic()
   dev.off()
   
+  # set color scales
+  blueGreenCols = rev(makeGreenBlueSequentialColors(64))
+  yellowBlueCols = makeBlueGreenYellowSequentialColors(64)
   
-  pdf("figures/gridResolutionTest/CoverageVRes.pdf", width=5, height=5)
-  pchs = 15:18
-  cols = rainbow(4)
-  ylim = range(c(coverageSmoothRisk), c(coverageRisk), c(coveragePrevalence), c(coverageGriddedRisk))
-  ylim = c(.2, 1)
-  plot(resolutions*.97, coverageSmoothRisk, pch=pchs[1], col=cols[1], 
-       ylim=ylim, ylab="80% coverage", xlab="Grid resolution (km)", 
-       log="x")
-  abline(a=.8, b=0, lty=2)
-  points(resolutions*.99, coverageRisk, pch=pchs[2], col=cols[2])
-  points(resolutions*1.01, coveragePrevalence, pch=pchs[3], col=cols[3])
-  points(resolutions*1.03, coverageGriddedRisk, pch=pchs[4], col=cols[4])
-  legend("right", c("Smooth risk", "Risk", "Prevalence", "Gridded risk"), 
-         pch=pchs, col=cols)
-  dev.off()
+  # plot uDraws
+  ns = sapply(popGrids, nrow)
+  sum(sapply(popGrids, nrow))
+  endIs = cumsum(ns)
+  startIs = c(1, endIs[-length(endIs)]+1)
+  nSamples = c(c(500, 1000), rep(10000, length(resolutions)-1))
+  cexs = c(.005, .04, .1, .2, .7, 1.2, 1.5, 2)
+  zlim=range(colMeans(spdeFitN$uDraws))
+  xlim=range(popGrids[[1]]$lon)
+  ylim=range(popGrids[[1]]$lat)
+  for(i in 1:length(resolutions)) {
+    thisNSamples = nSamples[i]
+    
+    # obtain the grids at this resolution
+    thisPopMat = popGrids[[i]]
+    
+    # obtain model output at this resolution
+    thisResolutionI = startIs[i]:endIs[i]
+    thisUDraws = spdeFitN$uDraws[thisResolutionI,1:thisNSamples]
+    
+    # make the uDraws plot
+    pdf(paste0("figures/application/gridResolutionTestUDraws", i, ".pdf"), width=5, height=5)
+    plotWithColor(thisPopMat$lon, thisPopMat$lat, rowMeans(thisUDraws), 
+                  colScale=blueGreenCols, xlab="Longitude", 
+                  ylab="Latitude", main=paste0("uDraws resolution ", resolutions[i], " km"), 
+                  cex=cexs[i], pch=19, zlim=zlim, xlim=xlim, ylim=ylim, 
+                  ordering="decreasing")
+    plotMapDat(mapDat=adm2, new=FALSE)
+    points(mort$lon, mort$lat, cex=.5)
+    dev.off()
+  }
+  
+  invisible(NULL)
 }
 
 
