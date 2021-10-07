@@ -1055,7 +1055,7 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
   # take draws from the stratified binomial process for each posterior sample
   if(is.null(clustersPerPixel)) {
     if(subareaLevel) {
-      eaSamples = rStratifiedMultnomialBySubarea(nDraws, popMat, easpa, stratifyByUrban, poppsub=poppsub, 
+      eaSamples = SUMMER:::rStratifiedMultnomialBySubarea(nDraws, popMat, easpa, stratifyByUrban, poppsub=poppsub, 
                                                  min1PerSubarea=min1PerSubarea)
     } else {
       eaSamples = rStratifiedMultnomial(nDraws, popMat, easpa, stratifyByUrban)
@@ -1111,17 +1111,17 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
     
     # in this case, every left out cluster has exactly 25 households. Simply sample target population 
     # with equal probability from each cluster/faux EA
-    Ncs = sampleNMultilevelMultinomialFixed(clustersPerPixel, nDraws=nDraws, pixelIndices=pixelIndices, 
+    Ncs = SUMMER:::sampleNMultilevelMultinomialFixed(clustersPerPixel, nDraws=nDraws, pixelIndices=pixelIndices, 
                                             urbanVals=urbanVals, areaVals=areaVals, easpa=easpa, popMat=popMat, stratifyByUrban=stratifyByUrban, 
                                             verbose=TRUE)
   } else {
     if(returnEAinfo) {
-      out = sampleNMultilevelMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 
+      out = SUMMER:::sampleNMultilevelMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 
                                          popMat=popMat, stratifyByUrban=stratifyByUrban, verbose=TRUE, returnEAinfo=returnEAinfo)
       householdDraws = out$householdDraws
       Ncs = out$targetPopDraws
     } else {
-      Ncs <- sampleNMultilevelMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 
+      Ncs <- SUMMER:::sampleNMultilevelMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 
                                           popMat=popMat, stratifyByUrban=stratifyByUrban, verbose=TRUE, returnEAinfo=returnEAinfo)
       householdDraws = NULL
     }
@@ -1197,7 +1197,7 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
   
   ##### calculate results for the other models if necessary
   if(doFineScaleRisk || doSmoothRisk) {
-    nPerEA = getExpectedNperEA(easpa, targetPopMat)
+    nPerEA = SUMMER:::getExpectedNperEA(easpa, targetPopMat)
   }
   
   if(doFineScaleRisk) {
