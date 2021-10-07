@@ -39,12 +39,7 @@ makeDefaultPopMat = function(getAdjusted=FALSE) {
   } else {
     out = popGrid
   }
-  out$pop = out$popOrig
-  out$area = out$admin1
-  out$popOrig = NULL
-  out$admin1 = NULL
-  out$constituency = out$admin2
-  out$province = out$region
+  # out$province = out$region
   
   out
 }
@@ -184,13 +179,9 @@ makeEASPAFromEADat = function(eaDat) {
 checkPopFrameAndDensity = function(popMat, adjustedPopMat, easpa, constituencyPop, stopOnMismatch=TRUE) {
   # first check the adjusted (target) population density
   temp = adjustPopGrid(adjustedPopMat, easpa)
-  if("popOrig" %in% names(adjustedPopMat)) {
-    maxDiff = max(abs(temp$popOrig - adjustedPopMat$popOrig))
-    adjustedPopMat$popOrig = temp$popOrig
-  } else if("pop" %in% names(adjustedPopMat)) {
-    maxDiff = max(abs(temp$pop - adjustedPopMat$pop))
-    adjustedPopMat$pop = temp$pop
-  }
+  maxDiff = max(abs(temp$pop - adjustedPopMat$pop))
+  adjustedPopMat$pop = temp$pop
+  
   if(maxDiff > 1e-3) {
     changedAdjustedPopMat = TRUE
     print(paste0("input adjustedPopMat did not match with ", 
@@ -219,13 +210,8 @@ checkPopFrameAndDensity = function(popMat, adjustedPopMat, easpa, constituencyPo
   
   # do the same for general population density
   temp = adjustPopGrid(popMat, constituencyPop, adjustLevel="Constituency")
-  if("popOrig" %in% names(popMat)) {
-    maxDiff = max(abs(temp$popOrig - popMat$popOrig))
-    popMat$popOrig = temp$popOrig
-  } else if("pop" %in% names(popMat)) {
-    maxDiff = max(abs(temp$pop - popMat$pop))
-    popMat$pop = temp$pop
-  }
+  maxDiff = max(abs(temp$pop - popMat$pop))
+  popMat$pop = temp$pop
   if(maxDiff > 1e-3) {
     changedPopMat = TRUE
     print(paste0("input popMat did not match with ", 
@@ -259,7 +245,7 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
                    regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=FALSE, validationPixelI=NULL, validationClusterI=NULL, 
                    onlyDoModifiedPixelLevel=FALSE, clustersPerPixel=NULL, 
                    doLcpb=FALSE, doLCpb=FALSE, doLCPb=FALSE, doIHMEModel=FALSE, 
-                   constituencyPop=poppcon, ensureAtLeast1PerConstituency=FALSE, urbanEffect=NULL, 
+                   constituencyPop=poppcon, min1PerSubarea=FALSE, urbanEffect=NULL, 
                    returnEAinfo=FALSE, epsc=NULL, urbanEffectDraws=NULL, logisticApproximation=TRUE, 
                    fixPopPerEA=NULL, fixHHPerEA=NULL, fixPopPerHH=NULL, 
                    verbose=FALSE, stopOnFrameMismatch=TRUE) {
@@ -376,7 +362,7 @@ modLCPB = function(uDraws, sigmaEpsilonDraws=NULL, easpa=NULL, popMat=NULL, adju
     if(!onlyDoModifiedPixelLevel) {
       if(constituencyLevel) {
         eaSamples = rStratifiedMultnomialByConstituency(nDraws, popMat, easpa, includeUrban, constituencyPop=constituencyPop, 
-                                                        ensureAtLeast1PerConstituency=ensureAtLeast1PerConstituency)
+                                                        min1PerSubarea=min1PerSubarea)
       } else {
         eaSamples = rStratifiedMultnomial(nDraws, popMat, easpa, includeUrban)
       }
@@ -3128,7 +3114,7 @@ resultsSPDE_LCPB = function(randomSeeds=NULL, gamma=-1, rho=(1/3)^2, sigmaEpsilo
                                           regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=FALSE, 
                                           onlyDoModifiedPixelLevel=FALSE, 
                                           doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE, urbanEffectDraws=urbanEffectDraws, 
-                                          ensureAtLeast1PerConstituency=TRUE))[3]
+                                          min1PerSubarea=TRUE))[3]
   # browser()
   
   # save results

@@ -1,24 +1,53 @@
 # this script is for comparing performance between models
+# download 2014 Kenya population density and associated TIF file
+githubURL <- paste0("https://github.com/paigejo/SUMMERdata/blob/main/data/", 
+                    "Kenya2014Pop/pop.rda?raw=true")
+popFilename = paste0(tempDirectory, "/pop.rda")
+if(!file.exists(popFilename)) {
+  download.file(githubURL,popFilename)
+}
 
-# simDatKenya = generateSimDataSetsLCPB(nsim=1, adjustedPopMat=popMatSimpleAdjusted, 
-#                                       fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
-#                                       logisticApproximation=FALSE, 
-#                                       dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
-#                                       seed=1, inla.seed=1L, simPopOnly=FALSE, returnEAinfo=TRUE, 
-#                                       easpa=NULL, popMat=NULL, constituencyPop=poppcon)
-simDatKenya = generateSimDataSetsLCPB(nsim=1, adjustedPopMat=popMatSimpleAdjusted, 
+githubURL <- paste0("https://github.com/paigejo/SUMMERdata/blob/main/data/", 
+                    "Kenya2014Pop/worldpop_total_1y_2014_00_00.tif?raw=true")
+popTIFFilename = paste0(tempDirectory, "/worldpop_total_1y_2014_00_00.tif")
+if(!file.exists(popTIFFilename)) {
+  download.file(githubURL,popTIFFilename)
+}
+
+# load it in
+require(raster)
+out = load(popFilename)
+out
+
+# make sure this is correct for re-projections
+pop@file@name = paste0(tempDirectory, "/worldpop_total_1y_2014_00_00.tif")
+
+popMatSimple = makePopIntegrationTab(kmRes=5, pop=pop, domainPoly=kenyaPoly, 
+                                     eastLim=eastLim, northLim=northLim, 
+                                     mapProjection=projKenya, poppa=poppaKenya, 
+                                     poppsub=poppsubKenya, stratifyByUrban=TRUE, 
+                                     areaMapDat=adm1, subareaMapDat=adm2, 
+                                     areaPolygonSubsetI=30)
+
+popMatSimpleNeonatal = adjustPopMat(popMatSimple, poppaTarget=poppsubKenyaNeonatal, adjustBy="subarea")
+easpaSimple = makeDefaultEASPA()
+easpaSimple = easpaSimple[easpaSimple$area == "Nairobi",]
+poppsubSimple = poppsubKenya
+poppsubSimple = poppsubSimple[poppsubSimple$area == "Nairobi",]
+simDatKenya = generateSimDataSetsLCPB2(nsim=1, targetPopMat=popMatSimpleNeonatal, 
+                                       popMat=popMatSimple, 
                                       fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
                                       logisticApproximation=FALSE, 
                                       dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
                                       seed=1, inla.seed=1L, simPopOnly=FALSE, returnEAinfo=TRUE, 
-                                      easpa=NULL, popMat=NULL, constituencyPop=poppcon)
+                                      easpa=easpaSimple, poppsub=poppsubSimple)
 
 # get the data and the true population
 dat = simDatKenya$SRSDat$clustDat[[1]]
-constituenciesN = poppcon$County == "Nairobi"
+constituenciesN = poppsubSimple$area == "Nairobi"
 countyN = sort(unique(poppc$County)) == "Nairobi"
-truePrevalenceConstituencyKenya = simDatKenya$simulatedEAs$aggregatedPop$aggregatedResultsLCPB$constituencyMatrices$p[constituenciesN,1]
-truePrevalenceCountyKenya = simDatKenya$simulatedEAs$aggregatedPop$aggregatedResultsLCPB$countyMatrices$p[countyN,1]
+truePrevalenceConstituencyKenya = simDatKenya$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pFineScalePrevalence
+truePrevalenceCountyKenya = simDatKenya$simulatedEAs$aggregatedPop$areaPop$aggregationResults$pFineScalePrevalence
 
 # construct integration grids at different resolutions
 # resolutions = c(1, 10, 20, 40, 60, 80)
@@ -31,17 +60,27 @@ popGrids = list()
 popGridsAdjusted = list()
 for(i in 1:length(resolutions)) {
   print(paste0("Creating integration grid at ", resolutions[i], " km resolution"))
-  thisPopGrid = makeInterpPopGrid(kmRes=resolutions[i], 
-                                  mean.neighbor=meanNeighbors[i], 
-                                  delta=deltas[i], conMap=adm2, poppcon=poppcon, 
-                                  mapDat=adm1, polygonSubsetI=30) # Nairobi is the 30th one
-  thisPopGrid$area = thisPopGrid$admin1
-  thisPopGrid$constituency = thisPopGrid$admin2
-  thisPopGridAdjusted = adjustPopGrid(thisPopGrid, poppcon, "Constituency")
+  # thisPopGrid = makePopIntegrationTab(kmRes=resolutions[i], mapProjection=SUMMER::projKenya, 
+  #                                     domainPoly=kenyaPoly, 
+  #                                     subareaMapDat=adm2, poppsub=poppsub, 
+  #                                     eastLim=eastLim, northLim=northLim, 
+  #                                     mean.neighbor=meanNeighbors[i], 
+  #                                     delta=deltas[i], 
+  #                                     areaMapDat=adm1, areaPolygonSubsetI=30) # Nairobi is the 30th one
+  # thisPopGrid$area = thisPopGrid$area
+  # thisPopGrid$constituency = thisPopGrid$subarea
+  # thisPopGridAdjusted = adjustPopGrid(thisPopGrid, poppconAdjusted, "Constituency")
   
-  # subset grids to be over only Nairobi
-  thisPopGrid = thisPopGrid[thisPopGrid$admin1 == "Nairobi",]
-  thisPopGridAdjusted = thisPopGridAdjusted[thisPopGridAdjusted$admin1 == "Nairobi",]
+  thisPopGrid = makePopIntegrationTab(kmRes=resolutions[i], pop=pop, domainPoly=kenyaPoly, 
+                                      eastLim=eastLim, northLim=northLim, 
+                                      mapProjection=SUMMER::projKenya, poppa=poppaKenya, 
+                                      poppsub=poppsubKenya, stratifyByUrban=TRUE, 
+                                      areaMapDat=adm1, subareaMapDat=adm2, 
+                                      mean.neighbor=meanNeighbors[i], 
+                                      delta=deltas[i], 
+                                      areaPolygonSubsetI=30)
+  
+  thisPopGridAdjusted = adjustPopMat(thisPopGrid, poppaTarget=poppsubKenyaNeonatal, adjustBy="subarea")
   
   popGrids = c(popGrids, list(thisPopGrid))
   popGridsAdjusted = c(popGridsAdjusted, list(thisPopGridAdjusted))
@@ -57,14 +96,14 @@ sum(sapply(popGrids, nrow))
 endIs = cumsum(ns)
 startIs = c(1, endIs[-length(endIs)]+1)
 
-# combine the grids
+# combine the grids into 1 matrix for evaluating the SPDE model all at once
 popMatCombined = do.call("rbind", popGrids)
 
 # fit SPDE cluster level risk model over all integration points
-nSamples = c(c(500, 1000), rep(10000, length(resolutions)-1))
 spdeFitN = fitSPDEKenyaDat(dat, nPostSamples=10000, popMat=popMatCombined)
 
 # apply aggregation models at each resolution
+nSamples = c(c(500, 1000), rep(10000, length(resolutions)-1))
 aggResultsN = list()
 for(i in 1:length(popGrids)) {
   # obtain the grids at this resolution
@@ -77,7 +116,14 @@ for(i in 1:length(popGrids)) {
   thisUDraws = spdeFitN$uDraws[thisResolutionI,1:thisNSamples]
   sigmaEpsilonDraws = spdeFitN$sigmaEpsilonDraws[1:thisNSamples]
   
-  thisAggResultsN = modLCPB(thisUDraws, sigmaEpsilonDraws, easpaN, thisPopMat, 
+  # thisAggResultsN = modLCPB(thisUDraws, sigmaEpsilonDraws, easpaN, thisPopMat, 
+  #                           thisPopMatAdjusted, doLCPb=TRUE, doIHMEModel=TRUE, 
+  #                           constituencyPop=poppconN, ensureAtLeast1PerConstituency=TRUE, 
+  #                           logisticApproximation=FALSE, verbose=TRUE, 
+  #                           fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
+  #                           stopOnFrameMismatch=FALSE)
+  
+  thisAggResultsN = simPopCustom(thisUDraws, sigmaEpsilonDraws, easpa, thisPopMat, 
                             thisPopMatAdjusted, doLCPb=TRUE, doIHMEModel=TRUE, 
                             constituencyPop=poppconN, ensureAtLeast1PerConstituency=TRUE, 
                             logisticApproximation=FALSE, verbose=TRUE, 
@@ -162,8 +208,8 @@ N=length(tempCon)
 CIWidthFrame = data.frame(Constituency=rep(tempCon, 4), 
                           Resolution=rep(tempRes, 4), 
                           Model=factor(c(rep("Smooth risk", N), rep("Risk", N), 
-                                  rep("Prevalence", N), rep("Gridded risk", N)), 
-                                  levels=c("Smooth risk", "Risk", "Prevalence", "Gridded risk")), 
+                                         rep("Prevalence", N), rep("Gridded risk", N)), 
+                                       levels=c("Smooth risk", "Risk", "Prevalence", "Gridded risk")), 
                           CIWidth=CIWidth)
 
 pdf("figures/gridResolutionTest/CIWidthVRes.pdf", width=7, height=5)

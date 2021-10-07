@@ -1343,29 +1343,29 @@ aggregateModelResultsKenya = function(dat, results, popGrid, clusterLevel=TRUE, 
 # aggregates pixel predictions to the requested levels
 # pg: matrix of empirical proportion draws at the pixel level
 # Ng: matrix of population denominator draws at the pixel level
-# popMatAdjusted: of similar format to that returned by makeDefaultPopMat() (the default), 
+# targetPopMat: of similar format to that returned by makeDefaultPopMat() (the default), 
 #                  but with popOrig modified to include the 
 #                  density of the population of interest rather than the overall population
-# useDensity: whether to use population density weighting from popMatAdjusted 
+# useDensity: whether to use population density weighting from targetPopMat 
 #             or even weighting within the strata
 # separateUrbanRural: whether or not to produce estimates in urban and 
 #                     rural parts of areas separately
-# popRegionNames: vector of region names with same length as nrow(popMatAdjusted)
+# popRegionNames: vector of region names with same length as nrow(targetPopMat)
 # countyLevel, regionLevel, nationalLevel: whether or not to aggregate to the 
 #                                          given levels
 # countyPopTotal: the total population in the county
 # normalize: whether or not to normalize the rowSums of the aggregation matrices. 
 #            If set to TRUE, calculates average of Zg and Ng over the areas for any single draw, and 
 #            pg is calculated as average of Zg over average of Ng
-aggregatePixelPredictions = function(Zg, Ng, popMatAdjusted=NULL, useDensity=FALSE, 
+aggregatePixelPredictions = function(Zg, Ng, targetPopMat=NULL, useDensity=FALSE, 
                                      separateUrbanRural=TRUE, popRegionNames=NULL, 
                                      constituencyLevel=TRUE, countyLevel=TRUE, regionLevel=TRUE, nationalLevel=TRUE, 
                                      constituencyPopTotal=NULL, countyPopTotal=NULL, regionPopTotal=NULL, nationalPopTotal=NULL, 
                                      constituencyPopUrban=NULL, countyPopUrban=NULL, regionPopUrban=NULL, nationalPopUrban=NULL, 
                                      country="Kenya", normalize=FALSE, lcpbSwitchedUrban=NULL, fillZeroAreas=FALSE) {
   
-  if(is.null(popMatAdjusted)) {
-    popMatAdjusted = makeDefaultPopMat(getAdjusted=TRUE)
+  if(is.null(targetPopMat)) {
+    targetPopMat = makeDefaultPopMat(getAdjusted=TRUE)
     # lon: longitude
     # lat: latitude
     # east: easting (km)
@@ -1377,17 +1377,17 @@ aggregatePixelPredictions = function(Zg, Ng, popMatAdjusted=NULL, useDensity=FAL
     # province: the super-area
   }
   
-  predPts = cbind(popMatAdjusted$east, popMatAdjusted$north)
-  predsUrban = popMatAdjusted$urban
-  if("constituency" %in% names(popMatAdjusted)) {
-    predsConstituency = popMatAdjusted$constituency
-  } else if("admin2" %in% names(popMatAdjusted)) {
-    predsConstituency = popMatAdjusted$admin2
+  predPts = cbind(targetPopMat$east, targetPopMat$north)
+  predsUrban = targetPopMat$urban
+  if("constituency" %in% names(targetPopMat)) {
+    predsConstituency = targetPopMat$constituency
+  } else if("admin2" %in% names(targetPopMat)) {
+    predsConstituency = targetPopMat$admin2
   }
-  if("area" %in% names(popMatAdjusted)) {
-    predsCounty = popMatAdjusted$area
-  } else if("admin1" %in% names(popMatAdjusted)) {
-    predsCounty = popMatAdjusted$admin1
+  if("area" %in% names(targetPopMat)) {
+    predsCounty = targetPopMat$area
+  } else if("admin1" %in% names(targetPopMat)) {
+    predsCounty = targetPopMat$admin1
   }
   
   predsCountry = rep(country, length(predsCounty))
@@ -1419,8 +1419,8 @@ aggregatePixelPredictions = function(Zg, Ng, popMatAdjusted=NULL, useDensity=FAL
   #            contain only binary values (or non-binary values based on the binary values if 
   #            urbanProportions is not NULL)
   getIntegrationMatrix = function(areaNames, urbanProportions=NULL, normalize=FALSE) {
-    popDensities = popMatAdjusted$pop
-    equalDensities = rep(1, nrow(popMatAdjusted))
+    popDensities = targetPopMat$pop
+    equalDensities = rep(1, nrow(targetPopMat))
     if(useDensity) {
       densities = popDensities
     } else {
@@ -4177,7 +4177,7 @@ getExpectedNperEA = function(easpa, popMat=popGrid) {
   outUrban + outRural
 }
 
-# taken from logitnorm package.  Calculates the mean of a distribution whose 
+# adapted from logitnorm package.  Calculates the mean of a distribution whose 
 # logit is Gaussian. Each row of muSigmaMat has a mean and standard deviation 
 # on the logit scale
 logitNormMean = function(muSigmaMat, parClust=NULL, logisticApproximation=TRUE, ...) {
@@ -5110,6 +5110,13 @@ myin.poly = function (xd, xp, convex.hull = FALSE, inflation = 1e-07)
                                                                                 1]), as.single(matrix(xp[, 2], ncol=1)), ind = as.integer(rep(-1, 
                                                                                                                               nd)))$ind
   as.logical(ind)
+}
+
+getPopMatResolution = function(popMat) {
+  out = aggregate(popMat$east, by=list(east=popMat$east), FUN=length)
+  whichI = which.max(out[,2])
+  temp = sort(popMat$north[popMat$east == out[whichI,1]])
+  min(diff(temp))
 }
 
 

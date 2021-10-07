@@ -1033,7 +1033,8 @@ makeMortPlots = function(logisticApproximation=FALSE) {
 }
 
 # for now, just gets the results for Nairobi
-getMortGridResolutuionResults = function(seed=123) {
+getMortGridResolutionResults = function() {
+  seed=123
   set.seed(seed)
   
   # make sampling frame
@@ -1083,7 +1084,7 @@ getMortGridResolutuionResults = function(seed=123) {
   spdeFitN = fitSPDEKenyaDat(mort, nPostSamples=10000, popMat=popMatCombined)
   
   # apply aggregation models at each resolution
-  nSamples = c(c(500, 1000), rep(10000, length(resolutions)-1))
+  nSamples = c(c(500, 1000, 5000), rep(10000, length(resolutions)-3))
   aggResultsN = list()
   for(i in 1:length(popGrids)) {
     thisNSamples = nSamples[i]
