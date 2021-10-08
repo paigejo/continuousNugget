@@ -1019,6 +1019,7 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
                         doSmoothRiskLogisticApprox=FALSE, 
                         poppsub=NULL, subareaLevel=FALSE, 
                         min1PerSubarea=TRUE, 
+                        fixPopPerEA=NULL, fixHHPerEA=NULL, fixPopPerHH=NULL, 
                         returnEAinfo=FALSE, epsc=NULL) {
   
   if(is.null(poppsub) && subareaLevel) {
