@@ -2489,21 +2489,21 @@ plotMapDat = function(plotVar=NULL, varCounties=NULL, zlim=NULL, project=FALSE, 
   # load necessary data
   if(is.null(mapDat)) {
     if(length(plotVar) == 47) {
-      out = load("../U5MR/adminMapData.RData")
       mapDat = adm1
+    } else if(length(plotVar) == 300) {
+      mapDat = adm2
     } else if(length(plotVar) == 8) {
       # shape file found at: https://jlinden.carto.com/tables/kenya_region_shapefile/public
       require(maptools)
       mapDat = readShapePoly("../U5MR/mapData/kenya_region_shapefile/kenya_region_shapefile.shp", delete_null_obj=TRUE, force_ring=TRUE, repair=TRUE)
     } else {
-      out = load("../U5MR/adminMapData.RData")
       mapDat = adm0
     }
   }
   if(is.null(varCounties)) {
     if(length(mapDat) == 8) {
       varCounties = sort(as.character(poppr$Region))
-    } else if(length(mapDat) == 273) {
+    } else if(length(mapDat) == 300) {
       varCounties = sort(as.character(mapDat@data$CONSTITUEN))
     } else {
       varCounties=sort(as.character(unique(mort$admin1)))
