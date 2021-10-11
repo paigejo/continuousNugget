@@ -5119,6 +5119,10 @@ getPopMatResolution = function(popMat) {
   min(diff(temp))
 }
 
+# calculate true object size in bytes
+trueObjectSize = function(x) {
+  length(serialize(x,NULL))
+}
 
 
 

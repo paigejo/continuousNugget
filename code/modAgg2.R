@@ -1030,6 +1030,25 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
     stop("validationPixelI, validationClusterI, and clustersPerPixel not yet fully implemented")
   }
   
+  if(any(c(!is.null(fixPopPerEA), !is.null(fixHHPerEA), !is.null(fixPopPerHH)))) {
+    print("adjusting easpa population and households based on fixPopPerEA, fixHHPerEA, and fixPopPerHH")
+  }
+  if(!is.null(fixPopPerEA)) {
+    easpa$popUrb = easpa$EAUrb * fixPopPerEA
+    easpa$popRur = easpa$EARur * fixPopPerEA
+    easpa$popTotal = easpa$EATotal * fixPopPerEA
+  }
+  if(!is.null(fixHHPerEA)) {
+    easpa$HHUrb = easpa$EAUrb * fixHHPerEA
+    easpa$HHRur = easpa$EARur * fixHHPerEA
+    easpa$HHTotal = easpa$EATotal * fixHHPerEA
+  }
+  if(!is.null(fixPopPerHH)) {
+    if(fixPopPerHH * fixHHPerEA != fixPopPerEA) {
+      stop("fixPopPerHH * fixHHPerEA != fixPopPerEA")
+    }
+  }
+  
   nDraws = ncol(logitRiskDraws)
   
   # set default inputs
@@ -1112,9 +1131,13 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
     
     # in this case, every left out cluster has exactly 25 households. Simply sample target population 
     # with equal probability from each cluster/faux EA
-    Ncs = SUMMER:::sampleNMultilevelMultinomialFixed(clustersPerPixel, nDraws=nDraws, pixelIndices=pixelIndices, 
-                                            urbanVals=urbanVals, areaVals=areaVals, easpa=easpa, popMat=popMat, stratifyByUrban=stratifyByUrban, 
-                                            verbose=TRUE)
+    if(is.null(fixPopPerEA)) {
+      Ncs = SUMMER:::sampleNMultilevelMultinomialFixed(clustersPerPixel, nDraws=nDraws, pixelIndices=pixelIndices, 
+                                                       urbanVals=urbanVals, areaVals=areaVals, easpa=easpa, popMat=popMat, stratifyByUrban=stratifyByUrban, 
+                                                       verbose=TRUE)
+    } else {
+      Ncs = matrix(rep(fixPopPerEA, totalEAs*nDraws), ncol=nDraws)
+    }
   } else {
     if(returnEAinfo) {
       out = SUMMER:::sampleNMultilevelMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 

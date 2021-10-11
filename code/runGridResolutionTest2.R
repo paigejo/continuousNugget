@@ -44,6 +44,10 @@ simDatKenya = generateSimDataSetsLCPB2(nsim=1, targetPopMat=popMatSimpleNeonatal
 
 # get the data and the true population
 dat = simDatKenya$SRSDat$clustDat[[1]]
+dat$y = dat$Z
+dat$n = dat$N
+dat$admin1 = dat$area
+dat$admin2 = dat$subarea
 constituenciesN = poppsubSimple$area == "Nairobi"
 countyN = sort(unique(poppc$County)) == "Nairobi"
 truePrevalenceConstituencyKenya = simDatKenya$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pFineScalePrevalence
@@ -96,14 +100,37 @@ sum(sapply(popGrids, nrow))
 endIs = cumsum(ns)
 startIs = c(1, endIs[-length(endIs)]+1)
 
+save(popGrids, popGridsAdjusted, ns, endIs, startIs, file="savedOutput/simpleExample/popGridResTest.RData")
+out = load("savedOutput/simpleExample/popGridResTest.RData")
+
 # combine the grids into 1 matrix for evaluating the SPDE model all at once
 popMatCombined = do.call("rbind", popGrids)
 
 # fit SPDE cluster level risk model over all integration points
 spdeFitN = fitSPDEKenyaDat(dat, nPostSamples=10000, popMat=popMatCombined)
 
+# remove unnecessary parts of the spdeFitN object to save space
+spdeFitN$mod$.args = NULL
+spdeFitN$mod$all.hyper = NULL
+
 # apply aggregation models at each resolution
 nSamples = c(c(500, 1000), rep(10000, length(resolutions)-1))
+separateUDraws = list()
+for(i in 1:length(popGrids)) {
+  # obtain the grids at this resolution
+  thisNSamples = nSamples[i]
+  
+  # obtain model output at this resolution
+  thisResolutionI = startIs[i]:endIs[i]
+  separateUDraws = c(separateUDraws, spdeFitN$uDraws[thisResolutionI,1:thisNSamples])
+}
+spdeFitN$uDraws = NULL
+
+# save spdeFitN and its relevant uDraws
+save(spdeFitN, separateUDraws, file="savedOutput/simpleExample/spdeFitNandUDraws.RData")
+out = load("savedOutput/simpleExample/spdeFitNandUDraws.RData")
+
+# run the actual analysis
 aggResultsN = list()
 for(i in 1:length(popGrids)) {
   # obtain the grids at this resolution
@@ -113,7 +140,8 @@ for(i in 1:length(popGrids)) {
   
   # obtain model output at this resolution
   thisResolutionI = startIs[i]:endIs[i]
-  thisUDraws = spdeFitN$uDraws[thisResolutionI,1:thisNSamples]
+  # thisUDraws = spdeFitN$uDraws[thisResolutionI,1:thisNSamples]
+  thisUDraws = separateUDraws[[i]]
   sigmaEpsilonDraws = spdeFitN$sigmaEpsilonDraws[1:thisNSamples]
   
   # thisAggResultsN = modLCPB(thisUDraws, sigmaEpsilonDraws, easpaN, thisPopMat, 
@@ -123,12 +151,12 @@ for(i in 1:length(popGrids)) {
   #                           fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
   #                           stopOnFrameMismatch=FALSE)
   
-  thisAggResultsN = simPopCustom(thisUDraws, sigmaEpsilonDraws, easpa, thisPopMat, 
-                            thisPopMatAdjusted, doLCPb=TRUE, doIHMEModel=TRUE, 
-                            constituencyPop=poppconN, ensureAtLeast1PerConstituency=TRUE, 
-                            logisticApproximation=FALSE, verbose=TRUE, 
-                            fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
-                            stopOnFrameMismatch=FALSE)
+  thisAggResultsN = simPopCustom(thisUDraws, sigmaEpsilonDraws, easpaSimple, thisPopMat, 
+                            thisPopMatAdjusted, doFineScaleRisk=TRUE, doIHMERisk=TRUE, 
+                            doSmoothRisk=TRUE, 
+                            poppsub=poppsubSimple, min1PerSubarea=TRUE, 
+                            doSmoothRiskLogisticApprox=FALSE, 
+                            fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1)
   
   aggResultsN = c(aggResultsN, list(thisAggResultsN))
 }
