@@ -993,7 +993,8 @@ areaPopToArea = function(areaLevelPop, areasFrom, areasTo,
     resFineScaleRisk = out$aggregationResults
     resAggregationMatrices = out$aggregationMatrices
     
-    aggregationResults = merge(aggregationResults, resFineScaleRisk, by="region")
+    # aggregationResults = merge(aggregationResults, resFineScaleRisk, by="region")
+    aggregationResults = c(aggregationResults, resFineScaleRisk)
     aggregationMatrices = c(aggregationMatrices, resAggregationMatrices)
   }
   
@@ -1002,7 +1003,18 @@ areaPopToArea = function(areaLevelPop, areasFrom, areasTo,
     resSmoothRisk = out$aggregationResults
     resAggregationMatrices = out$aggregationMatrices
     
-    aggregationResults = merge(aggregationResults, resSmoothRisk, by="region")
+    # aggregationResults = merge(aggregationResults, resSmoothRisk, by="region")
+    aggregationResults = c(aggregationResults, resSmoothRisk)
+    aggregationMatrices = c(aggregationMatrices, resAggregationMatrices)
+  }
+  
+  if(doIHMERisk) {
+    out = getaggregationResults("IHMERisk")
+    resIHMERisk = out$aggregationResults
+    resAggregationMatrices = out$aggregationMatrices
+    
+    # aggregationResults = merge(aggregationResults, resIHMERisk, by="region")
+    aggregationResults = c(aggregationResults, resIHMERisk)
     aggregationMatrices = c(aggregationMatrices, resAggregationMatrices)
   }
   
