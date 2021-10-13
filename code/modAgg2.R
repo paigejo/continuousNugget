@@ -677,7 +677,8 @@ pixelPopToArea = function(pixelLevelPop, eaSamples, areas, stratifyByUrban=TRUE,
     names(aggregationResultsFineScaleRisk)[-1] = paste(names(aggregationResultsFineScaleRisk)[-1], "FineScaleRisk", sep="")
     names(aggregationMatricesFineScaleRisk) = paste(names(aggregationMatricesFineScaleRisk), "FineScaleRisk", sep="")
     
-    aggregationResults = merge(aggregationResults, aggregationResultsFineScaleRisk, by="region")
+    # aggregationResults = merge(aggregationResults, aggregationResultsFineScaleRisk, by="region")
+    aggregationResults = c(aggregationResults, aggregationResultsFineScaleRisk[-1])
     aggregationMatrices = c(aggregationMatrices, aggregationMatricesFineScaleRisk)
   }
   
@@ -694,7 +695,8 @@ pixelPopToArea = function(pixelLevelPop, eaSamples, areas, stratifyByUrban=TRUE,
     names(aggregationResultsSmoothRisk)[-1] = paste(names(aggregationResultsSmoothRisk)[-1], "SmoothRisk", sep="")
     names(aggregationMatricesSmoothRisk) = paste(names(aggregationMatricesSmoothRisk), "SmoothRisk", sep="")
     
-    aggregationResults = merge(aggregationResults, aggregationResultsSmoothRisk, by="region")
+    # aggregationResults = merge(aggregationResults, aggregationResultsSmoothRisk, by="region")
+    aggregationResults = c(aggregationResults, aggregationResultsSmoothRisk[-1])
     aggregationMatrices = c(aggregationMatrices, aggregationMatricesSmoothRisk)
   }
   
@@ -710,7 +712,8 @@ pixelPopToArea = function(pixelLevelPop, eaSamples, areas, stratifyByUrban=TRUE,
     names(aggregationResultsIHMERisk)[-1] = paste(names(aggregationResultsIHMERisk)[-1], "IHMERisk", sep="")
     names(aggregationMatricesIHMERisk) = paste(names(aggregationMatricesIHMERisk), "IHMERisk", sep="")
     
-    aggregationResults = merge(aggregationResults, aggregationResultsIHMERisk, by="region")
+    # aggregationResults = merge(aggregationResults, aggregationResultsIHMERisk, by="region")
+    aggregationResults = c(aggregationResults, aggregationResultsIHMERisk[-1])
     aggregationMatrices = c(aggregationMatrices, aggregationMatricesIHMERisk)
   }
   
@@ -1022,10 +1025,6 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
                         fixPopPerEA=NULL, fixHHPerEA=NULL, fixPopPerHH=NULL, 
                         returnEAinfo=FALSE, epsc=NULL) {
   
-  if(is.null(poppsub) && subareaLevel) {
-    stop("if subareaLevel is TRUE, user must specify poppsub")
-  }
-  
   if(!is.null(validationPixelI) || !is.null(validationClusterI) || !is.null(clustersPerPixel)) {
     stop("validationPixelI, validationClusterI, and clustersPerPixel not yet fully implemented")
   }
@@ -1065,7 +1064,7 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
     stop("area names and easpa do not match popMat or are not in the correct order")
   
   # determine if we care about subareas (smallest areas we care about. No info of EAs per subarea)
-  subareaLevel = !is.null(popMat$subarea)
+  sampleBySubarea = !is.null(popMat$subarea) && !is.null(poppsub)
   
   ##### Line 1 (of the algorithm): take draws from the binomial process for each stratum (each row of easpa)
   # get probabilities for each pixel (or at least something proportional within each stratum)
@@ -1074,11 +1073,11 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
   
   # take draws from the stratified binomial process for each posterior sample
   if(is.null(clustersPerPixel)) {
-    if(subareaLevel) {
+    if(sampleBySubarea) {
       eaSamples = SUMMER:::rStratifiedMultnomialBySubarea(nDraws, popMat, easpa, stratifyByUrban, poppsub=poppsub, 
                                                  min1PerSubarea=min1PerSubarea)
     } else {
-      eaSamples = rStratifiedMultnomial(nDraws, popMat, easpa, stratifyByUrban)
+      eaSamples = SUMMER:::rStratifiedMultnomial(nDraws, popMat, easpa, stratifyByUrban)
     }
   }
   
@@ -1300,7 +1299,7 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
         eaDat$pIHMERisk=IHMERisk[theseI,i]
       }
       
-      if(subareaLevel) {
+      if("subarea" %in% names(popMat)) {
         eaDat$subarea = popMat$subarea[theseI]
       } else {
         eaDat$subarea = NULL

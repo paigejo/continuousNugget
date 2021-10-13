@@ -144,23 +144,59 @@ for(i in 1:length(popGrids)) {
   thisUDraws = separateUDraws[[i]]
   sigmaEpsilonDraws = spdeFitN$sigmaEpsilonDraws[1:thisNSamples]
   
-  # thisAggResultsN = modLCPB(thisUDraws, sigmaEpsilonDraws, easpaN, thisPopMat, 
-  #                           thisPopMatAdjusted, doLCPb=TRUE, doIHMEModel=TRUE, 
-  #                           constituencyPop=poppconN, ensureAtLeast1PerConstituency=TRUE, 
-  #                           logisticApproximation=FALSE, verbose=TRUE, 
-  #                           fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
-  #                           stopOnFrameMismatch=FALSE)
-  
   thisAggResultsN = simPopCustom(thisUDraws, sigmaEpsilonDraws, easpaSimple, thisPopMat, 
                             thisPopMatAdjusted, doFineScaleRisk=TRUE, doIHMERisk=TRUE, 
-                            doSmoothRisk=TRUE, 
+                            doSmoothRisk=TRUE, subareaLevel=TRUE, 
                             poppsub=poppsubSimple, min1PerSubarea=TRUE, 
-                            doSmoothRiskLogisticApprox=FALSE, 
+                            doSmoothRiskLogisticApprox=FALSE, returnEAinfo=TRUE, 
                             fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1)
   
   aggResultsN = c(aggResultsN, list(thisAggResultsN))
 }
 names(aggResultsN) = paste0("aggResultsN", resolutions)
+
+for(i in 1:length(popGrids)) {
+  # obtain the grids at this resolution
+  thisNSamples = nSamples[i]
+  thisPopMat = popGrids[[i]]
+  thisPopMatAdjusted = popGridsAdjusted[[i]]
+  
+  # obtain model output at this resolution
+  thisResolutionI = startIs[i]:endIs[i]
+  # thisUDraws = spdeFitN$uDraws[thisResolutionI,1:thisNSamples]
+  thisUDraws = separateUDraws[[i]]
+  sigmaEpsilonDraws = spdeFitN$sigmaEpsilonDraws[1:thisNSamples]
+  
+  # get pixel level results
+  pixelPop = aggResultsN[[i]]
+  eaPop = list(eaDatList=pixelPop$eaDatList, eaSamples=pixelPop$eaSamples)
+  eaSamples = pixelPop$eaSamples
+  pixelPop$eaDatList = NULL
+  pixelPop$eaSamples = NULL
+  
+  # aggregate to Admin2 level
+  subareaPop = pixelPopToArea(pixelLevelPop=pixelPop, eaSamples=eaSamples, 
+                              areas=thisPopMat$subarea, stratifyByUrban=TRUE, 
+                              targetPopMat=thisPopMatAdjusted, 
+                              doFineScaleRisk=TRUE, doSmoothRisk=TRUE, doIHMERisk=TRUE)
+  
+  # get areas associated with each subarea for aggregation
+  tempAreasFrom = thisPopMat$subarea
+  tempAreasTo = thisPopMat$area
+  areasFrom = sort(unique(tempAreasFrom))
+  areasToI = match(areasFrom, tempAreasFrom)
+  areasTo = tempAreasTo[areasToI]
+  
+  # do the aggregation from subareas to areas
+  outAreaLevel = areaPopToArea(areaLevelPop=subareaPop, 
+                               areasFrom=areasFrom, areasTo=areasTo, stratifyByUrban=TRUE, 
+                               doFineScaleRisk=TRUE, doSmoothRisk=TRUE, doIHMERisk=TRUE)
+  
+  aggResultsN[[i]] = list(eaPop=eaPop, pixelPop=pixelPop, subareaPop=subareaPop, areaPop=outAreaLevel)
+}
+
+
+
 save(popGrids, popGridsAdjusted, aggResultsN, file="savedOutput/simpleExample/gridResolutionTestNairobi.RData")
 
 out = load("savedOutput/simpleExample/gridResolutionTestNairobi.RData")
