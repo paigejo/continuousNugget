@@ -34,13 +34,15 @@ easpaSimple = makeDefaultEASPA()
 easpaSimple = easpaSimple[easpaSimple$area == "Nairobi",]
 poppsubSimple = poppsubKenya
 poppsubSimple = poppsubSimple[poppsubSimple$area == "Nairobi",]
-simDatKenya = generateSimDataSetsLCPB2(nsim=1, targetPopMat=popMatSimpleNeonatal, 
-                                       popMat=popMatSimple, 
+
+# simulate population over all of Kenya and generate survey from the EAs
+simDatKenya = generateSimDataSetsLCPB2(nsim=1, targetPopMat=popMatKenyaNeonatal, 
+                                       popMat=popMatKenya, 
                                       fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
                                       logisticApproximation=FALSE, 
                                       dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
                                       seed=1, inla.seed=1L, simPopOnly=FALSE, returnEAinfo=TRUE, 
-                                      easpa=easpaSimple, poppsub=poppsubSimple)
+                                      easpa=easpaKenya, poppsub=poppsubKenya)
 
 # get the data and the true population
 dat = simDatKenya$SRSDat$clustDat[[1]]
@@ -48,10 +50,12 @@ dat$y = dat$Z
 dat$n = dat$N
 dat$admin1 = dat$area
 dat$admin2 = dat$subarea
-constituenciesN = poppsubSimple$area == "Nairobi"
-countyN = sort(unique(poppc$County)) == "Nairobi"
+constituenciesN = poppsubKenya$area == "Nairobi"
+countyN = sort(unique(poppaKenya$area)) == "Nairobi"
 truePrevalenceConstituencyKenya = simDatKenya$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pFineScalePrevalence
 truePrevalenceCountyKenya = simDatKenya$simulatedEAs$aggregatedPop$areaPop$aggregationResults$pFineScalePrevalence
+truePrevalenceConstituencyKenya = truePrevalenceConstituencyKenya[constituenciesN]
+truePrevalenceCountyKenya = truePrevalenceCountyKenya[countyN]
 
 # construct integration grids at different resolutions
 # resolutions = c(1, 10, 20, 40, 60, 80)
@@ -188,16 +192,16 @@ for(i in 1:length(popGrids)) {
   areasTo = tempAreasTo[areasToI]
   
   # do the aggregation from subareas to areas
-  outAreaLevel = areaPopToArea(areaLevelPop=subareaPop, 
+  areaPop = areaPopToArea(areaLevelPop=subareaPop, 
                                areasFrom=areasFrom, areasTo=areasTo, stratifyByUrban=TRUE, 
                                doFineScaleRisk=TRUE, doSmoothRisk=TRUE, doIHMERisk=TRUE)
   
-  aggResultsN[[i]] = list(eaPop=eaPop, pixelPop=pixelPop, subareaPop=subareaPop, areaPop=outAreaLevel)
+  aggResultsN[[i]] = list(eaPop=eaPop, pixelPop=pixelPop, subareaPop=subareaPop, areaPop=areaPop)
 }
 
 
 
-save(popGrids, popGridsAdjusted, aggResultsN, file="savedOutput/simpleExample/gridResolutionTestNairobi.RData")
+save(aggResultsN, file="savedOutput/simpleExample/gridResolutionTestNairobi.RData")
 
 out = load("savedOutput/simpleExample/gridResolutionTestNairobi.RData")
 
@@ -213,11 +217,11 @@ residsConstituencyRisk = list()
 residsConstituencyPrevalence = list()
 residsConstituencyGriddedRisk = list()
 for(i in 1:length(resolutions)) {
-  thesePreds = rowMeans(aggResultsN[[i]]$aggregatedResultslcpb$constituencyMatrices$p)
-  theseResidsSmoothRisk = sweep(aggResultsN[[i]]$aggregatedResultslcpb$constituencyMatrices$p, 1, truePrevalenceConstituencyKenya, "-")
-  theseResidsRisk = sweep(aggResultsN[[i]]$aggregatedResultsLCPb$constituencyMatrices$p, 1, truePrevalenceConstituencyKenya, "-")
-  theseResidsPrevalence = sweep(aggResultsN[[i]]$aggregatedResultsLCPB$constituencyMatrices$p, 1, truePrevalenceConstituencyKenya, "-")
-  theseResidsGriddedRisk = sweep(aggResultsN[[i]]$aggregatedResultsIHME$constituencyMatrices$p, 1, truePrevalenceConstituencyKenya, "-")
+  thesePreds = rowMeans(aggResultsN[[i]]$subareaPop$aggregationResults$pFineScalePrevalence)
+  theseResidsSmoothRisk = sweep(aggResultsN[[i]]$subareaPop$aggregationResults$pSmoothRisk, 1, truePrevalenceConstituencyKenya, "-")
+  theseResidsRisk = sweep(aggResultsN[[i]]$subareaPop$aggregationResults$pFineScaleRisk, 1, truePrevalenceConstituencyKenya, "-")
+  theseResidsPrevalence = sweep(aggResultsN[[i]]$subareaPop$aggregationResults$pFineScalePrevalence, 1, truePrevalenceConstituencyKenya, "-")
+  theseResidsGriddedRisk = sweep(aggResultsN[[i]]$subareaPop$aggregationResults$pIHMERisk, 1, truePrevalenceConstituencyKenya, "-")
   predsConstituency[,i] = thesePreds
   residsConstituencySmoothRisk = c(residsConstituencySmoothRisk, list(theseResidsSmoothRisk))
   residsConstituencyRisk = c(residsConstituencyRisk, list(theseResidsRisk))
@@ -267,7 +271,7 @@ dev.off()
 # Plot CI Widths versus resolution and model
 CIWidth = c(c(CIWidthSmoothRisk), c(CIWidthRisk), c(CIWidthPrevalence), c(CIWidthGriddedRisk))
 tempRes = resolutions[col(CIWidthSmoothRisk)]
-tempCon = factor(as.character(poppcon$Constituency[constituenciesN][col(CIWidthSmoothRisk)]))
+tempCon = factor(as.character(poppsubSimple$subarea[col(CIWidthSmoothRisk)]))
 N=length(tempCon)
 CIWidthFrame = data.frame(Constituency=rep(tempCon, 4), 
                           Resolution=rep(tempRes, 4), 
