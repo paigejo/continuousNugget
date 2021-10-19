@@ -143,6 +143,8 @@ for(i in 1:length(popGrids)) {
   thisNSamples = nSamples[i]
   thisPopMat = popGrids[[i]]
   thisPopMatAdjusted = popGridsAdjusted[[i]]
+  print(paste0("Running analysis for grid ", i, "/", length(popGrids), " with ", nrow(popGridsAdjusted[[i]]), " points"))
+  startTime = proc.time()[3]
   
   # obtain model output at this resolution
   thisResolutionI = startIs[i]:endIs[i]
@@ -151,7 +153,7 @@ for(i in 1:length(popGrids)) {
   sigmaEpsilonDraws = spdeFitN$sigmaEpsilonDraws[1:thisNSamples]
   
   thisAggResultsN = simPopCustom(thisUDraws, sigmaEpsilonDraws, easpaSimple, thisPopMat, 
-                            thisPopMatAdjusted, doFineScaleRisk=TRUE, doIHMERisk=TRUE, 
+                            thisPopMatAdjusted, doFineScaleRisk=TRUE, doGriddedRisk=TRUE, 
                             doSmoothRisk=TRUE, subareaLevel=TRUE, gridLevel=FALSE, 
                             poppsub=poppsubSimple, min1PerSubarea=TRUE, 
                             doSmoothRiskLogisticApprox=FALSE, returnEAinfo=TRUE, 
@@ -159,6 +161,8 @@ for(i in 1:length(popGrids)) {
                             verbose=TRUE)
   
   aggResultsN = c(aggResultsN, list(thisAggResultsN))
+  endTime = proc.time()[3]
+  print(paste0("Took ", (endTime-startTime)/60, " minutes"))
 }
 names(aggResultsN) = paste0("aggResultsN", resolutions)
 
@@ -201,9 +205,6 @@ for(i in 1:length(popGrids)) {
   
   aggResultsN[[i]] = list(eaPop=eaPop, pixelPop=pixelPop, subareaPop=subareaPop, areaPop=areaPop)
 }
-
-
-
 save(aggResultsN, file="savedOutput/simpleExample/gridResolutionTestNairobi.RData")
 
 out = load("savedOutput/simpleExample/gridResolutionTestNairobi.RData")
