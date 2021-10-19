@@ -36,13 +36,15 @@ poppsubSimple = poppsubKenya
 poppsubSimple = poppsubSimple[poppsubSimple$area == "Nairobi",]
 
 # simulate population over all of Kenya and generate survey from the EAs
-simDatKenya = generateSimDataSetsLCPB2(nsim=1, targetPopMat=popMatKenyaNeonatal, 
+thisTime = system.time(simDatKenya <- generateSimDataSetsLCPB2(nsim=1, targetPopMat=popMatKenyaNeonatal, 
                                        popMat=popMatKenya, 
+                                       doFineScaleRisk=TRUE, doSmoothRisk=TRUE, 
+                                       gridLevel=FALSE, subareaLevel=TRUE, 
                                       fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
                                       logisticApproximation=FALSE, 
                                       dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
                                       seed=1, inla.seed=1L, simPopOnly=FALSE, returnEAinfo=TRUE, 
-                                      easpa=easpaKenya, poppsub=poppsubKenya)
+                                      easpa=easpaKenya, poppsub=poppsubKenya))
 
 # get the data and the true population
 dat = simDatKenya$SRSDat$clustDat[[1]]
@@ -150,10 +152,11 @@ for(i in 1:length(popGrids)) {
   
   thisAggResultsN = simPopCustom(thisUDraws, sigmaEpsilonDraws, easpaSimple, thisPopMat, 
                             thisPopMatAdjusted, doFineScaleRisk=TRUE, doIHMERisk=TRUE, 
-                            doSmoothRisk=TRUE, subareaLevel=TRUE, 
+                            doSmoothRisk=TRUE, subareaLevel=TRUE, gridLevel=FALSE, 
                             poppsub=poppsubSimple, min1PerSubarea=TRUE, 
                             doSmoothRiskLogisticApprox=FALSE, returnEAinfo=TRUE, 
-                            fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1)
+                            fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
+                            verbose=TRUE)
   
   aggResultsN = c(aggResultsN, list(thisAggResultsN))
 }

@@ -549,10 +549,10 @@ simPopSPDE = function(nsim=1, easpa, popMat, targetPopMat, poppsub, spdeMesh,
 #' @param areasFrom character vector of length equal to the number of areas from which 
 #'            we would like to aggregate containing the unique names of the areas. 
 #'            Can also be subareas, but these are smaller than the "to areas", and 
-#'            each "from area" but be entirely contained in a single "to area"
-#' @param areasTo character vector of length equal to the number of subareas to which 
-#'          we would like to aggregate containing the names of the areas associated 
-#'          with each respective subarea. Can also be a different set of subareas, 
+#'            each "from area" must be entirely contained in a single "to area"
+#' @param areasTo character vector of length equal to the number of areas from which 
+#'          we would like to aggregate containing the names of the areas containing 
+#'          with each respective `from' area. Can also be a set of subareas, 
 #'          but these are larger than the "from areas".
 #' 
 #' @author John Paige
@@ -639,7 +639,7 @@ EAPopToArea = function(EALevelPop, areaMat, areaLevels, urbanMat=NULL,
     aggregationResultsFineScalePrevalence = out
     names(aggregationResultsFineScalePrevalence)[-1] = paste(names(aggregationResultsFineScalePrevalence)[-1], "FineScalePrevalence", sep="")
     
-    aggregationResults = c(aggregationResults, aggregationResultsFineScaleRisk[-1])
+    aggregationResults = c(aggregationResults, aggregationResultsFineScalePrevalence[-1])
   }
   
   # fine scale risk aggregation model
@@ -666,7 +666,7 @@ pixelPopToArea = function(pixelLevelPop, eaSamples, areas, stratifyByUrban=TRUE,
                           doSmoothRisk=!is.null(pixelLevelPop$pSmoothRisk), 
                           doGriddedRisk=!is.null(pixelLevelPop$pGriddedRisk)) {
   
-  aggregationResults = list()
+  aggregationResults = list(region=sort(unique(areas)))
   aggregationMatrices = list()
   
   # fine scale prevalence aggregation model
@@ -681,8 +681,8 @@ pixelPopToArea = function(pixelLevelPop, eaSamples, areas, stratifyByUrban=TRUE,
     names(aggregationResultsFineScalePrevalence)[-1] = paste(names(aggregationResultsFineScalePrevalence)[-1], "FineScalePrevalence", sep="")
     names(aggregationMatricesFineScalePrevalence) = paste(names(aggregationMatricesFineScalePrevalence), "FineScalePrevalence", sep="")
     
-    aggregationResults = c(aggregationResults, aggregationResultsFineScaleRisk[-1])
-    aggregationMatrices = c(aggregationMatrices, aggregationMatricesFineScaleRisk)
+    aggregationResults = c(aggregationResults, aggregationResultsFineScalePrevalence[-1])
+    aggregationMatrices = c(aggregationMatrices, aggregationMatricesFineScalePrevalence)
   }
   
   
@@ -909,32 +909,30 @@ aggPredsVariablePerArea = function(popNumerators, popDenominators,
     
     # aggregate
     out = c(tapply(vals[,i], indices, FUN=sum, na.rm=TRUE))
-    
-    indices = as.numeric(out)
-    returnValues = rep(NA, length(levels(areaMat[1,1])))
-    returnValues[indices] = out
-    
-    returnValues
+    unlist(out)
   }
   
   # aggregate numerators and denominators, calculate prevalence/risk
+  popNumerators[popDenominators == 0] = 0
   if(!is.null(urbanMat)) {
     # do the same for urban/rural strata:
     ## urban:
     popNumeratorsUrban = popNumerators * urbanMat
     popDenominatorsUrban = popDenominators * urbanMat
-    NareaUrban <- sapply(1:ncol(popNumerators), getDrawColumn, vals=popNumeratorsUrban)
+    NareaUrban <- sapply(1:ncol(popDenominators), getDrawColumn, vals=popDenominatorsUrban)
     NareaUrban[is.na(NareaUrban)] = 0
-    ZareaUrban <- sapply(1:ncol(popDenominators), getDrawColumn, vals=popDenominatorsUrban)
+    ZareaUrban <- sapply(1:ncol(popNumerators), getDrawColumn, vals=popNumeratorsUrban)
+    ZareaUrban[is.na(ZareaUrban)] = 0
     pAreaUrban = ZareaUrban / NareaUrban
     pAreaUrban[NareaUrban == 0] = NA
     
     ## rural:
     popNumeratorsRural = popNumerators * (!urbanMat)
     popDenominatorsRural = popDenominators * (!urbanMat)
-    NareaRural <- sapply(1:ncol(popNumerators), getDrawColumn, vals=popNumeratorsRural)
+    NareaRural <- sapply(1:ncol(popDenominators), getDrawColumn, vals=popDenominatorsRural)
     NareaRural[is.na(NareaRural)] = 0
-    ZareaRural <- sapply(1:ncol(popDenominators), getDrawColumn, vals=popDenominatorsRural)
+    ZareaRural <- sapply(1:ncol(popNumerators), getDrawColumn, vals=popNumeratorsRural)
+    ZareaRural[is.na(ZareaRural)] = 0
     pAreaRural = ZareaRural / NareaRural
     pAreaRural[NareaRural == 0] = NA
     
@@ -949,9 +947,10 @@ aggPredsVariablePerArea = function(popNumerators, popDenominators,
          ZRural=ZareaRural, NRural=NareaRural, pRural=pAreaRural)
   } else {
     # in this case, we don't care about stratification, only the overall areal results
-    Narea <- sapply(1:ncol(popNumerators), getDrawColumn, vals=popNumerators)
+    Narea <- sapply(1:ncol(popDenominators), getDrawColumn, vals=popDenominators)
     Narea[is.na(Narea)] = 0
-    Zarea <- sapply(1:ncol(popDenominators), getDrawColumn, vals=popDenominators)
+    Zarea <- sapply(1:ncol(popNumerators), getDrawColumn, vals=popNumerators)
+    Zarea[is.na(Zarea)] = 0
     pArea = Zarea / Narea
     pArea[Narea == 0] = NA
     
@@ -990,10 +989,12 @@ areaPopToArea = function(areaLevelPop, areasFrom, areasTo,
   
   ##### aggregate populations
   # fine scale prevalence aggregation model
-  getaggregationResults = function(resultNameRoot="FineScalePrevalence") {
+  getAggregationResults = function(resultNameRoot="FineScalePrevalence") {
     if(! (paste("N", resultNameRoot, sep="") %in% names(areaLevelPop$aggregationResults))) {
       stop(paste0(resultNameRoot, " was not computed in input areaLevelPop"))
     }
+    
+    capitalResultNameRoot = resultNameRoot
     
     nSamples = areaLevelPop$aggregationResults[[paste("N", resultNameRoot, sep="")]]
     zSamples = areaLevelPop$aggregationResults[[paste("Z", resultNameRoot, sep="")]]
@@ -1003,8 +1004,12 @@ areaPopToArea = function(areaLevelPop, areasFrom, areasTo,
     NAggregated =  A %*% nSamples
     pAggregated = ZAggregated / NAggregated
     pAggregated[NAggregated == 0] = NA
-    thisA=A %*% areaLevelPop$aggregationMatrices[[paste("A", resultNameRoot, sep="")]]
-    rownames(thisA) = uniqueNames
+    if(!is.null(areaLevelPop$aggregationMatrices)) {
+      thisA=A %*% areaLevelPop$aggregationMatrices[[paste("A", resultNameRoot, sep="")]]
+      rownames(thisA) = uniqueNames
+    } else {
+      thisA = NULL
+    }
     
     if(stratifyByUrban) {
       nSamplesUrban = areaLevelPop$aggregationResults[[paste("NUrban", resultNameRoot, sep="")]]
@@ -1019,15 +1024,23 @@ areaPopToArea = function(areaLevelPop, areasFrom, areasTo,
       NAggregatedUrban =  A %*% nSamplesUrban
       pAggregatedUrban = ZAggregatedUrban / NAggregatedUrban
       pAggregatedUrban[NAggregatedUrban == 0] = NA
-      thisAUrban=A %*% areaLevelPop$aggregationMatrices[[paste("AUrban", resultNameRoot, sep="")]]
-      rownames(thisAUrban) = uniqueNames
+      if(!is.null(areaLevelPop$aggregationMatrices)) {
+        thisAUrban=A %*% areaLevelPop$aggregationMatrices[[paste("AUrban", resultNameRoot, sep="")]]
+        rownames(thisAUrban) = uniqueNames
+      } else {
+        thisAUrban = NULL
+      }
       
       ZAggregatedRural =  A %*% zSamplesRural
       NAggregatedRural =  A %*% nSamplesRural
       pAggregatedRural = ZAggregatedRural / NAggregatedRural
       pAggregatedRural[NAggregatedRural == 0] = NA
-      thisARural=A %*% areaLevelPop$aggregationMatrices[[paste("ARural", resultNameRoot, sep="")]]
-      rownames(thisARural) = uniqueNames
+      if(!is.null(areaLevelPop$aggregationMatrices)) {
+        thisARural=A %*% areaLevelPop$aggregationMatrices[[paste("ARural", resultNameRoot, sep="")]]
+        rownames(thisARural) = uniqueNames
+      } else {
+        thisARural = NULL
+      }
     } else {
       ZAggregatedUrban = NULL
       NAggregatedUrban = NULL
@@ -1043,24 +1056,27 @@ areaPopToArea = function(areaLevelPop, areasFrom, areasTo,
     aggregationResults = list(region=uniqueNames, p=pAggregated, Z=ZAggregated, N=NAggregated, 
                               pUrban=pAggregatedUrban, ZUrban=ZAggregatedUrban, NUrban=NAggregatedUrban, 
                               pRural=pAggregatedRural, ZRural=ZAggregatedRural, NRural=NAggregatedRural)
-    aggregationMatrices = list(A=thisA, AUrban=thisAUrban, ARural=thisARural)
+    if(!is.null(thisA)) {
+      aggregationMatrices = list(A=thisA, AUrban=thisAUrban, ARural=thisARural)
+      names(aggregationMatrices) = paste(names(aggregationMatrices)[-1], capitalResultNameRoot, sep="")
+    } else {
+      aggregationMatrices = NULL
+    }
     
-    capitalResultNameRoot = resultNameRoot
     # capitalResultNameRoot = paste(toupper(substr(capitalResultNameRoot, 1, 1)), substr(capitalResultNameRoot, 2, nchar(capitalResultNameRoot)), sep="")
     names(aggregationResults)[-1] = paste(names(aggregationResults)[-1], capitalResultNameRoot, sep="")
-    names(aggregationMatrices) = paste(names(aggregationMatrices)[-1], capitalResultNameRoot, sep="")
     
     list(aggregationResults=aggregationResults, aggregationMatrices=aggregationMatrices)
   }
   
   # fine scale prevalence model 
-  out = getaggregationResults("FineScalePrevalence")
+  out = getAggregationResults("FineScalePrevalence")
   aggregationResults = out$aggregationResults
   aggregationMatrices = out$aggregationMatrices
   
   # fine scale risk aggregation model
   if(doFineScaleRisk) {
-    out = getaggregationResults("FineScaleRisk")
+    out = getAggregationResults("FineScaleRisk")
     resFineScaleRisk = out$aggregationResults
     resAggregationMatrices = out$aggregationMatrices
     
@@ -1070,7 +1086,7 @@ areaPopToArea = function(areaLevelPop, areasFrom, areasTo,
   }
   
   if(doSmoothRisk) {
-    out = getaggregationResults("SmoothRisk")
+    out = getAggregationResults("SmoothRisk")
     resSmoothRisk = out$aggregationResults
     resAggregationMatrices = out$aggregationMatrices
     
@@ -1080,7 +1096,7 @@ areaPopToArea = function(areaLevelPop, areasFrom, areasTo,
   }
   
   if(doGriddedRisk) {
-    out = getaggregationResults("GriddedRisk")
+    out = getAggregationResults("GriddedRisk")
     resGriddedRisk = out$aggregationResults
     resAggregationMatrices = out$aggregationMatrices
     
@@ -1266,7 +1282,7 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
   }
   
   # calculate Z_{ic} for each EA in each pixel
-  Zc = matrix(stats::rbinom(n=totalEAs * nDraws, size=Ncs, prob=as.matrix(muc)), ncol=nDraws)
+  Zcs = matrix(stats::rbinom(n=totalEAs * nDraws, size=Ncs, prob=as.matrix(muc)), ncol=nDraws)
   
   ##### Line 4: Aggregate appropriate values from EAs to the grid cell level
   
@@ -1328,6 +1344,12 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
   
   # even if we aren't producing grid level results in general, gridded and smooth risk 
   # require it
+  griddedRisk = NULL
+  zSamplesGriddedRisk = NULL
+  nSamplesGriddedRisk = NULL
+  smoothRisk = NULL
+  zSamplesSmoothRisk = NULL
+  nSamplesSmoothRisk = NULL
   if(doGriddedRisk) {
     # NOTE: these cluster effects aren't necessarily in agreement with the 
     #       cluster effects of the fine scale models, since they're drawn 
@@ -1353,7 +1375,7 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
   NcsSamplesFineScaleRisk = NULL
   if(gridLevel) {
     # calculate pixel/grid level results
-    out = aggPredsVariablePerArea(popNumerators=Zc, popDenominators=Ncs, 
+    out = aggPredsVariablePerArea(popNumerators=Zcs, popDenominators=Ncs, 
                                   areaMat=pixelIndexMat, areaLevels=1:nrow(popMat))
     Ng = out$N
     Zg = out$Z
@@ -1372,13 +1394,16 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
       
       # We aggregate just like for the fine scale prevalence model, but using the expected population 
       # numerators conditional on the true denominators.
-      ZcsFineScaleRisk = muc * nSamplesFineScaleRisk
       NcsFineScaleRisk = Ncs
+      ZcsFineScaleRisk = muc * NcsFineScaleRisk
       out = aggPredsVariablePerArea(popNumerators=ZcsFineScaleRisk, popDenominators=Ncs, 
                                     areaMat=pixelIndexMat, areaLevels=1:nrow(popMat))
       nSamplesFineScaleRisk = out$N
       zSamplesFineScaleRisk = out$Z
       fineScaleRisk = out$p
+    } else {
+      nSamplesFineScaleRisk = NULL
+      zSamplesFineScaleRisk = NULL
     }
     
     ##### Extra steps: collect draws at each level and generate:
@@ -1399,13 +1424,17 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
   if(subareaLevel) {
     # aggregate up from the most aggregated set of results we have: pixel/grid level if we have them, 
     # EA level results otherwise.
+    if(verbose) {
+      print("Aggregating to the subarea level...")
+    }
+    
     subareas = sort(unique(popMat$subarea))
-    if(doGridLevel) {
+    if(gridLevel) {
       # first get results for fine scale prevalence
-      subareaLevelPop = SUMMER:::pixelPopToArea(pixelLevelPop, eaSamples=eaSamples, areas=popMat$subarea, 
-                                                stratifyByUrban=stratifyByUrban, targetPopMat=targetPopMat, 
-                                                doFineScaleRisk=doFineScaleRisk, doSmoothRisk=doSmoothRisk, 
-                                                doGriddedRisk=doGriddedRisk, easpa=easpa)
+      subareaLevelPop = pixelPopToArea(pixelLevelPop, eaSamples=eaSamples, areas=popMat$subarea, 
+                                       stratifyByUrban=stratifyByUrban, targetPopMat=targetPopMat, 
+                                       doFineScaleRisk=doFineScaleRisk, doSmoothRisk=doSmoothRisk, 
+                                       doGriddedRisk=doGriddedRisk)
     } else {
       # we aggregate EA level results to subarea level. This takes a bit more leg work
       subareaLevelPop = list()
@@ -1422,7 +1451,7 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
       fineScalePrevalenceSubarea = aggPredsVariablePerArea(popNumerators=Zcs, popDenominators=Ncs, 
                                                            areaMat=subareaMat, urbanMat=urbanMat, 
                                                            areaLevels=sort(as.character(poppsub$subarea)))
-      names(fineScalePrevalenceSubarea)[-1] = paste(names(fineScalePrevalenceSubarea)[-1], "FineScalePrevalence")
+      names(fineScalePrevalenceSubarea)[-1] = paste(names(fineScalePrevalenceSubarea)[-1], "FineScalePrevalence", sep="")
       subareaLevelPop = c(subareaLevelPop, fineScalePrevalenceSubarea)
       
       # fine scale risk
@@ -1433,7 +1462,7 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
                                                        popDenominators=NcsFineScaleRisk, 
                                                        areaMat=subareaMat, urbanMat=urbanMat, 
                                                        areaLevels=sort(as.character(poppsub$subarea)))
-        names(fineScaleRiskSubarea)[-1] = paste(names(fineScaleRiskSubarea)[-1], "FineScaleRisk")
+        names(fineScaleRiskSubarea)[-1] = paste(names(fineScaleRiskSubarea)[-1], "FineScaleRisk", sep="")
         subareaLevelPop = c(subareaLevelPop, fineScaleRiskSubarea)
       }
       
@@ -1441,10 +1470,11 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
       if(doSmoothRisk || doGriddedRisk) {
         # we have pixel level results, so use them instead of EA level results since it's faster
         
-        smoothGriddedRiskSubarea = pixelPopToArea(pixelLevelPop, eaSamples=eaSamples, areas=popMat$area, 
+        smoothGriddedRiskSubarea = pixelPopToArea(pixelLevelPop, eaSamples=eaSamples, areas=popMat$subarea, 
                                            stratifyByUrban=stratifyByUrban, targetPopMat=targetPopMat, 
                                            doFineScalePrevalence=FALSE, doFineScaleRisk=FALSE, 
                                            doSmoothRisk=doSmoothRisk, doGriddedRisk=doGriddedRisk)
+        smoothGriddedRiskSubarea$aggregationResults$region = NULL
         subareaLevelPop = c(subareaLevelPop, smoothGriddedRiskSubarea$aggregationResults)
       }
       
@@ -1457,12 +1487,12 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
   
   # aggregate to the area level. Aggregate up from largest possible level to save time
   if(verbose) {
-    print("Aggregating to the subarea level...")
+    print("Aggregating to the area level...")
   }
   if(subareaLevel) {
     areasFrom = subareaLevelPop$aggregationResults$region
-    poppsub$area[match(subareaLevelPop$aggregationResults$region, 
-                       poppsub$subarea)]
+    areasTo = poppsub$area[match(subareaLevelPop$aggregationResults$region, 
+                                 poppsub$subarea)]
     areaLevelPop = areaPopToArea(subareaLevelPop, areasFrom=areasFrom, areasTo=areasTo, 
                                  stratifyByUrban=stratifyByUrban, doFineScaleRisk=doFineScaleRisk, 
                                  doSmoothRisk=doSmoothRisk, doGriddedRisk=doGriddedRisk)
@@ -1491,6 +1521,7 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
                            doFineScalePrevalence=FALSE, doFineScaleRisk=FALSE, 
                            doSmoothRisk=doSmoothRisk, doGriddedRisk=doGriddedRisk)
       out = out$aggregationResults
+      out$region = NULL
     }
     
     areaLevelPop = c(areaLevelPop, out)
@@ -1508,8 +1539,8 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
                          area=popMat$area[theseI], subarea=rep("temp", length(theseI)), 
                          urban=popMat$urban[theseI], east=popMat$east[theseI], north=popMat$north[theseI], 
                          popDensity=popMat$pop[theseI], popDensityTarget=targetPopMat$pop[theseI], pixelIs=theseI, 
-                         nHH=householdDraws[,i], N=Ncs[,i], Z=Zc[,i], 
-                         pFineScalePrevalence=Zc[,i]/Ncs[,i])
+                         nHH=householdDraws[,i], N=Ncs[,i], Z=Zcs[,i], 
+                         pFineScalePrevalence=Zcs[,i]/Ncs[,i])
       if(doFineScaleRisk) {
         eaDat$pFineScaleRisk = muc[,i]
         eaDat$ZFineScaleRisk = muc[,i] * Ncs[,i]

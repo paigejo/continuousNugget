@@ -612,11 +612,11 @@ genAndreaFormatFromEAIsLong = function(eaDat, eaIs, eaDatLong, HHIs, sampleWeigh
 
 # convert from output of simClusters3 to the result of generateSimDataSets.R
 genAndreaFormatFromEAIsLong2 = function(eaDat, eaIs, eaDatLong, HHIs, sampleWeights, 
-                                        doSmoothRisk=TRUE, doFineScaleRisk=TRUE, doIHMERisk=TRUE) {
+                                        doSmoothRisk=TRUE, doFineScaleRisk=TRUE, doGriddedRisk=TRUE) {
   lapply(1:ncol(eaIs), genClustDatFromEAIsLong2, eaDat=eaDat, eaIs=eaIs, eaDatLong=eaDatLong, 
          HHIs=HHIs, sampleWeights=sampleWeights, 
          doSmoothRisk=doSmoothRisk, doFineScaleRisk=doFineScaleRisk, 
-         doIHMERisk=doIHMERisk)
+         doGriddedRisk=doGriddedRisk)
 }
 
 # given the above function (simClusters2Mult), generates a dataframe following the format 
@@ -650,7 +650,7 @@ genClustDatFromEAIsLong = function(eaDat, eaIs, eaDatLong, HHIs, sampleWeights, 
 # given the above function (simClusters2Mult), generates a dataframe following the format 
 # of simClusters2 given a simulation index, i
 genClustDatFromEAIsLong2 = function(eaDat, eaIs, eaDatLong, HHIs, sampleWeights, i, 
-                                    doSmoothRisk=TRUE, doFineScaleRisk=TRUE, doIHMERisk=TRUE) {
+                                    doSmoothRisk=TRUE, doFineScaleRisk=TRUE, doGriddedRisk=TRUE) {
   clustDatLong = as.data.table(eaDatLong[HHIs[,i],])
   
   # aggregate the long format to the short format
@@ -663,7 +663,7 @@ genClustDatFromEAIsLong2 = function(eaDat, eaIs, eaDatLong, HHIs, sampleWeights,
   #                             probsHH=probsHH[1], trueProbDeathNoNug=trueProbDeathNoNug[1], 
   #                             trueProbDeath=trueProbDeath[1]), 
   #                         by=eaIs]
-  if(doSmoothRisk && doFineScaleRisk && doIHMERisk) {
+  if(doSmoothRisk && doFineScaleRisk && doGriddedRisk) {
     clustDat = clustDatLong[, .(lon=lon[1], lat=lat[1], 
                                 popDensity=popDensity[1], popDensityTarget=popDensityTarget[1], 
                                 area=area[1], subarea=subarea[1], 
@@ -671,7 +671,7 @@ genClustDatFromEAIsLong2 = function(eaDat, eaIs, eaDatLong, HHIs, sampleWeights,
                                 n=sum(n), y=sum(y), 
                                 pSmoothRisk=pSmoothRisk[1], pFineScaleRisk=pFineScaleRisk[1], 
                                 pFineScalePrevalence=sum(y)/sum(n), 
-                                pIHMERisk=pIHMERisk[1]), 
+                                pGriddedRisk=pGriddedRisk[1]), 
                             by=eaIs]
   } else if(doSmoothRisk && doFineScaleRisk) {
     clustDat = clustDatLong[, .(lon=lon[1], lat=lat[1], 
@@ -682,7 +682,7 @@ genClustDatFromEAIsLong2 = function(eaDat, eaIs, eaDatLong, HHIs, sampleWeights,
                                 pSmoothRisk=pSmoothRisk[1], pFineScaleRisk=pFineScaleRisk[1], 
                                 pFineScalePrevalence=sum(y)/sum(n)), 
                             by=eaIs]
-  } else if(doSmoothRisk && doIHMERisk) {
+  } else if(doSmoothRisk && doGriddedRisk) {
     clustDat = clustDatLong[, .(lon=lon[1], lat=lat[1], 
                                 popDensity=popDensity[1], popDensityTarget=popDensityTarget[1], 
                                 area=area[1], subarea=subarea[1], 
@@ -690,9 +690,9 @@ genClustDatFromEAIsLong2 = function(eaDat, eaIs, eaDatLong, HHIs, sampleWeights,
                                 n=sum(n), y=sum(y), 
                                 pSmoothRisk=pSmoothRisk[1], 
                                 pFineScalePrevalence=sum(y)/sum(n), 
-                                pIHMERisk=pIHMERisk[1]), 
+                                pGriddedRisk=pGriddedRisk[1]), 
                             by=eaIs]
-  } else if(doFineScaleRisk && doIHMERisk) {
+  } else if(doFineScaleRisk && doGriddedRisk) {
     clustDat = clustDatLong[, .(lon=lon[1], lat=lat[1], 
                                 popDensity=popDensity[1], popDensityTarget=popDensityTarget[1], 
                                 area=area[1], subarea=subarea[1], 
@@ -700,7 +700,7 @@ genClustDatFromEAIsLong2 = function(eaDat, eaIs, eaDatLong, HHIs, sampleWeights,
                                 n=sum(n), y=sum(y), 
                                 pFineScaleRisk=pFineScaleRisk[1], 
                                 pFineScalePrevalence=sum(y)/sum(n), 
-                                pIHMERisk=pIHMERisk[1]), 
+                                pGriddedRisk=pGriddedRisk[1]), 
                             by=eaIs]
   } else if(doSmoothRisk) {
     clustDat = clustDatLong[, .(lon=lon[1], lat=lat[1], 
@@ -720,14 +720,22 @@ genClustDatFromEAIsLong2 = function(eaDat, eaIs, eaDatLong, HHIs, sampleWeights,
                                 pFineScaleRisk=pFineScaleRisk[1], 
                                 pFineScalePrevalence=sum(y)/sum(n)), 
                             by=eaIs]
-  } else if(doIHMERisk) {
+  } else if(doGriddedRisk) {
     clustDat = clustDatLong[, .(lon=lon[1], lat=lat[1], 
                                 popDensity=popDensity[1], popDensityTarget=popDensityTarget[1], 
                                 area=area[1], subarea=subarea[1], 
                                 east=east[1], north=north[1], urban=urban[1], nHH=nHH[1], 
                                 n=sum(n), y=sum(y), 
                                 pFineScalePrevalence=sum(y)/sum(n), 
-                                pIHMERisk=pIHMERisk[1]), 
+                                pGriddedRisk=pGriddedRisk[1]), 
+                            by=eaIs]
+  } else {
+    clustDat = clustDatLong[, .(lon=lon[1], lat=lat[1], 
+                                popDensity=popDensity[1], popDensityTarget=popDensityTarget[1], 
+                                area=area[1], subarea=subarea[1], 
+                                east=east[1], north=north[1], urban=urban[1], nHH=nHH[1], 
+                                n=sum(n), y=sum(y), 
+                                pFineScalePrevalence=sum(y)/sum(n)), 
                             by=eaIs]
   }
   
@@ -1717,8 +1725,8 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
                       urbanOverSamplefrac=0, seed=NULL, inla.seed=0L, 
                       nHHSampled=25, fixPopPerEA=NULL, fixHHPerEA=NULL, fixPopPerHH=NULL, 
                       easpa=NULL, popMat=NULL, targetPopMat=NULL, 
-                      stratifyByUrban=TRUE, pixelLevel=TRUE, subareaLevel=TRUE, 
-                      doSmoothRisk=TRUE, doFineScaleRisk=TRUE, doIHMERisk=TRUE, 
+                      stratifyByUrban=TRUE, gridLevel=TRUE, subareaLevel=TRUE, 
+                      doSmoothRisk=TRUE, doFineScaleRisk=TRUE, 
                       poppsub=poppsubKenya, 
                       min1PerSubarea=TRUE, clustDat=NULL, 
                       spreadEAsInPixels=FALSE, logisticApproximation=TRUE, 
@@ -1798,11 +1806,12 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
                        margVar=margVar, sigmaEpsilon=sigmaEpsilon, 
                        gamma=gamma, effRange=effRange, beta0=beta0, 
                        seed=seed, inla.seed=inla.seed, nHHSampled=nHHSampled, 
-                       stratifyByUrban=stratifyByUrban, subareaLevel=subareaLevel, 
+                       stratifyByUrban=stratifyByUrban, 
+                       subareaLevel=subareaLevel, gridLevel=gridLevel, 
                        doFineScaleRisk=doFineScaleRisk, doSmoothRisk=doSmoothRisk, 
-                       doIHMERisk=doIHMERisk, 
                        doSmoothRiskLogisticApprox=logisticApproximation, 
-                       min1PerSubarea=min1PerSubarea)
+                       min1PerSubarea=min1PerSubarea, 
+                       fixPopPerEA=fixPopPerEA, fixHHPerEA=fixHHPerEA, fixPopPerHH=fixPopPerHH)
   
   if(returnEAinfo) {
     eaDatList = outLCPB$eaPop$eaDatList
@@ -1898,7 +1907,7 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
     # return cluster data in Andrea's format:
     clustList = genAndreaFormatFromEAIsLong2(eaDat, clustDat$eaIs, eaDatLong, clustDat$HHIs, 
                                              clustDat$sampleWeights, doFineScaleRisk=doFineScaleRisk, 
-                                             doSmoothRisk=doSmoothRisk, doIHMERisk=doIHMERisk)
+                                             doSmoothRisk=doSmoothRisk, doGriddedRisk=FALSE)
     
     list(eaDat=eaDat, eaSamples=eaSamples, clustDat=clustList, aggregatedPop=outLCPB, thisclustpc=thisclustpc)
   } else if(returnEAinfo) {
