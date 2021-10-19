@@ -158,7 +158,7 @@ for(i in 1:length(popGrids)) {
                             poppsub=poppsubSimple, min1PerSubarea=TRUE, 
                             doSmoothRiskLogisticApprox=FALSE, returnEAinfo=TRUE, 
                             fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
-                            verbose=TRUE)
+                            verbose=FALSE)
   
   aggResultsN = c(aggResultsN, list(thisAggResultsN))
   endTime = proc.time()[3]

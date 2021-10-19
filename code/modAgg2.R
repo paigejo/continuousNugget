@@ -723,8 +723,8 @@ pixelPopToArea = function(pixelLevelPop, eaSamples, areas, stratifyByUrban=TRUE,
   
   if(doGriddedRisk) {
     # IHME risk model
-    nSamplesGriddedRisk = pixelLevelPop$NgriddedRisk
-    zSamplesGriddedRisk = pixelLevelPop$ZgriddedRisk
+    nSamplesGriddedRisk = pixelLevelPop$NGriddedRisk
+    zSamplesGriddedRisk = pixelLevelPop$ZGriddedRisk
     zSamplesGriddedRisk[is.na(zSamplesGriddedRisk)] = 0 # must set to zero temporarily so matrix multiplication works out
     out = aggPixelPreds(Zg=zSamplesGriddedRisk, Ng=nSamplesGriddedRisk, areas=areas, targetPopMat=targetPopMat, 
                         useDensity=FALSE, stratifyByUrban=stratifyByUrban, normalize=FALSE)
