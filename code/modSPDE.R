@@ -737,8 +737,6 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
     controlFixed=list(quantiles=allQuantiles)
   }
   
-  if(!is.null())
-  
   stack.full = stack.est
   stackDat = inla.stack.data(stack.full, spde=prior)
   
