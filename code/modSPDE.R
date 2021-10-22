@@ -749,7 +749,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
   }
   if(family == "binomial" && clusterEffect) {
     if(!is.null(fixedParameters$clusterPrec)) {
-      thisFormula = paste0(thisFormula, " + f(cluster, model='iid', hyper = list(initial=log(fixedParameters$clusterPrec), fixed=TRUE))")
+      thisFormula = paste0(thisFormula, " + f(cluster, model='iid', hyper = list(theta=list(initial=log(fixedParameters$clusterPrec), fixed=TRUE)))")
     } else {
       thisFormula = paste0(thisFormula, " + f(cluster, model='iid', hyper = list(prec = clusterList))")
     }
