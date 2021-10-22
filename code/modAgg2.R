@@ -1632,7 +1632,80 @@ checkPopFrameAndIntWeights = function(popMat, targetPopMat, easpa, poppsub, stop
   list(popMat=popMat, targetPopMat=targetPopMat, changed=list(changedPopMat=changedPopMat, changedTargetPopMat=changedTargetPopMat))
 }
 
-
+EADatListToEAPop = function(eaDatList) {
+  areas = eaDatList[[1]]$area
+  pixelIndexMat = sapply(eaDatList, function(x) {x$pixelIs})
+  
+  if("urban" %in% names(eaDatList[[1]])) {
+    urbanMat = sapply(eaDatList, function(x) {x$urban})
+  } else {
+    urbanMat = NULL
+  }
+  
+  if("subarea" %in% names(eaDatList[[1]])) {
+    subareaMat = sapply(eaDatList, function(x) {x$subarea})
+  } else {
+    subareaMat = NULL
+  }
+  
+  if("pFineScalePrevalence" %in% names(eaDatList[[1]])) {
+    pFineScalePrevalence = sapply(eaDatList, function(x) {x$pFineScalePrevalence})
+    ZFineScalePrevalence = sapply(eaDatList, function(x) {x$ZFineScalePrevalence})
+    NFineScalePrevalence = sapply(eaDatList, function(x) {x$NFineScalePrevalence})
+  } else {
+    pFineScalePrevalence = NULL
+    ZFineScalePrevalence = NULL
+    NFineScalePrevalence = NULL
+  }
+  
+  if("pFineScaleRisk" %in% names(eaDatList[[1]])) {
+    pFineScaleRisk = sapply(eaDatList, function(x) {x$pFineScaleRisk})
+    ZFineScaleRisk = sapply(eaDatList, function(x) {x$ZFineScaleRisk})
+    NFineScaleRisk = sapply(eaDatList, function(x) {x$NFineScaleRisk})
+  } else {
+    pFineScaleRisk = NULL
+    ZFineScaleRisk = NULL
+    NFineScaleRisk = NULL
+  }
+  
+  if("pSmoothRisk" %in% names(eaDatList[[1]])) {
+    pSmoothRisk = sapply(eaDatList, function(x) {x$pSmoothRisk})
+    ZSmoothRisk = sapply(eaDatList, function(x) {x$ZSmoothRisk})
+    NSmoothRisk = sapply(eaDatList, function(x) {x$NSmoothRisk})
+  } else {
+    pSmoothRisk = NULL
+    ZSmoothRisk = NULL
+    NSmoothRisk = NULL
+  }
+  
+  if("pGriddedRisk" %in% names(eaDatList[[1]])) {
+    pGriddedRisk = sapply(eaDatList, function(x) {x$pGriddedRisk})
+    ZGriddedRisk = sapply(eaDatList, function(x) {x$ZGriddedRisk})
+    NGriddedRisk = sapply(eaDatList, function(x) {x$NGriddedRisk})
+  } else {
+    pGriddedRisk = NULL
+    ZGriddedRisk = NULL
+    NGriddedRisk = NULL
+  }
+  
+  eaPop = list(region=as.character(1:length(areas)), area=areas, 
+               subareaMat=subareaMat, urbanMat=urbanMat, 
+               pixelIndexMat=pixelIndexMat, 
+               pFineScalePrevalence=pFineScalePrevalence, 
+               ZFineScalePrevalence=ZFineScalePrevalence, 
+               NFineScalePrevalence=NFineScalePrevalence, 
+               pFineScaleRisk=pFineScaleRisk, 
+               ZFineScaleRisk=ZFineScaleRisk, 
+               NFineScaleRisk=NFineScaleRisk, 
+               pSmoothRisk=pSmoothRisk, 
+               ZSmoothRisk=ZSmoothRisk, 
+               NSmoothRisk=NSmoothRisk, 
+               pGriddedRisk=pGriddedRisk, 
+               ZGriddedRisk=ZGriddedRisk, 
+               NGriddedRisk=NGriddedRisk)
+  
+  eaPop
+}
 
 
 

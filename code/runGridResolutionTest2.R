@@ -52,12 +52,15 @@ dat$y = dat$Z
 dat$n = dat$N
 dat$admin1 = dat$area
 dat$admin2 = dat$subarea
+EAsN = simDatKenya$simulatedEAs$aggregatedPop$eaPop$eaDatList[[1]]$area == "Nariobi"
 constituenciesN = poppsubKenya$area == "Nairobi"
 countyN = sort(unique(poppaKenya$area)) == "Nairobi"
+truePrevalenceEAsKenya = simDatKenya$simulatedEAs$aggregatedPop$eaPop$eaDatList[[1]]$pFineScalePrevalence
+truePrevalenceEAsKenya = truePrevalenceEAsKenya[EAsN]
 truePrevalenceConstituencyKenya = simDatKenya$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pFineScalePrevalence
-truePrevalenceCountyKenya = simDatKenya$simulatedEAs$aggregatedPop$areaPop$aggregationResults$pFineScalePrevalence
 truePrevalenceConstituencyKenya = truePrevalenceConstituencyKenya[constituenciesN]
 truePrevalenceCountyKenya = truePrevalenceCountyKenya[countyN]
+truePrevalenceCountyKenya = simDatKenya$simulatedEAs$aggregatedPop$areaPop$aggregationResults$pFineScalePrevalence
 
 # construct integration grids at different resolutions
 # resolutions = c(1, 10, 20, 40, 60, 80)
@@ -113,6 +116,8 @@ out = load("savedOutput/simpleExample/popGridResTest.RData")
 popMatCombined = do.call("rbind", popGrids)
 
 # fit SPDE cluster level risk model over all integration points
+# spde$effRange, spde$margVar, familyPrec, clusterPrec, beta
+fixedParameters = list(spde=list(effRange=400, margVar=(1/3)^2), clusterPrec=2.5, beta=c(-2.9, -1))
 spdeFitN = fitSPDEKenyaDat(dat, nPostSamples=10000, popMat=popMatCombined)
 
 # remove unnecessary parts of the spdeFitN object to save space
@@ -166,45 +171,46 @@ for(i in 1:length(popGrids)) {
 }
 names(aggResultsN) = paste0("aggResultsN", resolutions)
 
-for(i in 1:length(popGrids)) {
-  # obtain the grids at this resolution
-  thisNSamples = nSamples[i]
-  thisPopMat = popGrids[[i]]
-  thisPopMatAdjusted = popGridsAdjusted[[i]]
-  
-  # obtain model output at this resolution
-  thisResolutionI = startIs[i]:endIs[i]
-  # thisUDraws = spdeFitN$uDraws[thisResolutionI,1:thisNSamples]
-  thisUDraws = separateUDraws[[i]]
-  sigmaEpsilonDraws = spdeFitN$sigmaEpsilonDraws[1:thisNSamples]
-  
-  # get pixel level results
-  pixelPop = aggResultsN[[i]]
-  eaPop = list(eaDatList=pixelPop$eaDatList, eaSamples=pixelPop$eaSamples)
-  eaSamples = pixelPop$eaSamples
-  pixelPop$eaDatList = NULL
-  pixelPop$eaSamples = NULL
-  
-  # aggregate to Admin2 level
-  subareaPop = pixelPopToArea(pixelLevelPop=pixelPop, eaSamples=eaSamples, 
-                              areas=thisPopMat$subarea, stratifyByUrban=TRUE, 
-                              targetPopMat=thisPopMatAdjusted, 
-                              doFineScaleRisk=TRUE, doSmoothRisk=TRUE, doIHMERisk=TRUE)
-  
-  # get areas associated with each subarea for aggregation
-  tempAreasFrom = thisPopMat$subarea
-  tempAreasTo = thisPopMat$area
-  areasFrom = sort(unique(tempAreasFrom))
-  areasToI = match(areasFrom, tempAreasFrom)
-  areasTo = tempAreasTo[areasToI]
-  
-  # do the aggregation from subareas to areas
-  areaPop = areaPopToArea(areaLevelPop=subareaPop, 
-                               areasFrom=areasFrom, areasTo=areasTo, stratifyByUrban=TRUE, 
-                               doFineScaleRisk=TRUE, doSmoothRisk=TRUE, doIHMERisk=TRUE)
-  
-  aggResultsN[[i]] = list(eaPop=eaPop, pixelPop=pixelPop, subareaPop=subareaPop, areaPop=areaPop)
-}
+
+# for(i in 1:length(popGrids)) {
+#   # obtain the grids at this resolution
+#   thisNSamples = nSamples[i]
+#   thisPopMat = popGrids[[i]]
+#   thisPopMatAdjusted = popGridsAdjusted[[i]]
+#   
+#   # obtain model output at this resolution
+#   thisResolutionI = startIs[i]:endIs[i]
+#   # thisUDraws = spdeFitN$uDraws[thisResolutionI,1:thisNSamples]
+#   thisUDraws = separateUDraws[[i]]
+#   sigmaEpsilonDraws = spdeFitN$sigmaEpsilonDraws[1:thisNSamples]
+#   
+#   # get pixel level results
+#   pixelPop = aggResultsN[[i]]
+#   eaPop = list(eaDatList=pixelPop$eaDatList, eaSamples=pixelPop$eaSamples)
+#   eaSamples = pixelPop$eaSamples
+#   pixelPop$eaDatList = NULL
+#   pixelPop$eaSamples = NULL
+#   
+#   # aggregate to Admin2 level
+#   subareaPop = pixelPopToArea(pixelLevelPop=pixelPop, eaSamples=eaSamples, 
+#                               areas=thisPopMat$subarea, stratifyByUrban=TRUE, 
+#                               targetPopMat=thisPopMatAdjusted, 
+#                               doFineScaleRisk=TRUE, doSmoothRisk=TRUE, doGriddedRisk=TRUE)
+#   
+#   # get areas associated with each subarea for aggregation
+#   tempAreasFrom = thisPopMat$subarea
+#   tempAreasTo = thisPopMat$area
+#   areasFrom = sort(unique(tempAreasFrom))
+#   areasToI = match(areasFrom, tempAreasFrom)
+#   areasTo = tempAreasTo[areasToI]
+#   
+#   # do the aggregation from subareas to areas
+#   areaPop = areaPopToArea(areaLevelPop=subareaPop, 
+#                                areasFrom=areasFrom, areasTo=areasTo, stratifyByUrban=TRUE, 
+#                                doFineScaleRisk=TRUE, doSmoothRisk=TRUE, doGriddedRisk=TRUE)
+#   
+#   aggResultsN[[i]] = list(eaPop=eaPop, pixelPop=pixelPop, subareaPop=subareaPop, areaPop=areaPop)
+# }
 save(aggResultsN, file="savedOutput/simpleExample/gridResolutionTestNairobi.RData")
 
 out = load("savedOutput/simpleExample/gridResolutionTestNairobi.RData")
@@ -214,18 +220,28 @@ out = load("savedOutput/simpleExample/gridResolutionTestNairobi.RData")
 # truePrevalenceConstituencyKenya
 # truePrevalenceCountyKenya
 
+generateResolutionTestPlots = function(level=c("subareaPop", "areaPop", "eaPop")
+                                       truth, maxSamples, 
+                                       resultNameRoot="Constituency") {
+  
+}
+
 # Calculate RMSE, 80% Coverage
 predsConstituency = matrix(nrow=length(truePrevalenceConstituencyKenya), ncol=length(resolutions))
 residsConstituencySmoothRisk = list()
 residsConstituencyRisk = list()
 residsConstituencyPrevalence = list()
 residsConstituencyGriddedRisk = list()
+maxSamples = max(nSamples)
+maxSamples = min(nSamples)
+maxSamples = 1000
 for(i in 1:length(resolutions)) {
-  thesePreds = rowMeans(aggResultsN[[i]]$subareaPop$aggregationResults$pFineScalePrevalence)
-  theseResidsSmoothRisk = sweep(aggResultsN[[i]]$subareaPop$aggregationResults$pSmoothRisk, 1, truePrevalenceConstituencyKenya, "-")
-  theseResidsRisk = sweep(aggResultsN[[i]]$subareaPop$aggregationResults$pFineScaleRisk, 1, truePrevalenceConstituencyKenya, "-")
-  theseResidsPrevalence = sweep(aggResultsN[[i]]$subareaPop$aggregationResults$pFineScalePrevalence, 1, truePrevalenceConstituencyKenya, "-")
-  theseResidsGriddedRisk = sweep(aggResultsN[[i]]$subareaPop$aggregationResults$pIHMERisk, 1, truePrevalenceConstituencyKenya, "-")
+  thisMaxSamples = min(c(nSamples[i], maxSamples))
+  thesePreds = rowMeans(aggResultsN[[i]]$subareaPop$aggregationResults$pFineScalePrevalence[,1:thisMaxSamples])
+  theseResidsSmoothRisk = sweep(aggResultsN[[i]]$subareaPop$aggregationResults$pSmoothRisk[,1:thisMaxSamples], 1, truePrevalenceConstituencyKenya, "-")
+  theseResidsRisk = sweep(aggResultsN[[i]]$subareaPop$aggregationResults$pFineScaleRisk[,1:thisMaxSamples], 1, truePrevalenceConstituencyKenya, "-")
+  theseResidsPrevalence = sweep(aggResultsN[[i]]$subareaPop$aggregationResults$pFineScalePrevalence[,1:thisMaxSamples], 1, truePrevalenceConstituencyKenya, "-")
+  theseResidsGriddedRisk = sweep(aggResultsN[[i]]$subareaPop$aggregationResults$pGriddedRisk[,1:thisMaxSamples], 1, truePrevalenceConstituencyKenya, "-")
   predsConstituency[,i] = thesePreds
   residsConstituencySmoothRisk = c(residsConstituencySmoothRisk, list(theseResidsSmoothRisk))
   residsConstituencyRisk = c(residsConstituencyRisk, list(theseResidsRisk))
@@ -265,7 +281,7 @@ coverageGriddedRisk = colMeans(inCIGriddedRisk)
 
 # Plot central predictions versus resolution
 ylim = range(c(predsConstituency))
-pdf("figures/gridResolutionTest/predictionVRes.pdf", width=5, height=5)
+pdf(paste0("figures/gridResolutionTest/predictionVRes_maxSamples", maxSamples, ".pdf"), width=5, height=5)
 cols = rainbow(4)
 thisFrame = data.frame(predsConstituency)
 boxplot(predsConstituency, names=resolutions, col="skyblue", 
@@ -284,7 +300,7 @@ CIWidthFrame = data.frame(Constituency=rep(tempCon, 4),
                                        levels=c("Smooth risk", "Risk", "Prevalence", "Gridded risk")), 
                           CIWidth=CIWidth)
 
-pdf("figures/gridResolutionTest/CIWidthVRes.pdf", width=7, height=5)
+pdf(paste0("figures/gridResolutionTest/CIWidthVRes_maxSamples", maxSamples, ".pdf"), width=7, height=5)
 ggplot(CIWidthFrame, aes(factor(Resolution), CIWidth, fill=factor(Model))) + 
   geom_boxplot(position="dodge2") + scale_y_continuous(trans="log10") +
   labs(x="Grid resolution (km)", y="80% credible interval width", fill="Model") + 
@@ -292,7 +308,7 @@ ggplot(CIWidthFrame, aes(factor(Resolution), CIWidth, fill=factor(Model))) +
 dev.off()
 
 
-pdf("figures/gridResolutionTest/CoverageVRes.pdf", width=5, height=5)
+pdf(paste0("figures/gridResolutionTest/CoverageVRes_maxSamples", maxSamples, ".pdf"), width=5, height=5)
 pchs = 15:18
 cols = rainbow(4)
 ylim = range(c(coverageSmoothRisk), c(coverageRisk), c(coveragePrevalence), c(coverageGriddedRisk))
