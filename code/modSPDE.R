@@ -770,6 +770,8 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
   # }
   thisFormula = as.formula(thisFormula)
   
+  browser()
+  
   startModelFitTime = proc.time()[3]
   if(family == "normal") {
     if(!is.null(xObs)) {
