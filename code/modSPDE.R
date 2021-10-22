@@ -664,6 +664,9 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
     xObs = NULL
     offsetPred = xPred %*% fixedParameters$beta
     xPred = NULL
+  } else {
+    offsetEst = NULL
+    offsetPred = NULL
   }
   
   # construct the observation stack 
@@ -755,9 +758,9 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
       thisFormula = paste0(thisFormula, " + f(cluster, model='iid', hyper = list(prec = clusterList))")
     }
   }
-  if(!is.null(offsetEst)) {
-    thisFormula = paste0(thisFormula, " + offset(offsetEst)")
-  }
+  # if(!is.null(offsetEst)) {
+  #   thisFormula = paste0(thisFormula, " + offset(offsetEst)")
+  # }
   thisFormula = as.formula(thisFormula)
   
   startModelFitTime = proc.time()[3]
@@ -770,6 +773,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                  family=family, verbose=verbose, control.inla=control.inla, 
                  control.compute=list(config=TRUE, cpo=doValidation, dic=doValidation, waic=doValidation), 
                  control.mode=modeControl, 
+                 offset=offsetEst, 
                  control.fixed=controlFixed, 
                  control.family=control.family)
     } else {
@@ -780,6 +784,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                  family=family, verbose=verbose, control.inla=control.inla, 
                  control.compute=list(config=TRUE, cpo=doValidation, dic=doValidation, waic=doValidation), 
                  control.mode=modeControl, 
+                 offset=offsetEst, 
                  control.fixed=controlFixed, 
                  control.family=control.family)
     }
@@ -793,6 +798,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                  family=family, verbose=verbose, control.inla=control.inla, 
                  control.compute=list(config=TRUE, cpo=doValidation, dic=doValidation, waic=doValidation), 
                  control.mode=modeControl, Ntrials=stackDat$Ntrials, 
+                 offset=offsetEst, 
                  control.fixed=controlFixed, control.family = control.family)
     } else if(is.null(xObs) && clusterEffect) {
       mod = inla(#y ~ - 1 + f(field, model=prior) + f(cluster, model="iid", hyper = list(prec = clusterList)), 
@@ -802,6 +808,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                  family=family, verbose=verbose, control.inla=control.inla, 
                  control.compute=list(config=TRUE, cpo=doValidation, dic=doValidation, waic=doValidation), 
                  control.mode=modeControl, Ntrials=stackDat$Ntrials, 
+                 offset=offsetEst, 
                  control.fixed=controlFixed, control.family = control.family)
     } else if(!is.null(xObs) && !clusterEffect) {
       mod = inla(#y ~ - 1 + X + f(field, model=prior), 
@@ -811,6 +818,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                  family=family, verbose=verbose, control.inla=control.inla, 
                  control.compute=list(config=TRUE, cpo=doValidation, dic=doValidation, waic=doValidation), 
                  control.mode=modeControl, Ntrials=stackDat$Ntrials, 
+                 offset=offsetEst, 
                  control.fixed=controlFixed, control.family = control.family)
     } else if(is.null(xObs) && !clusterEffect) {
       mod = inla(#y ~ - 1 + f(field, model=prior), 
@@ -820,6 +828,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                  family=family, verbose=verbose, control.inla=control.inla, 
                  control.compute=list(config=TRUE, cpo=doValidation, dic=doValidation, waic=doValidation), 
                  control.mode=modeControl, Ntrials=stackDat$Ntrials, 
+                 offset=offsetEst, 
                  control.fixed=controlFixed, control.family = control.family)
     }
   } else {
