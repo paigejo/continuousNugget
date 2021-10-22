@@ -38,14 +38,14 @@ getSPDEModelFixedPar = function(mesh, effRange, margVar=1) {
   # logTau = log(tau0)
   
   # from page 5 of the paper listed above:
-  logKappa = 0.5 * log(8)
-  logTau = 0.5 * (lgamma(1) - (lgamma(2) + log(4*pi))) - logKappa
-  theta = c(log(sqrt(margVar)), log(effRange))
+  # logKappa = 0.5 * log(8)
+  # logTau = 0.5 * (lgamma(1) - (lgamma(2) + log(4*pi))) - logKappa
+  # theta = c(log(sqrt(margVar)), log(effRange))
   # spde <- INLA::inla.spde2.matern(mesh, B.tau = cbind(logTau, -1, +1),
   #                                 B.kappa = cbind(logKappa, 0, -1), theta.prior.mean = theta,
   #                                 theta.prior.prec = c(0.1, 1))
-  spde = INLA::inla.spde1.create(mesh, model="matern", param=theta)
-  
+  # spde = INLA::inla.spde1.create(mesh, model="matern", param=theta)
+  spde = inla.spde2.pcmatern(mesh, prior.range=c(effRange, NA), prior.sigma=c(sqrt(margVar), NA))
   spde
 }
 
