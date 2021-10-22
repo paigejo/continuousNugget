@@ -40,13 +40,20 @@ getSPDEModelFixedPar = function(mesh, effRange, margVar=1) {
   # from page 5 of the paper listed above:
   # logKappa = 0.5 * log(8)
   # logTau = 0.5 * (lgamma(1) - (lgamma(2) + log(4*pi))) - logKappa
-  # theta = c(log(sqrt(margVar)), log(effRange))
+  theta = c(log(sqrt(margVar)), log(effRange))
   # spde <- INLA::inla.spde2.matern(mesh, B.tau = cbind(logTau, -1, +1),
   #                                 B.kappa = cbind(logKappa, 0, -1), theta.prior.mean = theta,
   #                                 theta.prior.prec = c(0.1, 1))
   # spde = INLA::inla.spde1.create(mesh, model="matern", param=theta)
   spde = inla.spde2.pcmatern(mesh, prior.range=c(effRange, NA), prior.sigma=c(sqrt(margVar), NA))
-  spde
+  
+  test = inla.spde2.generic(spde$param.inla$M0, spde$param.inla$M1, spde$param.inla$M2, 
+                            spde$param.inla$B0, spde$param.inla$B1, spde$param.inla$B2, 
+                            theta.mu=theta, theta.Q=spde$param.inla$theta.Q, 
+                            transform=spde$param.inla$transform, 
+                            theta.initial=theta, fixed=rep(TRUE, 2), 
+                            theta.fixed=theta, BLC=spde$param.inla$BLC)
+  test
 }
 
 # get a reasonable default mesh triangulation for the SPDE model for [-1,1] x [-1,1] spatial domain
@@ -860,7 +867,11 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
   if(family == "normal") {
     nuggetVars = sapply(postSamples, function(x) {1 / x$hyperpar[1]})
   } else if(family == "binomial" && clusterEffect) {
-    nuggetVars = sapply(postSamples, function(x) {1 / x$hyperpar[3]})
+    if(!is.null(fixedParameters$clusterPrec)) {
+      nuggetVars = rep(1/fixedParameters$clusterPrec, length(postSamples))
+    } else {
+      nuggetVars = sapply(postSamples, function(x) {1 / x$hyperpar[3]})
+    }
   } else if(family == "betabinomial") {
     overdispersions = sapply(postSamples, function(x) {x$hyperpar[1]})
   }
@@ -991,10 +1002,10 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
   rownames(mat) = hyperNames
   
   getSummaryStatistics = function(draws) {
-    c(Est=mean(draws), SD=sd(draws), 
-      Qlower=quantile(probs=(1 - significanceCI) / 2, draws), 
-      Q50=quantile(probs=0.5, draws), 
-      Qupper=quantile(probs=1 - (1 - significanceCI) / 2, draws))
+    c(Est=mean(draws, na.rm=TRUE), SD=sd(draws, na.rm=TRUE), 
+      Qlower=quantile(probs=(1 - significanceCI) / 2, draws, na.rm=TRUE), 
+      Q50=quantile(probs=0.5, draws, na.rm=TRUE), 
+      Qupper=quantile(probs=1 - (1 - significanceCI) / 2, draws, na.rm=TRUE))
   }
   summaryNames = c("Est", "SD", "Qlower", "Q50", "Qupper")
   parameterSummaryTable = t(apply(mat, 1, getSummaryStatistics))
