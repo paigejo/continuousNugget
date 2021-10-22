@@ -742,7 +742,8 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
   
   # see: inla.doc("loggamma")
   # shape=.1, scale=10 for unit mean, variance 100 prior
-  startModelFitTime = proc.time()[3]
+  
+  # setup the formula
   thisFormula = "y ~ -1 + f(field, model=prior)"
   if(!is.null(xObs)) {
     thisFormula = paste0(thisFormula, " + X")
@@ -757,10 +758,13 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
   if(!is.null(offsetEst)) {
     thisFormula = paste0(thisFormula, " + offset(offsetEst)")
   }
+  thisFormula = as.formula(thisFormula)
+  
+  startModelFitTime = proc.time()[3]
   if(family == "normal") {
     if(!is.null(xObs)) {
       mod = inla(#y ~ - 1 + X + f(field, model=prior), 
-                 as.formula(thisFormula), 
+                 thisFormula, 
                  data = stackDat, 
                  control.predictor=list(A=inla.stack.A(stack.full), compute=TRUE, link=stackDat$link, quantiles=allQuantiles), 
                  family=family, verbose=verbose, control.inla=control.inla, 
@@ -770,7 +774,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                  control.family=control.family)
     } else {
       mod = inla(#y ~ - 1 + f(field, model=prior), 
-                 as.formula(thisFormula), 
+                 thisFormula, 
                  data = stackDat, 
                  control.predictor=list(A=inla.stack.A(stack.full), compute=TRUE, link=stackDat$link, quantiles=allQuantiles), 
                  family=family, verbose=verbose, control.inla=control.inla, 
@@ -783,7 +787,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
     clusterList = list(param=c(1, 0.05), prior="pc.prec")
     if(!is.null(xObs) && clusterEffect) {
       mod = inla(#y ~ - 1 + X + f(field, model=prior) + f(cluster, model="iid", hyper = list(prec = clusterList)), 
-                 as.formula(thisFormula), 
+                 thisFormula, 
                  data = stackDat, 
                  control.predictor=list(A=inla.stack.A(stack.full), compute=TRUE, link=stackDat$link, quantiles=allQuantiles), 
                  family=family, verbose=verbose, control.inla=control.inla, 
@@ -792,7 +796,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                  control.fixed=controlFixed, control.family = control.family)
     } else if(is.null(xObs) && clusterEffect) {
       mod = inla(#y ~ - 1 + f(field, model=prior) + f(cluster, model="iid", hyper = list(prec = clusterList)), 
-                 as.formula(thisFormula), 
+                 thisFormula, 
                  data = stackDat, 
                  control.predictor=list(A=inla.stack.A(stack.full), compute=TRUE, link=stackDat$link, quantiles=allQuantiles), 
                  family=family, verbose=verbose, control.inla=control.inla, 
@@ -801,7 +805,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                  control.fixed=controlFixed, control.family = control.family)
     } else if(!is.null(xObs) && !clusterEffect) {
       mod = inla(#y ~ - 1 + X + f(field, model=prior), 
-                 as.formula(thisFormula), 
+                 thisFormula, 
                  data = stackDat, 
                  control.predictor=list(A=inla.stack.A(stack.full), compute=TRUE, link=stackDat$link, quantiles=allQuantiles), 
                  family=family, verbose=verbose, control.inla=control.inla, 
@@ -810,7 +814,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                  control.fixed=controlFixed, control.family = control.family)
     } else if(is.null(xObs) && !clusterEffect) {
       mod = inla(#y ~ - 1 + f(field, model=prior), 
-                 as.formula(thisFormula), 
+                 thisFormula, 
                  data = stackDat, 
                  control.predictor=list(A=inla.stack.A(stack.full), compute=TRUE, link=stackDat$link, quantiles=allQuantiles), 
                  family=family, verbose=verbose, control.inla=control.inla, 
