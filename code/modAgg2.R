@@ -674,7 +674,7 @@ pixelPopToArea = function(pixelLevelPop, eaSamples, areas, stratifyByUrban=TRUE,
     nSamples = pixelLevelPop$NFineScalePrevalence
     zSamples = pixelLevelPop$ZFineScalePrevalence
     zSamples[is.na(zSamples)] = 0 # must set to zero temporarily so matrix multiplication works
-    out = aggPixelPreds(Zg=zSamples, Ng=nSamples, areas=areas, targetPopMat=targetPopMat, 
+    out = SUMMER:::aggPixelPreds(Zg=zSamples, Ng=nSamples, areas=areas, targetPopMat=targetPopMat, 
                         useDensity=FALSE, stratifyByUrban=stratifyByUrban, normalize=FALSE)
     aggregationResultsFineScalePrevalence = out$aggregationResults
     aggregationMatricesFineScalePrevalence = out$aggregationMatrices
@@ -691,7 +691,7 @@ pixelPopToArea = function(pixelLevelPop, eaSamples, areas, stratifyByUrban=TRUE,
     nSamplesFineScaleRisk = pixelLevelPop$NFineScaleRisk
     zSamplesFineScaleRisk = pixelLevelPop$ZFineScaleRisk
     zSamplesFineScaleRisk[is.na(zSamplesFineScaleRisk)] = 0 # must set to zero temporarily so matrix multiplication works out
-    out = aggPixelPreds(Zg=zSamplesFineScaleRisk, Ng=nSamplesFineScaleRisk, areas=areas, targetPopMat=targetPopMat, 
+    out = SUMMER:::aggPixelPreds(Zg=zSamplesFineScaleRisk, Ng=nSamplesFineScaleRisk, areas=areas, targetPopMat=targetPopMat, 
                         useDensity=FALSE, stratifyByUrban=stratifyByUrban, normalize=FALSE)
     aggregationResultsFineScaleRisk = out$aggregationResults
     aggregationMatricesFineScaleRisk = out$aggregationMatrices
@@ -709,7 +709,7 @@ pixelPopToArea = function(pixelLevelPop, eaSamples, areas, stratifyByUrban=TRUE,
     nSamplesSmoothRisk = pixelLevelPop$NSmoothRisk
     zSamplesSmoothRisk = pixelLevelPop$ZSmoothRisk
     zSamplesSmoothRisk[is.na(zSamplesSmoothRisk)] = 0 # must set to zero temporarily so matrix multiplication works out
-    out = aggPixelPreds(Zg=zSamplesSmoothRisk, Ng=nSamplesSmoothRisk, areas=areas, targetPopMat=targetPopMat, 
+    out = SUMMER:::aggPixelPreds(Zg=zSamplesSmoothRisk, Ng=nSamplesSmoothRisk, areas=areas, targetPopMat=targetPopMat, 
                         useDensity=FALSE, stratifyByUrban=stratifyByUrban, normalize=FALSE)
     aggregationResultsSmoothRisk = out$aggregationResults
     aggregationMatricesSmoothRisk = out$aggregationMatrices
@@ -726,7 +726,7 @@ pixelPopToArea = function(pixelLevelPop, eaSamples, areas, stratifyByUrban=TRUE,
     nSamplesGriddedRisk = pixelLevelPop$NGriddedRisk
     zSamplesGriddedRisk = pixelLevelPop$ZGriddedRisk
     zSamplesGriddedRisk[is.na(zSamplesGriddedRisk)] = 0 # must set to zero temporarily so matrix multiplication works out
-    out = aggPixelPreds(Zg=zSamplesGriddedRisk, Ng=nSamplesGriddedRisk, areas=areas, targetPopMat=targetPopMat, 
+    out = SUMMER:::aggPixelPreds(Zg=zSamplesGriddedRisk, Ng=nSamplesGriddedRisk, areas=areas, targetPopMat=targetPopMat, 
                         useDensity=FALSE, stratifyByUrban=stratifyByUrban, normalize=FALSE)
     aggregationResultsGriddedRisk = out$aggregationResults
     aggregationMatricesGriddedRisk = out$aggregationMatrices
