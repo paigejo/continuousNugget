@@ -27,33 +27,16 @@ getSPDEPrior = function(mesh, U=1, alpha=0.05, medianRange=NULL) {
 
 getSPDEModelFixedPar = function(mesh, effRange, margVar=1) {
   
-  # calculate SPDE model parameters based on Lindgren Rue (2015) "Bayesian Spatial Modelling with R-INLA"
-  # it is easier to use theta and set sigma0 to 1 then to set sigma0 and the effective range directly
-  # kappa0 <- sqrt(8)/effRange * meshSize # since nu = 1
-  # kappa0 <- sqrt(8)/effRange # since nu = 1
-  # kappa0 = sqrt(8) / 5
-  # logKappa = log(kappa0)
-  sigma0 = 1
-  # tau0 <- 1/(sqrt(4 * pi) * kappa0 * sigma0)
-  # logTau = log(tau0)
-  
-  # from page 5 of the paper listed above:
-  # logKappa = 0.5 * log(8)
-  # logTau = 0.5 * (lgamma(1) - (lgamma(2) + log(4*pi))) - logKappa
   theta = c(log(sqrt(margVar)), log(effRange))
-  # spde <- INLA::inla.spde2.matern(mesh, B.tau = cbind(logTau, -1, +1),
-  #                                 B.kappa = cbind(logKappa, 0, -1), theta.prior.mean = theta,
-  #                                 theta.prior.prec = c(0.1, 1))
-  # spde = INLA::inla.spde1.create(mesh, model="matern", param=theta)
   spde = inla.spde2.pcmatern(mesh, prior.range=c(effRange, NA), prior.sigma=c(sqrt(margVar), NA))
   
-  test = inla.spde2.generic(spde$param.inla$M0, spde$param.inla$M1, spde$param.inla$M2, 
-                            spde$param.inla$B0, spde$param.inla$B1, spde$param.inla$B2, 
-                            theta.mu=theta, theta.Q=spde$param.inla$theta.Q, 
-                            transform=spde$param.inla$transform, 
-                            theta.initial=theta, fixed=rep(TRUE, 2), 
-                            theta.fixed=theta, BLC=spde$param.inla$BLC)
-  test
+  spde$param.inla$theta.initial = theta
+  spde$param.inla$theta.mu = theta
+  spde$param.inla$theta.fixed = theta
+  spde$param.inla$fixed = rep(TRUE, length(theta))
+  
+  # test
+  spde
 }
 
 # get a reasonable default mesh triangulation for the SPDE model for [-1,1] x [-1,1] spatial domain
@@ -769,8 +752,6 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
   #   thisFormula = paste0(thisFormula, " + offset(offsetEst)")
   # }
   thisFormula = as.formula(thisFormula)
-  
-  browser()
   
   startModelFitTime = proc.time()[3]
   if(family == "normal") {
