@@ -949,31 +949,47 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
     clusterVarI = 1
     spatialRangeI = 2
     spatialSDI = 3
-    mat = apply(hyperMat, 2, function(x) {c(totalVar=x[spatialSDI]^2+1/x[clusterVarI], spatialVar=x[spatialSDI]^2, errorVar=1/x[clusterVarI], 
-                                            totalSD=sqrt(x[spatialSDI]^2+1/x[clusterVarI]), spatialSD=x[spatialSDI], errorSD=sqrt(1/x[clusterVarI]), 
-                                            spatialRange=x[spatialRangeI])})
+    if(!is.matrix(hyperMat)) {
+      mat = NULL
+    } else {
+      mat = apply(hyperMat, 2, function(x) {c(totalVar=x[spatialSDI]^2+1/x[clusterVarI], spatialVar=x[spatialSDI]^2, errorVar=1/x[clusterVarI], 
+                                              totalSD=sqrt(x[spatialSDI]^2+1/x[clusterVarI]), spatialSD=x[spatialSDI], errorSD=sqrt(1/x[clusterVarI]), 
+                                              spatialRange=x[spatialRangeI])})
+    }
   } else if(family == "binomial") {
     spatialRangeI = 1
     spatialSDI = 2
     if(!clusterEffect) {
       clusterVarI = NULL
-      mat = apply(hyperMat, 2, function(x) {c(totalVar=x[spatialSDI]^2, spatialVar=x[spatialSDI]^2, 
-                                              totalSD=x[spatialSDI], spatialSD=x[spatialSDI], 
-                                              spatialRange=x[spatialRangeI])})
+      if(!is.matrix(hyperMat)) {
+        mat = NULL
+      } else {
+        mat = apply(hyperMat, 2, function(x) {c(totalVar=x[spatialSDI]^2, spatialVar=x[spatialSDI]^2, 
+                                                totalSD=x[spatialSDI], spatialSD=x[spatialSDI], 
+                                                spatialRange=x[spatialRangeI])})
+      }
     } else {
       clusterVarI = 3
-      mat = apply(hyperMat, 2, function(x) {c(totalVar=x[spatialSDI]^2+1/x[clusterVarI], spatialVar=x[spatialSDI]^2, errorVar=1/x[clusterVarI], 
-                                              totalSD=sqrt(x[spatialSDI]^2+1/x[clusterVarI]), spatialSD=x[spatialSDI], errorSD=sqrt(1/x[clusterVarI]), 
-                                              spatialRange=x[spatialRangeI])})
+      if(!is.matrix(hyperMat)) {
+        mat = NULL
+      } else {
+        mat = apply(hyperMat, 2, function(x) {c(totalVar=x[spatialSDI]^2+1/x[clusterVarI], spatialVar=x[spatialSDI]^2, errorVar=1/x[clusterVarI], 
+                                                totalSD=sqrt(x[spatialSDI]^2+1/x[clusterVarI]), spatialSD=x[spatialSDI], errorSD=sqrt(1/x[clusterVarI]), 
+                                                spatialRange=x[spatialRangeI])})
+      }
     }
   } else if(family == "betabinomial") {
     overdispersionI = 1
     spatialRangeI = 2
     spatialSDI = 3
     clusterVarI = NULL
-    mat = apply(hyperMat, 2, function(x) {c(totalVar=x[spatialSDI]^2, spatialVar=x[spatialSDI]^2, 
-                                            totalSD=x[spatialSDI], spatialSD=x[spatialSDI], 
-                                            spatialRange=x[spatialRangeI], overdispersion=x[overdispersionI])})
+    if(!is.matrix(hyperMat)) {
+      mat = NULL
+    } else {
+      mat = apply(hyperMat, 2, function(x) {c(totalVar=x[spatialSDI]^2, spatialVar=x[spatialSDI]^2, 
+                                              totalSD=x[spatialSDI], spatialSD=x[spatialSDI], 
+                                              spatialRange=x[spatialRangeI], overdispersion=x[overdispersionI])})
+    }
   }
   
   if(clusterEffect || family == "normal")
@@ -982,31 +998,39 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
     hyperNames = c("totalVar", "spatialVar", "totalSD", "spatialSD", "spatialRange")
   else if(family == "betabinomial")
     hyperNames = c("totalVar", "spatialVar", "totalSD", "spatialSD", "spatialRange", "overdispersion")
-  rownames(mat) = hyperNames
-  
-  getSummaryStatistics = function(draws) {
-    c(Est=mean(draws, na.rm=TRUE), SD=sd(draws, na.rm=TRUE), 
-      Qlower=quantile(probs=(1 - significanceCI) / 2, draws, na.rm=TRUE), 
-      Q50=quantile(probs=0.5, draws, na.rm=TRUE), 
-      Qupper=quantile(probs=1 - (1 - significanceCI) / 2, draws, na.rm=TRUE))
-  }
-  summaryNames = c("Est", "SD", "Qlower", "Q50", "Qupper")
-  parameterSummaryTable = t(apply(mat, 1, getSummaryStatistics))
-  colnames(parameterSummaryTable) = summaryNames
-  
-  # separate out default parameter summaries
-  if(family == "normal" || clusterEffect) {
-    sdSummary=parameterSummaryTable[6,]
-    varSummary=parameterSummaryTable[3,]
-    rangeSummary=parameterSummaryTable[7,]
+  if(is.matrix(hyperMat)) {
+    rownames(mat) = hyperNames
+    
+    getSummaryStatistics = function(draws) {
+      c(Est=mean(draws, na.rm=TRUE), SD=sd(draws, na.rm=TRUE), 
+        Qlower=quantile(probs=(1 - significanceCI) / 2, draws, na.rm=TRUE), 
+        Q50=quantile(probs=0.5, draws, na.rm=TRUE), 
+        Qupper=quantile(probs=1 - (1 - significanceCI) / 2, draws, na.rm=TRUE))
+    }
+    summaryNames = c("Est", "SD", "Qlower", "Q50", "Qupper")
+    parameterSummaryTable = t(apply(mat, 1, getSummaryStatistics))
+    colnames(parameterSummaryTable) = summaryNames
+    
+    # separate out default parameter summaries
+    if(family == "normal" || clusterEffect) {
+      sdSummary=parameterSummaryTable[6,]
+      varSummary=parameterSummaryTable[3,]
+      rangeSummary=parameterSummaryTable[7,]
+    } else {
+      sdSummary = matrix(rep(0, 5), nrow=1) # these are specifically error/cluster sd and var
+      varSummary = matrix(rep(0, 5), nrow=1)
+      rangeSummary=parameterSummaryTable[5,]
+    }
+    overdispersionSummary = matrix(rep(0, 5), nrow=1)
+    if(family == "betabinomial")
+      overdispersionSummary=parameterSummaryTable[6,]
   } else {
-    sdSummary = matrix(rep(0, 5), nrow=1) # these are specifically error/cluster sd and var
-    varSummary = matrix(rep(0, 5), nrow=1)
-    rangeSummary=parameterSummaryTable[5,]
+    parameterSummaryTable = NULL
+    sdSummary = NULL
+    varSummary = NULL
+    rangeSummary = NULL
+    overdispersionSummary = NULL
   }
-  overdispersionSummary = matrix(rep(0, 5), nrow=1)
-  if(family == "betabinomial")
-    overdispersionSummary=parameterSummaryTable[6,]
   
   endTime = proc.time()[3]
   totalTime = endTime - startTime
