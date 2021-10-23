@@ -30,10 +30,10 @@ getSPDEModelFixedPar = function(mesh, effRange, margVar=1) {
   theta = c(log(sqrt(margVar)), log(effRange))
   spde = inla.spde2.pcmatern(mesh, prior.range=c(effRange, NA), prior.sigma=c(sqrt(margVar), NA))
   
-  spde$param.inla$theta.initial = theta
-  spde$param.inla$theta.mu = theta
-  spde$param.inla$theta.fixed = theta
-  spde$param.inla$fixed = rep(TRUE, length(theta))
+  # spde$param.inla$theta.initial = theta
+  # spde$param.inla$theta.mu = theta
+  # spde$param.inla$theta.fixed = theta
+  # spde$param.inla$fixed = rep(TRUE, length(theta))
   
   # test
   spde

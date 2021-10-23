@@ -45,6 +45,7 @@ thisTime = system.time(simDatKenya <- generateSimDataSetsLCPB2(nsim=1, targetPop
                                       dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
                                       seed=1, inla.seed=1L, simPopOnly=FALSE, returnEAinfo=TRUE, 
                                       easpa=easpaKenya, poppsub=poppsubKenya))
+thisTime
 
 # get the data and the true population
 dat = simDatKenya$SRSDat$clustDat[[1]]
@@ -118,7 +119,8 @@ popMatCombined = do.call("rbind", popGrids)
 # fit SPDE cluster level risk model over all integration points
 # spde$effRange, spde$margVar, familyPrec, clusterPrec, beta
 fixedParameters = list(spde=list(effRange=400, margVar=(1/3)^2), clusterPrec=2.5, beta=c(-2.9, -1))
-spdeFitN = fitSPDEKenyaDat(dat, nPostSamples=10000, popMat=popMatCombined)
+spdeFitN = fitSPDEKenyaDat(dat, nPostSamples=10000, popMat=popMatCombined, 
+                           fixedParameters=fixedParameters, prior=NULL)
 
 # remove unnecessary parts of the spdeFitN object to save space
 spdeFitN$mod$.args = NULL
