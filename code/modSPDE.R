@@ -884,7 +884,7 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
   obsMat = fixedPart + AEst %*% latentMat[fieldIndices,]
   
   if(!is.null(offsetEst)) {
-    obsMat = sweep(predMat, 1, offsetEst, "+")
+    obsMat = sweep(obsMat, 1, offsetEst, "+")
   }
   
   # add in cluster effect if necessary

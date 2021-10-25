@@ -35,33 +35,51 @@ easpaSimple = easpaSimple[easpaSimple$area == "Nairobi",]
 poppsubSimple = poppsubKenya
 poppsubSimple = poppsubSimple[poppsubSimple$area == "Nairobi",]
 
-# simulate population over all of Kenya and generate survey from the EAs
-thisTime = system.time(simDatKenya <- generateSimDataSetsLCPB2(nsim=1, targetPopMat=popMatKenyaNeonatal, 
-                                       popMat=popMatKenya, 
-                                       doFineScaleRisk=TRUE, doSmoothRisk=TRUE, 
-                                       gridLevel=FALSE, subareaLevel=TRUE, 
-                                      fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
-                                      logisticApproximation=FALSE, 
-                                      dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
-                                      seed=1, inla.seed=1L, simPopOnly=FALSE, returnEAinfo=TRUE, 
-                                      easpa=easpaKenya, poppsub=poppsubKenya))
-thisTime
-
-# get the data and the true population
-dat = simDatKenya$SRSDat$clustDat[[1]]
-dat$y = dat$Z
-dat$n = dat$N
-dat$admin1 = dat$area
-dat$admin2 = dat$subarea
-EAsN = simDatKenya$simulatedEAs$aggregatedPop$eaPop$eaDatList[[1]]$area == "Nariobi"
+# simulate 100 truths
 constituenciesN = poppsubKenya$area == "Nairobi"
 countyN = sort(unique(poppaKenya$area)) == "Nairobi"
-truePrevalenceEAsKenya = simDatKenya$simulatedEAs$aggregatedPop$eaPop$eaDatList[[1]]$pFineScalePrevalence
-truePrevalenceEAsKenya = truePrevalenceEAsKenya[EAsN]
-truePrevalenceConstituencyKenya = simDatKenya$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pFineScalePrevalence
-truePrevalenceConstituencyKenya = truePrevalenceConstituencyKenya[constituenciesN]
-truePrevalenceCountyKenya = truePrevalenceCountyKenya[countyN]
-truePrevalenceCountyKenya = simDatKenya$simulatedEAs$aggregatedPop$areaPop$aggregationResults$pFineScalePrevalence
+truths = list()
+dats = list()
+for(i in 1:2) {
+  # simulate population over all of Kenya and generate survey from the EAs
+  thisTime = system.time(simDatKenya <- generateSimDataSetsLCPB2(nsim=1, targetPopMat=popMatKenyaNeonatal, 
+                                                                 popMat=popMatKenya, 
+                                                                 doFineScaleRisk=TRUE, doSmoothRisk=TRUE, 
+                                                                 gridLevel=FALSE, subareaLevel=TRUE, 
+                                                                 fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
+                                                                 logisticApproximation=FALSE, 
+                                                                 dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
+                                                                 seed=1, inla.seed=1L, simPopOnly=FALSE, returnEAinfo=TRUE, 
+                                                                 easpa=easpaKenya, poppsub=poppsubKenya))
+  
+  simDatKenya$overSampDat = NULL
+  simDatKenya$simulatedEAs$eaDat = NULL
+  simDatKenya$simulatedEAs$eaSamples = NULL
+  simDatKenya$simulatedEAs$clustDat = NULL
+  simDatKenya$simulatedEAs$thisclustpc = NULL
+  
+  # get the data and the true population
+  dat = simDatKenya$SRSDat$clustDat[[1]]
+  dat$y = dat$Z
+  dat$n = dat$N
+  dat$admin1 = dat$area
+  dat$admin2 = dat$subarea
+  dats[[i]] = dat
+  
+  EAsN = simDatKenya$simulatedEAs$aggregatedPop$eaPop$eaDatList[[1]]$area == "Nariobi"
+  truePrevalenceEAsKenya = simDatKenya$simulatedEAs$aggregatedPop$eaPop$eaDatList[[1]]$pFineScalePrevalence
+  truePrevalenceEAsKenya = truePrevalenceEAsKenya[EAsN]
+  truePrevalenceConstituencyKenya = simDatKenya$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pFineScalePrevalence
+  truePrevalenceConstituencyKenya = truePrevalenceConstituencyKenya[constituenciesN]
+  truePrevalenceCountyKenya = truePrevalenceCountyKenya[countyN]
+  truePrevalenceCountyKenya = simDatKenya$simulatedEAs$aggregatedPop$areaPop$aggregationResults$pFineScalePrevalence
+  
+  truths[[i]]  = list(EAsN=EAsN, truePrevalenceEAsKenya=truePrevalenceEAsKenya, 
+                      truePrevalenceConstituencyKenya=truePrevalenceConstituencyKenya, 
+                      truePrevalenceCountyKenya=truePrevalenceCountyKenya)
+}
+save(dats, truths, file="savedOutput/simpleExample/gridResTest_datsAndTruths.RData")
+out = load("savedOutput/simpleExample/gridResTest_datsAndTruths.RData")
 
 # construct integration grids at different resolutions
 # resolutions = c(1, 10, 20, 40, 60, 80)
@@ -116,103 +134,80 @@ out = load("savedOutput/simpleExample/popGridResTest.RData")
 # combine the grids into 1 matrix for evaluating the SPDE model all at once
 popMatCombined = do.call("rbind", popGrids)
 
-# fit SPDE cluster level risk model over all integration points
+# fit SPDE cluster level risk model over all integration points, for each truth, 
+# and then generate predictions from the aggregation model conditional on the 
+# risk model predictions
 # spde$effRange, spde$margVar, familyPrec, clusterPrec, beta
 fixedParameters = list(spde=list(effRange=400, margVar=(1/3)^2), clusterPrec=2.5, beta=c(-2.9, -1))
-spdeFitN = fitSPDEKenyaDat(dat, nPostSamples=10000, popMat=popMatCombined, 
-                           fixedParameters=fixedParameters, prior=NULL)
-
-# remove unnecessary parts of the spdeFitN object to save space
-spdeFitN$mod$.args = NULL
-spdeFitN$mod$all.hyper = NULL
-
-# apply aggregation models at each resolution
-nSamples = c(c(500, 1000), rep(10000, length(resolutions)-1))
-separateUDraws = list()
-for(i in 1:length(popGrids)) {
-  # obtain the grids at this resolution
-  thisNSamples = nSamples[i]
+nSamples = rep(1000, length(resolutions))
+allAggResultsN = list()
+for(i in 1:length(truths)) {
+  print(paste0("Running analysis for truth ", i, "/", length(truths)))
   
-  # obtain model output at this resolution
-  thisResolutionI = startIs[i]:endIs[i]
-  separateUDraws = c(separateUDraws, spdeFitN$uDraws[thisResolutionI,1:thisNSamples])
+  dat = dats[[i]]
+  spdeFitN = fitSPDEKenyaDat(dat, nPostSamples=max(nSamples), popMat=popMatCombined, 
+                             fixedParameters=fixedParameters, prior=NULL)
+  
+  # remove unnecessary parts of the spdeFitN object to save space
+  spdeFitN$mod$.args = NULL
+  spdeFitN$mod$all.hyper = NULL
+  
+  # apply aggregation models at each resolution
+  # nSamples = c(c(500, 1000), rep(10000, length(resolutions)-1))
+  separateUDraws = list()
+  for(j in 1:length(popGrids)) {
+    # obtain the grids at this resolution
+    thisNSamples = nSamples[j]
+    
+    # obtain model output at this resolution
+    thisResolutionI = startIs[j]:endIs[j]
+    separateUDraws = c(separateUDraws, spdeFitN$uDraws[thisResolutionI,1:thisNSamples])
+  }
+  spdeFitN$uDraws = NULL
+  
+  # save spdeFitN and its relevant uDraws
+  # save(spdeFitN, separateUDraws, file="savedOutput/simpleExample/spdeFitNandUDraws.RData")
+  # out = load("savedOutput/simpleExample/spdeFitNandUDraws.RData")
+  
+  # run the actual analysis
+  aggResultsN = list()
+  for(j in 1:length(popGrids)) {
+    # obtain the grids at this resolution
+    thisNSamples = nSamples[j]
+    thisPopMat = popGrids[[j]]
+    thisPopMatAdjusted = popGridsAdjusted[[j]]
+    print(paste0("Running analysis for grid ", j, "/", length(popGrids), " with ", nrow(popGridsAdjusted[[j]]), " points"))
+    startTime = proc.time()[3]
+    
+    # obtain model output at this resolution
+    thisResolutionI = startIs[j]:endIs[j]
+    # thisUDraws = spdeFitN$uDraws[thisResolutionI,1:thisNSamples]
+    thisUDraws = separateUDraws[[j]]
+    sigmaEpsilonDraws = spdeFitN$sigmaEpsilonDraws[1:thisNSamples]
+    
+    thisAggResultsN = simPopCustom(thisUDraws, sigmaEpsilonDraws, easpaSimple, thisPopMat, 
+                                   thisPopMatAdjusted, doFineScaleRisk=TRUE, doGriddedRisk=TRUE, 
+                                   doSmoothRisk=TRUE, subareaLevel=TRUE, gridLevel=FALSE, 
+                                   poppsub=poppsubSimple, min1PerSubarea=TRUE, 
+                                   doSmoothRiskLogisticApprox=FALSE, returnEAinfo=TRUE, 
+                                   fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
+                                   verbose=FALSE)
+    
+    # remove unnecessary components to save space
+    thisAggResultsN = list(subareaPop = thisAggResultsN$subareaPop)
+    thisAggResultsN$subareaPop$aggregationMatrices = NULL
+    
+    # compile results
+    aggResultsN = c(aggResultsN, list(thisAggResultsN))
+    endTime = proc.time()[3]
+    print(paste0("Took ", (endTime-startTime)/60, " minutes"))
+  }
+  names(aggResultsN) = paste0("aggResultsN", resolutions)
+  
+  # add results for this truth
+  allAggResultsN = c(allAggResultsN, aggResultsN)
 }
-spdeFitN$uDraws = NULL
 
-# save spdeFitN and its relevant uDraws
-save(spdeFitN, separateUDraws, file="savedOutput/simpleExample/spdeFitNandUDraws.RData")
-out = load("savedOutput/simpleExample/spdeFitNandUDraws.RData")
-
-# run the actual analysis
-aggResultsN = list()
-for(i in 1:length(popGrids)) {
-  # obtain the grids at this resolution
-  thisNSamples = nSamples[i]
-  thisPopMat = popGrids[[i]]
-  thisPopMatAdjusted = popGridsAdjusted[[i]]
-  print(paste0("Running analysis for grid ", i, "/", length(popGrids), " with ", nrow(popGridsAdjusted[[i]]), " points"))
-  startTime = proc.time()[3]
-  
-  # obtain model output at this resolution
-  thisResolutionI = startIs[i]:endIs[i]
-  # thisUDraws = spdeFitN$uDraws[thisResolutionI,1:thisNSamples]
-  thisUDraws = separateUDraws[[i]]
-  sigmaEpsilonDraws = spdeFitN$sigmaEpsilonDraws[1:thisNSamples]
-  
-  thisAggResultsN = simPopCustom(thisUDraws, sigmaEpsilonDraws, easpaSimple, thisPopMat, 
-                            thisPopMatAdjusted, doFineScaleRisk=TRUE, doGriddedRisk=TRUE, 
-                            doSmoothRisk=TRUE, subareaLevel=TRUE, gridLevel=FALSE, 
-                            poppsub=poppsubSimple, min1PerSubarea=TRUE, 
-                            doSmoothRiskLogisticApprox=FALSE, returnEAinfo=TRUE, 
-                            fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
-                            verbose=FALSE)
-  
-  aggResultsN = c(aggResultsN, list(thisAggResultsN))
-  endTime = proc.time()[3]
-  print(paste0("Took ", (endTime-startTime)/60, " minutes"))
-}
-names(aggResultsN) = paste0("aggResultsN", resolutions)
-
-
-# for(i in 1:length(popGrids)) {
-#   # obtain the grids at this resolution
-#   thisNSamples = nSamples[i]
-#   thisPopMat = popGrids[[i]]
-#   thisPopMatAdjusted = popGridsAdjusted[[i]]
-#   
-#   # obtain model output at this resolution
-#   thisResolutionI = startIs[i]:endIs[i]
-#   # thisUDraws = spdeFitN$uDraws[thisResolutionI,1:thisNSamples]
-#   thisUDraws = separateUDraws[[i]]
-#   sigmaEpsilonDraws = spdeFitN$sigmaEpsilonDraws[1:thisNSamples]
-#   
-#   # get pixel level results
-#   pixelPop = aggResultsN[[i]]
-#   eaPop = list(eaDatList=pixelPop$eaDatList, eaSamples=pixelPop$eaSamples)
-#   eaSamples = pixelPop$eaSamples
-#   pixelPop$eaDatList = NULL
-#   pixelPop$eaSamples = NULL
-#   
-#   # aggregate to Admin2 level
-#   subareaPop = pixelPopToArea(pixelLevelPop=pixelPop, eaSamples=eaSamples, 
-#                               areas=thisPopMat$subarea, stratifyByUrban=TRUE, 
-#                               targetPopMat=thisPopMatAdjusted, 
-#                               doFineScaleRisk=TRUE, doSmoothRisk=TRUE, doGriddedRisk=TRUE)
-#   
-#   # get areas associated with each subarea for aggregation
-#   tempAreasFrom = thisPopMat$subarea
-#   tempAreasTo = thisPopMat$area
-#   areasFrom = sort(unique(tempAreasFrom))
-#   areasToI = match(areasFrom, tempAreasFrom)
-#   areasTo = tempAreasTo[areasToI]
-#   
-#   # do the aggregation from subareas to areas
-#   areaPop = areaPopToArea(areaLevelPop=subareaPop, 
-#                                areasFrom=areasFrom, areasTo=areasTo, stratifyByUrban=TRUE, 
-#                                doFineScaleRisk=TRUE, doSmoothRisk=TRUE, doGriddedRisk=TRUE)
-#   
-#   aggResultsN[[i]] = list(eaPop=eaPop, pixelPop=pixelPop, subareaPop=subareaPop, areaPop=areaPop)
-# }
 save(aggResultsN, file="savedOutput/simpleExample/gridResolutionTestNairobi.RData")
 
 out = load("savedOutput/simpleExample/gridResolutionTestNairobi.RData")
