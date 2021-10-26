@@ -958,6 +958,84 @@ aggPredsVariablePerArea = function(popNumerators, popDenominators,
   }
 }
 
+aggPredsVariablePerAreaDT = function(popNumerators, popDenominators, 
+                                     areaMat, areaLevels, urbanMat=NULL) {
+  
+  areaLevels = c(outer(areaLevels, 1:ncol(areaMat), function(x,y) {paste0(x, y)}))
+  areaMat = matrix(sweep(areaMat, 2, 1:ncol(areaMat), function(x, y) {paste0(x, y)}), ncol=1)
+  if(!is.null(urbanMat)) {
+    urbanMat = matrix(urbanMat, ncol=1)
+    dt = data.table(popNumerators=c(popNumerators), popDenominators=c(popDenominators), 
+                    area=c(areaMat), urban=c(urbanMat))
+    
+    aggDT = dt[, numerator:=sum(popNumerators), denominator:=sum(popDenominators), 
+       keyby=list(area, urban)]
+  } else {
+    dt = data.table(popNumerators=c(popNumerators), popDenominators=c(popDenominators), 
+                    area=c(areaMat))
+    aggDT = dt[, numerator:=sum(popNumerators), denominator:=sum(popDenominators), 
+               keyby=list(area)]
+  }
+  
+  
+  # function for aggregating values for each grid cell for draw i
+  getDrawColumn = function(i, vals) {
+    # calculate levels over which to aggregate
+    indices = factor(as.character(areaMat[,i]), levels=areaLevels)
+    
+    # aggregate
+    out = c(tapply(vals[,i], indices, FUN=sum, na.rm=TRUE))
+    unlist(out)
+  }
+  
+  fullMat = data.table(cbind(popNumerators=popNumerators, popDenominators=popDenominators, areaMat))
+  
+  # aggregate numerators and denominators, calculate prevalence/risk
+  popNumerators[popDenominators == 0] = 0
+  if(!is.null(urbanMat)) {
+    # do the same for urban/rural strata:
+    ## urban:
+    popNumeratorsUrban = popNumerators * urbanMat
+    popDenominatorsUrban = popDenominators * urbanMat
+    NareaUrban <- sapply(1:ncol(popDenominators), getDrawColumn, vals=popDenominatorsUrban)
+    NareaUrban[is.na(NareaUrban)] = 0
+    ZareaUrban <- sapply(1:ncol(popNumerators), getDrawColumn, vals=popNumeratorsUrban)
+    ZareaUrban[is.na(ZareaUrban)] = 0
+    pAreaUrban = ZareaUrban / NareaUrban
+    pAreaUrban[NareaUrban == 0] = NA
+    
+    ## rural:
+    popNumeratorsRural = popNumerators * (!urbanMat)
+    popDenominatorsRural = popDenominators * (!urbanMat)
+    NareaRural <- sapply(1:ncol(popDenominators), getDrawColumn, vals=popDenominatorsRural)
+    NareaRural[is.na(NareaRural)] = 0
+    ZareaRural <- sapply(1:ncol(popNumerators), getDrawColumn, vals=popNumeratorsRural)
+    ZareaRural[is.na(ZareaRural)] = 0
+    pAreaRural = ZareaRural / NareaRural
+    pAreaRural[NareaRural == 0] = NA
+    
+    ## combined:
+    Narea = NareaUrban + NareaRural
+    Zarea = ZareaUrban + ZareaRural
+    pArea = Zarea / Narea
+    pArea[Narea == 0] = NA
+    
+    list(region=areaLevels, Z=Zarea, N=Narea, p=pArea, 
+         ZUrban=ZareaUrban, NUrban=NareaUrban, pUrban=pAreaUrban, 
+         ZRural=ZareaRural, NRural=NareaRural, pRural=pAreaRural)
+  } else {
+    # in this case, we don't care about stratification, only the overall areal results
+    Narea <- sapply(1:ncol(popDenominators), getDrawColumn, vals=popDenominators)
+    Narea[is.na(Narea)] = 0
+    Zarea <- sapply(1:ncol(popNumerators), getDrawColumn, vals=popNumerators)
+    Zarea[is.na(Zarea)] = 0
+    pArea = Zarea / Narea
+    pArea[Narea == 0] = NA
+    
+    list(region=areaLevels, Z=Zarea, N=Narea, p=pArea)
+  }
+}
+
 #' @describeIn aggPop Aggregate areal populations to another areal level
 #' @export
 areaPopToArea = function(areaLevelPop, areasFrom, areasTo, 
