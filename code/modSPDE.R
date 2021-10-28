@@ -743,8 +743,10 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
   }
   if(family == "binomial" && clusterEffect) {
     if(!is.null(fixedParameters$clusterPrec)) {
-      thisFormula = paste0(thisFormula, " + f(cluster, model='iid', hyper = list(theta=list(initial=log(fixedParameters$clusterPrec), fixed=TRUE)))")
+      # thisFormula = paste0(thisFormula, " + f(cluster, model='iid', hyper = list(theta=list(initial=log(fixedParameters$clusterPrec), fixed=TRUE)))")
+      thisFormula = paste0(thisFormula, " + f(cluster, model='iid', hyper = list(prec=list(initial=log(fixedParameters$clusterPrec), fixed=TRUE)))")
     } else {
+      clusterList = list(param=c(1, 0.05), prior="pc.prec")
       thisFormula = paste0(thisFormula, " + f(cluster, model='iid', hyper = list(prec = clusterList))")
     }
   }
@@ -779,7 +781,6 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                  control.family=control.family)
     }
   } else if(family == "binomial" || family == "betabinomial") {
-    clusterList = list(param=c(1, 0.05), prior="pc.prec")
     if(!is.null(xObs) && clusterEffect) {
       mod = inla(#y ~ - 1 + X + f(field, model=prior) + f(cluster, model="iid", hyper = list(prec = clusterList)), 
                  thisFormula, 

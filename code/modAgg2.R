@@ -494,7 +494,7 @@ simPopSPDE = function(nsim=1, easpa, popMat, targetPopMat, poppsub, spdeMesh,
   } else {
     simVals = matrix(rep(0, nrow(pixelCoords)), ncol=1)
   }
-  
+  browser()
   # add in intercept
   simVals = simVals + beta0
   
@@ -510,7 +510,7 @@ simPopSPDE = function(nsim=1, easpa, popMat, targetPopMat, poppsub, spdeMesh,
   # simulate the enumeration areas
   logitRiskDraws = simVals
   sigmaEpsilonDraws = rep(sigmaEpsilon, nsim)
-  
+  browser()
   out = simPopCustom(logitRiskDraws=logitRiskDraws, sigmaEpsilonDraws=sigmaEpsilonDraws, easpa=easpa, 
                      popMat=popMat, targetPopMat=targetPopMat, 
                      stratifyByUrban=stratifyByUrban, doSmoothRisk=doSmoothRisk, 
@@ -520,6 +520,7 @@ simPopSPDE = function(nsim=1, easpa, popMat, targetPopMat, poppsub, spdeMesh,
                      subareaLevel=subareaLevel, gridLevel=gridLevel, 
                      min1PerSubarea=min1PerSubarea, returnEAinfo=TRUE, epsc=epsc, 
                      fixPopPerEA=fixPopPerEA, fixHHPerEA=fixHHPerEA, fixPopPerHH=fixPopPerHH)
+  browser()
   eaPop = list(eaDatList=out$eaDatList, eaSamples=out$eaSamples)
   out$eaDatList = NULL
   out$eaSamples = NULL
@@ -960,79 +961,124 @@ aggPredsVariablePerArea = function(popNumerators, popDenominators,
 
 aggPredsVariablePerAreaDT = function(popNumerators, popDenominators, 
                                      areaMat, areaLevels, urbanMat=NULL) {
+  browser()
+  popNumerators[popDenominators == 0] = 0
   
-  areaLevels = c(outer(areaLevels, 1:ncol(areaMat), function(x,y) {paste0(x, y)}))
-  areaMat = matrix(sweep(areaMat, 2, 1:ncol(areaMat), function(x, y) {paste0(x, y)}), ncol=1)
+  originalAreaLevel = areaLevels
+  width = floor(log10(ncol(areaMat))) + 1
+  columnNames = str_pad(1:ncol(areaMat), width, pad="0")
+  areaLevels = c(outer(areaLevels, columnNames, function(x,y) {paste0(x, y)}))
+  areaMat = matrix(sweep(areaMat, 2, columnNames, function(x, y) {paste0(x, y)}), ncol=1)
+  
   if(!is.null(urbanMat)) {
-    urbanMat = matrix(urbanMat, ncol=1)
-    dt = data.table(popNumerators=c(popNumerators), popDenominators=c(popDenominators), 
-                    area=c(areaMat), urban=c(urbanMat))
+    # urbanMat = matrix(urbanMat, ncol=1)
+    # pad dt with all area x urban combinations
+    dt = data.table(popNumerators=c(popNumerators, rep(0, 2*length(areaLevels))), 
+                    popDenominators=c(popDenominators, rep(0, 2*length(areaLevels))), 
+                    area=c(areaMat, rep(areaLevels, 2)), 
+                    urban=c(urbanMat, c(rep(TRUE, length(areaLevels)), rep(FALSE, length(areaLevels)))))
     
-    aggDT = dt[, numerator:=sum(popNumerators), denominator:=sum(popDenominators), 
-       keyby=list(area, urban)]
-  } else {
-    dt = data.table(popNumerators=c(popNumerators), popDenominators=c(popDenominators), 
-                    area=c(areaMat))
-    aggDT = dt[, numerator:=sum(popNumerators), denominator:=sum(popDenominators), 
-               keyby=list(area)]
-  }
-  
-  
-  # function for aggregating values for each grid cell for draw i
-  getDrawColumn = function(i, vals) {
-    # calculate levels over which to aggregate
-    indices = factor(as.character(areaMat[,i]), levels=areaLevels)
+    # 
+    # pad = data.table(popNumerators=rep(0, 2*length(areaLevels)), 
+    #                  popDenominators=rep(0, 2*length(areaLevels)), 
+    #                  area=rep(areaLevels, 2), 
+    #                  urban=c(rep(TRUE, length(areaLevels)), rep(FALSE, length(areaLevels))))
+    # dt = rbind(dt, pad)
     
     # aggregate
-    out = c(tapply(vals[,i], indices, FUN=sum, na.rm=TRUE))
-    unlist(out)
-  }
-  
-  fullMat = data.table(cbind(popNumerators=popNumerators, popDenominators=popDenominators, areaMat))
-  
-  # aggregate numerators and denominators, calculate prevalence/risk
-  popNumerators[popDenominators == 0] = 0
-  if(!is.null(urbanMat)) {
-    # do the same for urban/rural strata:
-    ## urban:
-    popNumeratorsUrban = popNumerators * urbanMat
-    popDenominatorsUrban = popDenominators * urbanMat
-    NareaUrban <- sapply(1:ncol(popDenominators), getDrawColumn, vals=popDenominatorsUrban)
-    NareaUrban[is.na(NareaUrban)] = 0
-    ZareaUrban <- sapply(1:ncol(popNumerators), getDrawColumn, vals=popNumeratorsUrban)
-    ZareaUrban[is.na(ZareaUrban)] = 0
-    pAreaUrban = ZareaUrban / NareaUrban
-    pAreaUrban[NareaUrban == 0] = NA
+    aggDTUrbRur = dt[, lapply(.SD, sum), keyby=list(area, urban)]
     
-    ## rural:
-    popNumeratorsRural = popNumerators * (!urbanMat)
-    popDenominatorsRural = popDenominators * (!urbanMat)
-    NareaRural <- sapply(1:ncol(popDenominators), getDrawColumn, vals=popDenominatorsRural)
-    NareaRural[is.na(NareaRural)] = 0
-    ZareaRural <- sapply(1:ncol(popNumerators), getDrawColumn, vals=popNumeratorsRural)
-    ZareaRural[is.na(ZareaRural)] = 0
-    pAreaRural = ZareaRural / NareaRural
+    # urban/rural:
+    ZareaUrban = matrix(aggDTUrbRur[urban==TRUE, popNumerators], ncol=ncol(popDenominators))
+    ZareaRural = matrix(aggDTUrbRur[urban==FALSE, popNumerators], ncol=ncol(popDenominators))
+    NareaUrban = matrix(aggDTUrbRur[urban==TRUE, popDenominators], ncol=ncol(popDenominators))
+    NareaRural = matrix(aggDTUrbRur[urban==FALSE, popDenominators], ncol=ncol(popDenominators))
+    pAreaUrban = matrix(ZareaUrban / NareaUrban, ncol=ncol(popDenominators))
+    pAreaUrban[NareaUrban == 0] = NA
+    pAreaRural = matrix(ZareaRural / NareaRural, ncol=ncol(popDenominators))
     pAreaRural[NareaRural == 0] = NA
     
-    ## combined:
-    Narea = NareaUrban + NareaRural
+    # combined:
     Zarea = ZareaUrban + ZareaRural
+    Narea = NareaUrban + NareaRural
     pArea = Zarea / Narea
     pArea[Narea == 0] = NA
     
-    list(region=areaLevels, Z=Zarea, N=Narea, p=pArea, 
+    list(region=originalAreaLevel, Z=Zarea, N=Narea, p=pArea, 
          ZUrban=ZareaUrban, NUrban=NareaUrban, pUrban=pAreaUrban, 
          ZRural=ZareaRural, NRural=NareaRural, pRural=pAreaRural)
   } else {
-    # in this case, we don't care about stratification, only the overall areal results
-    Narea <- sapply(1:ncol(popDenominators), getDrawColumn, vals=popDenominators)
-    Narea[is.na(Narea)] = 0
-    Zarea <- sapply(1:ncol(popNumerators), getDrawColumn, vals=popNumerators)
-    Zarea[is.na(Zarea)] = 0
+    dt = data.table(popNumerators=c(popNumerators), popDenominators=c(popDenominators), 
+                    area=c(areaMat))
+    aggDT = dt[, lapply(.SD, sum), keyby=list(area)]
+    
+    Zarea = matrix(aggDT$popNumerators, ncol=ncol(popNumerators))
+    Narea = matrix(aggDT$popDenominators, ncol=ncol(popDenominators))
     pArea = Zarea / Narea
     pArea[Narea == 0] = NA
     
-    list(region=areaLevels, Z=Zarea, N=Narea, p=pArea)
+    list(region=originalAreaLevel, Z=Zarea, N=Narea, p=pArea)
+  }
+}
+
+aggPredsVariablePerAreaDT2 = function(popNumerators, popDenominators, 
+                                     areaMat, areaLevels, urbanMat=NULL) {
+  browser()
+  popNumerators[popDenominators == 0] = 0
+  
+  originalAreaLevels = areaLevels
+  
+  areaLevels = outer(originalAreaLevels, length(originalAreaLevels)*(1:length(originalAreaLevels)), "+")
+  areaMat = sweep(areaMat, 2, length(originalAreaLevels)*(1:length(originalAreaLevels)), "+")
+  
+  if(!is.null(urbanMat)) {
+    # urbanMat = matrix(urbanMat, ncol=1)
+    # pad dt with all area x urban combinations
+    dt = data.table(popNumerators=c(popNumerators, rep(0, 2*length(areaLevels))), 
+                    popDenominators=c(popDenominators, rep(0, 2*length(areaLevels))), 
+                    area=c(areaMat, rep(areaLevels, 2)), 
+                    urban=c(urbanMat, c(rep(TRUE, length(areaLevels)), rep(FALSE, length(areaLevels)))))
+    
+    # 
+    # pad = data.table(popNumerators=rep(0, 2*length(areaLevels)), 
+    #                  popDenominators=rep(0, 2*length(areaLevels)), 
+    #                  area=rep(areaLevels, 2), 
+    #                  urban=c(rep(TRUE, length(areaLevels)), rep(FALSE, length(areaLevels))))
+    # dt = rbind(dt, pad)
+    
+    # aggregate
+    aggDTUrbRur = dt[, lapply(.SD, sum), keyby=list(area, urban)]
+    
+    # urban/rural:
+    ZareaUrban = matrix(aggDTUrbRur[urban==TRUE, popNumerators], ncol=ncol(popDenominators))
+    ZareaRural = matrix(aggDTUrbRur[urban==FALSE, popNumerators], ncol=ncol(popDenominators))
+    NareaUrban = matrix(aggDTUrbRur[urban==TRUE, popDenominators], ncol=ncol(popDenominators))
+    NareaRural = matrix(aggDTUrbRur[urban==FALSE, popDenominators], ncol=ncol(popDenominators))
+    pAreaUrban = matrix(ZareaUrban / NareaUrban, ncol=ncol(popDenominators))
+    pAreaUrban[NareaUrban == 0] = NA
+    pAreaRural = matrix(ZareaRural / NareaRural, ncol=ncol(popDenominators))
+    pAreaRural[NareaRural == 0] = NA
+    
+    # combined:
+    Zarea = ZareaUrban + ZareaRural
+    Narea = NareaUrban + NareaRural
+    pArea = Zarea / Narea
+    pArea[Narea == 0] = NA
+    
+    list(region=originalAreaLevel, Z=Zarea, N=Narea, p=pArea, 
+         ZUrban=ZareaUrban, NUrban=NareaUrban, pUrban=pAreaUrban, 
+         ZRural=ZareaRural, NRural=NareaRural, pRural=pAreaRural)
+  } else {
+    dt = data.table(popNumerators=c(popNumerators), popDenominators=c(popDenominators), 
+                    area=c(areaMat))
+    aggDT = dt[, lapply(.SD, sum), keyby=list(area)]
+    
+    Zarea = matrix(aggDT$popNumerators, ncol=ncol(popNumerators))
+    Narea = matrix(aggDT$popDenominators, ncol=ncol(popDenominators))
+    pArea = Zarea / Narea
+    pArea[Narea == 0] = NA
+    
+    list(region=originalAreaLevel, Z=Zarea, N=Narea, p=pArea)
   }
 }
 
@@ -1336,12 +1382,14 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
   } else {
     if(returnEAinfo) {
       out = SUMMER:::sampleNMultilevelMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 
-                                         popMat=popMat, stratifyByUrban=stratifyByUrban, verbose=verbose, returnEAinfo=returnEAinfo)
+                                         popMat=popMat, stratifyByUrban=stratifyByUrban, verbose=verbose, returnEAinfo=returnEAinfo, 
+                                         fixPopPerHH=fixPopPerHH)
       householdDraws = out$householdDraws
       Ncs = out$targetPopDraws
     } else {
       Ncs <- SUMMER:::sampleNMultilevelMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 
-                                          popMat=popMat, stratifyByUrban=stratifyByUrban, verbose=verbose, returnEAinfo=returnEAinfo)
+                                          popMat=popMat, stratifyByUrban=stratifyByUrban, verbose=verbose, returnEAinfo=returnEAinfo, 
+                                          fixPopPerHH=fixPopPerHH)
       householdDraws = NULL
     }
   }
@@ -1453,8 +1501,11 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
   NcsSamplesFineScaleRisk = NULL
   if(gridLevel) {
     # calculate pixel/grid level results
-    out = aggPredsVariablePerArea(popNumerators=Zcs, popDenominators=Ncs, 
-                                  areaMat=pixelIndexMat, areaLevels=1:nrow(popMat))
+    browser()
+    time1=system.time(out <- aggPredsVariablePerArea(popNumerators=Zcs, popDenominators=Ncs, 
+                                  areaMat=pixelIndexMat, areaLevels=1:nrow(popMat)))
+    time2=system.time(out <- aggPredsVariablePerAreaDT(popNumerators=Zcs, popDenominators=Ncs, 
+                                  areaMat=pixelIndexMat, areaLevels=1:nrow(popMat)))
     Ng = out$N
     Zg = out$Z
     pg = out$p
@@ -1526,9 +1577,12 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
       }
       
       # fine scale prevalence
-      fineScalePrevalenceSubarea = aggPredsVariablePerArea(popNumerators=Zcs, popDenominators=Ncs, 
-                                                           areaMat=subareaMat, urbanMat=urbanMat, 
-                                                           areaLevels=sort(as.character(poppsub$subarea)))
+      fineScalePrevalenceSubarea <- aggPredsVariablePerArea(popNumerators=Zcs, popDenominators=Ncs, 
+                                                            areaMat=subareaMat, urbanMat=urbanMat, 
+                                                            areaLevels=sort(as.character(poppsub$subarea)))
+      # time2 = system.time(fineScalePrevalenceSubarea <- aggPredsVariablePerAreaDT(popNumerators=Zcs, popDenominators=Ncs,
+                                                           # areaMat=subareaMat, urbanMat=urbanMat,
+                                                           # areaLevels=sort(as.character(poppsub$subarea))))
       names(fineScalePrevalenceSubarea)[-1] = paste(names(fineScalePrevalenceSubarea)[-1], "FineScalePrevalence", sep="")
       subareaLevelPop = c(subareaLevelPop, fineScalePrevalenceSubarea)
       
@@ -1784,7 +1838,3 @@ EADatListToEAPop = function(eaDatList) {
   
   eaPop
 }
-
-
-
-

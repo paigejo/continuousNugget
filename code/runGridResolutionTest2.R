@@ -1,5 +1,5 @@
 # this script is for comparing performance between models
-doSetup = TRUE
+doSetup = FALSE
 
 # download data ----
 # download 2014 Kenya population density and associated TIF file
@@ -7,7 +7,7 @@ githubURL <- paste0("https://github.com/paigejo/SUMMERdata/blob/main/data/",
                     "Kenya2014Pop/pop.rda?raw=true")
 popFilename = paste0(tempDirectory, "/pop.rda")
 if(!file.exists(popFilename)) {
-  download.file(githubURL,popFilename)
+  download.file(githubURL, popFilename)
 }
 
 githubURL <- paste0("https://github.com/paigejo/SUMMERdata/blob/main/data/", 
@@ -42,6 +42,7 @@ poppsubSimple = poppsubSimple[poppsubSimple$area == "Nairobi",]
 # simulate truths ----
 constituenciesN = poppsubKenya$area == "Nairobi"
 countyN = sort(unique(poppaKenya$area)) == "Nairobi"
+set.seed(123) # THIS LINE IS NEW, ADDED AFTER GRID RES TEST WAS DONE
 seeds = sample(1:100000, 100, replace=FALSE)
 inlaSeeds = sample(1:100000, 100, replace=FALSE)
 if(doSetup) {
@@ -56,7 +57,8 @@ if(doSetup) {
                                                                    fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
                                                                    logisticApproximation=FALSE, 
                                                                    dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
-                                                                   seed=seeds[i], inla.seed=inlaSeeds[i], simPopOnly=FALSE, returnEAinfo=TRUE, 
+                                                                   seed=seeds[i], inla.seed=inlaSeeds[i], 
+                                                                   simPopOnly=FALSE, returnEAinfo=TRUE, 
                                                                    easpa=easpaKenya, poppsub=poppsubKenya))
     
     simDatKenya$overSampDat = NULL
@@ -78,8 +80,8 @@ if(doSetup) {
     truePrevalenceEAsKenya = truePrevalenceEAsKenya[EAsN]
     truePrevalenceConstituencyKenya = simDatKenya$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pFineScalePrevalence
     truePrevalenceConstituencyKenya = truePrevalenceConstituencyKenya[constituenciesN]
-    truePrevalenceCountyKenya = truePrevalenceCountyKenya[countyN]
     truePrevalenceCountyKenya = simDatKenya$simulatedEAs$aggregatedPop$areaPop$aggregationResults$pFineScalePrevalence
+    truePrevalenceCountyKenya = truePrevalenceCountyKenya[countyN]
     
     truths[[i]]  = list(EAsN=EAsN, truePrevalenceEAsKenya=truePrevalenceEAsKenya, 
                         truePrevalenceConstituencyKenya=truePrevalenceConstituencyKenya, 
@@ -160,8 +162,9 @@ popMatCombined = do.call("rbind", popGrids)
 fixedParameters = list(spde=list(effRange=400, margVar=(1/3)^2), clusterPrec=2.5, beta=c(-2.9, -1))
 nSamples = rep(1000, length(resolutions))
 allAggResultsN = list()
-startI = 1
+startI = 91
 endI = length(truths)
+endI = 100
 for(i in startI:endI) {
   print(paste0("Running analysis for truth ", i, "/", length(truths), ", endI=", endI))
   
@@ -233,9 +236,9 @@ save(allAggResultsN,
      file=paste0("savedOutput/simpleExample/gridResolutionTestNairobi_", 
                  startI, "_", endI, ".RData"))
 
-# concatenate all results if need be:
-tempAllAggResultsN = list()
+# concatenate results ----
 if(FALSE) {
+  tempAllAggResultsN = list()
   out = load(paste0("savedOutput/simpleExample/gridResolutionTestNairobi_1_10.RData"))
   tempAllAggResultsN = c(tempAllAggResultsN, allAggResultsN)
   out = load(paste0("savedOutput/simpleExample/gridResolutionTestNairobi_11_20.RData"))
@@ -258,9 +261,10 @@ if(FALSE) {
   tempAllAggResultsN = c(tempAllAggResultsN, allAggResultsN)
   
   allAggResultsN = tempAllAggResultsN
+  save(allAggResultsN, file="savedOutput/simpleExample/gridResolutionTestNairobi_1_100.RData")
 }
 
-out = load("savedOutput/simpleExample/gridResolutionTestNairobi.RData")
+out = load("savedOutput/simpleExample/gridResolutionTestNairobi_1_100.RData")
 
 ##### Plot results ----
 
@@ -580,16 +584,16 @@ dev.off()
 pdf(paste0("figures/gridResolutionTest/meanCoverage80VRes.pdf"), width=5, height=5)
 pchs = 15:18
 cols = rainbow(4)
-ylim = range(c(meanCoveragesSmoothRisk80), c(meanCoveragesRisk80), 
-             c(meanCoveragesPrevalence80), c(meanCoveragesGriddedRisk80))
-ylim = c(0, 1)
-plot(resolutions*.97, meanCoveragesSmoothRisk80, pch=pchs[1], col=cols[1], 
+ylim = range(100*c(c(meanCoveragesSmoothRisk80), c(meanCoveragesRisk80), 
+             c(meanCoveragesPrevalence80), c(meanCoveragesGriddedRisk80)))
+ylim = c(0, 100)
+plot(resolutions*.97, 100*meanCoveragesSmoothRisk80, pch=pchs[1], col=cols[1], 
      ylim=ylim, ylab="80% coverage", xlab="Grid resolution (km)", 
      log="x")
-abline(a=.8, b=0, lty=2)
-points(resolutions*.99, meanCoveragesRisk80, pch=pchs[2], col=cols[2])
-points(resolutions*1.01, meanCoveragesPrevalence80, pch=pchs[3], col=cols[3])
-points(resolutions*1.03, meanCoveragesGriddedRisk80, pch=pchs[4], col=cols[4])
+abline(a=80, b=0, lty=2)
+points(resolutions*.99, 100*meanCoveragesRisk80, pch=pchs[2], col=cols[2])
+points(resolutions*1.01, 100*meanCoveragesPrevalence80, pch=pchs[3], col=cols[3])
+points(resolutions*1.03, 100*meanCoveragesGriddedRisk80, pch=pchs[4], col=cols[4])
 legend("right", c("Smooth risk", "Risk", "Prevalence", "Gridded risk"), 
        pch=pchs, col=cols)
 dev.off()
@@ -597,16 +601,16 @@ dev.off()
 pdf(paste0("figures/gridResolutionTest/meanCoverage90VRes.pdf"), width=5, height=5)
 pchs = 15:18
 cols = rainbow(4)
-ylim = range(c(meanCoveragesSmoothRisk90), c(meanCoveragesRisk90), 
-             c(meanCoveragesPrevalence90), c(meanCoveragesGriddedRisk90))
-ylim = c(0, 1)
-plot(resolutions*.97, meanCoveragesSmoothRisk90, pch=pchs[1], col=cols[1], 
+ylim = range(100*c(c(meanCoveragesSmoothRisk90), c(meanCoveragesRisk90), 
+             c(meanCoveragesPrevalence90), c(meanCoveragesGriddedRisk90)))
+ylim = c(0, 100)
+plot(resolutions*.97, 100*meanCoveragesSmoothRisk90, pch=pchs[1], col=cols[1], 
      ylim=ylim, ylab="90% coverage", xlab="Grid resolution (km)", 
      log="x")
-abline(a=.8, b=0, lty=2)
-points(resolutions*.99, meanCoveragesRisk90, pch=pchs[2], col=cols[2])
-points(resolutions*1.01, meanCoveragesPrevalence90, pch=pchs[3], col=cols[3])
-points(resolutions*1.03, meanCoveragesGriddedRisk90, pch=pchs[4], col=cols[4])
+abline(a=90, b=0, lty=2)
+points(resolutions*.99, 100*meanCoveragesRisk90, pch=pchs[2], col=cols[2])
+points(resolutions*1.01, 100*meanCoveragesPrevalence90, pch=pchs[3], col=cols[3])
+points(resolutions*1.03, 100*meanCoveragesGriddedRisk90, pch=pchs[4], col=cols[4])
 legend("right", c("Smooth risk", "Risk", "Prevalence", "Gridded risk"), 
        pch=pchs, col=cols)
 dev.off()
@@ -614,16 +618,16 @@ dev.off()
 pdf(paste0("figures/gridResolutionTest/meanCoverage95VRes.pdf"), width=5, height=5)
 pchs = 15:18
 cols = rainbow(4)
-ylim = range(c(meanCoveragesSmoothRisk95), c(meanCoveragesRisk95), 
-             c(meanCoveragesPrevalence95), c(meanCoveragesGriddedRisk95))
-ylim = c(0, 1)
-plot(resolutions*.97, meanCoveragesSmoothRisk95, pch=pchs[1], col=cols[1], 
+ylim = range(100*c(c(meanCoveragesSmoothRisk95), c(meanCoveragesRisk95), 
+             c(meanCoveragesPrevalence95), c(meanCoveragesGriddedRisk95)))
+ylim = c(0, 100)
+plot(resolutions*.97, 100*meanCoveragesSmoothRisk95, pch=pchs[1], col=cols[1], 
      ylim=ylim, ylab="95% coverage", xlab="Grid resolution (km)", 
      log="x")
-abline(a=.8, b=0, lty=2)
-points(resolutions*.99, meanCoveragesRisk95, pch=pchs[2], col=cols[2])
-points(resolutions*1.01, meanCoveragesPrevalence95, pch=pchs[3], col=cols[3])
-points(resolutions*1.03, meanCoveragesGriddedRisk95, pch=pchs[4], col=cols[4])
+abline(a=95, b=0, lty=2)
+points(resolutions*.99, 100*meanCoveragesRisk95, pch=pchs[2], col=cols[2])
+points(resolutions*1.01, 100*meanCoveragesPrevalence95, pch=pchs[3], col=cols[3])
+points(resolutions*1.03, 100*meanCoveragesGriddedRisk95, pch=pchs[4], col=cols[4])
 legend("right", c("Smooth risk", "Risk", "Prevalence", "Gridded risk"), 
        pch=pchs, col=cols)
 dev.off()
