@@ -206,7 +206,7 @@ tempData = tempData[order(tempData$NAME_2),]
 newadm2 <- SpatialPolygonsDataFrame(temp, tempData, match.ID = F)
 adm2 = newadm2
 
-poppsubKenyaNeonatal = poppRegionFromPopMat(popMatKenyaNeonatal, 
+poppsubKenyaNeonatal = SUMMER:::poppRegionFromPopMat(popMatKenyaNeonatal, 
                                             popMatKenyaNeonatal$subarea)
 poppsubKenyaNeonatal = 
   cbind(subarea=poppsubKenyaNeonatal$region, 
