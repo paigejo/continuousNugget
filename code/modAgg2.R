@@ -494,7 +494,7 @@ simPopSPDE = function(nsim=1, easpa, popMat, targetPopMat, poppsub, spdeMesh,
   } else {
     simVals = matrix(rep(0, nrow(pixelCoords)), ncol=1)
   }
-  browser()
+  
   # add in intercept
   simVals = simVals + beta0
   
