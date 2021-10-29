@@ -510,7 +510,7 @@ simPopSPDE = function(nsim=1, easpa, popMat, targetPopMat, poppsub, spdeMesh,
   # simulate the enumeration areas
   logitRiskDraws = simVals
   sigmaEpsilonDraws = rep(sigmaEpsilon, nsim)
-  browser()
+  
   out = simPopCustom(logitRiskDraws=logitRiskDraws, sigmaEpsilonDraws=sigmaEpsilonDraws, easpa=easpa, 
                      popMat=popMat, targetPopMat=targetPopMat, 
                      stratifyByUrban=stratifyByUrban, doSmoothRisk=doSmoothRisk, 
@@ -520,7 +520,7 @@ simPopSPDE = function(nsim=1, easpa, popMat, targetPopMat, poppsub, spdeMesh,
                      subareaLevel=subareaLevel, gridLevel=gridLevel, 
                      min1PerSubarea=min1PerSubarea, returnEAinfo=TRUE, epsc=epsc, 
                      fixPopPerEA=fixPopPerEA, fixHHPerEA=fixHHPerEA, fixPopPerHH=fixPopPerHH)
-  browser()
+  
   eaPop = list(eaDatList=out$eaDatList, eaSamples=out$eaSamples)
   out$eaDatList = NULL
   out$eaSamples = NULL
