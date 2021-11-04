@@ -5108,7 +5108,7 @@ meanEAsPerCon2 = function(numToPrint=0) {
   # popTotal: the number of people in the the area
   
   
-  countyI = match(poppaKenya$area, easpa$area)
+  countyI = match(poppsubKenya$area, easpa$area)
   easInUrbanStratum = easpa$EAUrb[countyI]
   easInRuralStratum = easpa$EARur[countyI]
   popInUrbanStratum = poppaKenya$popUrb[countyI]
