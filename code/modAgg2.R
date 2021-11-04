@@ -961,7 +961,7 @@ aggPredsVariablePerArea = function(popNumerators, popDenominators,
 
 aggPredsVariablePerAreaDT = function(popNumerators, popDenominators, 
                                      areaMat, areaLevels, urbanMat=NULL) {
-  browser()
+  
   popNumerators[popDenominators == 0] = 0
   
   originalAreaLevel = areaLevels
@@ -1501,11 +1501,12 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
   NcsSamplesFineScaleRisk = NULL
   if(gridLevel) {
     # calculate pixel/grid level results
-    browser()
-    time1=system.time(out <- aggPredsVariablePerArea(popNumerators=Zcs, popDenominators=Ncs, 
-                                  areaMat=pixelIndexMat, areaLevels=1:nrow(popMat)))
-    time2=system.time(out <- aggPredsVariablePerAreaDT(popNumerators=Zcs, popDenominators=Ncs, 
-                                  areaMat=pixelIndexMat, areaLevels=1:nrow(popMat)))
+    # time1=system.time(out <- aggPredsVariablePerArea(popNumerators=Zcs, popDenominators=Ncs, 
+    #                               areaMat=pixelIndexMat, areaLevels=1:nrow(popMat)))
+    # time2=system.time(out <- aggPredsVariablePerAreaDT(popNumerators=Zcs, popDenominators=Ncs, 
+    #                               areaMat=pixelIndexMat, areaLevels=1:nrow(popMat)))
+    out <- aggPredsVariablePerArea(popNumerators=Zcs, popDenominators=Ncs, 
+                                   areaMat=pixelIndexMat, areaLevels=1:nrow(popMat))
     Ng = out$N
     Zg = out$Z
     pg = out$p

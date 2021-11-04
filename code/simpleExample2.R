@@ -37,29 +37,30 @@ offsets = matrix(0, nrow=6, ncol=2)
 offsets[1,2] = .1 # shift label for Eldas slightly higher
 offsets[6,1] = .15 # shift label for Wajir West slightly farther east
 easpsub = meanEAsPerCon2()
-easpsub = easpsub[easpsubarea=="Wajir",]
+easpsub = easpsub[easpsub$area=="Wajir",]
 popGridWajir = popGrid[popGrid$area=="Wajir",]
 popGridWajirNorth = popGrid[popGrid$subarea=="Wajir North",]
 popGridWajirAdjusted = popGridAdjusted[popGridAdjusted$area=="Wajir",]
-poppaSimpleAdjusted = poppa
+poppaSimpleAdjusted = poppaKenya[order(poppaKenya$area),]
 poppaSimpleAdjusted$popUrb = easpa$EAUrb * 25
 poppaSimpleAdjusted$popRur = easpa$EARur * 25
 poppaSimpleAdjusted$popTotal = easpa$EATotal * 25
+poppaSimpleAdjustedW = poppaSimpleAdjusted[poppaSimpleAdjusted$area == "Wajir",]
 popMatSimpleAdjusted = adjustPopGrid(popGrid, poppaSimpleAdjusted)
-popMatSimpleAdjusted$constituency = popMatSimpleAdjusted$admin2
-popMatSimpleAdjusted$area = popMatSimpleAdjusted$admin1
-popMatSimpleAdjustedNW = popMatSimpleAdjusted[popGrid$admin2=="Wajir North",]
+popMatSimpleAdjusted$subarea = popMatSimpleAdjusted$subarea
+popMatSimpleAdjusted$area = popMatSimpleAdjusted$area
+popMatSimpleAdjustedNW = popMatSimpleAdjusted[popGrid$subarea=="Wajir North",]
 # plotMapDat(mapDat=adm0, lwd=.5, new=TRUE)
 # plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], border="green")
 
 # restrict simulation to N Wajir
-popMatSimpleAdjustedW = popMatSimpleAdjusted[popMatSimpleAdjusted$admin1 == "Wajir", ]
+popMatSimpleAdjustedW = popMatSimpleAdjusted[popMatSimpleAdjusted$area == "Wajir", ]
 easpaW = makeDefaultEASPA()
 easpaW = easpaW[easpaW$area == "Wajir", ]
 popMatW = makeDefaultPopMat()
 popMatW = popMatW[popMatW$area == "Wajir", ]
-poppconW = poppcon
-poppconW = poppconW[poppconWarea == "Wajir", ]
+poppsubW = poppsubKenya
+poppsubW = poppsubW[poppsubW$area == "Wajir", ]
 
 # set up color scales
 redBlueScale = makeRedBlueDivergingColors(64, rev=TRUE)
@@ -90,26 +91,26 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
 #            legend.cex=.5, legend.width=1)
 quilt.plot(mort$lon[mort$admin1=="Wajir"], mort$lat[mort$admin1=="Wajir"], mort$y[mort$admin1=="Wajir"]/mort$n[mort$admin1=="Wajir"], 
            nx=50, ny=60, add=TRUE)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
 dev.off()
 
 # make 1km res pop density grid ----
 if(FALSE) {
-  popMatFine = makePopIntegrationTab(kmRes=1, pop=pop, domainPoly=kenyaPoly, 
+  popGridFine = makePopIntegrationTab(kmRes=1, pop=pop, domainPoly=kenyaPoly, 
                                      eastLim=eastLim, northLim=northLim, 
                                      mapProjection=projKenya, poppa=poppaKenya, 
                                      poppsub=poppsubKenya, stratifyByUrban=TRUE, 
                                      areaMapDat=adm1, subareaMapDat=adm2, 
                                      areaPolygonSubsetI=46)
   
-  popGridFineAdjusted = adjustPopMat(popMatFine, poppaTarget=poppaSimpleAdjusted, adjustBy="subarea")
+  popGridFineAdjusted = adjustPopMat(popGridFine, poppaTarget=poppaSimpleAdjustedW, adjustBy="area")
   
   # popGridFine = makeInterpPopGrid(kmRes=1, mean.neighbor=500, delta=.05, poppcon=poppcon)
   # popGridFineAdjusted = adjustPopGrid(popGridFine, poppaSimpleAdjusted)
   
-  popGridFine = popGridFine[popGridFine$admin1 == "Wajir",]
-  popGridFineAdjusted = popGridFineAdjusted[popGridFineAdjusted$admin1 == "Wajir",]
+  popGridFine = popGridFine[popGridFine$area == "Wajir",]
+  popGridFineAdjusted = popGridFineAdjusted[popGridFineAdjusted$area == "Wajir",]
   
   # normalize to have the correct population within the county
   # popGridFine$pop = popGridFine$pop * (poppc$popTotal[poppcarea=="Wajir"] / sum(popGridFine$pop))
@@ -132,7 +133,7 @@ if(FALSE) {
   quilt.plot(popGridFine$lon, popGridFine$lat, log(popGridFine$pop),
              col=popCols, nx=230, ny=380, add.legend = FALSE, add=TRUE,
              zlim=log(popRange))
-  plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+  plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
   addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
   dev.off()
   
@@ -150,7 +151,7 @@ if(FALSE) {
   quilt.plot(popGridFineAdjusted$lon, popGridFineAdjusted$lat, log(popGridFineAdjusted$pop),
              col=popCols, nx=230, ny=380, add.legend = FALSE, add=TRUE,
              zlim=log(popRangeTarget))
-  plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+  plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
   addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
   dev.off()
 }
@@ -162,8 +163,8 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=FALSE, legend.mar=0, addColorBar=FALSE)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
-popInWajir = popGrid$admin1 == "Wajir"
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
+popInWajir = popGrid$area == "Wajir"
 quilt.plot(popGrid$lon[popInWajir], popGrid$lat[popInWajir], popGrid$urban[popInWajir], col=c(rgb(0, 0, 0, 0), "blue"), nx=60, ny=100, add.legend = FALSE, add=TRUE)
 offsets = matrix(0, nrow=6, ncol=2)
 offsets[1,2] = .1 # shift label for Eldas slightly higher
@@ -177,8 +178,8 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=FALSE, legend.mar=0, addColorBar=FALSE)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
-popInWajir = popGrid$admin1 == "Wajir"
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
+popInWajir = popGrid$area == "Wajir"
 quilt.plot(popGrid$lon[popInWajir], popGrid$lat[popInWajir], popGrid$urban[popInWajir], col=c(rgb(0, 0, 0, 0), "blue"), nx=60, ny=100, add.legend = FALSE, add=TRUE)
 offsets = matrix(0, nrow=6, ncol=2)
 offsets[1,2] = .1 # shift label for Eldas slightly higher
@@ -189,7 +190,7 @@ dev.off()
 # now plot urban fraction as a function of constituency
 pdf(file="figures/simpleExample/wajirUrbanFrac.pdf", width=4, height=5)
 par(mar=c(4.1, 4.1, 1.1, 4.5))
-urbanFraction = (poppcon$popUrb/poppcon$popTotal)[poppconarea=="Wajir"]
+urbanFraction = (poppsubW$popUrb/poppsubW$popTotal)
 ruralUrbanCols=makeGreenBlueSequentialColors(32)
 # theseCols = getColorsFromScale(urbanFraction, c(.02, .7), ruralUrbanCols, forceValuesInRange=TRUE)
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
@@ -210,7 +211,7 @@ dev.off()
 # now plot urban fraction as a function of constituency
 pdf(file="figures/simpleExample/wajirUrbanFrac.pdf", width=4, height=5)
 par(mar=c(4.1, 4.1, 1.1, 4.5))
-urbanFraction = (poppcon$popUrb/poppcon$popTotal)[poppconarea=="Wajir"]
+urbanFraction = (poppsubKenya$popUrb/poppsubKenya$popTotal)[poppsubKenya$area=="Wajir"]
 ruralUrbanCols=makeGreenBlueSequentialColors(32)
 # theseCols = getColorsFromScale(urbanFraction, c(.02, .7), ruralUrbanCols, forceValuesInRange=TRUE)
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
@@ -286,20 +287,21 @@ addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
 dev.off()
 
 ##### Simulate EA locations for example ----
-simDat = generateSimDataSetsLCPB(nsim=1, adjustedPopMat=popMatSimpleAdjustedW, 
+simDat = generateSimDataSetsLCPB2(nsim=1, targetPopMat=popMatSimpleAdjustedW, 
                                  fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
-                                 logisticApproximation=FALSE, 
+                                 logisticApproximation=FALSE, gridLevel=TRUE, 
+                                 doFineScaleRisk=TRUE, doSmoothRisk=TRUE, 
                                  dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
                                  seed=1, inla.seed=1L, simPopOnly=FALSE, returnEAinfo=TRUE, 
-                                 easpa=easpaW, popMat=popMatW, constituencyPop=poppconW)
+                                 easpa=easpaW, popMat=popMatW, poppsub=poppsubW)
 eaSamples = simDat$simulatedEAs$eaSamples
 eaDat = simDat$simulatedEAs$eaDat
-# eaDat = eaDat[eaDat$admin1 == "Wajir",]
-eaDatNW = eaDat[eaDat$admin2 == "Wajir North", ]
-eaSamplesNW = eaSamples[popGridWajir$admin2=="Wajir North",1]
-# eaSamples = eaSamples[popGrid$admin1=="Wajir",1]
-NSamples = simDat$simulatedEAs$aggregatedPop$pixelMatricesLCPB$N[,1]
-NSamplesNW = simDat$simulatedEAs$aggregatedPop$pixelMatricesLCPB$N[popGridWajir$admin2=="Wajir North",1]
+# eaDat = eaDat[eaDat$area == "Wajir",]
+eaDatNW = eaDat[eaDat$subarea == "Wajir North", ]
+eaSamplesNW = eaSamples[popGridWajir$subarea=="Wajir North",1]
+# eaSamples = eaSamples[popGrid$area=="Wajir",1]
+NSamples = simDat$simulatedEAs$aggregatedPop$pixelPop$NFineScalePrevalence[,1]
+NSamplesNW = NSamples[popGridWajir$subarea=="Wajir North"]
 prevalenceSamples = simDat$simulatedEAs$aggregatedPop$pixelMatricesLCPB$p[,1]
 
 # plot EA locations ----
@@ -308,7 +310,7 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDat$lon, eaDat$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 points(eaDat$lon, eaDat$lat, pch=19, cex=.1, col="blue")
 addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
@@ -322,7 +324,7 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDat$lon, eaDat$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 plotWithColor(eaDat$lon, eaDat$lat, eaDat$pLCPB, pch=19, cex=.2, 
               colScale=riskCols, new=FALSE, zlim=pRangeMod, 
@@ -339,7 +341,7 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDat$lon, eaDat$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 plotWithColor(eaDat$lon, eaDat$lat, eaDat$pLCPb, pch=19, cex=.2, 
               colScale=riskCols, new=FALSE, zlim=pRangeMod, 
@@ -355,7 +357,7 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDat$lon, eaDat$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 plotWithColor(eaDat$lon, eaDat$lat, eaDat$pLCPb, pch=19, cex=.2, 
               colScale=riskCols, new=FALSE, 
@@ -371,7 +373,7 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDat$lon, eaDat$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 plotWithColor(eaDat$lon, eaDat$lat, eaDat$pLcpb, pch=19, cex=.2, 
               colScale=riskCols, new=FALSE, zlim=pRangeMod, 
@@ -387,7 +389,7 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDat$lon, eaDat$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 plotWithColor(eaDat$lon, eaDat$lat, eaDat$pLcpb, pch=19, cex=.2, 
               colScale=riskCols, new=FALSE, 
@@ -403,7 +405,7 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            xlim = longRangeNorthWajir, ylim = latRangeNorthWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDat$lon, eaDat$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.3, col="blue")
 addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.5)
@@ -423,7 +425,7 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeNorthWajir, kenyaLatRange = latRangeNorthWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pLCPB, pch=21, cex=1, 
               colScale=riskCols, new=FALSE, zlim=pRangeMod, 
@@ -441,7 +443,7 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeNorthWajir, kenyaLatRange = latRangeNorthWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 prevalenceResiduals = eaDatNW$pLCPB - eaDatNW$plcpb
 # tempRiskCols = makePurpleRedDivergingColors(64, rev=TRUE, valRange = range(prevalenceResiduals), center = 0)
@@ -460,7 +462,7 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeNorthWajir, kenyaLatRange = latRangeNorthWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 prevalenceResiduals = 100 * (eaDatNW$pLCPB - eaDatNW$plcpb) / eaDatNW$plcpb
 # tempRiskCols = makePurpleRedDivergingColors(64, rev=TRUE, valRange = range(prevalenceResiduals), center = 0)
@@ -479,7 +481,7 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeNorthWajir, kenyaLatRange = latRangeNorthWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pLCPb, pch=21, cex=1, 
               colScale=riskCols, new=FALSE, zlim=pRangeMod, 
@@ -497,7 +499,7 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeNorthWajir, kenyaLatRange = latRangeNorthWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 tempRiskCols = makePurpleRedDivergingColors(64, rev=TRUE, valRange = range(eaDatNW$pLCPB), center = median(eaDatNW$pLCPB))
 plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pLCPb, pch=21, cex=1, 
@@ -514,7 +516,7 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeNorthWajir, kenyaLatRange = latRangeNorthWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 prevalenceResiduals = eaDatNW$pLCPB - eaDatNW$plcpb
 riskResiduals = eaDatNW$pLCPb - eaDatNW$plcpb
@@ -534,7 +536,7 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeNorthWajir, kenyaLatRange = latRangeNorthWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 prevalenceResiduals = 100 * (eaDatNW$pLCPB - eaDatNW$plcpb) / eaDatNW$plcpb
 riskResiduals = 100 * (eaDatNW$pLCPb - eaDatNW$plcpb) / eaDatNW$plcpb
@@ -553,7 +555,7 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeNorthWajir, kenyaLatRange = latRangeNorthWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pLCPb, pch=21, cex=.8, 
               colScale=riskCols, new=FALSE, 
@@ -570,7 +572,7 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeNorthWajir, kenyaLatRange = latRangeNorthWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pLcpb, pch=21, cex=.8, 
               colScale=riskCols, new=FALSE, zlim=pRangeMod, 
@@ -587,7 +589,7 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeNorthWajir, kenyaLatRange = latRangeNorthWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pLcpb, pch=21, cex=.8, 
               colScale=riskCols, new=FALSE, 
@@ -606,12 +608,12 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 pRange = range(prevalenceSamples, na.rm=TRUE)
-quilt.plot(popGrid$lon[popGrid$admin1=="Wajir"], 
-           popGrid$lat[popGrid$admin1=="Wajir"], 
+quilt.plot(popGrid$lon[popGrid$area=="Wajir"], 
+           popGrid$lat[popGrid$area=="Wajir"], 
            prevalenceSamples, 
            col=riskCols, nx=45, ny=60, add.legend = TRUE, add=TRUE, 
            zlim=pRangeMod)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
 dev.off()
 
@@ -624,12 +626,12 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-quilt.plot(popGrid$lon[popGrid$admin1=="Wajir"], 
-           popGrid$lat[popGrid$admin1=="Wajir"], 
+quilt.plot(popGrid$lon[popGrid$area=="Wajir"], 
+           popGrid$lat[popGrid$area=="Wajir"], 
            logit(expectedRisk), 
            col=riskCols, nx=45, ny=60, add.legend = FALSE, add=TRUE, 
            zlim=logit(pRangeMod))
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 ticks = c(.01, .05, .1,.2, .3, .4)
 tickLabels = as.character(ticks)
 image.plot(zlim=logit(pRangeMod), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
@@ -643,12 +645,12 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-quilt.plot(popGrid$lon[popGrid$admin1=="Wajir"], 
-           popGrid$lat[popGrid$admin1=="Wajir"], 
+quilt.plot(popGrid$lon[popGrid$area=="Wajir"], 
+           popGrid$lat[popGrid$area=="Wajir"], 
            logit(expectedRisk), 
            col=riskCols, nx=45, ny=60, add.legend = FALSE, add=TRUE, 
            zlim=logit(range(expectedRisk)))
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 ticks = c(.01, .02, .03, .04, .05, .06, .07, .08, .09, .1)
 tickLabels = as.character(ticks)
 image.plot(zlim=logit(range(expectedRisk)), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
@@ -659,7 +661,7 @@ dev.off()
 
 # plot smooth risk for Wajir North
 expectedRisk = simDat$simulatedEAs$aggregatedPop$pixelMatriceslcpb$p[,1]
-expectedRisk = expectedRisk[popGridWajir$admin2 == "Wajir North"]
+expectedRisk = expectedRisk[popGridWajir$subarea == "Wajir North"]
 # pRangeMod = range(c(eaDat$pLCPB[eaDat$pLCPB != 0], eaDat$pLCPb, eaDat$plcpb))
 pRangeMod = range(c(eaDatNW$pLCPB[eaDatNW$pLCPB != 0], eaDatNW$pLCPb, eaDatNW$plcpb))
 
@@ -668,12 +670,12 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeNorthWajir, kenyaLatRange = latRangeNorthWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-quilt.plot(popGrid$lon[popGrid$admin2=="Wajir North"], 
-           popGrid$lat[popGrid$admin2=="Wajir North"], 
+quilt.plot(popGrid$lon[popGrid$subarea=="Wajir North"], 
+           popGrid$lat[popGrid$subarea=="Wajir North"], 
            logit(expectedRisk), 
            col=riskCols, nx=29, ny=24, add.legend = FALSE, add=TRUE, 
            zlim=logit(pRangeMod))
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 ticks = c(0, .05, .1, .15, .2, .25, .3, .35, .4, .45)
 tickLabels = as.character(ticks)
 tickLabels[seq(4, 10, by=2)] = ""
@@ -688,12 +690,12 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeNorthWajir, kenyaLatRange = latRangeNorthWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-quilt.plot(popGrid$lon[popGrid$admin2=="Wajir North"], 
-           popGrid$lat[popGrid$admin2=="Wajir North"], 
+quilt.plot(popGrid$lon[popGrid$subarea=="Wajir North"], 
+           popGrid$lat[popGrid$subarea=="Wajir North"], 
            logit(expectedRisk), 
            col=riskCols, nx=29, ny=24, add.legend = FALSE, add=TRUE, 
            zlim=logit(range(expectedRisk)))
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 ticks = c(.02, .03, .04, .05, .06, .07)
 tickLabels = as.character(ticks)
 image.plot(zlim=logit(range(expectedRisk)), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
@@ -707,12 +709,12 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeNorthWajir, kenyaLatRange = latRangeNorthWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-quilt.plot(popGrid$lon[popGrid$admin2=="Wajir North"], 
-           popGrid$lat[popGrid$admin2=="Wajir North"], 
+quilt.plot(popGrid$lon[popGrid$subarea=="Wajir North"], 
+           popGrid$lat[popGrid$subarea=="Wajir North"], 
            expectedRisk, 
            col=riskCols, nx=29, ny=24, add.legend = FALSE, add=TRUE, 
            zlim=range(expectedRisk))
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 ticks = c(.02, .03, .04, .05, .06, .07)
 tickLabels = as.character(ticks)
 image.plot(zlim=range(expectedRisk), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
@@ -729,12 +731,12 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 eaRange = c(1, 60)
-quilt.plot(popGrid$lon[popGrid$admin1=="Wajir"], 
-           popGrid$lat[popGrid$admin1=="Wajir"], 
+quilt.plot(popGrid$lon[popGrid$area=="Wajir"], 
+           popGrid$lat[popGrid$area=="Wajir"], 
            log(eaSamples), 
            col=popCols[-(1:5)], nx=45, ny=60, add.legend = FALSE, add=TRUE, 
            zlim=log(eaRange))
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 eaTicks = c(1, 5, 10, 50)
 eaTickLabels = as.character(eaTicks)
 image.plot(zlim=log(eaRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
@@ -750,12 +752,12 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 NRange = c(35, 2400)
-quilt.plot(popGrid$lon[popGrid$admin1=="Wajir"], 
-           popGrid$lat[popGrid$admin1=="Wajir"], 
+quilt.plot(popGrid$lon[popGrid$area=="Wajir"], 
+           popGrid$lat[popGrid$area=="Wajir"], 
            log(NSamples), 
            col=popCols[-(1:5)], nx=45, ny=60, add.legend = FALSE, add=TRUE, 
            zlim=log(NRange))
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 NTicks = c(35, 100, 300, 800, 2400)
 NTickLabels = as.character(NTicks)
 image.plot(zlim=log(NRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
@@ -794,7 +796,7 @@ if(FALSE) {
   quilt.plot(popGridWajirAdjusted$lon, popGridWajirAdjusted$lat, log(popWeights), 
              col=popCols, nx=45, ny=75, add.legend = FALSE, add=TRUE, 
              zlim=log(weightRange))
-  plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+  plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
   addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
   dev.off()
 }
@@ -808,7 +810,7 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
 quilt.plot(popGridWajir$lon, popGridWajir$lat, log(eaSamplesNorm), 
            col=popCols[-(1:5)], nx=45, ny=60, add.legend = FALSE, add=TRUE, 
            zlim=log(weightRange))
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 image.plot(zlim=log(weightRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
            col=popCols[-(1:5)], add=TRUE, axis.args=list(at=log(weightTicks), labels=weightTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
            legend.cex=.5, legend.width=1)
@@ -821,12 +823,12 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-quilt.plot(popGrid$lon[popGrid$admin1=="Wajir"], 
-           popGrid$lat[popGrid$admin1=="Wajir"], 
+quilt.plot(popGrid$lon[popGrid$area=="Wajir"], 
+           popGrid$lat[popGrid$area=="Wajir"], 
            log(NSamples), 
            col=popCols[-(1:5)], nx=45, ny=60, add.legend = FALSE, add=TRUE, 
            zlim=log(weightRange))
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # NTicks = c(35, 100, 300, 800, 2400)
 # NTickLabels = as.character(NTicks)
 image.plot(zlim=log(weightRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
@@ -847,7 +849,7 @@ plotWithColor(eaDat$lon, eaDat$lat, weightsEA,
               zlim=weightRange, scaleFun=log, scaleFunInverse=exp, 
               legend.cex=.5, legend.width=1, legend.mar=5, 
               pch=19, cex=.2, ticks=weightTicks)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # NTicks = c(35, 100, 300, 800, 2400)
 # NTickLabels = as.character(NTicks)
 addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
@@ -859,12 +861,12 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-quilt.plot(popGrid$lon[popGrid$admin1=="Wajir"], 
-           popGrid$lat[popGrid$admin1=="Wajir"], 
+quilt.plot(popGrid$lon[popGrid$area=="Wajir"], 
+           popGrid$lat[popGrid$area=="Wajir"], 
            log(eaSamples), 
            col=popCols[-(1:5)], nx=45, ny=60, add.legend = FALSE, add=TRUE, 
            zlim=log(weightRange2))
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 image.plot(zlim=log(weightRange2), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
            col=popCols[-(1:5)], add=TRUE, axis.args=list(at=log(weightTicks2), labels=weightTickLabels2, cex.axis=1, tck=-.7, hadj=-.1), 
            legend.cex=.5, legend.width=1)
@@ -877,12 +879,12 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-quilt.plot(popGrid$lon[popGrid$admin1=="Wajir"], 
-           popGrid$lat[popGrid$admin1=="Wajir"], 
+quilt.plot(popGrid$lon[popGrid$area=="Wajir"], 
+           popGrid$lat[popGrid$area=="Wajir"], 
            log(NSamples), 
            col=popCols[-(1:5)], nx=45, ny=60, add.legend = FALSE, add=TRUE, 
            zlim=log(weightRange2))
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 NTicks = c(35, 100, 300, 800, 2400)
 NTickLabels = as.character(NTicks)
 image.plot(zlim=log(weightRange2), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
@@ -902,12 +904,12 @@ dev.off()
 #               colScale=popCols[-c(1:5)], new=FALSE, 
 #               legend.cex=.5, legend.width=1, legend.mar=5, 
 #               pch=19, cex=.2)
-# # quilt.plot(popGrid$lon[popGrid$admin1=="Wajir"], 
-# #            popGrid$lat[popGrid$admin1=="Wajir"], 
+# # quilt.plot(popGrid$lon[popGrid$area=="Wajir"], 
+# #            popGrid$lat[popGrid$area=="Wajir"], 
 # #            log(NSamples), 
 # #            col=popCols[-(1:5)], nx=45, ny=60, add.legend = FALSE, add=TRUE, 
 # #            zlim=log(weightRange2))
-# plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+# plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # # NTicks = c(35, 100, 300, 800, 2400)
 # # NTickLabels = as.character(NTicks)
 # # image.plot(zlim=log(weightRange2), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
@@ -948,14 +950,14 @@ if(FALSE) {
   quilt.plot(popMatSimpleAdjustedNW$lon, popMatSimpleAdjustedNW$lat, log(popWeights), 
              col=popCols, nx=29, ny=24, add.legend = FALSE, add=TRUE, 
              zlim=log(weightRange))
-  plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+  plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
   addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.8)
   dev.off()
 }
 
 # same but with number of assigned people per EA
 
-nEAsNW = sum(eaSamples[popGridWajir$admin2 == "Wajir North"])
+nEAsNW = sum(eaSamples[popGridWajir$subarea == "Wajir North"])
 weightsEA = rep(1/nEAsNW, nEAsNW)
 pdf(file="figures/simpleExample/wajirSimNPerEANormNW.pdf", width=5, height=3.9)
 par(mar=c(4.1, 4.1, 1.1, 4.5))
@@ -967,7 +969,7 @@ plotWithColor(eaDatNW$lon, eaDatNW$lat, weightsEA,
               zlim=weightRange, scaleFun=log, scaleFunInverse=exp, 
               legend.cex=.5, legend.width=1, legend.mar=5, 
               pch=19, cex=1, ticks=weightTicks)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # NTicks = c(35, 100, 300, 800, 2400)
 # NTickLabels = as.character(NTicks)
 addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.8)
@@ -979,12 +981,12 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-quilt.plot(popGrid$lon[popGrid$admin1=="Wajir"], 
-           popGrid$lat[popGrid$admin1=="Wajir"], 
+quilt.plot(popGrid$lon[popGrid$area=="Wajir"], 
+           popGrid$lat[popGrid$area=="Wajir"], 
            log(eaSamples), 
            col=popCols[-(1:5)], nx=45, ny=60, add.legend = FALSE, add=TRUE, 
            zlim=log(weightRange2))
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 image.plot(zlim=log(weightRange2), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
            col=popCols[-(1:5)], add=TRUE, axis.args=list(at=log(weightTicks2), labels=weightTickLabels2, cex.axis=1, tck=-.7, hadj=-.1), 
            legend.cex=.5, legend.width=1)
@@ -997,12 +999,12 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-quilt.plot(popGrid$lon[popGrid$admin1=="Wajir"], 
-           popGrid$lat[popGrid$admin1=="Wajir"], 
+quilt.plot(popGrid$lon[popGrid$area=="Wajir"], 
+           popGrid$lat[popGrid$area=="Wajir"], 
            log(NSamplesNW), 
            col=popCols[-(1:5)], nx=45, ny=60, add.legend = FALSE, add=TRUE, 
            zlim=log(weightRange2))
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 NTicks = c(35, 100, 300, 800, 2400)
 NTickLabels = as.character(NTicks)
 image.plot(zlim=log(weightRange2), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
@@ -1022,12 +1024,12 @@ dev.off()
 #               colScale=popCols[-c(1:5)], new=FALSE, 
 #               legend.cex=.5, legend.width=1, legend.mar=5, 
 #               pch=19, cex=.2)
-# # quilt.plot(popGrid$lon[popGrid$admin1=="Wajir"], 
-# #            popGrid$lat[popGrid$admin1=="Wajir"], 
+# # quilt.plot(popGrid$lon[popGrid$area=="Wajir"], 
+# #            popGrid$lat[popGrid$area=="Wajir"], 
 # #            log(NSamplesNW), 
 # #            col=popCols[-(1:5)], nx=45, ny=60, add.legend = FALSE, add=TRUE, 
 # #            zlim=log(weightRange2))
-# plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+# plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # # NTicks = c(35, 100, 300, 800, 2400)
 # # NTickLabels = as.character(NTicks)
 # # image.plot(zlim=log(weightRange2), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
@@ -1042,14 +1044,14 @@ par(mar=c(4.1, 4.1, 1.1, 4.5))
 plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-tempVals = factor(popGrid$admin2[popGrid$admin1=="Wajir"])
+tempVals = factor(popGrid$subarea[popGrid$area=="Wajir"])
 tempVals = as.numeric(tempVals)
-quilt.plot(popGrid$lon[popGrid$admin1=="Wajir"], 
-           popGrid$lat[popGrid$admin1=="Wajir"], 
+quilt.plot(popGrid$lon[popGrid$area=="Wajir"], 
+           popGrid$lat[popGrid$area=="Wajir"], 
            tempVals, 
            col=rainbow(6), nx=45, ny=60, add.legend = TRUE, add=TRUE, 
            FUN=max)
-plotMapDat(mapDat=adm2[adm2@data$COUNTY_NAM=="Wajir",], lwd=.5)
+plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
 dev.off()
 
@@ -1060,15 +1062,15 @@ eaSamplesRural = eaSamples
 eaSamplesUrban[!urbanPixels] = 0
 eaSamplesRural[urbanPixels] = 0
 
-out = aggregate(c(eaSamplesUrban), by=list(constituency=popGridWajir$admin2), FUN=sum)
+out = aggregate(c(eaSamplesUrban), by=list(constituency=popGridWajir$subarea), FUN=sum)
 nEAs = out$x
 nEAsUrban = nEAs
 
-out = aggregate(c(eaSamplesRural), by=list(constituency=popGridWajir$admin2), FUN=sum)
+out = aggregate(c(eaSamplesRural), by=list(constituency=popGridWajir$subarea), FUN=sum)
 nEAs = out$x
 nEAsRural = nEAs
 
-out = aggregate(c(eaSamples), by=list(constituency=popGridWajir$admin2), FUN=sum)
+out = aggregate(c(eaSamples), by=list(constituency=popGridWajir$subarea), FUN=sum)
 nEAs = out$x
 nEAsTotal = nEAs
 
@@ -1124,7 +1126,7 @@ addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
 dev.off()
 
 # plot prevalence and risk ----
-easInWajir = eaDat$admin1 == "Wajir"
+easInWajir = eaDat$area == "Wajir"
 pdf(file="figures/simpleExample/wajirSimlcpbVLCPB.pdf", width=5, height=5)
 plot(eaDat$plcpb[easInWajir], eaDat$pLCPB[easInWajir], pch=19, cex=.1, col="blue", type="n", 
      xlab="Smooth Risk", ylab="Fine Scale Prevalence")
@@ -1133,8 +1135,8 @@ points(eaDat$plcpb[easInWajir], eaDat$pLCPB[easInWajir], pch=19, cex=.1, col="bl
 dev.off()
 
 # plot constituency level prevalence versus risk:
-sortI = sort(as.character(poppcon$Constituency), index.return=TRUE)$ix
-theseCounties = poppconarea[sortI]
+sortI = sort(as.character(poppsubKenya$Constituency), index.return=TRUE)$ix
+theseCounties = poppsubKenyaarea[sortI]
 constituenciesInWajir = theseCounties == "Wajir"
 pdf(file="figures/simpleExample/wajirSimlcpbVLCPBConstituency.pdf", width=5, height=5)
 plot(simDat$simulatedEAs$aggregatedPop$aggregatedResultslcpb$constituencyMatrices$p[constituenciesInWajir,1], 
@@ -1211,12 +1213,12 @@ dev.off()
 # simDatMultiOriginal = generateSimDataSetsLCPB(nsim=nsim, adjustedPopMat=popMatSimpleAdjusted, fixPopPerEA=25, logisticApproximation=FALSE, 
 #                                               dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
 #                                               simPopOnly=TRUE, returnEAinfo=FALSE, seed=1, inla.seed=1L, verbose=TRUE, 
-#                                               easpa=easpa, popMat=popMat, constituencyPop=poppcon)
+#                                               easpa=easpa, popMat=popMat, constituencyPop=poppsubKenya)
 nsim = 10000
 simDatMulti = generateSimDataSetsLCPB(nsim=nsim, adjustedPopMat=popMatSimpleAdjustedW, fixPopPerEA=25, logisticApproximation=FALSE, 
                                       dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
                                       simPopOnly=TRUE, returnEAinfo=FALSE, seed=1, inla.seed=1L, verbose=TRUE, 
-                                      easpa=easpaW, popMat=popMatW, constituencyPop=poppconW)
+                                      easpa=easpaW, popMat=popMatW, constituencyPop=poppsubW)
 testnsim = 10000
 prevalenceSamples = simDatMulti$aggregatedResultsLCPB$constituencyMatrices$Z[,1:testnsim]
 fineScaleRiskSamples = simDatMulti$aggregatedResultsLCPb$constituencyMatrices$Z[,1:testnsim]
@@ -1322,7 +1324,7 @@ sigmaEpsilonDraws = spdeFit$sigmaEpsilonDraws
 # apply aggregation models
 aggResults = modLCPB(uDraws, sigmaEpsilonDraws, easpaW, popMatW, 
                      popMatSimpleAdjustedW, doLCPb=TRUE, doIHMEModel=TRUE, 
-                     constituencyPop=poppconW, ensureAtLeast1PerConstituency=TRUE, 
+                     constituencyPop=poppsubW, ensureAtLeast1PerConstituency=TRUE, 
                      logisticApproximation=FALSE, verbose=TRUE, 
                      fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1)
 
@@ -1335,11 +1337,11 @@ nEAsTotal = out$meanTotalEAs
 nPerCon = aggResults$aggregatedResultslcpb$constituencyMatrices$N[,1]
 
 # calculate number of pixels per area (for understanding IHME model variance)
-out = aggregate(popMatSimpleAdjustedW$pop, by=list(pixels=popMatSimpleAdjustedW$admin2), FUN=length)
+out = aggregate(popMatSimpleAdjustedW$pop, by=list(pixels=popMatSimpleAdjustedW$subarea), FUN=length)
 nPixels = out$x
 
 # calculate number of EAs sampled per area (for understanding spatial variance)
-out = aggregate(dat$N[dat$admin1 == "Wajir"], by=list(dat$admin2[dat$admin1 == "Wajir"]), FUN=length)
+out = aggregate(dat$N[dat$area == "Wajir"], by=list(dat$subarea[dat$area == "Wajir"]), FUN=length)
 nEAsSampled = out$x
 
 # gather aggregation model output
@@ -1423,32 +1425,32 @@ mean((prevalenceSDs - smoothRiskSDs) / smoothRiskSDs)
 # Do the same, but in Nairobi ----
 longRangeNairobi = c(39, 41)
 latRangeNairobi = c(0.25, 3.6)
-constituenciesN = poppcon$Constituency[poppconarea=="Nairobi"]
+constituenciesN = poppsubKenya$subarea[poppsubKenya$area=="Nairobi"]
 offsets = matrix(0, nrow=4, ncol=2)
 # offsets[1,2] = .1 # shift label for Eldas slightly higher
 # offsets[6,1] = .15 # shift label for Wajir West slightly farther east
 easpsub = meanEAsPerCon()
 easpsub = easpsub[easpsubarea=="Nairobi",]
-popGridN = popGrid[popGrid$admin1=="Nairobi",]
-# popGridWajirAdjusted = popGridAdjusted[popGridAdjusted$admin1=="Wajir",]
+popGridN = popGrid[popGrid$area=="Nairobi",]
+# popGridWajirAdjusted = popGridAdjusted[popGridAdjusted$area=="Wajir",]
 # plotMapDat(mapDat=adm0, lwd=.5, new=TRUE)
 # plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], border="green")
 
 # restrict simulation to Nairobi
-popMatSimpleAdjustedN = popMatSimpleAdjusted[popMatSimpleAdjusted$admin1 == "Nairobi", ]
+popMatSimpleAdjustedN = popMatSimpleAdjusted[popMatSimpleAdjusted$area == "Nairobi", ]
 easpaN = makeDefaultEASPA()
 easpaN = easpaN[easpaN$area == "Nairobi", ]
 popMatN = makeDefaultPopMat()
 popMatN = popMatN[popMatN$area == "Nairobi", ]
-poppconN = poppcon
-poppconN = poppconN[poppconNarea == "Nairobi", ]
+poppsubN = poppsubKenya
+poppsubN = poppsubN[poppsubN$area == "Nairobi", ]
 
 simDatKenya = generateSimDataSetsLCPB(nsim=1, adjustedPopMat=popMatSimpleAdjusted, 
                                       fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
                                       logisticApproximation=FALSE, 
                                       dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
                                       seed=1, inla.seed=1L, simPopOnly=FALSE, returnEAinfo=TRUE, 
-                                      easpa=NULL, popMat=NULL, constituencyPop=poppcon)
+                                      easpa=NULL, popMat=NULL, constituencyPop=poppsubKenya)
 
 # get the data and the true population
 dat = simDatKenya$SRSDat$clustDat[[1]]
@@ -1466,7 +1468,7 @@ sigmaEpsilonDraws = spdeFitN$sigmaEpsilonDraws
 # apply aggregation models
 aggResultsN = modLCPB(uDraws, sigmaEpsilonDraws, easpaN, popMatN, 
                       popMatSimpleAdjustedN, doLCPb=TRUE, doIHMEModel=TRUE, 
-                      constituencyPop=poppconN, ensureAtLeast1PerConstituency=TRUE, 
+                      constituencyPop=poppsubN, ensureAtLeast1PerConstituency=TRUE, 
                       logisticApproximation=FALSE, verbose=TRUE, 
                       fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1)
 
@@ -1479,11 +1481,11 @@ nEAsTotal = out$meanTotalEAs
 nPerCon = aggResultsN$aggregatedResultslcpb$constituencyMatrices$N[,1]
 
 # calculate number of pixels per area (for understanding IHME model variance)
-out = aggregate(popMatSimpleAdjustedN$pop, by=list(pixels=popMatSimpleAdjustedN$admin2), FUN=length)
+out = aggregate(popMatSimpleAdjustedN$pop, by=list(pixels=popMatSimpleAdjustedN$subarea), FUN=length)
 nPixels = out$x
 
 # calculate number of EAs sampled per area (for understanding spatial variance)
-out = aggregate(dat$N[dat$admin1 == "Nairobi"], by=list(dat$admin2[dat$admin1 == "Nairobi"]), FUN=length)
+out = aggregate(dat$N[dat$area == "Nairobi"], by=list(dat$subarea[dat$area == "Nairobi"]), FUN=length)
 nEAsSampled = out$x
 
 # gather aggregation model output
@@ -1583,7 +1585,7 @@ if(FALSE) {
   # apply aggregation models
   aggResultsKenya = modLCPB(uDraws, sigmaEpsilonDraws, NULL, NULL, 
                             NULL, doLCPb=TRUE, doIHMEModel=TRUE, 
-                            constituencyPop=poppcon, ensureAtLeast1PerConstituency=TRUE, 
+                            constituencyPop=poppsubKenya, ensureAtLeast1PerConstituency=TRUE, 
                             logisticApproximation=FALSE, verbose=TRUE, 
                             fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1)
   
@@ -1601,11 +1603,11 @@ nEAsTotal = out$meanTotalEAs
 nPerCon = rowMeans(aggResultsKenya$aggregatedResultslcpb$constituencyMatrices$N)
 
 # calculate number of pixels per area (for understanding IHME model variance)
-out = aggregate(popMatSimpleAdjustedN$pop, by=list(pixels=popMatSimpleAdjustedN$admin2), FUN=length)
+out = aggregate(popMatSimpleAdjustedN$pop, by=list(pixels=popMatSimpleAdjustedN$subarea), FUN=length)
 nPixels = out$x
 
 # calculate number of EAs sampled per area (for understanding spatial variance)
-out = aggregate(dat$N[dat$admin1 == "Nairobi"], by=list(dat$admin2[dat$admin1 == "Nairobi"]), FUN=length)
+out = aggregate(dat$N[dat$area == "Nairobi"], by=list(dat$subarea[dat$area == "Nairobi"]), FUN=length)
 nEAsSampled = out$x
 
 # gather aggregation model output
@@ -1656,25 +1658,25 @@ xtable(combinedResults,
 mean((constituencyResults$Prevalence - constituencyResults$SmoothRisk) / constituencyResults$SmoothRisk)
 
 # Tests ----
-popMatSimpleAdjustedW2 = popGridAdjusted[popGridAdjusted$admin1 == "Wajir",]
-popMatSimpleAdjustedW2$area = popMatSimpleAdjustedW2$admin1
+popMatSimpleAdjustedW2 = popGridAdjusted[popGridAdjusted$area == "Wajir",]
+popMatSimpleAdjustedW2$area = popMatSimpleAdjustedW2$area
 easpaW2 = easpaW # easpaW is only adjusted to have 25 neonatals/EA in the simulation code itself
 simDatMulti2 = generateSimDataSetsLCPB(nsim=nsim, adjustedPopMat=popMatSimpleAdjustedW2, logisticApproximation=FALSE, 
                                        dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
                                        simPopOnly=TRUE, returnEAinfo=FALSE, seed=123, inla.seed=123L, verbose=TRUE, 
-                                       easpa=easpaW2, popMat=popMatW, constituencyPop=poppconW)
+                                       easpa=easpaW2, popMat=popMatW, constituencyPop=poppsubW)
 
 nTest = 100
 test = modLCPB(matrix(uDraws[,1:nTest], ncol=nTest), sigmaEpsilonDraws[1:nTest], easpaW, popMatW, 
                popMatSimpleAdjustedW, doLCPb=TRUE, doIHMEModel=TRUE, 
-               constituencyPop=poppconW, ensureAtLeast1PerConstituency=TRUE, 
+               constituencyPop=poppsubW, ensureAtLeast1PerConstituency=TRUE, 
                logisticApproximation=FALSE, verbose=TRUE, 
                fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1)
 
 simDatMulti3 = generateSimDataSetsLCPB(nsim=nsim, adjustedPopMat=popMatSimpleAdjustedW, fixPopPerEA=57, logisticApproximation=FALSE, 
                                        dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
                                        simPopOnly=TRUE, returnEAinfo=FALSE, seed=1, inla.seed=1L, verbose=TRUE, 
-                                       easpa=easpaW, popMat=popMatW, constituencyPop=poppconW, stopOnFrameMismatch=FALSE)
+                                       easpa=easpaW, popMat=popMatW, constituencyPop=poppsubW, stopOnFrameMismatch=FALSE)
 
 testnsim = 10000
 
@@ -1736,15 +1738,15 @@ rbind(prevalenceSDs, fineScaleRiskSDs, smoothRiskSDs)
 # fineScaleRiskSDs 0.0007050809 0.0006552234 0.0002188096 0.0008433078 0.0006901962 0.0006129011
 # smoothRiskSDs    0.0006789629 0.0006376858 0.0002157206 0.0008341588 0.0006807164 0.0005927873
 
-testSamples = simDatMulti$aggregatedResultsLcpb$constituencyMatrices$p[poppconarea=="Wajir",]
+testSamples = simDatMulti$aggregatedResultsLcpb$constituencyMatrices$p[poppsubKenya$area=="Wajir",]
 testCIWidths = apply(testSamples, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
 
 sum(popMatSimpleAdjusted$pop[popMatSimpleAdjusted$constituency == "Wajir South" & popMatSimpleAdjusted$urban])
 
 temp = popMatSimpleAdjusted
-temp$admin2 = as.character(temp$admin2)
-temp = temp[temp$admin1 == "Wajir",]
-aggregate(temp$pop, by=list(admin2=temp$admin2, urban=temp$urban), FUN=sum, drop=FALSE)
+temp$subarea = as.character(temp$subarea)
+temp = temp[temp$area == "Wajir",]
+aggregate(temp$pop, by=list(admin2=temp$subarea, urban=temp$urban), FUN=sum, drop=FALSE)
 #         admin2 urban         x
 # 1        Eldas FALSE 1900.89072
 # 2       Tarbaj FALSE 2809.62441
