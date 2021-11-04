@@ -38,6 +38,10 @@ easpaSimple = makeDefaultEASPA()
 easpaSimple = easpaSimple[easpaSimple$area == "Nairobi",]
 poppsubSimple = poppsubKenya
 poppsubSimple = poppsubSimple[poppsubSimple$area == "Nairobi",]
+easpa25 = makeDefaultEASPA()
+easpa25$popUrb = 25 * easpa25$EAUrb
+easpa25$popRur = 25 * easpa25$EARur
+easpa25$popTotal = easpa25$popUrb + easpa25$popRur
 
 # simulate truths ----
 constituenciesN = poppsubKenya$area == "Nairobi"
@@ -170,7 +174,7 @@ for(i in startI:endI) {
   
   dat = dats[[i]]
   spdeFitN = fitSPDEKenyaDat(dat, nPostSamples=max(nSamples), popMat=popMatCombined, 
-                             fixedParameters=fixedParameters, prior=NULL)
+                             fixedParameters=fixedParameters, prior=NULL, strategy="simplified.laplace")
   
   # remove unnecessary parts of the spdeFitN object to save space
   spdeFitN$mod$.args = NULL

@@ -5093,6 +5093,104 @@ meanHHPerCon = function(numToPrint=0) {
   out
 }
 
+# get average number of EAs per constituency
+meanEAsPerCon2 = function(numToPrint=0) {
+  easpa = makeDefaultEASPA()
+  # area: the name or id of the area
+  # EAUrb: the number of EAs in the urban part of the area
+  # EARur: the number of EAs in the rural part of the area
+  # EATotal: the number of EAs in the the area
+  # HHUrb: the number of households in the urban part of the area
+  # HHRur: the number of households in the rural part of the area
+  # HHTotal: the number of households in the the area
+  # popUrb: the number of people in the urban part of the area
+  # popRur: the number of people in the rural part of the area
+  # popTotal: the number of people in the the area
+  
+  
+  countyI = match(poppaKenya$area, easpa$area)
+  easInUrbanStratum = easpa$EAUrb[countyI]
+  easInRuralStratum = easpa$EARur[countyI]
+  popInUrbanStratum = poppaKenya$popUrb[countyI]
+  popInRuralStratum = poppaKenya$popRur[countyI]
+  
+  out = aggregate(poppsubKenya$popUrb, by=list(County=poppsubKenya$area), FUN=sum)
+  sortI = sort(poppaKenya$area, index.return=TRUE)$ix
+  cbind(out, poppaKenya[sortI,])
+  
+  popFractionUrb = poppsubKenya$popUrb / popInUrbanStratum
+  popFractionRur = poppsubKenya$popRur / popInRuralStratum
+  popFractionRur[!is.finite(popFractionRur)] = 0
+  meanUrbanEAs = easInUrbanStratum * popFractionUrb
+  meanRuralEAs = easInRuralStratum * popFractionRur
+  meanTotalEAs = meanUrbanEAs + meanRuralEAs
+  
+  out = cbind(poppsubKenya, meanUrbanEAs=meanUrbanEAs, meanRuralEAs=meanRuralEAs, meanTotalEAs=meanTotalEAs)
+  
+  if(numToPrint > 0) {
+    # print numToPrint constituencis with the smallest number of EAs
+    sortI = sort(meanUrbanEAs, index.return=TRUE)$ix
+    print(out[sortI[1:numToPrint],])
+    
+    sortI = sort(meanRuralEAs, index.return=TRUE)$ix
+    print(out[sortI[1:numToPrint],])
+    
+    sortI = sort(meanTotalEAs, index.return=TRUE)$ix
+    print(out[sortI[1:numToPrint],])
+  }
+  
+  out
+}
+
+# get average number of households per constituency
+meanHHPerCon2 = function(numToPrint=0) {
+  easpa = makeDefaultEASPA()
+  # area: the name or id of the area
+  # EAUrb: the number of EAs in the urban part of the area
+  # EARur: the number of EAs in the rural part of the area
+  # EATotal: the number of EAs in the the area
+  # HHUrb: the number of households in the urban part of the area
+  # HHRur: the number of households in the rural part of the area
+  # HHTotal: the number of households in the the area
+  # popUrb: the number of people in the urban part of the area
+  # popRur: the number of people in the rural part of the area
+  # popTotal: the number of people in the the area
+  
+  
+  countyI = match(poppsubKenya$area, easpa$area)
+  hhsInUrbanStratum = easpc$HHUrb[countyI]
+  hhsInRuralStratum = easpc$HHRur[countyI]
+  popInUrbanStratum = poppaKenya$popUrb[countyI]
+  popInRuralStratum = poppaKenya$popRur[countyI]
+  
+  out = aggregate(poppsubKenya$popUrb, by=list(County=poppsubKenya$area), FUN=sum)
+  sortI = sort(poppaKenya$area, index.return=TRUE)$ix
+  cbind(out, poppaKenya[sortI,])
+  
+  popFractionUrb = poppsubKenya$popUrb / popInUrbanStratum
+  popFractionRur = poppsubKenya$popRur / popInRuralStratum
+  popFractionRur[!is.finite(popFractionRur)] = 0
+  meanUrbanHHs = hhsInUrbanStratum * popFractionUrb
+  meanRuralHHs = hhsInRuralStratum * popFractionRur
+  meanTotalHHs = meanUrbanHHs + meanRuralHHs
+  
+  out = cbind(poppsubKenya, meanUrbanHHs=meanUrbanHHs, meanRuralHHs=meanRuralHHs, meanTotalHHs=meanTotalHHs)
+  
+  if(numToPrint > 0) {
+    # print numToPrint constituencis with the smallest number of EAs
+    sortI = sort(meanUrbanHHs, index.return=TRUE)$ix
+    print(out[sortI[1:numToPrint],])
+    
+    sortI = sort(meanRuralHHs, index.return=TRUE)$ix
+    print(out[sortI[1:numToPrint],])
+    
+    sortI = sort(meanTotalHHs, index.return=TRUE)$ix
+    print(out[sortI[1:numToPrint],])
+  }
+  
+  out
+}
+
 myin.poly = function (xd, xp, convex.hull = FALSE, inflation = 1e-07) 
 {
   if (convex.hull) {

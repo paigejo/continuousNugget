@@ -79,12 +79,13 @@ getSPDEMeshKenya = function(locs=NULL, n=5000, max.n=5000, doPlot=FALSE, max.edg
 # use the fitSPDE function to fit SPDE model to binomial data within Kenya
 fitSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"), 
                            mesh=getSPDEMeshKenya(), prior=getSPDEPrior(mesh), 
-                           significanceCI=.8, int.strategy="ccd", strategy="gaussian", 
+                           significanceCI=.8, int.strategy="ccd", strategy="simplified.laplace", 
                            nPostSamples=1000, verbose=TRUE, link=1, seed=123, 
                            urbanEffect=TRUE, clusterEffect=TRUE, popMat=popGrid, 
                            leaveOutRegionName=NULL, kmres=5, doValidation=FALSE, previousFit=NULL, 
                            family=c("binomial", "betabinomial"), leaveOutI=NULL, 
-                           improperCovariatePrior=TRUE, fixedParameters=NULL) {
+                           improperCovariatePrior=TRUE, fixedParameters=NULL, 
+                           experimentalMode=FALSE) {
   # load observations
   family = match.arg(family)
   dataType = match.arg(dataType)
@@ -94,6 +95,12 @@ fitSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
     }
     else {
       dat = ed
+    }
+  }
+  
+  if(experimentalMode) {
+    if(strategy != "gaussian") {
+      stop("only gaussian integration is possible if experimentalMode is TRUE")
     }
   }
   
@@ -156,7 +163,7 @@ fitSPDEKenyaDat = function(dat=NULL, dataType=c("mort", "ed"),
             nPostSamples, verbose, link, seed, 
             family, obsNs, clusterEffect, predClusterI, doValidation, previousFit, 
             improperCovariatePrior=improperCovariatePrior, 
-            fixedParameters=fixedParameters), 
+            fixedParameters=fixedParameters, experimentalMode=experimentalMode), 
     list(obsCoords=obsCoords, obsValues=obsValues, xObs=xObs, xPred=xPred, obsNs=obsNs, obsUrban=obsUrban, 
          predPts=predPts, predClusterI=predClusterI, kmres=kmres)
     )
@@ -591,11 +598,17 @@ fitSPDE = function(obsCoords, obsValues, xObs=matrix(rep(1, length(obsValues)), 
                    family=c("normal", "binomial", "betabinomial"), obsNs=rep(1, length(obsValues)), clusterEffect=TRUE, 
                    predClusterI=rep(TRUE, nrow(predCoords)), doValidation=FALSE, 
                    previousFit=NULL, improperCovariatePrior=TRUE, 
-                   fixedParameters=NULL) {
+                   fixedParameters=NULL, experimentalMode=FALSE) {
   family = match.arg(family)
   startTime = proc.time()[3]
   if(!is.null(seed))
     set.seed(seed)
+  
+  if(experimentalMode) {
+    if(strategy != "gaussian") {
+      stop("only gaussian integration is possible if experimentalMode is TRUE")
+    }
+  }
   
   startTimeDefineModel = proc.time()[3]
   
