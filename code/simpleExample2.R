@@ -68,7 +68,7 @@ purpleRedScale = makePurpleRedSequentialColors(64)
 yellowScale = makeYellowSequentialColors(64)
 yellowRedScale = rev(makeRedYellowSequentialColors(64))
 greenScale = makeGreenSequentialColors(64)
-summerScale = makeBlueGreenYellowSequentialColors(64)
+summerScale = rev(makeBlueGreenYellowSequentialColors(64))
 blueYellowRedScale = rev(makeRedYellowBlueColors(64))
 purpleYellowScale = makePurpleYellowSequentialColors(64)
 popCols=makeBlueSequentialColors(64)
@@ -92,7 +92,7 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
 quilt.plot(mort$lon[mort$admin1=="Wajir"], mort$lat[mort$admin1=="Wajir"], mort$y[mort$admin1=="Wajir"]/mort$n[mort$admin1=="Wajir"], 
            nx=50, ny=60, add=TRUE)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # make 1km res pop density grid ----
@@ -113,7 +113,7 @@ if(FALSE) {
   popGridFineAdjusted = popGridFineAdjusted[popGridFineAdjusted$area == "Wajir",]
   
   # normalize to have the correct population within the county
-  # popGridFine$pop = popGridFine$pop * (poppc$popTotal[poppcarea=="Wajir"] / sum(popGridFine$pop))
+  # popGridFine$pop = popGridFine$pop * (poppc$popTotal[poppsubKenya$area=="Wajir"] / sum(popGridFine$pop))
   popRange = range(popGridFine$pop)
   popRangeTarget = range(popGridFineAdjusted$pop)
   
@@ -134,7 +134,7 @@ if(FALSE) {
              col=popCols, nx=230, ny=380, add.legend = FALSE, add=TRUE,
              zlim=log(popRange))
   plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
-  addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+  addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
   dev.off()
   
   # plot target population density on fine grid
@@ -152,7 +152,7 @@ if(FALSE) {
              col=popCols, nx=230, ny=380, add.legend = FALSE, add=TRUE,
              zlim=log(popRangeTarget))
   plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
-  addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+  addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
   dev.off()
 }
 
@@ -169,7 +169,7 @@ quilt.plot(popGrid$lon[popInWajir], popGrid$lat[popInWajir], popGrid$urban[popIn
 offsets = matrix(0, nrow=6, ncol=2)
 offsets[1,2] = .1 # shift label for Eldas slightly higher
 offsets[6,1] = .15 # shift label for Wajir West slightly farther east
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.7)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.7)
 dev.off()
 
 # pdf version:
@@ -184,7 +184,7 @@ quilt.plot(popGrid$lon[popInWajir], popGrid$lat[popInWajir], popGrid$urban[popIn
 offsets = matrix(0, nrow=6, ncol=2)
 offsets[1,2] = .1 # shift label for Eldas slightly higher
 offsets[6,1] = .15 # shift label for Wajir West slightly farther east
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.7)
 dev.off()
 
 # now plot urban fraction as a function of constituency
@@ -204,7 +204,7 @@ plotMapDat(plotVar=log(urbanFraction), varCounties=constituenciesW, mapDat=adm2,
 # image.plot(zlim=log(popRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
 #            col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
 #            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 
@@ -225,7 +225,7 @@ plotMapDat(plotVar=log(urbanFraction), varCounties=constituenciesW, mapDat=adm2,
 # image.plot(zlim=log(popRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
 #            col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
 #            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # plot expected EAs ----
@@ -245,7 +245,7 @@ plotMapDat(plotVar=log(meanUrbanEAs), varCounties=constituenciesW, mapDat=adm2, 
 # image.plot(zlim=log(popRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
 #            col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
 #            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # plot expected number of rural EAs per constituency
@@ -264,7 +264,7 @@ plotMapDat(plotVar=log(meanRuralEAs), varCounties=constituenciesW, mapDat=adm2, 
 # image.plot(zlim=log(popRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
 #            col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
 #            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # plot expected number of rural EAs per constituency
@@ -283,7 +283,7 @@ plotMapDat(plotVar=log(meanRuralEAs), varCounties=constituenciesW, mapDat=adm2, 
 # image.plot(zlim=log(popRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
 #            col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
 #            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 ##### Simulate EA locations for example ----
@@ -302,7 +302,7 @@ eaSamplesNW = eaSamples[popGridWajir$subarea=="Wajir North",1]
 # eaSamples = eaSamples[popGrid$area=="Wajir",1]
 NSamples = simDat$simulatedEAs$aggregatedPop$pixelPop$NFineScalePrevalence[,1]
 NSamplesNW = NSamples[popGridWajir$subarea=="Wajir North"]
-prevalenceSamples = simDat$simulatedEAs$aggregatedPop$pixelMatricesLCPB$p[,1]
+prevalenceSamples = simDat$simulatedEAs$aggregatedPop$pixelPop$pFineScalePrevalence[,1]
 
 # plot EA locations ----
 pdf(file="figures/simpleExample/wajirSimEALocs.pdf", width=4, height=5)
@@ -313,11 +313,11 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDat$lon, eaDat$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 points(eaDat$lon, eaDat$lat, pch=19, cex=.1, col="blue")
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # plot EA locations with color for fine scale prevalence
-pRangeMod = range(c(eaDat$pLCPB[eaDat$pLCPB != 0], eaDat$pLCPb, eaDat$plcpb))
+pRangeMod = range(c(eaDat$pFineScalePrevalence[eaDat$pFineScalePrevalence != 0], eaDat$pFineScaleRisk, eaDat$pSmoothRisk))
 ticks = c(.01, .05, .1, .2, .3, .4, .5)
 pdf(file="figures/simpleExample/wajirSimEALocsPrevalence.pdf", width=4, height=5)
 par(mar=c(4.1, 4.1, 1.1, 4.5))
@@ -326,12 +326,12 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDat$lon, eaDat$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
-plotWithColor(eaDat$lon, eaDat$lat, eaDat$pLCPB, pch=19, cex=.2, 
+plotWithColor(eaDat$lon, eaDat$lat, eaDat$pFineScalePrevalence, pch=19, cex=.2, 
               colScale=riskCols, new=FALSE, zlim=pRangeMod, 
               scaleFun=logit, scaleFunInverse=expit, forceColorsInRange=TRUE, 
               legend.cex=.5, legend.width=1, legend.mar=5, 
               ordering="none", ticks=ticks)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # plot EA locations with color for fine scale risk
@@ -343,12 +343,12 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDat$lon, eaDat$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
-plotWithColor(eaDat$lon, eaDat$lat, eaDat$pLCPb, pch=19, cex=.2, 
+plotWithColor(eaDat$lon, eaDat$lat, eaDat$pFineScaleRisk, pch=19, cex=.2, 
               colScale=riskCols, new=FALSE, zlim=pRangeMod, 
               scaleFun=logit, scaleFunInverse=expit, forceColorsInRange=TRUE, 
               legend.cex=.5, legend.width=1, legend.mar=5, 
               ordering="none", ticks=ticks)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # plot EA locations with color for fine scale risk on its own scale
@@ -359,12 +359,12 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDat$lon, eaDat$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
-plotWithColor(eaDat$lon, eaDat$lat, eaDat$pLCPb, pch=19, cex=.2, 
+plotWithColor(eaDat$lon, eaDat$lat, eaDat$pFineScaleRisk, pch=19, cex=.2, 
               colScale=riskCols, new=FALSE, 
               scaleFun=logit, scaleFunInverse=expit, forceColorsInRange=TRUE, 
               legend.cex=.5, legend.width=1, legend.mar=5, 
               ordering="none", ticks=ticks)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # plot EA locations with color for smooth risk
@@ -375,12 +375,12 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDat$lon, eaDat$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
-plotWithColor(eaDat$lon, eaDat$lat, eaDat$pLcpb, pch=19, cex=.2, 
+plotWithColor(eaDat$lon, eaDat$lat, eaDat$pSmoothRisk, pch=19, cex=.2, 
               colScale=riskCols, new=FALSE, zlim=pRangeMod, 
               scaleFun=logit, scaleFunInverse=expit, forceColorsInRange=TRUE, 
               legend.cex=.5, legend.width=1, legend.mar=5, 
               ordering="none", ticks=ticks)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # plot EA locations with color for smooth risk on its own color scale
@@ -391,12 +391,12 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDat$lon, eaDat$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
-plotWithColor(eaDat$lon, eaDat$lat, eaDat$pLcpb, pch=19, cex=.2, 
+plotWithColor(eaDat$lon, eaDat$lat, eaDat$pSmoothRisk, pch=19, cex=.2, 
               colScale=riskCols, new=FALSE, 
               scaleFun=logit, scaleFunInverse=expit, forceColorsInRange=TRUE, 
               legend.cex=.5, legend.width=1, legend.mar=5, 
               ordering="none", ticks=ticks)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # plot North Wajir EA locations ----
@@ -408,11 +408,11 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDat$lon, eaDat$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
 points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.3, col="blue")
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.5)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.5)
 dev.off()
 
 # plot EA locations with color for fine scale prevalence
-pRangeMod = range(c(eaDatNW$pLCPB[eaDatNW$pLCPB != 0], eaDatNW$pLCPb, eaDatNW$plcpb))
+pRangeMod = range(c(eaDatNW$pFineScalePrevalence[eaDatNW$pFineScalePrevalence != 0], eaDatNW$pFineScaleRisk, eaDatNW$pSmoothRisk))
 # ticks = c(0, .02, .04, .06, .08, .1, .2, .3, .4)
 # tickLabels = as.character(ticks)
 # tickLabels[c(5)] = ""
@@ -427,13 +427,13 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
-plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pLCPB, pch=21, cex=1, 
+plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pFineScalePrevalence, pch=21, cex=1, 
               colScale=riskCols, new=FALSE, zlim=pRangeMod, 
               scaleFun=logit, scaleFunInverse=expit, forceColorsInRange=TRUE, 
               legend.cex=.5, legend.width=1, legend.mar=5, 
               ordering="increasing", ticks=ticks, tickLabels=tickLabels, colorName="bg", 
               col=rgb(.5, .5, .5))
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.8)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.8)
 dev.off()
 
 # same but residuals
@@ -445,14 +445,14 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
-prevalenceResiduals = eaDatNW$pLCPB - eaDatNW$plcpb
+prevalenceResiduals = eaDatNW$pFineScalePrevalence - eaDatNW$pSmoothRisk
 # tempRiskCols = makePurpleRedDivergingColors(64, rev=TRUE, valRange = range(prevalenceResiduals), center = 0)
 tempRiskCols = makeRedBlueDivergingColors(64, rev=TRUE, valRange = range(prevalenceResiduals), center = 0)
 plotWithColor(eaDatNW$lon, eaDatNW$lat, prevalenceResiduals, pch=21, cex=1, 
               colScale=tempRiskCols, new=FALSE, zlim=range(prevalenceResiduals), 
               legend.cex=.5, legend.width=1, legend.mar=5, colorName="bg", 
               ordering="increasing", col=rgb(.5, .5, .5))
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.8)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.8)
 dev.off()
 
 # same but percent residuals
@@ -464,14 +464,14 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
-prevalenceResiduals = 100 * (eaDatNW$pLCPB - eaDatNW$plcpb) / eaDatNW$plcpb
+prevalenceResiduals = 100 * (eaDatNW$pFineScalePrevalence - eaDatNW$pSmoothRisk) / eaDatNW$pSmoothRisk
 # tempRiskCols = makePurpleRedDivergingColors(64, rev=TRUE, valRange = range(prevalenceResiduals), center = 0)
 tempRiskCols = makeRedBlueDivergingColors(64, rev=TRUE, valRange = range(prevalenceResiduals), center = 0)
 plotWithColor(eaDatNW$lon, eaDatNW$lat, prevalenceResiduals, pch=21, cex=1, 
               colScale=tempRiskCols, new=FALSE, zlim=range(prevalenceResiduals), 
               legend.cex=.5, legend.width=1, legend.mar=5, colorName="bg", 
               ordering="increasing", col=rgb(.5, .5, .5))
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.8)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.8)
 dev.off()
 
 # plot EA locations with color for fine scale risk
@@ -483,13 +483,13 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
-plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pLCPb, pch=21, cex=1, 
+plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pFineScaleRisk, pch=21, cex=1, 
               colScale=riskCols, new=FALSE, zlim=pRangeMod, 
               scaleFun=logit, scaleFunInverse=expit, forceColorsInRange=TRUE, 
               legend.cex=.5, legend.width=1, legend.mar=5, colorName="bg", 
               ordering="increasing", ticks=ticks, tickLabels=tickLabels, 
               col=rgb(.5, .5, .5))
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.8)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.8)
 dev.off()
 
 # same but different color scale
@@ -501,12 +501,12 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
-tempRiskCols = makePurpleRedDivergingColors(64, rev=TRUE, valRange = range(eaDatNW$pLCPB), center = median(eaDatNW$pLCPB))
-plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pLCPb, pch=21, cex=1, 
+tempRiskCols = makePurpleRedDivergingColors(64, rev=TRUE, valRange = range(eaDatNW$pFineScalePrevalence), center = median(eaDatNW$pFineScalePrevalence))
+plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pFineScaleRisk, pch=21, cex=1, 
               colScale=tempRiskCols, new=FALSE, zlim=pRangeMod, 
               legend.cex=.5, legend.width=1, legend.mar=5, colorName="bg", 
               ordering="increasing", col=rgb(.5, .5, .5))
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.8)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.8)
 dev.off()
 
 # same but residuals
@@ -518,15 +518,15 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
-prevalenceResiduals = eaDatNW$pLCPB - eaDatNW$plcpb
-riskResiduals = eaDatNW$pLCPb - eaDatNW$plcpb
+prevalenceResiduals = eaDatNW$pFineScalePrevalence - eaDatNW$pSmoothRisk
+riskResiduals = eaDatNW$pFineScaleRisk - eaDatNW$pSmoothRisk
 # tempRiskCols = makePurpleRedDivergingColors(64, rev=TRUE, valRange = range(prevalenceResiduals), center = 0)
 tempRiskCols = makeRedBlueDivergingColors(64, rev=TRUE, valRange = range(prevalenceResiduals), center = 0)
 plotWithColor(eaDatNW$lon, eaDatNW$lat, riskResiduals, pch=21, cex=1, 
               colScale=tempRiskCols, new=FALSE, zlim=range(prevalenceResiduals), 
               legend.cex=.5, legend.width=1, legend.mar=5, colorName="bg", 
               ordering="increasing", col=rgb(.5, .5, .5))
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.8)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.8)
 dev.off()
 
 # same but percent residuals
@@ -538,15 +538,15 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
-prevalenceResiduals = 100 * (eaDatNW$pLCPB - eaDatNW$plcpb) / eaDatNW$plcpb
-riskResiduals = 100 * (eaDatNW$pLCPb - eaDatNW$plcpb) / eaDatNW$plcpb
+prevalenceResiduals = 100 * (eaDatNW$pFineScalePrevalence - eaDatNW$pSmoothRisk) / eaDatNW$pSmoothRisk
+riskResiduals = 100 * (eaDatNW$pFineScaleRisk - eaDatNW$pSmoothRisk) / eaDatNW$pSmoothRisk
 # tempRiskCols = makePurpleRedDivergingColors(64, rev=TRUE, valRange = range(prevalenceResiduals), center = 0)
 tempRiskCols = makeRedBlueDivergingColors(64, rev=TRUE, valRange = range(prevalenceResiduals), center = 0)
 plotWithColor(eaDatNW$lon, eaDatNW$lat, riskResiduals, pch=21, cex=1, 
               colScale=tempRiskCols, new=FALSE, zlim=range(prevalenceResiduals), 
               legend.cex=.5, legend.width=1, legend.mar=5, colorName="bg", 
               ordering="increasing", col=rgb(.5, .5, .5))
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.8)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.8)
 dev.off()
 
 # plot EA locations with color for fine scale risk on its own scale
@@ -557,13 +557,13 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
-plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pLCPb, pch=21, cex=.8, 
+plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pFineScaleRisk, pch=21, cex=.8, 
               colScale=riskCols, new=FALSE, 
               scaleFun=logit, scaleFunInverse=expit, forceColorsInRange=TRUE, 
               legend.cex=.5, legend.width=1, legend.mar=5, colorName="bg", 
               ordering="increasing", ticks=ticks, tickLabels=tickLabels, 
               col=rgb(.5, .5, .5))
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.8)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.8)
 dev.off()
 
 # plot EA locations with color for smooth risk
@@ -574,13 +574,13 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
-plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pLcpb, pch=21, cex=.8, 
+plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pSmoothRisk, pch=21, cex=.8, 
               colScale=riskCols, new=FALSE, zlim=pRangeMod, 
               scaleFun=logit, scaleFunInverse=expit, forceColorsInRange=TRUE, 
               legend.cex=.5, legend.width=1, legend.mar=5, colorName="bg", 
               ordering="increasing", ticks=ticks, tickLabels=tickLabels, 
               col=rgb(.5, .5, .5))
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.8)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.8)
 dev.off()
 
 # plot EA locations with color for smooth risk on its own color scale
@@ -591,13 +591,13 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # points(eaDatNW$lon, eaDatNW$lat, pch=19, cex=.1, col=rgb(1, 0, 0, .2))
-plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pLcpb, pch=21, cex=.8, 
+plotWithColor(eaDatNW$lon, eaDatNW$lat, eaDatNW$pSmoothRisk, pch=21, cex=.8, 
               colScale=riskCols, new=FALSE, 
               scaleFun=logit, scaleFunInverse=expit, forceColorsInRange=TRUE, 
               legend.cex=.5, legend.width=1, legend.mar=5, colorName="bg", 
               ordering="increasing", ticks=ticks, tickLabels=tickLabels, 
               col=rgb(.5, .5, .5))
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.8)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.8)
 dev.off()
 
 # plot pixel numerators ----
@@ -614,12 +614,12 @@ quilt.plot(popGrid$lon[popGrid$area=="Wajir"],
            col=riskCols, nx=45, ny=60, add.legend = TRUE, add=TRUE, 
            zlim=pRangeMod)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # plot smooth risk
-expectedRisk = simDat$simulatedEAs$aggregatedPop$pixelMatriceslcpb$p[,1]
-pRangeMod = range(c(eaDat$pLCPB[eaDat$pLCPB != 0], eaDat$pLCPb, eaDat$plcpb))
+expectedRisk = simDat$simulatedEAs$aggregatedPop$pixelPop$pSmoothRisk[,1]
+pRangeMod = range(c(eaDat$pFineScalePrevalence[eaDat$pFineScalePrevalence != 0], eaDat$pFineScaleRisk, eaDat$pSmoothRisk))
 
 pdf(file="figures/simpleExample/wajirSimSmoothRisk.pdf", width=4, height=5)
 par(mar=c(4.1, 4.1, 1.1, 4.5))
@@ -637,7 +637,7 @@ tickLabels = as.character(ticks)
 image.plot(zlim=logit(pRangeMod), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
            col=riskCols, add=TRUE, axis.args=list(at=logit(ticks), labels=tickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 pdf(file="figures/simpleExample/wajirSimSmoothRiskSelfScaled.pdf", width=4, height=5)
@@ -656,14 +656,14 @@ tickLabels = as.character(ticks)
 image.plot(zlim=logit(range(expectedRisk)), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
            col=riskCols, add=TRUE, axis.args=list(at=logit(ticks), labels=tickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # plot smooth risk for Wajir North
-expectedRisk = simDat$simulatedEAs$aggregatedPop$pixelMatriceslcpb$p[,1]
+expectedRisk = simDat$simulatedEAs$aggregatedPop$pixelPop$pSmoothRisk[,1]
 expectedRisk = expectedRisk[popGridWajir$subarea == "Wajir North"]
 # pRangeMod = range(c(eaDat$pLCPB[eaDat$pLCPB != 0], eaDat$pLCPb, eaDat$plcpb))
-pRangeMod = range(c(eaDatNW$pLCPB[eaDatNW$pLCPB != 0], eaDatNW$pLCPb, eaDatNW$plcpb))
+pRangeMod = range(c(eaDatNW$pFineScalePrevalence[eaDatNW$pFineScalePrevalence != 0], eaDatNW$pFineScaleRisk, eaDatNW$pSmoothRisk))
 
 pdf(file="figures/simpleExample/wajirSimSmoothRiskNWajir.pdf", width=5, height=3.9)
 par(mar=c(4.1, 4.1, 1.1, 4.5))
@@ -682,7 +682,7 @@ tickLabels[seq(4, 10, by=2)] = ""
 image.plot(zlim=logit(pRangeMod), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
            col=riskCols, add=TRUE, axis.args=list(at=logit(ticks), labels=tickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.8)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.8)
 dev.off()
 
 pdf(file="figures/simpleExample/wajirSimSmoothRiskNWajirSelfScaled.pdf", width=5, height=3.9)
@@ -701,7 +701,7 @@ tickLabels = as.character(ticks)
 image.plot(zlim=logit(range(expectedRisk)), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
            col=riskCols, add=TRUE, axis.args=list(at=logit(ticks), labels=tickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.8)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.8)
 dev.off()
 
 pdf(file="figures/simpleExample/wajirSimSmoothRiskNWajirSelfScaledLinear.pdf", width=5, height=3.9)
@@ -711,16 +711,16 @@ plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE,
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 quilt.plot(popGrid$lon[popGrid$subarea=="Wajir North"], 
            popGrid$lat[popGrid$subarea=="Wajir North"], 
-           expectedRisk, 
-           col=riskCols, nx=29, ny=24, add.legend = FALSE, add=TRUE, 
-           zlim=range(expectedRisk))
+           expectedRisk, # nx=29, ny=24, 
+           col=riskCols, add.legend = FALSE, add=TRUE, 
+           zlim=range(expectedRisk), grid=gridListNW)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
-ticks = c(.02, .03, .04, .05, .06, .07)
+ticks = c(.02, .03, .04, .05, .06, .07, .08)
 tickLabels = as.character(ticks)
 image.plot(zlim=range(expectedRisk), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
            col=riskCols, add=TRUE, axis.args=list(at=ticks, labels=tickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.8)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.8)
 dev.off()
 
 # plot denominators ----
@@ -742,7 +742,7 @@ eaTickLabels = as.character(eaTicks)
 image.plot(zlim=log(eaRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
            col=popCols[-(1:5)], add=TRUE, axis.args=list(at=log(eaTicks), labels=eaTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # same but with number of assigned people per pixel
@@ -763,7 +763,7 @@ NTickLabels = as.character(NTicks)
 image.plot(zlim=log(NRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
            col=popCols[-(1:5)], add=TRUE, axis.args=list(at=log(NTicks), labels=NTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # treating denominators as weights
@@ -797,7 +797,7 @@ if(FALSE) {
              col=popCols, nx=45, ny=75, add.legend = FALSE, add=TRUE, 
              zlim=log(weightRange))
   plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
-  addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+  addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
   dev.off()
 }
 
@@ -814,7 +814,7 @@ plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 image.plot(zlim=log(weightRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
            col=popCols[-(1:5)], add=TRUE, axis.args=list(at=log(weightTicks), labels=weightTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # same but with number of assigned people per pixel
@@ -834,7 +834,7 @@ plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 image.plot(zlim=log(weightRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
            col=popCols[-(1:5)], add=TRUE, axis.args=list(at=log(weightTicks), labels=weightTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # same but with number of assigned people per EA
@@ -852,7 +852,7 @@ plotWithColor(eaDat$lon, eaDat$lat, weightsEA,
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # NTicks = c(35, 100, 300, 800, 2400)
 # NTickLabels = as.character(NTicks)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # same but with counts per pixel
@@ -870,7 +870,7 @@ plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 image.plot(zlim=log(weightRange2), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
            col=popCols[-(1:5)], add=TRUE, axis.args=list(at=log(weightTicks2), labels=weightTickLabels2, cex.axis=1, tck=-.7, hadj=-.1), 
            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # same but with number of assigned people per pixel
@@ -890,7 +890,7 @@ NTickLabels = as.character(NTicks)
 image.plot(zlim=log(weightRange2), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
            col=popCols[-(1:5)], add=TRUE, axis.args=list(at=log(weightTicks2), labels=weightTickLabels2, cex.axis=1, tck=-.7, hadj=-.1), 
            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # no point in hits plot, since every EA has 25 neonatals
@@ -915,7 +915,7 @@ dev.off()
 # # image.plot(zlim=log(weightRange2), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
 # #            col=popCols[-(1:5)], add=TRUE, axis.args=list(at=log(weightTicks2), labels=weightTickLabels2, cex.axis=1, tck=-.7, hadj=-.1), 
 # #            legend.cex=.5, legend.width=1)
-# addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+# addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 # dev.off()
 
 # plot agg weights North Wajir ----
@@ -936,22 +936,33 @@ weightRange2 = range(c(eaSamplesNorm[eaSamplesNorm!= 0], NSamplesNW[NSamplesNW !
 weightTicks2 = c(1e-04, 1e-03, 1e-02)
 weightTickLabels2 = as.character(weightTicks2)
 
+# first generate the North Wajir Grid
+gridNWEast = sort(unique(popMatSimpleAdjustedNW$east))
+gridNWNorth = sort(unique(popMatSimpleAdjustedNW$north))
+gridNWEastMid = median(gridNWEast)
+gridNWNorthMid = median(gridNWNorth)
+gridNWHorizontal = cbind(gridNWEast, gridNWNorthMid)
+gridNWVertical = cbind(gridNWEastMid, gridNWNorth)
+gridNWLon = projKenya(gridNWHorizontal, inverse=TRUE)[,1]
+gridNWLat = projKenya(gridNWVertical, inverse=TRUE)[,2]
+gridListNW = list(x=gridNWLon, y=gridNWLat)
+
 # plot pop density with same scale
 if(FALSE) {
   
   pdf(file="figures/simpleExample/wajirPopDensityNormNW.pdf", width=5, height=3.9)
   par(mar=c(4.1, 4.1, 1.1, 4.5))
-  plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
+  plotMapDat(mapDat=adm2[adm2@data$NAME_2=="Wajir North",], new=TRUE, 
              kenyaLonRange = longRangeNorthWajir, kenyaLatRange = latRangeNorthWajir, 
              leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
   image.plot(zlim=log(weightRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
              col=popCols, add=TRUE, axis.args=list(at=log(weightTicks), labels=weightTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
              legend.cex=.5, legend.width=1)
   quilt.plot(popMatSimpleAdjustedNW$lon, popMatSimpleAdjustedNW$lat, log(popWeights), 
-             col=popCols, nx=29, ny=24, add.legend = FALSE, add=TRUE, 
-             zlim=log(weightRange))
-  plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
-  addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.8)
+             col=popCols, add.legend = FALSE, add=TRUE, # nx=29, ny=24, 
+             zlim=log(weightRange), grid=gridListNW)
+  plotMapDat(mapDat=adm2[adm2@data$NAME_2=="Wajir North",], lwd=.5)
+  addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.8)
   dev.off()
 }
 
@@ -961,7 +972,7 @@ nEAsNW = sum(eaSamples[popGridWajir$subarea == "Wajir North"])
 weightsEA = rep(1/nEAsNW, nEAsNW)
 pdf(file="figures/simpleExample/wajirSimNPerEANormNW.pdf", width=5, height=3.9)
 par(mar=c(4.1, 4.1, 1.1, 4.5))
-plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
+plotMapDat(mapDat=adm2[adm2@data$NAME_2=="Wajir North",], new=TRUE, 
            kenyaLonRange = longRangeNorthWajir, kenyaLatRange = latRangeNorthWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
 plotWithColor(eaDatNW$lon, eaDatNW$lat, weightsEA, 
@@ -969,48 +980,68 @@ plotWithColor(eaDatNW$lon, eaDatNW$lat, weightsEA,
               zlim=weightRange, scaleFun=log, scaleFunInverse=exp, 
               legend.cex=.5, legend.width=1, legend.mar=5, 
               pch=19, cex=1, ticks=weightTicks)
-plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
+# plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 # NTicks = c(35, 100, 300, 800, 2400)
 # NTickLabels = as.character(NTicks)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.8)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.8)
 dev.off()
 
 # same but with counts per pixel
-pdf(file="figures/simpleExample/wajirSimEAsPerPixelNorm2.pdf", width=4, height=5)
+pdf(file="figures/simpleExample/wajirSimEAsPerPixelNormNW2.pdf", width=4, height=5)
 par(mar=c(4.1, 4.1, 1.1, 4.5))
-plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
+plotMapDat(mapDat=adm2[adm2@data$NAME_2=="Wajir North",], new=TRUE, 
            kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-quilt.plot(popGrid$lon[popGrid$area=="Wajir"], 
-           popGrid$lat[popGrid$area=="Wajir"], 
-           log(eaSamples), 
+quilt.plot(popGrid$lon[popGrid$subarea=="Wajir North"], 
+           popGrid$lat[popGrid$subarea=="Wajir North"], 
+           log(eaSamplesNorm), 
            col=popCols[-(1:5)], nx=45, ny=60, add.legend = FALSE, add=TRUE, 
            zlim=log(weightRange2))
-plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
+# plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 image.plot(zlim=log(weightRange2), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
            col=popCols[-(1:5)], add=TRUE, axis.args=list(at=log(weightTicks2), labels=weightTickLabels2, cex.axis=1, tck=-.7, hadj=-.1), 
            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # same but with number of assigned people per pixel
-pdf(file="figures/simpleExample/wajirSimNPerPixelNorm2.pdf", width=4, height=5)
+pdf(file="figures/simpleExample/wajirSimNPerPixelNormNW.pdf", width=5, height=3.9)
 par(mar=c(4.1, 4.1, 1.1, 4.5))
-plotMapDat(mapDat=adm1[adm1@data$NAME_1=="Wajir",], new=TRUE, 
-           kenyaLonRange = longRangeWajir, kenyaLatRange = latRangeWajir, 
+plotMapDat(mapDat=adm2[adm2@data$NAME_2=="Wajir North",], new=TRUE, 
+           kenyaLonRange = longRangeNorthWajir, kenyaLatRange = latRangeNorthWajir, 
            leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
-quilt.plot(popGrid$lon[popGrid$area=="Wajir"], 
-           popGrid$lat[popGrid$area=="Wajir"], 
+quilt.plot(popGrid$lon[popGrid$subarea=="Wajir North"], 
+           popGrid$lat[popGrid$subarea=="Wajir North"], 
+           log(NSamplesNW), grid=gridListNW, # nx=29, ny=24, 
+           col=popCols, add.legend = FALSE, add=TRUE, 
+           zlim=log(weightRange))
+# plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
+NTicks = c(35, 100, 300, 800, 2400)
+NTickLabels = as.character(NTicks)
+image.plot(zlim=log(weightRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
+           col=popCols, add=TRUE, axis.args=list(at=log(weightTicks), labels=weightTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
+           legend.cex=.5, legend.width=1)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_2=="Wajir North",], offsets=offsets, cex=.4)
+dev.off()
+
+# same but with number of assigned people per pixel and weight range 2
+pdf(file="figures/simpleExample/wajirSimNPerPixelNormNW2.pdf", width=5, height=3.9)
+par(mar=c(4.1, 4.1, 1.1, 4.5))
+plotMapDat(mapDat=adm2[adm2@data$NAME_2=="Wajir North",], new=TRUE, 
+           kenyaLonRange = longRangeNorthWajir, kenyaLatRange = latRangeNorthWajir, 
+           leaveRoomForLegend=TRUE, addColorBar=FALSE, legend.mar=5)
+quilt.plot(popGrid$lon[popGrid$subarea=="Wajir North"], 
+           popGrid$lat[popGrid$subarea=="Wajir North"], 
            log(NSamplesNW), 
-           col=popCols[-(1:5)], nx=45, ny=60, add.legend = FALSE, add=TRUE, 
+           col=popCols, nx=29, ny=24, add.legend = FALSE, add=TRUE, 
            zlim=log(weightRange2))
-plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
+# plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
 NTicks = c(35, 100, 300, 800, 2400)
 NTickLabels = as.character(NTicks)
 image.plot(zlim=log(weightRange2), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
            col=popCols[-(1:5)], add=TRUE, axis.args=list(at=log(weightTicks2), labels=weightTickLabels2, cex.axis=1, tck=-.7, hadj=-.1), 
            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_2=="Wajir North",], offsets=offsets, cex=.4)
 dev.off()
 
 # no point in hits plot, since every EA has 25 neonatals
@@ -1035,7 +1066,7 @@ dev.off()
 # # image.plot(zlim=log(weightRange2), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
 # #            col=popCols[-(1:5)], add=TRUE, axis.args=list(at=log(weightTicks2), labels=weightTickLabels2, cex.axis=1, tck=-.7, hadj=-.1), 
 # #            legend.cex=.5, legend.width=1)
-# addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+# addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 # dev.off()
 
 # check pixel constituencies ----
@@ -1052,7 +1083,7 @@ quilt.plot(popGrid$lon[popGrid$area=="Wajir"],
            col=rainbow(6), nx=45, ny=60, add.legend = TRUE, add=TRUE, 
            FUN=max)
 plotMapDat(mapDat=adm2[adm2@data$NAME_1=="Wajir",], lwd=.5)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # plot constituency denom ----
@@ -1088,7 +1119,7 @@ plotMapDat(plotVar=log(nEAs), varCounties=constituenciesW, mapDat=adm2, lwd=.5,
 # image.plot(zlim=log(popRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
 #            col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
 #            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # plot the number of sampled Urban EAs per constituency
@@ -1105,7 +1136,7 @@ plotMapDat(plotVar=log(nEAs), varCounties=constituenciesW, mapDat=adm2, lwd=.5,
 # image.plot(zlim=log(popRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
 #            col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
 #            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # plot the number of sampled Urban EAs per constituency
@@ -1122,76 +1153,68 @@ plotMapDat(plotVar=log(nEAs), varCounties=constituenciesW, mapDat=adm2, lwd=.5,
 # image.plot(zlim=log(popRange), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
 #            col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=-.1), 
 #            legend.cex=.5, legend.width=1)
-addMapLabels(constituenciesW, mapDat=adm2, offsets=offsets, cex=.4)
+addMapLabels(constituenciesW, mapDat=adm2[adm2@data$NAME_1=="Wajir",], offsets=offsets, areaVarName="NAME_2", cex=.4)
 dev.off()
 
 # plot prevalence and risk ----
 easInWajir = eaDat$area == "Wajir"
-pdf(file="figures/simpleExample/wajirSimlcpbVLCPB.pdf", width=5, height=5)
-plot(eaDat$plcpb[easInWajir], eaDat$pLCPB[easInWajir], pch=19, cex=.1, col="blue", type="n", 
+pdf(file="figures/simpleExample/wajirSimSmoothRiskVFineScalePrevalence.pdf", width=5, height=5)
+plot(eaDat$pSmoothRisk[easInWajir], eaDat$pFineScalePrevalence[easInWajir], pch=19, cex=.1, col="blue", type="n", 
      xlab="Smooth Risk", ylab="Fine Scale Prevalence")
 abline(a=0, b=1)
-points(eaDat$plcpb[easInWajir], eaDat$pLCPB[easInWajir], pch=19, cex=.1, col="blue")
+points(eaDat$pSmoothRisk[easInWajir], eaDat$pFineScalePrevalence[easInWajir], pch=19, cex=.1, col="blue")
 dev.off()
 
 # plot constituency level prevalence versus risk:
-sortI = sort(as.character(poppsubKenya$Constituency), index.return=TRUE)$ix
-theseCounties = poppsubKenyaarea[sortI]
-constituenciesInWajir = theseCounties == "Wajir"
-pdf(file="figures/simpleExample/wajirSimlcpbVLCPBConstituency.pdf", width=5, height=5)
-plot(simDat$simulatedEAs$aggregatedPop$aggregatedResultslcpb$constituencyMatrices$p[constituenciesInWajir,1], 
-     simDat$simulatedEAs$aggregatedPop$aggregatedResultsLCPB$constituencyMatrices$p[constituenciesInWajir,1], 
+sortI = sort(as.character(poppsubKenya$subarea), index.return=TRUE)$ix
+theseCounties = poppsubKenya$area[sortI]
+# constituenciesInWajir = theseCounties == "Wajir"
+pdf(file="figures/simpleExample/wajirSimSmoothRiskVFineScalePrevalenceConstituency.pdf", width=5, height=5)
+plot(simDat$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pSmoothRisk[,1], 
+     simDat$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pFineScalePrevalence[,1], 
      pch=19, cex=1, col="blue", type="n", 
      xlab="Smooth Risk", ylab="Fine Scale Prevalence", xlim=c(.03, .1), ylim=c(.03, .1))
 abline(a=0, b=1)
-points(simDat$simulatedEAs$aggregatedPop$aggregatedResultslcpb$constituencyMatrices$p[constituenciesInWajir,1], 
-       simDat$simulatedEAs$aggregatedPop$aggregatedResultsLCPB$constituencyMatrices$p[constituenciesInWajir,1], 
+points(simDat$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pSmoothRisk[,1], 
+       simDat$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pFineScalePrevalence[,1], 
        pch=19, cex=1, col="blue")
-text(simDat$simulatedEAs$aggregatedPop$aggregatedResultslcpb$constituencyMatrices$p[constituenciesInWajir,1], 
-     simDat$simulatedEAs$aggregatedPop$aggregatedResultsLCPB$constituencyMatrices$p[constituenciesInWajir,1], 
+text(simDat$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pSmoothRisk[,1], 
+     simDat$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pFineScalePrevalence[,1], 
      constituenciesW, cex=.55, pos=4)
 dev.off()
 
 # Tabulate prevalence versus risk ----
 # calulcate percent different between risk and prevalence
-lcpb = simDat$simulatedEAs$aggregatedPop$aggregatedResultslcpb$constituencyMatrices$p[,1]
-LCPb = simDat$simulatedEAs$aggregatedPop$aggregatedResultsLCPb$constituencyMatrices$p[,1]
-LCPB = simDat$simulatedEAs$aggregatedPop$aggregatedResultsLCPB$constituencyMatrices$p[,1]
-constituencyResults = data.frame(Area=constituenciesW, SmoothRisk=lcpb, Risk=LCPb, Prevalence=LCPB, TotalEAs=nEAsTotal)
-wajirCountyI = sort(unique(poppcarea)) == "Wajir"
-lcpbCounty = simDat$simulatedEAs$aggregatedPop$aggregatedResultslcpb$countyMatrices$p[,1]
-LCPbCounty = simDat$simulatedEAs$aggregatedPop$aggregatedResultsLCPb$countyMatrices$p[,1]
-LCPBCounty = simDat$simulatedEAs$aggregatedPop$aggregatedResultsLCPB$countyMatrices$p[,1]
-countyResults = data.frame(Area="Wajir", SmoothRisk=lcpbCounty, Risk=LCPbCounty, Prevalence=LCPBCounty, TotalEAs=sum(nEAsTotal))
+SmoothRisk = simDat$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pSmoothRisk[,1]
+Risk = simDat$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pFineScaleRisk[,1]
+Prevalence = simDat$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pFineScalePrevalence[,1]
+constituencyResults = data.frame(Area=constituenciesW, SmoothRisk=SmoothRisk, Risk=Risk, Prevalence=Prevalence, TotalEAs=nEAsTotal)
+wajirCountyI = sort(unique(poppsubKenya$area)) == "Wajir"
+SmoothRiskCounty = simDat$simulatedEAs$aggregatedPop$areaPop$aggregationResults$pSmoothRisk[,1]
+FineScaleRiskCounty = simDat$simulatedEAs$aggregatedPop$areaPop$aggregationResults$pFineScaleRisk[,1]
+FineScalePrevalenceCounty = simDat$simulatedEAs$aggregatedPop$areaPop$aggregationResults$pFineScalePrevalence[,1]
+countyResults = data.frame(Area="Wajir", SmoothRisk=SmoothRiskCounty, Risk=FineScaleRiskCounty, Prevalence=FineScalePrevalenceCounty, TotalEAs=sum(nEAsTotal))
 combinedResults = rbind(constituencyResults, countyResults)
 print(combinedResults)
 xtable(combinedResults, digits=3)
-#          Area SmoothRisk       Risk Prevalence  TotalEAs
-# 1       Eldas 0.06557801 0.06354172 0.06342857       70
-# 2      Tarbaj 0.06531854 0.06507623 0.06754098      122
-# 3  Wajir East 0.04102762 0.04360798 0.04219780      182
-# 4 Wajir North 0.06117243 0.05823436 0.06537931      145
-# 5 Wajir South 0.07255666 0.07674612 0.08194595      185
-# 6  Wajir West 0.07283498 0.06545748 0.06414414      111
-# 7       Wajir 0.06191546 0.06163395 0.06395092      815
+#        Area SmoothRisk       Risk Prevalence TotalEAs
+#       Eldas 0.05990297 0.05730967 0.06254545       55
+#      Tarbaj 0.05111533 0.05100725 0.04200000      120
+#  Wajir East 0.02777313 0.02942914 0.03300546      183
+# Wajir North 0.05683298 0.05581496 0.06013072      153
+# Wajir South 0.05562260 0.05899186 0.05500000      184
+#  Wajir West 0.05388420 0.04814104 0.04533333      120
+#       Wajir 0.04910678 0.04887061 0.04819632      815
 
-percentDifference = (LCPB - lcpb) / lcpb
+percentDifference = 100*(Prevalence - SmoothRisk) / SmoothRisk
 print(data.frame(Constituency=constituenciesW, pctDiff=percentDifference, urbanEAs=nEAsUrban, ruralEAs=nEAsRural, totalEAs=nEAsTotal))
-#   Constituency     pctDiff urbanEAs ruralEAs totalEAs
-# 1        Eldas -0.05107582        0       79       79
-# 2       Tarbaj  0.05118402        4      121      125
-# 3   Wajir East  0.01746166      155       43      198
-# 4  Wajir North -0.04886100        4      123      127
-# 5  Wajir South -0.03683734        0      198      198
-# 6   Wajir West  0.04094348        0       88       88
-
-#  Constituency pctDiff urbanEAs ruralEAs totalEAs
-#         Eldas    -5.1        0       79       79
-#        Tarbaj     5.1        4      121      125
-#    Wajir East     1.7      155       43      198
-#   Wajir North    -4.9        4      123      127
-#   Wajir South    -3.7        0      198      198
-#    Wajir West     4.1        0       88       88
+# Constituency    pctDiff urbanEAs ruralEAs totalEAs
+#        Eldas   4.411283        0       55       55
+#       Tarbaj -17.832874        7      113      120
+#   Wajir East  18.839540      135       48      183
+#  Wajir North   5.802506        3      150      153
+#  Wajir South  -1.119322        5      179      184
+#   Wajir West -15.868966       13      107      120
 
 #### Plot Constituency Results ####
 ylim=range(c(constituencyResults$SmoothRisk, constituencyResults$Risk, constituencyResults$Prevalence))
@@ -1215,18 +1238,20 @@ dev.off()
 #                                               simPopOnly=TRUE, returnEAinfo=FALSE, seed=1, inla.seed=1L, verbose=TRUE, 
 #                                               easpa=easpa, popMat=popMat, constituencyPop=poppsubKenya)
 nsim = 10000
-simDatMulti = generateSimDataSetsLCPB(nsim=nsim, adjustedPopMat=popMatSimpleAdjustedW, fixPopPerEA=25, logisticApproximation=FALSE, 
+simDatMulti = generateSimDataSetsLCPB2(nsim=nsim, targetPopMat=popMatSimpleAdjustedW, 
+                                       fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
                                       dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
                                       simPopOnly=TRUE, returnEAinfo=FALSE, seed=1, inla.seed=1L, verbose=TRUE, 
-                                      easpa=easpaW, popMat=popMatW, constituencyPop=poppsubW)
+                                      easpa=easpaW, popMat=popMatW, poppsub=poppsubW, gridLevel=TRUE, 
+                                      doSmoothRisk=TRUE, doFineScaleRisk=TRUE, logisticApproximation=FALSE)
 testnsim = 10000
-prevalenceSamples = simDatMulti$aggregatedResultsLCPB$constituencyMatrices$Z[,1:testnsim]
-fineScaleRiskSamples = simDatMulti$aggregatedResultsLCPb$constituencyMatrices$Z[,1:testnsim]
-smoothRiskSamples = simDatMulti$aggregatedResultslcpb$constituencyMatrices$Z[,1:testnsim]
+prevalenceSamples = simDatMulti$subareaPop$aggregationResults$ZFineScalePrevalence[,1:testnsim]
+fineScaleRiskSamples = simDatMulti$subareaPop$aggregationResults$ZFineScaleRisk[,1:testnsim]
+smoothRiskSamples = simDatMulti$subareaPop$aggregationResults$ZSmoothRisk[,1:testnsim]
 
-prevalenceSamples = simDatMulti$aggregatedResultsLCPB$constituencyMatrices$p[,1:testnsim]
-fineScaleRiskSamples = simDatMulti$aggregatedResultsLCPb$constituencyMatrices$p[,1:testnsim]
-smoothRiskSamples = simDatMulti$aggregatedResultslcpb$constituencyMatrices$p[,1:testnsim]
+prevalenceSamples = simDatMulti$subareaPop$aggregationResults$pFineScalePrevalence[,1:testnsim]
+fineScaleRiskSamples = simDatMulti$subareaPop$aggregationResults$pFineScaleRisk[,1:testnsim]
+smoothRiskSamples = simDatMulti$subareaPop$aggregationResults$pSmoothRisk[,1:testnsim]
 
 # 80% CIs
 prevalenceCIWidths = apply(prevalenceSamples, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
@@ -1235,60 +1260,62 @@ smoothRiskCIWidths = apply(smoothRiskSamples, 1, function(x){diff(quantile(x, pr
 # constituencyResults = rbind(prevalenceCIWidths, fineScaleRiskCIWidths, smoothRiskCIWidths)
 constituencyResults = data.frame(Area=constituenciesW, SmoothRisk=smoothRiskCIWidths, Risk=fineScaleRiskCIWidths, Prevalence=prevalenceCIWidths, TotalEAs=nEAsTotal)
 
-lcpbCounty = simDatMulti$aggregatedResultslcpb$countyMatrices$Z
-LCPbCounty = simDatMulti$aggregatedResultsLCPb$countyMatrices$Z
-LCPBCounty = simDatMulti$aggregatedResultsLCPB$countyMatrices$Z
+smoothRiskCounty = simDatMulti$areaPop$aggregationResults$ZSmoothRisk
+fineScaleRiskCounty = simDatMulti$areaPop$aggregationResults$ZFineScaleRisk
+fineScalePrevalenceCounty = simDatMulti$areaPop$aggregationResults$ZFineScalePrevalence
 
-lcpbCounty = simDatMulti$aggregatedResultslcpb$countyMatrices$p
-LCPbCounty = simDatMulti$aggregatedResultsLCPb$countyMatrices$p
-LCPBCounty = simDatMulti$aggregatedResultsLCPB$countyMatrices$p
+smoothRiskCounty = simDatMulti$areaPop$aggregationResults$pSmoothRisk
+fineScaleRiskCounty = simDatMulti$areaPop$aggregationResults$pFineScaleRisk
+fineScalePrevalenceCounty = simDatMulti$areaPop$aggregationResults$pFineScalePrevalence
 
-prevalenceCIWidths = apply(LCPBCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
-fineScaleRiskCIWidths = apply(LCPbCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
-smoothRiskCIWidths = apply(lcpbCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+prevalenceCIWidths = apply(fineScalePrevalenceCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+fineScaleRiskCIWidths = apply(fineScaleRiskCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+smoothRiskCIWidths = apply(smoothRiskCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
 countyResults = data.frame(Area="Wajir", SmoothRisk=smoothRiskCIWidths, Risk=fineScaleRiskCIWidths, Prevalence=prevalenceCIWidths, TotalEAs=sum(nEAsTotal))
 
 combinedResults = rbind(constituencyResults, countyResults)
 print(combinedResults)
 xtable(combinedResults, digits=3)
-#         Area SmoothRisk       Risk Prevalence TotalEAs
-# 1       Eldas 0.06326411 0.06437442 0.06632373       62
-# 2      Tarbaj 0.06199913 0.06254643 0.06385187      122
-# 3  Wajir East 0.03558563 0.03585227 0.03664516      173
-# 4 Wajir North 0.06956095 0.07003291 0.07031925      138
-# 5 Wajir South 0.06322627 0.06347952 0.06450509      215
-# 6  Wajir West 0.05932780 0.06055693 0.06157220      105
-# 7       Wajir 0.05270074 0.05252068 0.05281472      815
+#        Area SmoothRisk       Risk Prevalence TotalEAs
+#       Eldas 0.04629711 0.04800643 0.05072920       55
+#      Tarbaj 0.04583046 0.04671403 0.04811827      120
+#  Wajir East 0.02576206 0.02633897 0.02747312      183
+# Wajir North 0.04622396 0.04630701 0.04750958      153
+# Wajir South 0.04192406 0.04236640 0.04348542      184
+#  Wajir West 0.04240138 0.04367990 0.04497796      120
+#       Wajir 0.03533783 0.03554017 0.03577914      815
 combinedResults = rbind(constituencyResults, countyResults)
 print(combinedResults)
 xtable(combinedResults, digits=3)
 # pct larger:
-(constituencyResults$Prevalence - constituencyResults$SmoothRisk) / constituencyResults$SmoothRisk
-# 0.04836255 0.02988332 0.02977417 0.01090124 0.02022610 0.03783050
-mean((constituencyResults$Prevalence - constituencyResults$SmoothRisk) / constituencyResults$SmoothRisk)
-# [1] 0.02949631
+100 * (constituencyResults$Prevalence - constituencyResults$SmoothRisk) / constituencyResults$SmoothRisk
+# 9.573133 4.991903 6.641795 2.781280 3.724255 6.076628
+mean(100 * (constituencyResults$Prevalence - constituencyResults$SmoothRisk) / constituencyResults$SmoothRisk)
+# 5.631499
 
 # 95% CIs
 prevalenceCIWidths = apply(prevalenceSamples, 1, function(x){diff(quantile(x, probs=c(0.025, 0.975), na.rm=TRUE))})
 fineScaleRiskCIWidths = apply(fineScaleRiskSamples, 1, function(x){diff(quantile(x, probs=c(0.025, 0.975), na.rm=TRUE))})
 smoothRiskCIWidths = apply(smoothRiskSamples, 1, function(x){diff(quantile(x, probs=c(0.025, 0.975), na.rm=TRUE))})
 rbind(prevalenceCIWidths, fineScaleRiskCIWidths, smoothRiskCIWidths)
-# [,1]       [,2]       [,3]      [,4]       [,5]       [,6]
-# prevalenceCIWidths    0.1038467 0.10096725 0.05808698 0.1134532 0.10217768 0.09642105
-# fineScaleRiskCIWidths 0.1018004 0.09832631 0.05633098 0.1129878 0.10123629 0.09357837
-# smoothRiskCIWidths    0.1002967 0.09726498 0.05627309 0.1126969 0.09972347 0.09276377
+#                            Eldas     Tarbaj Wajir East Wajir North Wajir South  Wajir West
+# prevalenceCIWidths    0.07889456 0.07577971 0.04331512  0.07446680  0.06694146  0.07016640
+# fineScaleRiskCIWidths 0.07349561 0.07416060 0.04242293  0.07294329  0.06555293  0.06852538
+# smoothRiskCIWidths    0.07158451 0.07203241 0.04137768  0.07182707  0.06456175  0.06657485
 
-mean((prevalenceCIWidths - smoothRiskCIWidths) / smoothRiskCIWidths)
+
+mean(100* (prevalenceCIWidths - smoothRiskCIWidths) / smoothRiskCIWidths)
+# 5.475363
 
 # means
 prevalenceMeans = rowMeans(prevalenceSamples)
 fineScaleRiskMeans = rowMeans(fineScaleRiskSamples)
 smoothRiskMeans = rowMeans(smoothRiskSamples)
 rbind(prevalenceMeans, fineScaleRiskMeans, smoothRiskMeans)
-# [,1]       [,2]       [,3]       [,4]       [,5]       [,6]
-# prevalenceMeans    0.06615164 0.06444411 0.03602050 0.06635717 0.06439644 0.06137775
-# fineScaleRiskMeans 0.06610529 0.06436843 0.03599965 0.06635841 0.06436133 0.06140232
-# smoothRiskMeans    0.06609431 0.06444141 0.03602750 0.06643923 0.06431593 0.06142097
+#                         Eldas     Tarbaj Wajir East Wajir North Wajir South Wajir West
+# prevalenceMeans    0.06437398 0.06314970 0.03486189  0.06359500  0.06244569 0.05976299
+# fineScaleRiskMeans 0.06425381 0.06315893 0.03487984  0.06357393  0.06246475 0.05969088
+# smoothRiskMeans    0.06424268 0.06314229 0.03488853  0.06364964  0.06243501 0.05969217
 
 # SDs
 means = smoothRiskMeans
@@ -1300,18 +1327,21 @@ fineScaleRiskSDs = rowMeans(fineScaleRiskErr^2)
 smoothRiskSDs = rowMeans(smoothRiskErr^2)
 
 rbind(prevalenceSDs, fineScaleRiskSDs, smoothRiskSDs)
-# [,1]         [,2]         [,3]         [,4]         [,5]         [,6]
-# prevalenceSDs    0.0007368619 0.0006832285 0.0002270314 0.0008593671 0.0007034295 0.0006356289
-# fineScaleRiskSDs 0.0007050809 0.0006552234 0.0002188096 0.0008433078 0.0006901962 0.0006129011
-# smoothRiskSDs    0.0006789629 0.0006376858 0.0002157206 0.0008341588 0.0006807164 0.0005927873
+#                         Eldas       Tarbaj   Wajir East  Wajir North  Wajir South   Wajir West
+# prevalenceSDs    0.0004158730 0.0003728951 0.0001247979 0.0003671224 0.0003012047 0.0003255839
+# fineScaleRiskSDs 0.0003737302 0.0003546713 0.0001167018 0.0003524427 0.0002874843 0.0003060737
+# smoothRiskSDs    0.0003448184 0.0003413493 0.0001115633 0.0003432380 0.0002788463 0.0002911358
 
 # pct difference
-(prevalenceSDs - smoothRiskSDs) / smoothRiskSDs
-mean((prevalenceSDs - smoothRiskSDs) / smoothRiskSDs)
+100 * (prevalenceSDs - smoothRiskSDs) / smoothRiskSDs
+mean(100 * (prevalenceSDs - smoothRiskSDs) / smoothRiskSDs)
+# 11.41997
 
 ##### Fit model to SRS cluster data ----
 # get the data
 dat = simDat$SRSDat$clustDat[[1]]
+dat$y = dat$Z
+dat$n = dat$N
 
 # fit SPDE cluster level risk model
 nSamples = 10000 # 10000 takes about 5 minutes
@@ -1322,19 +1352,22 @@ uDraws = spdeFit$uDraws
 sigmaEpsilonDraws = spdeFit$sigmaEpsilonDraws
 
 # apply aggregation models
-aggResults = modLCPB(uDraws, sigmaEpsilonDraws, easpaW, popMatW, 
-                     popMatSimpleAdjustedW, doLCPb=TRUE, doIHMEModel=TRUE, 
-                     constituencyPop=poppsubW, ensureAtLeast1PerConstituency=TRUE, 
-                     logisticApproximation=FALSE, verbose=TRUE, 
-                     fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1)
+aggResults = simPopCustom(uDraws, sigmaEpsilonDraws, easpa=easpaW, 
+                          popMat=popMatW, targetPopMat=popMatSimpleAdjustedW, 
+                          stratifyByUrban=TRUE, 
+                          doFineScaleRisk=TRUE, doSmoothRisk=TRUE, doGriddedRisk=TRUE, 
+                          doSmoothRiskLogisticApprox=FALSE, 
+                          poppsub=poppsubW, subareaLevel=TRUE, gridLevel=TRUE, 
+                          fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
+                          returnEAinfo=FALSE, verbose=TRUE)
 
 # get average number of EAs per area
-out = meanEAsPerCon()
-out = out[outarea == "Wajir",]
+out = meanEAsPerCon2()
+out = out[out$area == "Wajir",]
 nEAsTotal = out$meanTotalEAs
 
 # get average number of neonatals per area
-nPerCon = aggResults$aggregatedResultslcpb$constituencyMatrices$N[,1]
+nPerCon = aggResults$subareaPop$aggregationResults$NSmoothRisk[,1]
 
 # calculate number of pixels per area (for understanding IHME model variance)
 out = aggregate(popMatSimpleAdjustedW$pop, by=list(pixels=popMatSimpleAdjustedW$subarea), FUN=length)
@@ -1345,15 +1378,15 @@ out = aggregate(dat$N[dat$area == "Wajir"], by=list(dat$subarea[dat$area == "Waj
 nEAsSampled = out$x
 
 # gather aggregation model output
-prevalenceSamples = aggResults$aggregatedResultsLCPB$constituencyMatrices$Z[,1:testnsim]
-fineScaleRiskSamples = aggResults$aggregatedResultsLCPb$constituencyMatrices$Z[,1:testnsim]
-smoothRiskSamples = aggResults$aggregatedResultslcpb$constituencyMatrices$Z[,1:testnsim]
-ihmeSamples = aggResults$aggregatedResultsIHME$constituencyMatrices$Z[,1:testnsim]
+prevalenceSamples = aggResults$subareaPop$aggregationResults$ZFineScalePrevalence[,1:testnsim]
+fineScaleRiskSamples = aggResults$subareaPop$aggregationResults$ZFineScaleRisk[,1:testnsim]
+smoothRiskSamples = aggResults$subareaPop$aggregationResults$ZSmoothRisk[,1:testnsim]
+ihmeSamples = aggResults$subareaPop$aggregationResults$ZGriddedRisk[,1:testnsim]
 
-prevalenceSamples = aggResults$aggregatedResultsLCPB$constituencyMatrices$p[,1:testnsim]
-fineScaleRiskSamples = aggResults$aggregatedResultsLCPb$constituencyMatrices$p[,1:testnsim]
-smoothRiskSamples = aggResults$aggregatedResultslcpb$constituencyMatrices$p[,1:testnsim]
-ihmeSamples = aggResults$aggregatedResultsIHME$constituencyMatrices$p[,1:testnsim]
+prevalenceSamples = aggResults$subareaPop$aggregationResults$pFineScalePrevalence[,1:testnsim]
+fineScaleRiskSamples = aggResults$subareaPop$aggregationResults$pFineScaleRisk[,1:testnsim]
+smoothRiskSamples = aggResults$subareaPop$aggregationResults$pSmoothRisk[,1:testnsim]
+ihmeSamples = aggResults$subareaPop$aggregationResults$pGriddedRisk[,1:testnsim]
 
 # 80% CIs
 prevalenceCIWidths = apply(prevalenceSamples, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
@@ -1362,19 +1395,19 @@ smoothRiskCIWidths = apply(smoothRiskSamples, 1, function(x){diff(quantile(x, pr
 ihmeCIWidths = apply(ihmeSamples, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
 constituencyResults = data.frame(Area=constituenciesW, SmoothRisk=smoothRiskCIWidths, Risk=fineScaleRiskCIWidths, Prevalence=prevalenceCIWidths, IHMERisk=ihmeCIWidths, EAs=nEAsTotal, EAsSampled=nEAsSampled, Pixels=nPixels, Neonatals=nPerCon)
 
-lcpbCounty = aggResults$aggregatedResultslcpb$countyMatrices$Z
-LCPbCounty = aggResults$aggregatedResultsLCPb$countyMatrices$Z
-LCPBCounty = aggResults$aggregatedResultsLCPB$countyMatrices$Z
-ihmeCounty = aggResults$aggregatedResultsIHME$countyMatrices$Z
+smoothRiskCounty = aggResults$areaPop$aggregationResults$ZSmoothRisk
+fineScaleRiskCounty = aggResults$areaPop$aggregationResults$ZFineScaleRisk
+fineScalePrevalenceCounty = aggResults$areaPop$aggregationResults$ZFineScalePrevalence
+ihmeCounty = aggResults$areaPop$aggregationResults$ZGriddedRisk
 
-lcpbCounty = aggResults$aggregatedResultslcpb$countyMatrices$p
-LCPbCounty = aggResults$aggregatedResultsLCPb$countyMatrices$p
-LCPBCounty = aggResults$aggregatedResultsLCPB$countyMatrices$p
-ihmeCounty = aggResults$aggregatedResultsIHME$countyMatrices$p
+smoothRiskCounty = aggResults$areaPop$aggregationResults$pSmoothRisk
+fineScaleRiskCounty = aggResults$areaPop$aggregationResults$pFineScaleRisk
+fineScalePrevalenceCounty = aggResults$areaPop$aggregationResults$pFineScalePrevalence
+ihmeCounty = aggResults$areaPop$aggregationResults$pGriddedRisk
 
-prevalenceCIWidths = apply(LCPBCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
-fineScaleRiskCIWidths = apply(LCPbCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
-smoothRiskCIWidths = apply(lcpbCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+prevalenceCIWidths = apply(fineScalePrevalenceCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+fineScaleRiskCIWidths = apply(fineScaleRiskCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+smoothRiskCIWidths = apply(smoothRiskCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
 ihmeCIWidths = apply(ihmeCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
 countyResults = data.frame(Area="Wajir", SmoothRisk=smoothRiskCIWidths, Risk=fineScaleRiskCIWidths, Prevalence=prevalenceCIWidths, IHMERisk=ihmeCIWidths, EAs=sum(nEAsTotal), EAsSampled=sum(nEAsSampled), Pixels=sum(nPixels), Neonatals=sum(nPerCon))
 
@@ -1386,8 +1419,8 @@ xtable(combinedResults,
        display=c("d", "s", "e", "e", "e", "e", "d", "d", "d", "d"))
 
 # pct larger:
-(constituencyResults$Prevalence - constituencyResults$SmoothRisk) / constituencyResults$SmoothRisk
-mean((constituencyResults$Prevalence - constituencyResults$SmoothRisk) / constituencyResults$SmoothRisk)
+100 * (constituencyResults$Prevalence - constituencyResults$SmoothRisk) / constituencyResults$SmoothRisk
+mean(100 * (constituencyResults$Prevalence - constituencyResults$SmoothRisk) / constituencyResults$SmoothRisk)
 
 # 95% CIs
 prevalenceCIWidths = apply(prevalenceSamples, 1, function(x){diff(quantile(x, probs=c(0.025, 0.975), na.rm=TRUE))})
@@ -1396,7 +1429,7 @@ smoothRiskCIWidths = apply(smoothRiskSamples, 1, function(x){diff(quantile(x, pr
 ihmeCIWidths = apply(ihmeSamples, 1, function(x){diff(quantile(x, probs=c(0.025, 0.975), na.rm=TRUE))})
 rbind(prevalenceCIWidths, fineScaleRiskCIWidths, smoothRiskCIWidths, ihmeCIWidths)
 
-mean((prevalenceCIWidths - smoothRiskCIWidths) / smoothRiskCIWidths)
+mean(100 * (prevalenceCIWidths - smoothRiskCIWidths) / smoothRiskCIWidths)
 
 # means
 prevalenceMeans = rowMeans(prevalenceSamples)
@@ -1419,8 +1452,8 @@ ihmeSDs = rowMeans(ihmeErr^2)
 rbind(prevalenceSDs, fineScaleRiskSDs, smoothRiskSDs, ihmeSDs)
 
 # pct difference
-(prevalenceSDs - smoothRiskSDs) / smoothRiskSDs
-mean((prevalenceSDs - smoothRiskSDs) / smoothRiskSDs)
+100 * (prevalenceSDs - smoothRiskSDs) / smoothRiskSDs
+mean(100 * (prevalenceSDs - smoothRiskSDs) / smoothRiskSDs)
 
 # Do the same, but in Nairobi ----
 longRangeNairobi = c(39, 41)
@@ -1429,8 +1462,8 @@ constituenciesN = poppsubKenya$subarea[poppsubKenya$area=="Nairobi"]
 offsets = matrix(0, nrow=4, ncol=2)
 # offsets[1,2] = .1 # shift label for Eldas slightly higher
 # offsets[6,1] = .15 # shift label for Wajir West slightly farther east
-easpsub = meanEAsPerCon()
-easpsub = easpsub[easpsubarea=="Nairobi",]
+easpsub = meanEAsPerCon2()
+easpsub = easpsub[easpsub$area=="Nairobi",]
 popGridN = popGrid[popGrid$area=="Nairobi",]
 # popGridWajirAdjusted = popGridAdjusted[popGridAdjusted$area=="Wajir",]
 # plotMapDat(mapDat=adm0, lwd=.5, new=TRUE)
@@ -1445,17 +1478,17 @@ popMatN = popMatN[popMatN$area == "Nairobi", ]
 poppsubN = poppsubKenya
 poppsubN = poppsubN[poppsubN$area == "Nairobi", ]
 
-simDatKenya = generateSimDataSetsLCPB(nsim=1, adjustedPopMat=popMatSimpleAdjusted, 
+simDatKenya = generateSimDataSetsLCPB2(nsim=1, targetPopMat=popMatSimpleAdjusted, 
                                       fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
                                       logisticApproximation=FALSE, 
                                       dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
                                       seed=1, inla.seed=1L, simPopOnly=FALSE, returnEAinfo=TRUE, 
-                                      easpa=NULL, popMat=NULL, constituencyPop=poppsubKenya)
+                                      easpa=NULL, popMat=NULL, poppsub=poppsubKenya)
 
 # get the data and the true population
 dat = simDatKenya$SRSDat$clustDat[[1]]
-truePrevalenceConstituencyKenya = simDatKenya$simulatedEAs$aggregatedPop$aggregatedResultsLCPB$constituencyMatrices$p[,1]
-truePrevalenceCountyKenya = simDatKenya$simulatedEAs$aggregatedPop$aggregatedResultsLCPB$countyMatrices$p[,1]
+truePrevalenceConstituencyKenya = simDatKenya$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pFineScalePrevalence[,1]
+truePrevalenceCountyKenya = simDatKenya$simulatedEAs$aggregatedPop$areaPop$aggregationResults$pFineScalePrevalence[,1]
 
 # fit SPDE cluster level risk model
 nSamples = 10000
@@ -1478,7 +1511,7 @@ out = out[outarea == "Nairobi",]
 nEAsTotal = out$meanTotalEAs
 
 # get average number of neonatals per area
-nPerCon = aggResultsN$aggregatedResultslcpb$constituencyMatrices$N[,1]
+nPerCon = aggResultsN$subareaPop$aggregationResults$NSmoothRisk[,1]
 
 # calculate number of pixels per area (for understanding IHME model variance)
 out = aggregate(popMatSimpleAdjustedN$pop, by=list(pixels=popMatSimpleAdjustedN$subarea), FUN=length)
@@ -1489,15 +1522,15 @@ out = aggregate(dat$N[dat$area == "Nairobi"], by=list(dat$subarea[dat$area == "N
 nEAsSampled = out$x
 
 # gather aggregation model output
-prevalenceSamples = aggResultsN$aggregatedResultsLCPB$constituencyMatrices$Z[,1:testnsim]
-fineScaleRiskSamples = aggResultsN$aggregatedResultsLCPb$constituencyMatrices$Z[,1:testnsim]
-smoothRiskSamples = aggResultsN$aggregatedResultslcpb$constituencyMatrices$Z[,1:testnsim]
-ihmeSamples = aggResultsN$aggregatedResultsIHME$constituencyMatrices$Z[,1:testnsim]
+prevalenceSamples = aggResultsN$aggregationResults$ZFineScalePrevalence[,1:testnsim]
+fineScaleRiskSamples = aggResultsN$aggregationResults$ZFineScaleRisk[,1:testnsim]
+smoothRiskSamples = aggResultsN$aggregationResults$ZSmoothRisk[,1:testnsim]
+ihmeSamples = aggResultsN$aggregationResultsIHME$constituencyMatrices$Z[,1:testnsim]
 
-prevalenceSamples = aggResultsN$aggregatedResultsLCPB$constituencyMatrices$p[,1:testnsim]
-fineScaleRiskSamples = aggResultsN$aggregatedResultsLCPb$constituencyMatrices$p[,1:testnsim]
-smoothRiskSamples = aggResultsN$aggregatedResultslcpb$constituencyMatrices$p[,1:testnsim]
-ihmeSamples = aggResultsN$aggregatedResultsIHME$constituencyMatrices$p[,1:testnsim]
+prevalenceSamples = aggResultsN$subareaPop$aggregationResults$pFineScalePrevalence[,1:testnsim]
+fineScaleRiskSamples = aggResultsN$subareaPop$aggregationResults$pFineScaleRisk[,1:testnsim]
+smoothRiskSamples = aggResultsN$subareaPop$aggregationResults$pSmoothRisk[,1:testnsim]
+ihmeSamples = aggResultsN$aggregationResultsIHME$constituencyMatrices$p[,1:testnsim]
 
 # 80% CIs
 prevalenceCIWidths = apply(prevalenceSamples, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
@@ -1506,19 +1539,19 @@ smoothRiskCIWidths = apply(smoothRiskSamples, 1, function(x){diff(quantile(x, pr
 ihmeCIWidths = apply(ihmeSamples, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
 constituencyResults = data.frame(Area=constituenciesN, SmoothRisk=smoothRiskCIWidths, Risk=fineScaleRiskCIWidths, Prevalence=prevalenceCIWidths, IHMERisk=ihmeCIWidths, EAs=nEAsTotal, EAsSampled=nEAsSampled, Pixels=nPixels, Neonatals=nPerCon)
 
-lcpbCounty = aggResultsN$aggregatedResultslcpb$countyMatrices$Z
-LCPbCounty = aggResultsN$aggregatedResultsLCPb$countyMatrices$Z
-LCPBCounty = aggResultsN$aggregatedResultsLCPB$countyMatrices$Z
-ihmeCounty = aggResultsN$aggregatedResultsIHME$countyMatrices$Z
+smoothRiskCounty = aggResultsN$aggregationResultslcpb$countyMatrices$Z
+fineScaleRiskCounty = aggResultsN$aggregationResultsLCPb$countyMatrices$Z
+fineScalePrevalenceCounty = aggResultsN$aggregationResultsLCPB$countyMatrices$Z
+ihmeCounty = aggResultsN$aggregationResultsIHME$countyMatrices$Z
 
-lcpbCounty = aggResultsN$aggregatedResultslcpb$countyMatrices$p
-LCPbCounty = aggResultsN$aggregatedResultsLCPb$countyMatrices$p
-LCPBCounty = aggResultsN$aggregatedResultsLCPB$countyMatrices$p
-ihmeCounty = aggResultsN$aggregatedResultsIHME$countyMatrices$p
+smoothRiskCounty = aggResultsN$areaPop$aggregationResults$pSmoothRisk
+fineScaleRiskCounty = aggResultsN$areaPop$aggregationResults$pFineScaleRisk
+fineScalePrevalenceCounty = aggResultsN$areaPop$aggregationResults$pFineScalePrevalence
+ihmeCounty = aggResultsN$aggregationResultsIHME$countyMatrices$p
 
-prevalenceCIWidths = apply(LCPBCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
-fineScaleRiskCIWidths = apply(LCPbCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
-smoothRiskCIWidths = apply(lcpbCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+prevalenceCIWidths = apply(fineScalePrevalenceCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+fineScaleRiskCIWidths = apply(fineScaleRiskCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+smoothRiskCIWidths = apply(smoothRiskCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
 ihmeCIWidths = apply(ihmeCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
 countyResults = data.frame(Area="Nairobi", SmoothRisk=smoothRiskCIWidths, Risk=fineScaleRiskCIWidths, Prevalence=prevalenceCIWidths, IHMERisk=ihmeCIWidths, EAs=sum(nEAsTotal), EAsSampled=sum(nEAsSampled), Pixels=sum(nPixels), Neonatals=sum(nPerCon))
 
@@ -1600,7 +1633,7 @@ out = meanEAsPerCon()
 nEAsTotal = out$meanTotalEAs
 
 # get average number of neonatals per area
-nPerCon = rowMeans(aggResultsKenya$aggregatedResultslcpb$constituencyMatrices$N)
+nPerCon = rowMeans(aggResultsKenya$subareaPop$aggregationResults$NSmoothRisk)
 
 # calculate number of pixels per area (for understanding IHME model variance)
 out = aggregate(popMatSimpleAdjustedN$pop, by=list(pixels=popMatSimpleAdjustedN$subarea), FUN=length)
@@ -1611,15 +1644,15 @@ out = aggregate(dat$N[dat$area == "Nairobi"], by=list(dat$subarea[dat$area == "N
 nEAsSampled = out$x
 
 # gather aggregation model output
-prevalenceSamples = aggResultsKenya$aggregatedResultsLCPB$constituencyMatrices$Z[,1:testnsim]
-fineScaleRiskSamples = aggResultsKenya$aggregatedResultsLCPb$constituencyMatrices$Z[,1:testnsim]
-smoothRiskSamples = aggResultsKenya$aggregatedResultslcpb$constituencyMatrices$Z[,1:testnsim]
-ihmeSamples = aggResultsKenya$aggregatedResultsIHME$constituencyMatrices$Z[,1:testnsim]
+prevalenceSamples = aggResultsKenya$aggregationResults$ZFineScalePrevalence[,1:testnsim]
+fineScaleRiskSamples = aggResultsKenya$aggregationResults$ZFineScaleRisk[,1:testnsim]
+smoothRiskSamples = aggResultsKenya$aggregationResults$ZSmoothRisk[,1:testnsim]
+ihmeSamples = aggResultsKenya$aggregationResultsIHME$constituencyMatrices$Z[,1:testnsim]
 
-prevalenceSamples = aggResultsKenya$aggregatedResultsLCPB$constituencyMatrices$p[,1:testnsim]
-fineScaleRiskSamples = aggResultsKenya$aggregatedResultsLCPb$constituencyMatrices$p[,1:testnsim]
-smoothRiskSamples = aggResultsKenya$aggregatedResultslcpb$constituencyMatrices$p[,1:testnsim]
-ihmeSamples = aggResultsKenya$aggregatedResultsIHME$constituencyMatrices$p[,1:testnsim]
+prevalenceSamples = aggResultsKenya$subareaPop$aggregationResults$pFineScalePrevalence[,1:testnsim]
+fineScaleRiskSamples = aggResultsKenya$subareaPop$aggregationResults$pFineScaleRisk[,1:testnsim]
+smoothRiskSamples = aggResultsKenya$subareaPop$aggregationResults$pSmoothRisk[,1:testnsim]
+ihmeSamples = aggResultsKenya$aggregationResultsIHME$constituencyMatrices$p[,1:testnsim]
 
 # 80% CIs
 prevalenceCIWidths = apply(prevalenceSamples, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
@@ -1628,19 +1661,19 @@ smoothRiskCIWidths = apply(smoothRiskSamples, 1, function(x){diff(quantile(x, pr
 ihmeCIWidths = apply(ihmeSamples, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
 constituencyResults = data.frame(Area=constituenciesN, SmoothRisk=smoothRiskCIWidths, Risk=fineScaleRiskCIWidths, Prevalence=prevalenceCIWidths, IHMERisk=ihmeCIWidths, EAs=nEAsTotal, EAsSampled=nEAsSampled, Pixels=nPixels, Neonatals=nPerCon)
 
-lcpbCounty = aggResultsKenya$aggregatedResultslcpb$countyMatrices$Z
-LCPbCounty = aggResultsKenya$aggregatedResultsLCPb$countyMatrices$Z
-LCPBCounty = aggResultsKenya$aggregatedResultsLCPB$countyMatrices$Z
-ihmeCounty = aggResultsKenya$aggregatedResultsIHME$countyMatrices$Z
+smoothRiskCounty = aggResultsKenya$aggregationResultslcpb$countyMatrices$Z
+fineScaleRiskCounty = aggResultsKenya$aggregationResultsLCPb$countyMatrices$Z
+fineScalePrevalenceCounty = aggResultsKenya$aggregationResultsLCPB$countyMatrices$Z
+ihmeCounty = aggResultsKenya$aggregationResultsIHME$countyMatrices$Z
 
-lcpbCounty = aggResultsKenya$aggregatedResultslcpb$countyMatrices$p
-LCPbCounty = aggResultsKenya$aggregatedResultsLCPb$countyMatrices$p
-LCPBCounty = aggResultsKenya$aggregatedResultsLCPB$countyMatrices$p
-ihmeCounty = aggResultsKenya$aggregatedResultsIHME$countyMatrices$p
+smoothRiskCounty = aggResultsKenya$areaPop$aggregationResults$pSmoothRisk
+fineScaleRiskCounty = aggResultsKenya$areaPop$aggregationResults$pFineScaleRisk
+fineScalePrevalenceCounty = aggResultsKenya$areaPop$aggregationResults$pFineScalePrevalence
+ihmeCounty = aggResultsKenya$aggregationResultsIHME$countyMatrices$p
 
-prevalenceCIWidths = apply(LCPBCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
-fineScaleRiskCIWidths = apply(LCPbCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
-smoothRiskCIWidths = apply(lcpbCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+prevalenceCIWidths = apply(fineScalePrevalenceCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+fineScaleRiskCIWidths = apply(fineScaleRiskCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
+smoothRiskCIWidths = apply(smoothRiskCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
 ihmeCIWidths = apply(ihmeCounty, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
 countyResults = data.frame(Area="Nairobi", SmoothRisk=smoothRiskCIWidths, Risk=fineScaleRiskCIWidths, Prevalence=prevalenceCIWidths, IHMERisk=ihmeCIWidths, EAs=sum(nEAsTotal), EAsSampled=sum(nEAsSampled), Pixels=sum(nPixels), Neonatals=sum(nPerCon))
 
@@ -1680,13 +1713,13 @@ simDatMulti3 = generateSimDataSetsLCPB(nsim=nsim, adjustedPopMat=popMatSimpleAdj
 
 testnsim = 10000
 
-prevalenceSamples = simDatMulti3$aggregatedResultsLCPB$constituencyMatrices$p[,1:testnsim]
-fineScaleRiskSamples = simDatMulti3$aggregatedResultsLCPb$constituencyMatrices$p[,1:testnsim]
-smoothRiskSamples = simDatMulti3$aggregatedResultslcpb$constituencyMatrices$p[,1:testnsim]
+prevalenceSamples = simDatMulti3$subareaPop$aggregationResults$pFineScalePrevalence[,1:testnsim]
+fineScaleRiskSamples = simDatMulti3$subareaPop$aggregationResults$pFineScaleRisk[,1:testnsim]
+smoothRiskSamples = simDatMulti3$subareaPop$aggregationResults$pSmoothRisk[,1:testnsim]
 
-prevalenceSamples = simDatMulti2$aggregatedResultsLCPB$constituencyMatrices$p[,1:testnsim]
-fineScaleRiskSamples = simDatMulti2$aggregatedResultsLCPb$constituencyMatrices$p[,1:testnsim]
-smoothRiskSamples = simDatMulti2$aggregatedResultslcpb$constituencyMatrices$p[,1:testnsim]
+prevalenceSamples = simDatMulti2$subareaPop$aggregationResults$pFineScalePrevalence[,1:testnsim]
+fineScaleRiskSamples = simDatMulti2$subareaPop$aggregationResults$pFineScaleRisk[,1:testnsim]
+smoothRiskSamples = simDatMulti2$subareaPop$aggregationResults$pSmoothRisk[,1:testnsim]
 
 # 80% CIs
 prevalenceCIWidths = apply(prevalenceSamples, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
@@ -1738,7 +1771,7 @@ rbind(prevalenceSDs, fineScaleRiskSDs, smoothRiskSDs)
 # fineScaleRiskSDs 0.0007050809 0.0006552234 0.0002188096 0.0008433078 0.0006901962 0.0006129011
 # smoothRiskSDs    0.0006789629 0.0006376858 0.0002157206 0.0008341588 0.0006807164 0.0005927873
 
-testSamples = simDatMulti$aggregatedResultsLcpb$constituencyMatrices$p[poppsubKenya$area=="Wajir",]
+testSamples = simDatMulti$aggregationResultsLcpb$constituencyMatrices$p[poppsubKenya$area=="Wajir",]
 testCIWidths = apply(testSamples, 1, function(x){diff(quantile(x, probs=c(0.1, 0.9), na.rm=TRUE))})
 
 sum(popMatSimpleAdjusted$pop[popMatSimpleAdjusted$constituency == "Wajir South" & popMatSimpleAdjusted$urban])
@@ -1788,10 +1821,10 @@ smoothRiskErr = sweep(smoothRiskSamples, 1, means, "-")
 prevalenceSDs = sqrt(rowMeans(prevalenceErr^2))
 fineScaleRiskSDs = sqrt(rowMeans(fineScaleRiskErr^2))
 smoothRiskSDs = sqrt(rowMeans(smoothRiskErr^2))
-countyMean = mean(simDatMulti$aggregatedResultslcpb$countyMatrices$p[wajirCountyI,])
-smoothRiskCountySamples = simDatMulti$aggregatedResultslcpb$countyMatrices$p[wajirCountyI,]
-riskCountySamples = simDatMulti$aggregatedResultsLCPb$countyMatrices$p[wajirCountyI,]
-prevalenceCountySamples = simDatMulti$aggregatedResultsLCPB$countyMatrices$p[wajirCountyI,]
+countyMean = mean(simDatMulti$areaPop$aggregationResults$pSmoothRisk[wajirCountyI,])
+smoothRiskCountySamples = simDatMulti$areaPop$aggregationResults$pSmoothRisk[wajirCountyI,]
+riskCountySamples = simDatMulti$areaPop$aggregationResults$pFineScaleRisk[wajirCountyI,]
+prevalenceCountySamples = simDatMulti$areaPop$aggregationResults$pFineScalePrevalence[wajirCountyI,]
 countySDs = data.frame(Area="Wajir", 
                        SmoothRisk=sqrt(mean((smoothRiskCountySamples-countyMean)^2)), 
                        Risk=sqrt(mean((riskCountySamples-countyMean)^2)), 

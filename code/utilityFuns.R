@@ -2662,10 +2662,12 @@ plotMapDat = function(plotVar=NULL, varCounties=NULL, zlim=NULL, project=FALSE, 
 # varAreas: the names of the areas we wish to plot
 # mapDat: spatial polygon file containing information on the areas
 # ...: additional arguments to the text function
-addMapLabels = function(varAreas=NULL, mapDat = NULL, offsets=NULL, ...) {
+addMapLabels = function(varAreas=NULL, mapDat = NULL, offsets=NULL, areaVarName=c("NAME_1", "NAME_2"), ...) {
   if(is.null(varAreas) && is.null(mapDat)) {
     stop("Must include either varAreas or mapDat")
   }
+  
+  areaVarName = match.arg(areaVarName)
   
   # load necessary data
   if(is.null(mapDat)) {
@@ -2676,7 +2678,7 @@ addMapLabels = function(varAreas=NULL, mapDat = NULL, offsets=NULL, ...) {
       # shape file found at: https://jlinden.carto.com/tables/kenya_region_shapefile/public
       require(maptools)
       mapDat = readShapePoly("../U5MR/mapData/kenya_region_shapefile/kenya_region_shapefile.shp", delete_null_obj=TRUE, force_ring=TRUE, repair=TRUE)
-    } else if(length(varAreas) == 273) {
+    } else if(length(varAreas) == 300) {
       mapDat = adm2
     } else {
       out = load("../U5MR/adminMapData.RData")
@@ -2686,8 +2688,8 @@ addMapLabels = function(varAreas=NULL, mapDat = NULL, offsets=NULL, ...) {
   if(is.null(varAreas)) {
     if(length(mapDat) == 8) {
       varAreas = sort(as.character(poppr$Region))
-    } else if(length(mapDat) == 273) {
-      varAreas = sort(as.character(mapDat@data$CONSTITUEN))
+    } else if(length(mapDat) == 300) {
+      varAreas = sort(as.character(mapDat@data$NAME_2))
     } else if(length(mapDat) == 47) {
       varAreas=sort(as.character(unique(mort$admin1)))
     } else {
@@ -2696,15 +2698,7 @@ addMapLabels = function(varAreas=NULL, mapDat = NULL, offsets=NULL, ...) {
   }
   
   # determine the names of the mapDat areas
-  if(!is.null(mapDat@data$NAME_1)) {
-    regionNames = mapDat@data$NAME_1
-  } else if(!is.null(mapDat@data$name_1)) {
-    regionNames = as.character(mapDat@data$name_1)
-  } else if(!is.null(mapDat@data$CONSTITUEN)) {
-    regionNames = as.character(mapDat@data$CONSTITUEN)
-  } else {
-    stop("mapDat has unrecognized area names")
-  }
+  regionNames = as.character(mapDat@data[[areaVarName]])
   
   # make sure county names are consistent for mapDat == adm1
   regionNames[regionNames == "Elgeyo-Marakwet"] = "Elgeyo Marakwet"
