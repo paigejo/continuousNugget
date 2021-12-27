@@ -1380,16 +1380,14 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
       Ncs = matrix(rep(fixPopPerEA, totalEAs*nDraws), ncol=nDraws)
     }
   } else {
+    out = SUMMER:::sampleNMultilevelMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 
+                                                popMat=popMat, stratifyByUrban=stratifyByUrban, verbose=verbose, returnEAinfo=returnEAinfo, 
+                                                fixPopPerHH=fixPopPerHH)
     if(returnEAinfo) {
-      out = SUMMER:::sampleNMultilevelMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 
-                                         popMat=popMat, stratifyByUrban=stratifyByUrban, verbose=verbose, returnEAinfo=returnEAinfo, 
-                                         fixPopPerHH=fixPopPerHH)
       householdDraws = out$householdDraws
       Ncs = out$targetPopDraws
     } else {
-      Ncs <- SUMMER:::sampleNMultilevelMultinomial(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 
-                                          popMat=popMat, stratifyByUrban=stratifyByUrban, verbose=verbose, returnEAinfo=returnEAinfo, 
-                                          fixPopPerHH=fixPopPerHH)
+      Ncs = out
       householdDraws = NULL
     }
   }

@@ -1731,7 +1731,8 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
                       min1PerSubarea=TRUE, clustDat=NULL, 
                       spreadEAsInPixels=FALSE, logisticApproximation=TRUE, 
                       simPopOnly=FALSE, returnEAinfo=!simPopOnly, verbose=TRUE, 
-                      stopOnFrameMismatch=TRUE, thisclustpc=NULL) {
+                      stopOnFrameMismatch=TRUE, thisclustpc=NULL, 
+                      nEAsFac=1, nClustFac=1) {
   if(!is.null(seed))
     set.seed(seed)
   
@@ -1753,6 +1754,13 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
     # popUrb: the number of people in the urban part of the area
     # popRur: the number of people in the rural part of the area
     # popTotal: the number of people in the the area
+    
+    easpa[,c("EAUrb", "EARur", "EATotal", 
+             "HHUrb", "HHRur", "HHTotal", 
+             "popUrb", "popRur", "popTotal")] = 
+      nEAsFac * easpa[,c("EAUrb", "EARur", "EATotal", 
+                         "HHUrb", "HHRur", "HHTotal", 
+                         "popUrb", "popRur", "popTotal")]
   }
   if(!is.null(fixPopPerEA)) {
     easpa$popUrb = easpa$EAUrb * fixPopPerEA
@@ -1795,6 +1803,9 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
     thisclustpc = clustpc
     usedCounties = unique(easpa$area)
     thisclustpc = thisclustpc[thisclustpc$area %in% usedCounties,]
+    
+    thisclustpc[,c("clustUrb", "clustRur", "clustTotal", "HHUrb", "HHRur", "HHTotal")] = 
+      round(nClustFac * thisclustpc[,c("clustUrb", "clustRur", "clustTotal", "HHUrb", "HHRur", "HHTotal")])
   }
   
   ### generate Binomial probabilities from transformed logit scale GP

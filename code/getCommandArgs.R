@@ -51,47 +51,41 @@ getSPDE_LCPBCommandArgs = function(gamma=c(-1, 0), rho=(1/3)^2, sigmaEpsilon=sqr
 }
 
 # make the command arguments file for compareModelsSimulationStudy
-getSPDE_LCPBSimStudyCommandArgs = function(gamma=c(-1, 0), rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), 
-                                   effRange=150, beta0=c(-3.9, 0), representativeSampling=c(TRUE, FALSE)) {
+getSPDE_prevRiskSimStudyCommandArgs = function(sigmaEpsilon=sqrt(.25), gamma=-1, effRange=250, 
+                                           representativeSampling=FALSE, 
+                                           rho=sigmaEpsilon^2*c(1/4, 1, 4), beta0=c(-4, 0), 
+                                           nEAsFac=c(1/5, 1, 5), nClustFac=c(1/3, 1, 3)) {
   
-  spde_lcpbSimStudyCommandArgs = list()
+  spde_prevRiskSimStudyCommandArgs = list()
   i = 1
-  for(i1 in 1:length(gamma)) {
-    thisGamma=gamma[i1]
+  for(i1 in 1:length(rho)) {
+    thisRho=rho[i1]
     
-    for(i2 in 1:length(rho)) {
-      thisRho = rho[i2]
+    for(i2 in 1:length(beta0)) {
+      thisBeta0 = beta0[i2]
       
       for(i3 in 1:length(sigmaEpsilon)) {
-        thisSigmaEpsilon = sigmaEpsilon[i3]
+        thisNEAsFac = nEAsFac[i3]
         
         for(i4 in 1:length(effRange)) {
-          thisEffRange = effRange[i4]
+          thisNClustFac = nClustFac[i4]
           
-          for(i5 in 1:length(beta0)) {
-            thisBeta0 = beta0[i5]
-              
-              for(i6 in 1:length(representativeSampling)) {
-                thisRepresentativeSampling = representativeSampling[i6]
-                
-                if(thisBeta0 == -3.9 && thisGamma == -1) {
-                  thisThisBeta0 = -2.9
-                } else {
-                  thisThisBeta0 = thisBeta0
-                }
-                
-                spde_lcpbSimStudyCommandArgs[[i]] = list(gamma=thisGamma, rho=thisRho, sigmaEpsilon=thisSigmaEpsilon, 
-                                                 effRange=thisEffRange, beta0=thisThisBeta0, 
-                                                 representativeSampling=thisRepresentativeSampling)
-                i=i+1
-              }
-          }
+          thisGamma = gamma
+          thisSigmaEpsilon = sigmaEpsilon
+          thisEffRange = effRange
+          thisRepresentativeSampling = representativeSampling
+          
+          spde_prevRiskSimStudyCommandArgs[[i]] = list(gamma=thisGamma, rho=thisRho, sigmaEpsilon=thisSigmaEpsilon, 
+                                                   effRange=thisEffRange, beta0=thisBeta0, 
+                                                   representativeSampling=thisRepresentativeSampling, 
+                                                   nEAsFac=thisNEAsFac, nClustFac=thisNClustFac)
+          i=i+1
         }
       }
     }
   }
   
-  save(spde_lcpbSimStudyCommandArgs, file="savedOutput/simStudyResults/spde_lcpbSimStudyCommandArgs.RData")
+  save(spde_prevRiskSimStudyCommandArgs, file="savedOutput/simStudyResults/spde_prevRiskSimStudyCommandArgs.RData")
 }
 
 

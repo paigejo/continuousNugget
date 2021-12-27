@@ -128,12 +128,13 @@ generateSimDataSetsLCPB2 = function(nsim=10, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.
                                    gridLevel=FALSE, subareaLevel=TRUE, 
                                    doFineScaleRisk=TRUE, doSmoothRisk=FALSE, 
                                    fixPopPerEA=NULL, fixHHPerEA=NULL, fixPopPerHH=NULL, 
-                                   logisticApproximation=TRUE, spreadEAsInPixels=TRUE, targetPopMat=NULL, 
+                                   logisticApproximation=FALSE, spreadEAsInPixels=TRUE, targetPopMat=NULL, 
                                    figureSaveDirectory="~/git/continuousNugget/figures/simDataSets/", 
                                    dataSaveDirectory="~/git/continuousNugget/savedOutput/simDataSets/", 
                                    seed=NULL, inla.seed=0L, simPopOnly=FALSE, returnEAinfo=TRUE, 
                                    easpa=NULL, popMat=NULL, poppsub=NULL, 
-                                   verbose=TRUE, stopOnFrameMismatch=TRUE, thisclustpc=NULL) {
+                                   verbose=TRUE, stopOnFrameMismatch=TRUE, thisclustpc=NULL, 
+                                   nEAsFac=1, nClustFac=1) {
   tausq = sigmaEpsilon^2
   if(!is.null(seed)) {
     set.seed(seed)
@@ -148,8 +149,9 @@ generateSimDataSetsLCPB2 = function(nsim=10, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.
   }
   
   # make strings representing the simulation with and without cluster effects
-  dataID = paste0("Beta", round(beta0, 4), "rho", round(rho, 4), "sigmaEps", 
-                  round(sigmaEpsilon, 4), "gamma", round(gamma, 4))
+  dataID = paste0("Bet", signif(beta0, 3), "rho", signif(rho, 3), "sigEps", 
+                  signif(sigmaEpsilon, 3), "gam", signif(gamma, 3), 
+                  "nEAsFac", signif(nEAsFac, 3), "nClustFac", signif(nClustFac, 3))
   
   # there should be 1 true population, but many simulated cluster surveys
   # load(paste0(globalDirectory, "empiricalDistributions.RData"))
@@ -167,7 +169,8 @@ generateSimDataSetsLCPB2 = function(nsim=10, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.
                       logisticApproximation=logisticApproximation, 
                       simPopOnly=simPopOnly, returnEAinfo=returnEAinfo, 
                       verbose=verbose, stopOnFrameMismatch=stopOnFrameMismatch, 
-                      easpa=easpa, popMat=popMat, poppsub=poppsub)
+                      easpa=easpa, popMat=popMat, poppsub=poppsub, 
+                      nEAsFac=nEAsFac, nClustFac=nClustFac)
   
   if(!simPopOnly) {
     kenyaEAs = simOut$eaDat
@@ -278,6 +281,38 @@ generateAllDataSets = function() {
   # generateSimDataSetsLCPB(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
   # generateSimDataSetsLCPB(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
   set.seed(1)
+  generateSimDataSetsLCPB(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=150, beta0=-2.9)
+  generateSimDataSetsLCPB(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=150, beta0=-3.9)
+  generateSimDataSetsLCPB(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=150, beta0=0)
+  generateSimDataSetsLCPB(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=150, beta0=0)
+}
+
+## TODO: modify function to take in vector of seeds, make different population replication 
+##       from same parameters for each seed
+generateAllDataSets2 = function() {
+  # generateSimDataSets(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9)
+  # generateSimDataSets(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9)
+  # generateSimDataSets(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
+  # generateSimDataSets(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
+  # generateSimDataSetsLCPB(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-2.9)
+  # generateSimDataSetsLCPB(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9)
+  # generateSimDataSetsLCPB(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
+  # generateSimDataSetsLCPB(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
+  
+  out = load("savedOutput/simStudyResults/spde_prevRiskSimStudyCommandArgs.RData")
+  
+  nPar = length(spde_prevRiskSimStudyCommandArgs)
+  set.seed(1)
+  allSeeds = sample(1:1000000, nPar, replace=FALSE)
+  for(i in nPar) {
+    set.seed(allSeeds[i])
+    
+    theseArgs = spde_prevRiskSimStudyCommandArgs[[i]]
+    do.call("generateSimDataSetsLCPB2", theseArgs)
+  }
+  
+  
+  
   generateSimDataSetsLCPB(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=150, beta0=-2.9)
   generateSimDataSetsLCPB(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=150, beta0=-3.9)
   generateSimDataSetsLCPB(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=150, beta0=0)

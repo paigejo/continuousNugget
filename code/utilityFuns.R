@@ -5003,14 +5003,14 @@ meanEAsPerCon = function(numToPrint=0) {
   # popRur: the number of people in the rural part of the area
   # popTotal: the number of people in the the area
   
-  
-  countyI = match(poppcon$County, easpc$County)
+  countyName = ifelse("County" %in% names(poppcon), "County", "area")
+  countyI = match(poppcon[[countyName]], easpc$County)
   easInUrbanStratum = easpc$EAUrb[countyI]
   easInRuralStratum = easpc$EARur[countyI]
   popInUrbanStratum = poppc$popUrb[countyI]
   popInRuralStratum = poppc$popRur[countyI]
   
-  out = aggregate(poppcon$popUrb, by=list(County=poppcon$County), FUN=sum)
+  out = aggregate(poppcon$popUrb, by=list(County=poppcon[[countyName]]), FUN=sum)
   sortI = sort(poppc$County, index.return=TRUE)$ix
   cbind(out, poppc[sortI,])
   
@@ -5052,14 +5052,14 @@ meanHHPerCon = function(numToPrint=0) {
   # popRur: the number of people in the rural part of the area
   # popTotal: the number of people in the the area
   
-  
-  countyI = match(poppcon$County, easpc$County)
+  countyName = ifelse("County" %in% names(poppcon), "County", "area")
+  countyI = match(poppcon[[countyName]], easpc$County)
   hhsInUrbanStratum = easpc$HHUrb[countyI]
   hhsInRuralStratum = easpc$HHRur[countyI]
   popInUrbanStratum = poppc$popUrb[countyI]
   popInRuralStratum = poppc$popRur[countyI]
   
-  out = aggregate(poppcon$popUrb, by=list(County=poppcon$County), FUN=sum)
+  out = aggregate(poppcon$popUrb, by=list(County=poppcon[[countyName]]), FUN=sum)
   sortI = sort(poppc$County, index.return=TRUE)$ix
   cbind(out, poppc[sortI,])
   
@@ -5216,10 +5216,540 @@ trueObjectSize = function(x) {
   length(serialize(x,NULL))
 }
 
+# function for approximating square expit with Gaussian cdf
+# relevant links:
+# https://threeplusone.com/pubs/on_logistic_normal.pdf
+# https://www.jstor.org/stable/pdf/2289785.pdf?casa_token=IZjKsLpD6vgAAAAA:rhluZ-6PLdDDq-3YAd_WpFbwZz7s2F4uVsnhq8z9xuVS1whV5O6GY4PngYf_wxkQ-e_J6L7f5KZi2oAmxjKAOKY_vD7UopmHylAJ6-JXfX_1xy149EE
+# https://math.stackexchange.com/questions/1800610/convolution-of-gaussian-and-error-function/1800648
+# https://math.stackexchange.com/questions/4316676/gaussian-integral-with-error-function?rq=1
+approxSqExpit = function(centerx=log(1+sqrt(2)), doTest=FALSE) {
+  sqExpitDeriv = 2*exp(2*centerx) / (exp(centerx) + 1)^3
+  sigma = 1/sqExpitDeriv/sqrt(2*pi)
+  
+  if(doTest) {
+    par(mfrow=c(2,1))
+    xs = seq(-3, 5, l=100)
+    plot(xs, expit(xs)^2, type="l", ylim=c(0, 1))
+    lines(xs, pnorm(xs, mean=centerx, sd=sigma), col="blue", lty=2)
+    
+    plot(xs, pnorm(xs, mean=centerx, sd=sigma) - expit(xs)^2, type="lty")
+    abline(h=0, lty=2)
+    
+    print(paste0("sigma: ", sigma))
+  }
+  
+  c(muStar=centerx, sigmaStar=sigma, fun=function(x) {pnorm(x, mean=centerx, sd=sigma)})
+}
 
+approxExpit = function(centerx=0, doTest=FALSE) {
+  expitDeriv = exp(centerx) / (exp(centerx) + 1)^2
+  sigma = 1/expitDeriv/sqrt(2*pi)
+  
+  if(doTest) {
+    par(mfrow=c(2,1))
+    xs = seq(-8, 8, l=100)
+    plot(xs, expit(xs), type="l", ylim=c(0, 1))
+    lines(xs, pnorm(xs, mean=centerx, sd=sigma), col="blue", lty=2)
+    
+    plot(xs, pnorm(xs, mean=centerx, sd=sigma) - expit(xs), type="lty")
+    abline(h=0, lty=2)
+    
+    print(paste0("sigma: ", sigma))
+  }
+  
+  c(muStar=centerx, sigmaStar=sigma, fun=function(x) {pnorm(x, mean=centerx, sd=sigma)})
+}
 
+approxSqProbit = function(centerx=qnorm(sqrt(.5)), doTest=FALSE) {
+  sqProbitDeriv = 2*pnorm(centerx) * dnorm(centerx)
+  sigma = 1/sqProbitDeriv/sqrt(2*pi)
+  
+  if(doTest) {
+    par(mfrow=c(2,1))
+    xs = seq(-3, 5, l=100)
+    plot(xs, pnorm(xs)^2, type="l", ylim=c(0, 1))
+    lines(xs, pnorm(xs, mean=centerx, sd=sigma), col="blue", lty=2)
+    
+    plot(xs, pnorm(xs, mean=centerx, sd=sigma) - pnorm(xs)^2, type="lty")
+    abline(h=0, lty=2)
+    
+    print(paste0("sigma: ", sigma))
+  }
+  
+  c(muStar=centerx, sigmaStar=sigma, fun=function(x) {pnorm(x, mean=centerx, sd=sigma)})
+}
 
+# E[r_c^2 | u] ----
+# s* is the single spatial location used to approximate the areal mean
+numericalApproxEr_c2_givenU = function(sigmaEps=.3, uSStar=0, xBetaSStar=-4) {
+  
+  integrand = function(eps) {
+    expit(uSStar + xBetaSStar + eps)^2 * dnorm(eps, sd=sigmaEps)
+  }
+  integrate(integrand, lower=-10*sigmaEps, upper=10*sigmaEps, subdivisions=100L)$value
+}
 
+numericalApproxEr_c2_givenUTest = function(sigmaEpsRange=c(.1, 15), uSStar=0, xBetaSStar=-4) {
+  sigmaEps = exp(seq(log(sigmaEpsRange[1]), log(sigmaEpsRange[2]), l=40))
+  ys = sapply(sigmaEps, FUN=numericalApproxEr_c2_givenU, uSStar=uSStar, xBetaSStar=xBetaSStar)
+  plot(sigmaEps, ys, type="l", xlab="sigmaEps", ylab="E[r_c^2 | u(s*)]", log="x")
+}
 
+# E[r_c^2] ----
+# s* is the single spatial location used to approximate the areal mean
+numericalApproxEr_c2 = function(sigmaEps=.3, sigmaU=.1, xBetaSStar=-4) {
+  
+  integrand = function(uSStar) {
+    sapply(uSStar, numericalApproxEr_c2_givenU, sigmaEps=sigmaEps, xBetaSStar=xBetaSStar) * dnorm(uSStar, sd=sigmaU)
+  }
+  integrate(integrand, lower=-10*sigmaU, upper=10*sigmaU)$value
+}
+
+numericalApproxEr_c2Test = function(sigmaEpsRange=c(.1, 30), sigmaURange=c(.1, 30), xBetaSStar=-4, res=40) {
+  sigmaEps = exp(seq(log(sigmaEpsRange[1]), log(sigmaEpsRange[2]), l=res))
+  sigmaU = exp(seq(log(sigmaURange[1]), log(sigmaURange[2]), l=res))
+  epsUGrid = make.surface.grid(list(sigmaEps=sigmaEps, sigmaU=sigmaU))
+  
+  Er_c2 = mapply(numericalApproxEr_c2, sigmaEps=epsUGrid[,1], sigmaU=epsUGrid[,2], MoreArgs=list(xBetaSStar=xBetaSStar))
+  
+  par(oma=c( 0,0,0,2), mar=c(5.1, 4.1, 4.1, 6))
+  quilt.plot(log(epsUGrid), logit(Er_c2), nx=res, ny=res, col=tim.colors(64), 
+             xlab="sigmaEps", ylab="sigmaU", main="E[E[r_c^2 | u(s*)]]", 
+             axes=FALSE, add.legend=FALSE, legend.mar=7)
+  ticks = axisTicks(log(range(sigmaEps)), log=TRUE)
+  tickLabels = as.character(ticks)
+  axis(side=1, at=log(ticks), labels=tickLabels)
+  axis(side=2, at=log(ticks), labels=tickLabels)
+  box()
+  
+  ticks = getLogitScaleTicks(Er_c2, nint=5)
+  tickLabels = as.character(ticks)
+  image.plot(zlim=logit(range(Er_c2)), nlevel=64, legend.only=TRUE, horizontal=FALSE, 
+             axis.args=list(at=log(ticks), labels=tickLabels), 
+             col=tim.colors(64))
+}
+
+# E[r_c | u]^2 (or E[r_S(s*) | u]^2) ----
+# s* is the single spatial location used to approximate the areal mean
+numericalApproxE2r_c_givenU = function(sigmaEps=.3, uSStar=0, xBetaSStar=-4) {
+  
+  integrand = function(eps) {
+    expit(uSStar + xBetaSStar + eps) * dnorm(eps, sd=sigmaEps)
+  }
+  integrate(integrand, lower=-10*sigmaEps, upper=10*sigmaEps, subdivisions=100L)$value^2
+}
+
+numericalApproxE2r_c_givenUTest = function(sigmaEpsRange=c(.1, 15), uSStar=0, xBetaSStar=-4) {
+  sigmaEps = exp(seq(log(sigmaEpsRange[1]), log(sigmaEpsRange[2]), l=40))
+  ys = sapply(sigmaEps, FUN=numericalApproxE2r_c_givenU, uSStar=uSStar, xBetaSStar=xBetaSStar)
+  plot(sigmaEps, ys, type="l", xlab="sigmaEps", ylab="E[r_c | u(s*)]^2", log="x")
+}
+
+# E[E[r_c | u]^2] (or E[r_S(s*)^2]) = E[E[r_S(s*) | u]^2] ----
+# s* is the single spatial location used to approximate the areal mean
+numericalApproxEE2r_c_givenU = function(sigmaEps=.3, sigmaU=.1, xBetaSStar=-4) {
+  
+  integrand = function(uSStar) {
+    sapply(uSStar, numericalApproxE2r_c_givenU, sigmaEps=sigmaEps, xBetaSStar=xBetaSStar) * dnorm(uSStar, sd=sigmaU)
+  }
+  integrate(integrand, lower=-10*sigmaU, upper=10*sigmaU)$value
+}
+
+numericalApproxEE2r_c_givenUTest = function(sigmaEpsRange=c(.1, 30), sigmaURange=c(.1, 30), xBetaSStar=-4, res=40) {
+  sigmaEps = exp(seq(log(sigmaEpsRange[1]), log(sigmaEpsRange[2]), l=res))
+  sigmaU = exp(seq(log(sigmaURange[1]), log(sigmaURange[2]), l=res))
+  epsUGrid = make.surface.grid(list(sigmaEps=sigmaEps, sigmaU=sigmaU))
+  
+  Er_c2 = mapply(numericalApproxEE2r_c_givenU, sigmaEps=epsUGrid[,1], sigmaU=epsUGrid[,2], MoreArgs=list(xBetaSStar=xBetaSStar))
+  
+  par(oma=c( 0,0,0,2), mar=c(5.1, 4.1, 4.1, 6))
+  quilt.plot(log(epsUGrid), logit(Er_c2), nx=res, ny=res, col=tim.colors(64), 
+             xlab="sigmaEps", ylab="sigmaU", main="E[E[r_c | u(s*)]^2]", 
+             axes=FALSE, add.legend=FALSE, legend.mar=7)
+  ticks = axisTicks(log(range(sigmaEps)), log=TRUE)
+  tickLabels = as.character(ticks)
+  axis(side=1, at=log(ticks), labels=tickLabels)
+  axis(side=2, at=log(ticks), labels=tickLabels)
+  box()
+  
+  ticks = getLogitScaleTicks(Er_c2, nint=5)
+  tickLabels = as.character(ticks)
+  image.plot(zlim=logit(range(Er_c2)), nlevel=64, legend.only=TRUE, horizontal=FALSE, 
+             axis.args=list(at=log(ticks), labels=tickLabels), 
+             col=tim.colors(64))
+}
+
+# E[Var(r_c | u)] ----
+numericalApproxEVarr_c_givenU = function(sigmaEps=.3, sigmaU=.1, xBetaSStar=-4) {
+  numericalApproxEr_c2(sigmaEps=sigmaEps, sigmaU=sigmaU, xBetaSStar=xBetaSStar) - numericalApproxEE2r_c_givenU(sigmaEps=sigmaEps, sigmaU=sigmaU, xBetaSStar=xBetaSStar)
+}
+
+numericalApproxEVarr_c_givenUTest = function(sigmaEpsRange=c(.01, 100), sigmaURange=c(.1, 100), xBetaSStar=-4, res=40) {
+  sigmaEps = exp(seq(log(sigmaEpsRange[1]), log(sigmaEpsRange[2]), l=res))
+  sigmaU = exp(seq(log(sigmaURange[1]), log(sigmaURange[2]), l=res))
+  epsUGrid = make.surface.grid(list(sigmaEps=sigmaEps, sigmaU=sigmaU))
+  
+  EVarr_c = mapply(numericalApproxEVarr_c_givenU, sigmaEps=epsUGrid[,1], sigmaU=epsUGrid[,2], MoreArgs=list(xBetaSStar=xBetaSStar))
+  
+  par(oma=c( 0,0,0,2), mar=c(5.1, 4.1, 4.1, 6))
+  quilt.plot(log(epsUGrid), logit(EVarr_c), nx=res, ny=res, col=tim.colors(64), 
+             xlab="sigmaEps", ylab="sigmaU", main="E[Var[r_c | u(s*)]]", 
+             axes=FALSE, add.legend=FALSE, legend.mar=7)
+  ticks = axisTicks(log(range(sigmaEps)), log=TRUE)
+  tickLabels = as.character(ticks)
+  axis(side=1, at=log(ticks), labels=tickLabels)
+  axis(side=2, at=log(ticks), labels=tickLabels)
+  box()
+  
+  ticks = getLogitScaleTicks(EVarr_c, nint=10)
+  tickLabels = as.character(ticks)
+  image.plot(zlim=logit(range(EVarr_c)), nlevel=64, legend.only=TRUE, horizontal=FALSE, 
+             axis.args=list(at=log(ticks), labels=tickLabels), 
+             col=tim.colors(64))
+  
+  plot(sigmaEps, EVarr_c[epsUGrid[,2] == sigmaU[1]], type="l", 
+       main=paste0("sigmaU = ", sigmaU[1]), log="xy", 
+       xlab="sigmaEps", ylab="E[Var[r_c | u(s*)]]")
+  
+  startInds = seq(1, nrow(epsUGrid), by=res)
+  endInds = startInds + 1
+  slopes = (log(EVarr_c[endInds]) - log(EVarr_c[startInds])) / 
+    (log(sigmaEps[2]) - log(sigmaEps[1]))
+  print(paste0("range of left tail power behavior in sigmaEps: ", min(slopes), "-", max(slopes)))
+}
+
+# E[r_S(s*)] = E[r_c] ----
+# s* is the single spatial location used to approximate the areal mean
+numericalApproxE_r_S = function(sigmaEps=.3, sigmaU=.1, xBetaSStar=-4) {
+  
+  r_SIntegrand = function(eps, uSStar) {
+    expit(eps + uSStar + xBetaSStar) * dnorm(eps, sd=sigmaEps)
+  }
+  r_S = function(uSStar) {
+    integrate(r_SIntegrand, lower=-10*sigmaEps, upper=10*sigmaEps, uSStar=uSStar)$value
+  }
+  
+  integrand = function(uSStar) {
+    sapply(uSStar, function(u) {r_S(u) * dnorm(u, sd=sigmaU)})
+  }
+  integrate(integrand, lower=-10*sigmaU, upper=10*sigmaU)$value
+}
+
+# E[r_S(s*)^2] - E[r_S(s*)]^2 (denominator) ----
+numericalApproxVar_r_S = function(sigmaEps=.3, sigmaU=.1, xBetaSStar=-4) {
+  numericalApproxEE2r_c_givenU(sigmaEps=sigmaEps, sigmaU=sigmaU, xBetaSStar=xBetaSStar) - numericalApproxE_r_S(sigmaEps=sigmaEps, sigmaU=sigmaU, xBetaSStar=xBetaSStar)^2
+}
+
+numericalApproxVar_r_STest = function(sigmaEpsRange=c(.01, 100), sigmaURange=c(.01, 100), xBetaSStar=-4, res=40) {
+  sigmaEps = exp(seq(log(sigmaEpsRange[1]), log(sigmaEpsRange[2]), l=res))
+  sigmaU = exp(seq(log(sigmaURange[1]), log(sigmaURange[2]), l=res))
+  epsUGrid = make.surface.grid(list(sigmaEps=sigmaEps, sigmaU=sigmaU))
+  
+  EVarr_S = mapply(numericalApproxVar_r_S, sigmaEps=epsUGrid[,1], sigmaU=epsUGrid[,2], MoreArgs=list(xBetaSStar=xBetaSStar))
+  
+  par(oma=c( 0,0,0,2), mar=c(5.1, 4.1, 4.1, 6))
+  quilt.plot(log(epsUGrid), logit(EVarr_S), nx=res, ny=res, col=tim.colors(64), 
+             xlab="sigmaEps", ylab="sigmaU", main="Var[r_S(s*)]", 
+             axes=FALSE, add.legend=FALSE, legend.mar=7)
+  ticks = axisTicks(log(range(sigmaEps)), log=TRUE)
+  tickLabels = as.character(ticks)
+  axis(side=1, at=log(ticks), labels=tickLabels)
+  axis(side=2, at=log(ticks), labels=tickLabels)
+  box()
+  
+  ticks = getLogitScaleTicks(EVarr_S, nint=10)
+  tickLabels = as.character(ticks)
+  image.plot(zlim=logit(range(EVarr_S)), nlevel=64, legend.only=TRUE, horizontal=FALSE, 
+             axis.args=list(at=log(ticks), labels=tickLabels), 
+             col=tim.colors(64))
+  
+  plot(sigmaEps, EVarr_S[epsUGrid[,2] == sigmaU[1]], type="l", 
+       main=paste0("sigmaU = ", sigmaU[1]), log="xy", 
+       xlab="sigmaEps", ylab="Var(r_S(s*))")
+  
+  startInds = seq(1, nrow(epsUGrid), by=res)
+  endInds = startInds + 1
+  slopes = (log(EVarr_S[endInds]) - log(EVarr_S[startInds])) / 
+    (log(sigmaEps[2]) - log(sigmaEps[1]))
+  print(paste0("range of left tail power behavior in sigmaEps: ", min(slopes), "-", max(slopes)))
+}
+
+# E[Var(N_c/N * Z_c/N_c * r_c | u)] (numerator) ----
+# (1/M) E[Var(r_c | u)] + (1/N)[(M-1)/M - 1/N] E[r_c^2] + 1/N^2 E[r_c]
+# M: number of EAs
+# N: total target population
+numericalApproxFullVarNumerator = function(sigmaEps=.3, sigmaU=.1, xBetaSStar=-4, M=100, N=M*25) {
+  (1/M) * numericalApproxEVarr_c_givenU(sigmaEps=sigmaEps, sigmaU=sigmaU, xBetaSStar=xBetaSStar) + 
+    (1/N)*((M-1)/M - 1/N) * numericalApproxEr_c2(sigmaEps=sigmaEps, sigmaU=sigmaU, xBetaSStar=xBetaSStar) + 
+    1/N^2 * numericalApproxE_r_S(sigmaEps=sigmaEps, sigmaU=sigmaU, xBetaSStar=xBetaSStar)
+}
+
+numericalApproxFullVarNumeratorTest = function(sigmaEpsRange=c(.01, 100), sigmaURange=c(.01, 100), xBetaSStar=-4, res=40) {
+  sigmaEps = exp(seq(log(sigmaEpsRange[1]), log(sigmaEpsRange[2]), l=res))
+  sigmaU = exp(seq(log(sigmaURange[1]), log(sigmaURange[2]), l=res))
+  epsUGrid = make.surface.grid(list(sigmaEps=sigmaEps, sigmaU=sigmaU))
+  
+  numeratorVar = mapply(numericalApproxFullVarNumerator, sigmaEps=epsUGrid[,1], sigmaU=epsUGrid[,2], MoreArgs=list(xBetaSStar=xBetaSStar))
+  
+  par(oma=c( 0,0,0,2), mar=c(5.1, 4.1, 4.1, 6))
+  quilt.plot(log(epsUGrid), logit(numeratorVar), nx=res, ny=res, col=tim.colors(64), 
+             xlab="sigmaEps", ylab="sigmaU", main="Numerator Var", 
+             axes=FALSE, add.legend=FALSE, legend.mar=7)
+  ticks = axisTicks(log(range(sigmaEps)), log=TRUE)
+  tickLabels = as.character(ticks)
+  axis(side=1, at=log(ticks), labels=tickLabels)
+  axis(side=2, at=log(ticks), labels=tickLabels)
+  box()
+  
+  ticks = getLogitScaleTicks(numeratorVar, nint=10)
+  tickLabels = as.character(ticks)
+  image.plot(zlim=logit(range(numeratorVar)), nlevel=64, legend.only=TRUE, horizontal=FALSE, 
+             axis.args=list(at=log(ticks), labels=tickLabels), 
+             col=tim.colors(64))
+  
+  plot(sigmaEps, numeratorVar[epsUGrid[,2] == sigmaU[1]], type="l", 
+       main=paste0("sigmaU = ", sigmaU[1]), log="xy", 
+       xlab="sigmaEps", ylab="Numerator Var")
+  
+  startInds = seq(1, nrow(epsUGrid), by=res)
+  endInds = startInds + 1
+  slopes = (log(numeratorVar[endInds]) - log(numeratorVar[startInds])) / 
+    (log(sigmaEps[2]) - log(sigmaEps[1]))
+  print(paste0("range of left tail power behavior in sigmaEps: ", min(slopes), "-", max(slopes)))
+}
+
+# Var(p(A))/Var(r_S(A)) ----
+# 1 + numerator/denominator
+# M: number of EAs
+# N: total target population
+numericalApproxPrevalenceOverSmoothRiskVarRatio = function(sigmaEps=.3, sigmaU=.1, xBetaSStar=-4, M=130, N=M*25) {
+  denom = numericalApproxVar_r_S(sigmaEps=sigmaEps, sigmaU=sigmaU, xBetaSStar=xBetaSStar)
+  numer = numericalApproxFullVarNumerator(sigmaEps=sigmaEps, sigmaU=sigmaU, xBetaSStar=xBetaSStar, M=M, N=N)
+  
+  1 + numer/denom
+}
+
+numericalApproxPrevalenceOverSmoothRiskTest = function(sigmaEpsRange=c(.001, 5), sigmaURange=c(.001, 5), xBetaSStar=-4, res=40, M=300, N=M*60) {
+  startTime = proc.time()[3]
+  
+  sigmaEps = exp(seq(log(sigmaEpsRange[1]), log(sigmaEpsRange[2]), l=res))
+  sigmaU = exp(seq(log(sigmaURange[1]), log(sigmaURange[2]), l=res))
+  epsUGrid = make.surface.grid(list(sigmaEps=sigmaEps, sigmaU=sigmaU))
+  
+  varRatio = mapply(numericalApproxPrevalenceOverSmoothRiskVarRatio, sigmaEps=epsUGrid[,1], sigmaU=epsUGrid[,2], MoreArgs=list(xBetaSStar=xBetaSStar, M=M, N=N))
+  pctIncreaseVar = (varRatio - 1)*100 # pct units
+  sdRatio = sqrt(varRatio)
+  pctIncreaseSD = (sdRatio - 1)*100 # pct units
+  
+  par(oma=c( 0,0,0,2), mar=c(5.1, 4.1, 4.1, 6))
+  
+  # first plot var ratio
+  quilt.plot(log(epsUGrid), log(varRatio), nx=res, ny=res, col=tim.colors(64), 
+             xlab="sigmaEps", ylab="sigmaU", main="Var(p(A))/Var(r_S(A))", 
+             axes=FALSE, add.legend=FALSE, legend.mar=7)
+  ticks = axisTicks(log(range(sigmaEps)), log=TRUE)
+  tickLabels = as.character(ticks)
+  axis(side=1, at=log(ticks), labels=tickLabels)
+  axis(side=2, at=log(ticks), labels=tickLabels)
+  box()
+  
+  ticks = getLogScaleTicks(varRatio, nint=10)
+  tickLabels = as.character(ticks)
+  image.plot(zlim=log(range(varRatio)), nlevel=64, legend.only=TRUE, horizontal=FALSE, 
+             axis.args=list(at=log(ticks), labels=tickLabels), 
+             col=tim.colors(64))
+  
+  plot(sigmaEps, varRatio[epsUGrid[,2] == sigmaU[1]], type="l", 
+       main=paste0("sigmaU = ", sigmaU[1]), log="xy", 
+       xlab="sigmaEps", ylab="Var(p(A))/Var(r_S(A))")
+  
+  startInds = seq(1, nrow(epsUGrid), by=res)
+  endInds = startInds + 1
+  slopesEps = (log(varRatio[endInds]) - log(varRatio[startInds])) / 
+    (log(sigmaEps[2]) - log(sigmaEps[1]))
+  
+  startInds = 1:res
+  endInds = (res+1):(2*res)
+  slopesU = (log(varRatio[endInds]) - log(varRatio[startInds])) / 
+    (log(sigmaU[2]) - log(sigmaU[1]))
+  print(paste0("range of left tail power behavior in varRatio for sigmaEps: ", signif(min(slopesEps), 3), "-", signif(max(slopesEps), 3), ", sigmaU: ", signif(min(slopesU), 3), "-", signif(max(slopesU), 3)))
+  
+  # now percent increase variance
+  quilt.plot(log(epsUGrid), log(pctIncreaseVar), nx=res, ny=res, col=tim.colors(64), 
+             xlab="sigmaEps", ylab="sigmaU", main="100 * (Var(p(A)) - Var(r_S(A)))/Var(r_S(A))", 
+             axes=FALSE, add.legend=FALSE, legend.mar=7)
+  ticks = axisTicks(log(range(sigmaEps)), log=TRUE)
+  tickLabels = as.character(ticks)
+  axis(side=1, at=log(ticks), labels=tickLabels)
+  axis(side=2, at=log(ticks), labels=tickLabels)
+  box()
+  
+  ticks = getLogScaleTicks(pctIncreaseVar, nint=10)
+  tickLabels = as.character(ticks)
+  image.plot(zlim=log(range(pctIncreaseVar)), nlevel=64, legend.only=TRUE, horizontal=FALSE, 
+             axis.args=list(at=log(ticks), labels=tickLabels), 
+             col=tim.colors(64))
+  
+  plot(sigmaEps, pctIncreaseVar[epsUGrid[,2] == sigmaU[1]], type="l", 
+       main=paste0("sigmaU = ", sigmaU[1]), log="xy", 
+       xlab="sigmaEps", ylab="100 * (Var(p(A)) - Var(r_S(A)))/Var(r_S(A))")
+  
+  startInds = seq(1, nrow(epsUGrid), by=res)
+  endInds = startInds + 1
+  slopesEps = (log(pctIncreaseVar[endInds]) - log(pctIncreaseVar[startInds])) / 
+    (log(sigmaEps[2]) - log(sigmaEps[1]))
+  
+  startInds = 1:res
+  endInds = (res+1):(2*res)
+  slopesU = (log(pctIncreaseVar[endInds]) - log(pctIncreaseVar[startInds])) / 
+    (log(sigmaU[2]) - log(sigmaU[1]))
+  print(paste0("range of left tail power behavior in pctIncreaseVar for sigmaEps: ", signif(min(slopesEps), 3), "-", signif(max(slopesEps), 3), ", sigmaU: ", signif(min(slopesU), 3), "-", signif(max(slopesU), 3)))
+  
+  logPctIncreaseVars = matrix(log(pctIncreaseVar), nrow=res)
+  logPctIncreaseVarDiffs = t(apply(logPctIncreaseVars, 1, diff))
+  logIncreaseSigmaU = matrix(log(sigmaU), nrow=res, ncol=res, byrow = TRUE)
+  logIncreaseSigmaUDiffs = t(apply(logIncreaseSigmaU, 1, diff))
+  
+  epsUGridDiff = epsUGrid
+  epsUGridDiff = epsUGridDiff[-((nrow(epsUGridDiff)-res+1):nrow(epsUGridDiff)),]
+  
+  quilt.plot(log(epsUGridDiff), c(logPctIncreaseVarDiffs / logIncreaseSigmaUDiffs), 
+             nx=res, ny=res-1, col=tim.colors(64), 
+             xlab="sigmaEps", ylab="sigmaU", axes=FALSE, 
+             main="Pct Increase Var sigmaU power behavior", 
+             legend.mar=7)
+  ticks = axisTicks(log(range(sigmaEps)), log=TRUE)
+  ticksDiff = axisTicks(log(range(sigmaU[-length(sigmaU)])), log=TRUE)
+  tickLabels = as.character(ticks)
+  tickLabelsDiff = as.character(ticksDiff)
+  axis(side=1, at=log(ticks), labels=tickLabels)
+  axis(side=2, at=log(ticksDiff), labels=tickLabelsDiff)
+  box()
+  
+  # now plot sd ratio
+  quilt.plot(log(epsUGrid), log(sdRatio), nx=res, ny=res, col=tim.colors(64), 
+             xlab="sigmaEps", ylab="sigmaU", main="sd(p(A))/sd(r_S(A))", 
+             axes=FALSE, add.legend=FALSE, legend.mar=7)
+  ticks = axisTicks(log(range(sigmaEps)), log=TRUE)
+  tickLabels = as.character(ticks)
+  axis(side=1, at=log(ticks), labels=tickLabels)
+  axis(side=2, at=log(ticks), labels=tickLabels)
+  box()
+  
+  ticks = getLogScaleTicks(sdRatio, nint=10)
+  tickLabels = as.character(ticks)
+  image.plot(zlim=log(range(sdRatio)), nlevel=64, legend.only=TRUE, horizontal=FALSE, 
+             axis.args=list(at=log(ticks), labels=tickLabels), 
+             col=tim.colors(64))
+  
+  plot(sigmaEps, sdRatio[epsUGrid[,2] == sigmaU[1]], type="l", 
+       main=paste0("sigmaU = ", sigmaU[1]), log="xy", 
+       xlab="sigmaEps", ylab="sd(p(A))/sd(r_S(A))")
+  
+  startInds = seq(1, nrow(epsUGrid), by=res)
+  endInds = startInds + 1
+  slopesEps = (log(sdRatio[endInds]) - log(sdRatio[startInds])) / 
+    (log(sigmaEps[2]) - log(sigmaEps[1]))
+  
+  startInds = 1:res
+  endInds = (res+1):(2*res)
+  slopesU = (log(sdRatio[endInds]) - log(sdRatio[startInds])) / 
+    (log(sigmaU[2]) - log(sigmaU[1]))
+  print(paste0("range of left tail power behavior in sdRatio for sigmaEps: ", signif(min(slopesEps), 3), "-", signif(max(slopesEps), 3), ", sigmaU: ", signif(min(slopesU), 3), "-", signif(max(slopesU), 3)))
+  
+  # now percent increase SD
+  quilt.plot(log(epsUGrid), log(pctIncreaseSD), nx=res, ny=res, col=tim.colors(64), 
+             xlab="sigmaEps", ylab="sigmaU", main="100 * (sd(p(A)) - sd(r_S(A)))/sd(r_S(A))", 
+             axes=FALSE, add.legend=FALSE, legend.mar=7)
+  ticks = axisTicks(log(range(sigmaEps)), log=TRUE)
+  tickLabels = as.character(ticks)
+  axis(side=1, at=log(ticks), labels=tickLabels)
+  axis(side=2, at=log(ticks), labels=tickLabels)
+  box()
+  
+  ticks = getLogScaleTicks(pctIncreaseSD, nint=10)
+  tickLabels = as.character(ticks)
+  image.plot(zlim=log(range(pctIncreaseSD)), nlevel=64, legend.only=TRUE, horizontal=FALSE, 
+             axis.args=list(at=log(ticks), labels=tickLabels), 
+             col=tim.colors(64))
+  
+  plot(sigmaEps, pctIncreaseSD[epsUGrid[,2] == sigmaU[1]], type="l", 
+       main=paste0("sigmaU = ", sigmaU[1]), log="xy", 
+       xlab="sigmaEps", ylab="100 * (sd(p(A)) - sd(r_S(A)))/sd(r_S(A))")
+  
+  startInds = seq(1, nrow(epsUGrid), by=res)
+  endInds = startInds + 1
+  slopesEps = (log(pctIncreaseSD[endInds]) - log(pctIncreaseSD[startInds])) / 
+    (log(sigmaEps[2]) - log(sigmaEps[1]))
+  
+  startInds = 1:res
+  endInds = (res+1):(2*res)
+  slopesU = (log(pctIncreaseSD[endInds]) - log(pctIncreaseSD[startInds])) / 
+    (log(sigmaU[2]) - log(sigmaU[1]))
+  print(paste0("range of left tail power behavior in pctIncreaseSD for sigmaEps: ", signif(min(slopesEps), 3), "-", signif(max(slopesEps), 3), ", sigmaU: ", signif(min(slopesU), 3), "-", signif(max(slopesU), 3)))
+  
+  endTime = proc.time()[3]
+  print(paste0("total time taken: ", (endTime - startTime)/60, " minutes"))
+  
+  # figure out index in results corresponding to specific parameters
+  printApproximationsForSpecificPar = function(thisSigmaEps = .46, thisSigmaU = .24) {
+    closestSigmaEps = sigmaEps[which.min(abs(sigmaEps - thisSigmaEps))]
+    closestSigmaU = sigmaU[which.min(abs(sigmaU - thisSigmaU))]
+    thisInds = which((epsUGrid[,1] == closestSigmaEps) & (epsUGrid[,2] == closestSigmaU))
+    
+    print(paste0("Approximate values for sigmaEps = ", closestSigmaEps, ", sigmaU = ", closestSigmaU))
+    print(paste0("Var ratio: ", varRatio[thisInds]))
+    print(paste0("Var pct increase: ", pctIncreaseVar[thisInds]))
+    print(paste0("SD ratio: ", sdRatio[thisInds]))
+    print(paste0("SD pct increase: ", pctIncreaseSD[thisInds]))
+  }
+  
+  print("realistic parameters (SPDE_UC:")
+  printApproximationsForSpecificPar(thisSigmaEps=.46, thisSigmaU=.24)
+  print("signal:noise var = 1:1:")
+  printApproximationsForSpecificPar(thisSigmaEps=.5, thisSigmaU=.5)
+  print("signal:noise var = 1:1 (but low var):")
+  printApproximationsForSpecificPar(thisSigmaEps=.05, thisSigmaU=.05)
+  print("signal:noise var = 1:9:")
+  printApproximationsForSpecificPar(thisSigmaEps=.5, thisSigmaU=.5/3)
+  print("signal:noise var = 1:16:")
+  printApproximationsForSpecificPar(thisSigmaEps=.5, thisSigmaU=.5/4)
+  print("signal:noise var = 1:25:")
+  printApproximationsForSpecificPar(thisSigmaEps=.5, thisSigmaU=.5/5)
+}
+
+# x: numbers on probability scale
+getLogitScaleTicks = function(x, nint=3, add.5=FALSE) {
+  minX = min(x)
+  maxX = max(x)
+  
+  # check if range contains .5. If so, make sure .5 is in range of data
+  if(minX <= .5 && maxX >= .5) {
+    x = c(x, .5)
+  }
+  
+  # first generate ticks below .5, then flip about .5
+  rx = x
+  rx[rx > .5] = 1 - rx[rx > .5]
+  
+  # now add log scale ticks
+  lowerTicks = axisTicks(range(log10(rx)), log=TRUE, nint=nint)
+  upperTicks = rev(1 - lowerTicks)
+  
+  if(add.5) {
+    c(lowerTicks, .5, upperTicks)
+  } else {
+    c(lowerTicks, upperTicks)
+  }
+}
+
+# x: numbers on positive real scale
+getLogScaleTicks = function(x, nint=5) {
+  axisTicks(range(log10(x)), log=TRUE, nint=nint)
+}
+
+approxSDPctIncrease = function(currSDPctIncrease, facVarPctIncrease=2) {
+  currVarPctIncrease = (currSDPctIncrease + 1)^2 - 1
+}
 
 
