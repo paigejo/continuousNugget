@@ -986,7 +986,7 @@ simClustersEmpirical = function(eaDat, eaDatLong, nsim=1, seed=NULL, urbanOverSa
     aggregate(sampleWeightsClusterLong, by=list(thisEAIs), FUN="sum")$x
   }
   sampleWeights = sapply(1:nsim, getSampleWeightsCluster)
-  
+  browser()
   list(eaIs=eaIs, HHIs=HHIs, sampleWeights=sampleWeights)
 }
 
