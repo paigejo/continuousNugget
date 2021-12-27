@@ -1756,9 +1756,9 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
   easpa[,c("EAUrb", "EARur", "EATotal", 
            "HHUrb", "HHRur", "HHTotal", 
            "popUrb", "popRur", "popTotal")] = 
-    nEAsFac * easpa[,c("EAUrb", "EARur", "EATotal", 
+    round(nEAsFac * easpa[,c("EAUrb", "EARur", "EATotal", 
                        "HHUrb", "HHRur", "HHTotal", 
-                       "popUrb", "popRur", "popTotal")]
+                       "popUrb", "popRur", "popTotal")])
   
   if(!is.null(poppsub)) {
     poppsub[,c("popUrb", "popRur", "popTotal")] = 
