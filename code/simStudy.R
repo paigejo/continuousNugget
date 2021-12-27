@@ -1813,9 +1813,11 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
     usedCounties = unique(easpa$area)
     thisclustpc = thisclustpc[thisclustpc$area %in% usedCounties,]
     
-    thisclustpc[,c("clustUrb", "clustRur", "clustTotal", "HHUrb", "HHRur", "HHTotal")] = 
-      round(nClustFac * thisclustpc[,c("clustUrb", "clustRur", "clustTotal", "HHUrb", "HHRur", "HHTotal")])
+    thisclustpc[,c("clustUrb", "clustRur", "clustTotal")] = 
+      round(nClustFac * thisclustpc[,c("clustUrb", "clustRur", "clustTotal")])
     thisclustpc$clustTotal = thisclustpc$clustUrb + thisclustpc$clustRur
+    thisclustpc$HHUrb = thisclustpc$clustUrb * nHHSampled
+    thisclustpc$HHRur = thisclustpc$clustRur * nHHSampled
     thisclustpc$HHTotal = thisclustpc$HHUrb + thisclustpc$HHRur
   }
   
