@@ -1766,7 +1766,7 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
   if(!is.null(poppsub)) {
     poppsub[,c("popUrb", "popRur", "popTotal")] = 
       nEAsFac * poppsub[,c("popUrb", "popRur", "popTotal")]
-    poppsub$popTotal = easpa$popUrb + easpa$popRur
+    poppsub$popTotal = poppsub$popUrb + poppsub$popRur
   } else if(nEAsFac != 1) {
     stop("nEAsFac is not 1, but poppsub is NULL")
   }
