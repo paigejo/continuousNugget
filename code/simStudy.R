@@ -1815,6 +1815,8 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
     
     thisclustpc[,c("clustUrb", "clustRur", "clustTotal", "HHUrb", "HHRur", "HHTotal")] = 
       round(nClustFac * thisclustpc[,c("clustUrb", "clustRur", "clustTotal", "HHUrb", "HHRur", "HHTotal")])
+    thisclustpc$clustTotal = thisclustpc$clustUrb + thisclustpc$clustRur
+    thisclustpc$HHTotal = thisclustpc$HHUrb + thisclustpc$HHRur
   }
   
   ### generate Binomial probabilities from transformed logit scale GP
