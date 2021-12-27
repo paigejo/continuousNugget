@@ -1750,14 +1750,23 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
     # popUrb: the number of people in the urban part of the area
     # popRur: the number of people in the rural part of the area
     # popTotal: the number of people in the the area
-    
-    easpa[,c("EAUrb", "EARur", "EATotal", 
-             "HHUrb", "HHRur", "HHTotal", 
-             "popUrb", "popRur", "popTotal")] = 
-      nEAsFac * easpa[,c("EAUrb", "EARur", "EATotal", 
-                         "HHUrb", "HHRur", "HHTotal", 
-                         "popUrb", "popRur", "popTotal")]
   }
+  
+  # scale easpa and poppsub using nEAsFac
+  easpa[,c("EAUrb", "EARur", "EATotal", 
+           "HHUrb", "HHRur", "HHTotal", 
+           "popUrb", "popRur", "popTotal")] = 
+    nEAsFac * easpa[,c("EAUrb", "EARur", "EATotal", 
+                       "HHUrb", "HHRur", "HHTotal", 
+                       "popUrb", "popRur", "popTotal")]
+  
+  if(!is.null(poppsub)) {
+    poppsub[,c("popUrb", "popRur", "popTotal")] = 
+      nEAsFac * poppsub[,c("popUrb", "popRur", "popTotal")]
+  } else if(nEAsFac != 1) {
+    stop("nEAsFac is not 1, but poppsub is NULL")
+  }
+    # adjust easpa based on fixed number of people/household or households/EA if specified
   if(!is.null(fixPopPerEA)) {
     easpa$popUrb = easpa$EAUrb * fixPopPerEA
     easpa$popRur = easpa$EARur * fixPopPerEA
@@ -1776,7 +1785,7 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
   totalEAs = sum(easpa$EATotal)
   totalHouseholds = sum(easpa$HHTotal)
   
-  # construct overall population density surface
+  # construct overall population density surface up to a scalar factor
   if(is.null(popMat)) {
     popMat = makeDefaultPopMat()
     # lon: longitude

@@ -132,7 +132,7 @@ generateSimDataSetsLCPB2 = function(nsim=100, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2
                                    figureSaveDirectory="~/git/continuousNugget/figures/simDataSets/", 
                                    dataSaveDirectory="~/git/continuousNugget/savedOutput/simDataSets/", 
                                    seed=NULL, inla.seed=0L, simPopOnly=FALSE, returnEAinfo=TRUE, 
-                                   easpa=NULL, popMat=NULL, poppsub=NULL, 
+                                   easpa=NULL, popMat=NULL, poppsub=poppsubKenya, 
                                    verbose=TRUE, stopOnFrameMismatch=TRUE, thisclustpc=NULL, 
                                    nEAsFac=1, nClustFac=1, representativeSampling=FALSE) {
   tausq = sigmaEpsilon^2
