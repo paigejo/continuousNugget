@@ -1855,10 +1855,9 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
   if(!simPopOnly && returnEAinfo) {
     print("Simulating surveys")
     
-    popsAndSurveys = list()
-    browser()
+    surveys = list()
     for(i in 1:nsim) {
-      if(mod(i, 10) == 0) {
+      if(i %% 10 == 0) {
         print(paste0("simulating survey ", i, "/", nsim))
       }
       eaDat = eaDatList[[i]]
@@ -1921,8 +1920,9 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
       if(is.null(clustDat)) {
         print("simulating cluster locations:")
         # clustDat = simClusters3(eaDat, numClusters, urbanOverSample, nsim)
-        clustDat = simClustersEmpirical(eaDat, eaDatLong, nsim, NULL, urbanOverSamplefrac, nHHSampled, 
-                                        thisclustpc=thisclustpc, representativeSampling=representativeSampling)
+        clustDat = simClustersEmpirical(eaDat, eaDatLong, nsim=1, NULL, urbanOverSamplefrac, nHHSampled, 
+                                        thisclustpc=thisclustpc, representativeSampling=representativeSampling, 
+                                        verbose=FALSE)
       }
       
       # return simulated data
@@ -1931,12 +1931,12 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
       # return cluster data in Andrea's format:
       clustList = genAndreaFormatFromEAIsLong2(eaDat, clustDat$eaIs, eaDatLong, clustDat$HHIs, 
                                                clustDat$sampleWeights, doFineScaleRisk=doFineScaleRisk, 
-                                               doSmoothRisk=doSmoothRisk, doGriddedRisk=FALSE)
+                                               doSmoothRisk=doSmoothRisk, doGriddedRisk=FALSE)[[1]]
       
-      surveys = c(surveys, clustList)
+      surveys = c(surveys, list(clustList))
     }
-    browser()
-    list(eaDatList=eaDatList, eaSamples=eaSamples, clustDat=clustList, aggregatedPop=outLCPB, thisclustpc=thisclustpc)
+    
+    list(eaDatList=eaDatList, eaSamples=eaSamples, clustDat=surveys, aggregatedPop=outLCPB, thisclustpc=thisclustpc)
   } else if(returnEAinfo) {
     list(eaDatList=eaDatList, eaSamples=eaSamples, aggregatedPop=outLCPB, thisclustpc=thisclustpc)
   } else {
