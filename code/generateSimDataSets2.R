@@ -140,9 +140,6 @@ generateSimDataSetsLCPB2 = function(nsim=100, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2
     set.seed(seed)
   }
   
-  if(nsim != 1 && !simPopOnly) {
-    stop("if nsim != 1, simPopOnly being FALSE not yet supported")
-  }
   if(!simPopOnly && !returnEAinfo) {
     warning("simPopOnly is FALSE, but returnEAinfo was set to FALSE. Setting returnEAinfo to TRUE instead")
     returnEAinfo = TRUE
