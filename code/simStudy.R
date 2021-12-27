@@ -1732,7 +1732,7 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
                       spreadEAsInPixels=FALSE, logisticApproximation=TRUE, 
                       simPopOnly=FALSE, returnEAinfo=!simPopOnly, verbose=TRUE, 
                       stopOnFrameMismatch=TRUE, thisclustpc=NULL, 
-                      nEAsFac=1, nClustFac=1) {
+                      nEAsFac=1, nClustFac=1, representativeSampling=FALSE) {
   if(!is.null(seed))
     set.seed(seed)
   
@@ -1912,7 +1912,8 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
       if(is.null(clustDat)) {
         print("simulating cluster locations:")
         # clustDat = simClusters3(eaDat, numClusters, urbanOverSample, nsim)
-        clustDat = simClustersEmpirical(eaDat, eaDatLong, nsim, NULL, urbanOverSamplefrac, nHHSampled, thisclustpc=thisclustpc)
+        clustDat = simClustersEmpirical(eaDat, eaDatLong, nsim, NULL, urbanOverSamplefrac, nHHSampled, 
+                                        thisclustpc=thisclustpc, representativeSampling=representativeSampling)
       }
       
       # return simulated data
