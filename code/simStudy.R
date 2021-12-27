@@ -1844,83 +1844,89 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
   }
   
   if(!simPopOnly && returnEAinfo) {
-    if(nsim != 1) {
-      stop("simulating multiple populations and surveys (nsim != 1) not supported if simPopOnly is FALSE")
-    }
-    
     print("Simulating surveys")
-    eaDat = eaDatList[[1]]
     
-    ### Simulate household survey if necessary
-    # first generate the number of households
-    numHouseholds = eaDat$nHH
-    
-    # now expand the eaDat table to be in the long format, were each row is a house
-    rowsLong = rep(1:nrow(eaDat), numHouseholds)
-    eaDatLong = eaDat[rowsLong, ]
-    eaDatLong$eaIs = rowsLong
-    eaUrbanLong = eaDatLong$urban
-    
-    # function for randomly spreading people among households in long form data:
-    extendThisDat = function(xs, nHH) {
-      revenMultinom = function(sizeK) {
-        size = sizeK[1]
-        k = sizeK[2]
-        prob = rep(1/k, k)
-        rmultinom(1, size, prob)
+    popsAndSurveys = list()
+    browser()
+    for(i in 1:nsim) {
+      if(mod(i, 10) == 0) {
+        print(paste0("simulating survey ", i, "/", nsim))
       }
-      unlist(apply(cbind(xs, nHH), 1, revenMultinom))
-    }
-    
-    # generate how many of the target population are in each cluster
-    if(is.null(fixPopPerHH)) {
-      lived = extendThisDat(eaDat$N - eaDat$Z, numHouseholds)
-      died = extendThisDat(eaDat$Z, numHouseholds)
-    } else if(fixPopPerHH == 1) {
-      extendDatEven = function(Ns, Zs) {
-        
-        spreadAmongHHs = function(thisRow) {
-          thisN = thisRow[1]
-          thisZ = thisRow[2]
-          
-          # spread population evenly among households
-          # nHH = thisRow$nHH
-          # hhI = sample(1:nHH, nHH, replace=FALSE)
-          c(rep(1, thisZ), rep(0, thisN - thisZ))
+      eaDat = eaDatList[[i]]
+      
+      ### Simulate household survey if necessary
+      # first generate the number of households
+      numHouseholds = eaDat$nHH
+      
+      # now expand the eaDat table to be in the long format, were each row is a house
+      rowsLong = rep(1:nrow(eaDat), numHouseholds)
+      eaDatLong = eaDat[rowsLong, ]
+      eaDatLong$eaIs = rowsLong
+      eaUrbanLong = eaDatLong$urban
+      
+      # function for randomly spreading people among households in long form data:
+      extendThisDat = function(xs, nHH) {
+        revenMultinom = function(sizeK) {
+          size = sizeK[1]
+          k = sizeK[2]
+          prob = rep(1/k, k)
+          rmultinom(1, size, prob)
         }
-        c(unlist(apply(cbind(Ns, Zs), 1, spreadAmongHHs)))
+        unlist(apply(cbind(xs, nHH), 1, revenMultinom))
       }
-      died = extendDatEven(eaDat$N, eaDat$Z)
-      lived = 1 - died
-    } else {
-      stop("If fixPopPerHH is not NULL it must be 1")
+      
+      # generate how many of the target population are in each cluster
+      if(is.null(fixPopPerHH)) {
+        lived = extendThisDat(eaDat$N - eaDat$Z, numHouseholds)
+        died = extendThisDat(eaDat$Z, numHouseholds)
+      } else if(fixPopPerHH == 1) {
+        extendDatEven = function(Ns, Zs) {
+          
+          spreadAmongHHs = function(thisRow) {
+            thisN = thisRow[1]
+            thisZ = thisRow[2]
+            
+            # spread population evenly among households
+            # nHH = thisRow$nHH
+            # hhI = sample(1:nHH, nHH, replace=FALSE)
+            c(rep(1, thisZ), rep(0, thisN - thisZ))
+          }
+          c(unlist(apply(cbind(Ns, Zs), 1, spreadAmongHHs)))
+        }
+        died = extendDatEven(eaDat$N, eaDat$Z)
+        lived = 1 - died
+      } else {
+        stop("If fixPopPerHH is not NULL it must be 1")
+      }
+      
+      eaDatLong$n = died + lived
+      eaDatLong$y = died
+      eaDatLong$nHH = 1
+      eaDatLong$pFineScalePrevalence = eaDatLong$y / eaDatLong$n
+      eaDatLong$pFineScalePrevalence[eaDatLong$n == 0] = 0
+      
+      ### sample clusters and households within EAs
+      # first generate clusters
+      # if(is.null(clustDat))
+      #   clustDat = simClusters2(eaDat, numClusters, urbanProps, counties, seed=NULL)
+      if(is.null(clustDat)) {
+        print("simulating cluster locations:")
+        # clustDat = simClusters3(eaDat, numClusters, urbanOverSample, nsim)
+        clustDat = simClustersEmpirical(eaDat, eaDatLong, nsim, NULL, urbanOverSamplefrac, nHHSampled, thisclustpc=thisclustpc)
+      }
+      
+      # return simulated data
+      print("finishing up...")
+      
+      # return cluster data in Andrea's format:
+      clustList = genAndreaFormatFromEAIsLong2(eaDat, clustDat$eaIs, eaDatLong, clustDat$HHIs, 
+                                               clustDat$sampleWeights, doFineScaleRisk=doFineScaleRisk, 
+                                               doSmoothRisk=doSmoothRisk, doGriddedRisk=FALSE)
+      
+      surveys = c(surveys, clustList)
     }
-    
-    eaDatLong$n = died + lived
-    eaDatLong$y = died
-    eaDatLong$nHH = 1
-    eaDatLong$pFineScalePrevalence = eaDatLong$y / eaDatLong$n
-    eaDatLong$pFineScalePrevalence[eaDatLong$n == 0] = 0
-    
-    ### sample clusters and households within EAs
-    # first generate clusters
-    # if(is.null(clustDat))
-    #   clustDat = simClusters2(eaDat, numClusters, urbanProps, counties, seed=NULL)
-    if(is.null(clustDat)) {
-      print("simulating cluster locations:")
-      # clustDat = simClusters3(eaDat, numClusters, urbanOverSample, nsim)
-      clustDat = simClustersEmpirical(eaDat, eaDatLong, nsim, NULL, urbanOverSamplefrac, nHHSampled, thisclustpc=thisclustpc)
-    }
-    
-    # return simulated data
-    print("finishing up...")
-    
-    # return cluster data in Andrea's format:
-    clustList = genAndreaFormatFromEAIsLong2(eaDat, clustDat$eaIs, eaDatLong, clustDat$HHIs, 
-                                             clustDat$sampleWeights, doFineScaleRisk=doFineScaleRisk, 
-                                             doSmoothRisk=doSmoothRisk, doGriddedRisk=FALSE)
-    
-    list(eaDat=eaDat, eaSamples=eaSamples, clustDat=clustList, aggregatedPop=outLCPB, thisclustpc=thisclustpc)
+    browser()
+    list(eaDatList=eaDatList, eaSamples=eaSamples, clustDat=clustList, aggregatedPop=outLCPB, thisclustpc=thisclustpc)
   } else if(returnEAinfo) {
     list(eaDatList=eaDatList, eaSamples=eaSamples, aggregatedPop=outLCPB, thisclustpc=thisclustpc)
   } else {

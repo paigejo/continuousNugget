@@ -123,7 +123,7 @@ generateSimPopulationsLCPB = function(nsim=10, rho=0.243, sigmaEpsilon=sqrt(0.46
 #                    or just to take the centroid of the pixel. NOTE: setting this to TRUE may jitter the EAs out 
 #                    of the administrative area assigned to the pixel, but the area assigned to the EA will stay 
 #                    the same
-generateSimDataSetsLCPB2 = function(nsim=10, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), 
+generateSimDataSetsLCPB2 = function(nsim=100, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), 
                                    gamma=-1, effRange = 400, beta0=-2.9, 
                                    gridLevel=FALSE, subareaLevel=TRUE, 
                                    doFineScaleRisk=TRUE, doSmoothRisk=FALSE, 
@@ -144,7 +144,7 @@ generateSimDataSetsLCPB2 = function(nsim=10, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.
     stop("if nsim != 1, simPopOnly being FALSE not yet supported")
   }
   if(!simPopOnly && !returnEAinfo) {
-    warning("simPopOnly is FALSE, but returnEAinfo was set to FALSE Setting to TRUE instead")
+    warning("simPopOnly is FALSE, but returnEAinfo was set to FALSE. Setting returnEAinfo to TRUE instead")
     returnEAinfo = TRUE
   }
   
