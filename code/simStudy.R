@@ -1736,10 +1736,6 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
   if(!is.null(seed))
     set.seed(seed)
   
-  if(!simPopOnly && nsim != 1) {
-    stop("simulating multiple populations and surveys (nsim != 1) not yet supported if simPopOnly is FALSE")
-  }
-  
   ## set default inputs
   # construct default household and population count per county table
   if(is.null(easpa)) {
