@@ -1726,8 +1726,7 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
                       easpa=NULL, popMat=NULL, targetPopMat=NULL, 
                       stratifyByUrban=TRUE, gridLevel=TRUE, subareaLevel=TRUE, 
                       doSmoothRisk=TRUE, doFineScaleRisk=TRUE, 
-                      poppsub=poppsubKenya, 
-                      min1PerSubarea=TRUE, clustDat=NULL, 
+                      poppsub=poppsubKenya, min1PerSubarea=TRUE, 
                       spreadEAsInPixels=FALSE, logisticApproximation=TRUE, 
                       simPopOnly=FALSE, returnEAinfo=!simPopOnly, verbose=TRUE, 
                       stopOnFrameMismatch=TRUE, thisclustpc=NULL, 
@@ -1918,15 +1917,12 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
       
       ### sample clusters and households within EAs
       # first generate clusters
-      # if(is.null(clustDat))
-      #   clustDat = simClusters2(eaDat, numClusters, urbanProps, counties, seed=NULL)
-      if(is.null(clustDat)) {
-        print("simulating cluster locations:")
-        # clustDat = simClusters3(eaDat, numClusters, urbanOverSample, nsim)
-        clustDat = simClustersEmpirical(eaDat, eaDatLong, nsim=1, NULL, urbanOverSamplefrac, nHHSampled, 
-                                        thisclustpc=thisclustpc, representativeSampling=representativeSampling, 
-                                        verbose=FALSE)
-      }
+      # clustDat = simClusters2(eaDat, numClusters, urbanProps, counties, seed=NULL)
+      print("simulating cluster locations:")
+      # clustDat = simClusters3(eaDat, numClusters, urbanOverSample, nsim)
+      clustDat = simClustersEmpirical(eaDat, eaDatLong, nsim=1, NULL, urbanOverSamplefrac, nHHSampled, 
+                                      thisclustpc=thisclustpc, representativeSampling=representativeSampling, 
+                                      verbose=FALSE)
       
       # return simulated data
       print("finishing up...")
