@@ -844,6 +844,10 @@ simClustersEmpirical = function(eaDat, eaDatLong, nsim=1, seed=NULL, urbanOverSa
     for(i in 1:nrow(tempclustpcI)) {
       countyName = counties[i]
       
+      # if(as.character(countyName) == "Lamu") {
+      #   browser()
+      # }
+      
       countyI = eaDat[,as.character(admin1) == countyName]
       if(verbose)
         print(paste0("County ", i, "/", length(counties), ": ", countyName))
@@ -1831,7 +1835,7 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
     warning("In some areas the number of requested clusters to sample is larger than the number of EAs. Setting equal to the number of EAs")
     thisclustpc$clustUrb[thisclustpc$clustUrb > easpa$EAUrb] = easpa$EAUrb[thisclustpc$clustUrb > easpa$EAUrb]
     thisclustpc$clustRur[thisclustpc$clustRur > easpa$EARur] = easpa$EARur[thisclustpc$clustRur > easpa$EARur]
-    thisclustpc$clustTotal[thisclustpc$clustTotal > easpa$EATotal] = easpa$EATotal[thisclustpc$clustTotal > easpa$EATotal]
+    thisclustpc$clustTotal = thisclustpc$clustUrb + thisclustpc$clustRur
   }
   
   ### generate Binomial probabilities from transformed logit scale GP
