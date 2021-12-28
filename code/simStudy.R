@@ -844,14 +844,14 @@ simClustersEmpirical = function(eaDat, eaDatLong, nsim=1, seed=NULL, urbanOverSa
     for(i in 1:nrow(tempclustpcI)) {
       countyName = counties[i]
       
-      if(as.character(countyName) == "Isiolo") {
-        # Lamu
-        # Elgeyo Marakwet
-        # Marsabit
-        # Taita Taveta
-        # Isiolo
-        browser()
-      }
+      # if(as.character(countyName) == "Isiolo") {
+      #   # Lamu
+      #   # Elgeyo Marakwet
+      #   # Marsabit
+      #   # Taita Taveta
+      #   # Isiolo
+      #   browser()
+      # }
       
       countyI = eaDat[,as.character(admin1) == countyName]
       if(verbose)
