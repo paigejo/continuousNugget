@@ -871,8 +871,16 @@ simClustersEmpirical = function(eaDat, eaDatLong, nsim=1, seed=NULL, urbanOverSa
         warning("inclusion probabilities greater than one, modifying to be .999")
         zs[zs >= 1-1e-6] = .999
       }
-      # newSamples = (1:length(thisCountyI))[thisCountyI][as.logical(UPtille(zs))]
-      newSamples = (1:length(thisCountyI))[thisCountyI][as.logical(UPmidzuno(zs))]
+      
+      # first check if we are trying to sample all of the stratum EAs. Otherwise 
+      # use the Midzuno method for PPS sampling
+      if(sum(thisCountyI) == numUrban) {
+        newSamples = which(thisCountyI)
+      } else {
+        # newSamples = (1:length(thisCountyI))[thisCountyI][as.logical(UPtille(zs))]
+        newSamples = (1:length(thisCountyI))[thisCountyI][as.logical(UPmidzuno(zs))]
+      }
+      
       allSamples = c(allSamples, newSamples)
       
       # allSamples = c(allSamples, pps.sampling(eaDat$nHH[thisCountyI], numUrban, (1:nrow(eaDat))[thisCountyI], FALSE, prob=probs))
@@ -892,8 +900,16 @@ simClustersEmpirical = function(eaDat, eaDatLong, nsim=1, seed=NULL, urbanOverSa
           warning("inclusion probabilities greater than one, modifying to be .999")
           zs[zs >= 1-1e-6] = .999
         }
-        # newSamples = (1:length(thisCountyI))[thisCountyI][as.logical(UPtille(zs))]
-        newSamples = (1:length(thisCountyI))[thisCountyI][as.logical(UPmidzuno(zs))]
+        
+        # first check if we are trying to sample all of the stratum EAs. Otherwise 
+        # use the Midzuno method for PPS sampling
+        if(sum(thisCountyI) == numRural) {
+          newSamples = which(thisCountyI)
+        } else {
+          # newSamples = (1:length(thisCountyI))[thisCountyI][as.logical(UPtille(zs))]
+          newSamples = (1:length(thisCountyI))[thisCountyI][as.logical(UPmidzuno(zs))]
+        }
+        
         
         # allSamples = c(allSamples, sample(1:nrow(eaDat), numRural, FALSE, prob=probs))
         allSamples = c(allSamples, newSamples)
