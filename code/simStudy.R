@@ -843,6 +843,7 @@ simClustersEmpirical = function(eaDat, eaDatLong, nsim=1, seed=NULL, urbanOverSa
     # allSamples = list()
     for(i in 1:nrow(tempclustpcI)) {
       countyName = counties[i]
+      
       countyI = eaDat[,as.character(admin1) == countyName]
       if(verbose)
         print(paste0("County ", i, "/", length(counties), ": ", countyName))
@@ -1819,6 +1820,18 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
     thisclustpc$HHUrb = thisclustpc$clustUrb * nHHSampled
     thisclustpc$HHRur = thisclustpc$clustRur * nHHSampled
     thisclustpc$HHTotal = thisclustpc$HHUrb + thisclustpc$HHRur
+  }
+  
+  # ensure we're not sampling more clusters than EAs in any stratum
+  thisclustpc = thisclustpc[order(thisclustpc$area),]
+  easpa = easpa[order(easpa$area),]
+  if(any(thisclustpc$clustUrb > easpa$EAUrb) | 
+     any(thisclustpc$clustRur > easpa$EARur) | 
+     any(thisclustpc$clustTotal > easpa$EATotal)) {
+    warning("In some areas the number of requested clusters to sample is larger than the number of EAs. Setting equal to the number of EAs")
+    thisclustpc$clustUrb[thisclustpc$clustUrb > easpa$EAUrb] = easpa$EAUrb[thisclustpc$clustUrb > easpa$EAUrb]
+    thisclustpc$clustRur[thisclustpc$clustRur > easpa$EARur] = easpa$EARur[thisclustpc$clustRur > easpa$EARur]
+    thisclustpc$clustTotal[thisclustpc$clustTotal > easpa$EATotal] = easpa$EATotal[thisclustpc$clustTotal > easpa$EATotal]
   }
   
   ### generate Binomial probabilities from transformed logit scale GP
