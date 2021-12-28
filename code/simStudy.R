@@ -900,7 +900,9 @@ simClustersEmpirical = function(eaDat, eaDatLong, nsim=1, seed=NULL, urbanOverSa
   # eaIs = replicate(nsim, generateSample())
   eaIs = matrix(ncol=nsim, nrow=sum(tempclustpc$clustUrb) + sum(tempclustpc$clustRur))
   for(i in 1:nsim) {
-    print(paste0("simulating data set ", i, "/", nsim))
+    if(verbose && i %% 10 == 0) {
+      print(paste0("simulating data set ", i, "/", nsim))
+    }
     eaIs[, i] = generateSample()
   }
   
@@ -1918,14 +1920,10 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
       ### sample clusters and households within EAs
       # first generate clusters
       # clustDat = simClusters2(eaDat, numClusters, urbanProps, counties, seed=NULL)
-      print("simulating cluster locations:")
       # clustDat = simClusters3(eaDat, numClusters, urbanOverSample, nsim)
       clustDat = simClustersEmpirical(eaDat, eaDatLong, nsim=1, NULL, urbanOverSamplefrac, nHHSampled, 
                                       thisclustpc=thisclustpc, representativeSampling=representativeSampling, 
                                       verbose=FALSE)
-      
-      # return simulated data
-      print("finishing up...")
       
       # return cluster data in Andrea's format:
       clustList = genAndreaFormatFromEAIsLong2(eaDat, clustDat$eaIs, eaDatLong, clustDat$HHIs, 
