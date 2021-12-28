@@ -844,9 +844,14 @@ simClustersEmpirical = function(eaDat, eaDatLong, nsim=1, seed=NULL, urbanOverSa
     for(i in 1:nrow(tempclustpcI)) {
       countyName = counties[i]
       
-      # if(as.character(countyName) == "Lamu") {
-      #   browser()
-      # }
+      if(as.character(countyName) == "Isiolo") {
+        # Lamu
+        # Elgeyo Marakwet
+        # Marsabit
+        # Taita Taveta
+        # Isiolo
+        browser()
+      }
       
       countyI = eaDat[,as.character(admin1) == countyName]
       if(verbose)
@@ -867,9 +872,12 @@ simClustersEmpirical = function(eaDat, eaDatLong, nsim=1, seed=NULL, urbanOverSa
       probs = probs/sum(probs)
       # allSamples = c(allSamples, sample(1:nrow(eaDat), numUrban, FALSE, prob=probs))
       zs = probs[thisCountyI] * numUrban # the inclusion probabilities
-      if(any(zs >= 1-1e-6)) {
-        warning("inclusion probabilities greater than one, modifying to be .999")
-        zs[zs >= 1-1e-6] = .999
+      if(any(zs >= 1-1e-6) && sum(thisCountyI) != numUrban) {
+        warning("inclusion probabilities greater than one, adjusting... Sampling will not quite be PPS")
+        while(any(zs >= 1-1e-6)) {
+          zs[zs >= 1-1e-6] = max(zs[zs < 1-1e-6])
+          zs = zs * (numUrban / sum(zs))
+        }
       }
       
       # first check if we are trying to sample all of the stratum EAs. Otherwise 
@@ -896,9 +904,12 @@ simClustersEmpirical = function(eaDat, eaDatLong, nsim=1, seed=NULL, urbanOverSa
         probs = probs/sum(probs)
         
         zs = probs[thisCountyI] * numRural # the inclusion probabilities
-        if(any(zs >= 1-1e-6)) {
-          warning("inclusion probabilities greater than one, modifying to be .999")
-          zs[zs >= 1-1e-6] = .999
+        if(any(zs >= 1-1e-6) && sum(thisCountyI) != numRural) {
+          warning("inclusion probabilities greater than one, adjusting... Sampling will not quite be PPS")
+          while(any(zs >= 1-1e-6)) {
+            zs[zs >= 1-1e-6] = max(zs[zs < 1-1e-6])
+            zs = zs * (numRural / sum(zs))
+          }
         }
         
         # first check if we are trying to sample all of the stratum EAs. Otherwise 
