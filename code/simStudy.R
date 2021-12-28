@@ -1929,6 +1929,8 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
       clustList = genAndreaFormatFromEAIsLong2(eaDat, clustDat$eaIs, eaDatLong, clustDat$HHIs, 
                                                clustDat$sampleWeights, doFineScaleRisk=doFineScaleRisk, 
                                                doSmoothRisk=doSmoothRisk, doGriddedRisk=FALSE)[[1]]
+      clustList$Z = clustList$y
+      clustList$N = clustList$n
       
       surveys = c(surveys, list(clustList))
     }

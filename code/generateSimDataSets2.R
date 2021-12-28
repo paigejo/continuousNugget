@@ -171,14 +171,12 @@ generateSimDataSetsLCPB2 = function(nsim=100, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2
                       representativeSampling=representativeSampling)
   
   if(!simPopOnly) {
-    kenyaEAs = simOut$eaDat
-    kenyaEAs$eaIs = 1:nrow(kenyaEAs)
-    kenyaEAsLong = kenyaEAs[rep(1:nrow(kenyaEAs), kenyaEAs$nHH),]
+    kenyaEAs = simOut$eaDatList
     thisclustpc = simOut$thisclustpc 
     
     # simulate the cluster sampling and add to the data sets
-    clustList = simOut$clustList
-    overSampDat = list(eaDat=kenyaEAs, clustDat=clustList, aggregatedPop=simOut$aggregatedPop)
+    clustList = simOut$clustDat
+    stratDat = list(eaDatList=kenyaEAs, clustDatList=clustList, aggregatedPop=simOut$aggregatedPop)
     
     # SRSClustDat = simClustersSRS(nsim, kenyaEAs, kenyaEAsLong, nEASampled=sum(thisclustpc$clustTotal))
     # clustList = genAndreaFormatFromEAIs(kenyaEAs, SRSClustDat$eaIs, SRSClustDat$sampleWeights)
@@ -222,9 +220,8 @@ generateSimDataSetsLCPB2 = function(nsim=100, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2
     # dev.off()
     
     # plot the first simulation of the over sampled and simple random sample data sets
-    clustDat = overSampDat$clustDat[[1]]
-    # clustDat = overSampDat$clustDat[[1]]
-    eaDat = overSampDat$eaDat
+    clustDat = stratDat$clustDatList[[1]]
+    eaDat = stratDat$eaDatList[[1]]
     pdf(paste0(figureSaveDirectory, "/stratifiedSimulation", dataID, ".pdf"), width=8, height=8)
     par(mfrow =c(2, 2), mar=c(5, 4, 4, 8))
     obsCoords = cbind(clustDat$east, clustDat$north)
@@ -258,9 +255,9 @@ generateSimDataSetsLCPB2 = function(nsim=100, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2
     # plotMapDat(project=TRUE)
     dev.off()
     
-    save(overSampDat, SRSDat, file=paste0(dataSaveDirectory, "simDataMulti", dataID, ".RData"))
+    save(stratDat, file=paste0(dataSaveDirectory, "simData", dataID, ".RData"))
     
-    return(invisible(list(simulatedEAs=simOut, overSampDat=overSampDat, SRSDat=SRSDat)))
+    return(invisible(list(simulatedEAs=simOut, stratDat=stratDat)))
   } else {
     invisible(simOut)
   }
