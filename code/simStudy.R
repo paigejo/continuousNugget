@@ -1833,9 +1833,20 @@ simDatLCPB2 = function(nsim=1, margVar=0.243, sigmaEpsilon=sqrt(0.463),
      any(thisclustpc$clustRur > easpa$EARur) | 
      any(thisclustpc$clustTotal > easpa$EATotal)) {
     warning("In some areas the number of requested clusters to sample is larger than the number of EAs. Setting equal to the number of EAs")
+    # first make sure number of sampled EAs in individual strata are within limits
     thisclustpc$clustUrb[thisclustpc$clustUrb > easpa$EAUrb] = easpa$EAUrb[thisclustpc$clustUrb > easpa$EAUrb]
     thisclustpc$clustRur[thisclustpc$clustRur > easpa$EARur] = easpa$EARur[thisclustpc$clustRur > easpa$EARur]
     thisclustpc$clustTotal = thisclustpc$clustUrb + thisclustpc$clustRur
+    
+    # now make sure county totals are within limits. If not, scale strata in county appropriately
+    if(any(thisclustpc$clustTotal > easpa$EATotal)) {
+      badCounties = thisclustpc$clustTotal > easpa$EATotal
+      badTotals = thisclustpc$clustTotal[badCounties]
+      badTargets = easpa$EATotal[badCounties]
+      thisclustpc$clustUrb[badCounties] = floor(thisclustpc$clustUrb[badCounties] * badTargets / badTotals)
+      thisclustpc$clustRur[badCounties] = floor(thisclustpc$clustUrb[badCounties] * badTargets / badTotals)
+      thisclustpc$clustTotal = thisclustpc$clustUrb + thisclustpc$clustRur
+    }
   }
   
   ### generate Binomial probabilities from transformed logit scale GP
