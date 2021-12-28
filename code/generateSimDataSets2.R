@@ -255,6 +255,14 @@ generateSimDataSetsLCPB2 = function(nsim=100, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2
     # plotMapDat(project=TRUE)
     dev.off()
     
+    # get rid of unnecessary data that takes up too much space:
+    stratDat$eaDatList = NULL
+    stratDat$aggregatedPop$eaPop = NULL
+    # stratDat$aggregatedPop$logitRiskDraws = NULL
+    # for(i in 1:nsim) {
+    #   stratDat$aggregatedPop$eaPop$eaDatList[[i]][c("popDensity", "pixelIs", "popDensityTarget", "nHH", "pFineScaleRisk", "pSmoothRisk")] = NULL
+    # }
+    
     save(stratDat, file=paste0(dataSaveDirectory, "simData", dataID, ".RData"))
     
     return(invisible(list(simulatedEAs=simOut, stratDat=stratDat)))
@@ -298,7 +306,8 @@ generateAllDataSets2 = function() {
   nPar = length(spde_prevRiskSimStudyCommandArgs)
   set.seed(1)
   allSeeds = sample(1:1000000, nPar, replace=FALSE)
-  for(i in nPar) {
+  for(i in 1:nPar) {
+    print(paste0("simulating dataset ", i, "/", nPar))
     set.seed(allSeeds[i])
     
     theseArgs = spde_prevRiskSimStudyCommandArgs[[i]]

@@ -64,10 +64,10 @@ getSPDE_prevRiskSimStudyCommandArgs = function(sigmaEpsilon=sqrt(.25), gamma=-1,
     for(i2 in 1:length(beta0)) {
       thisBeta0 = beta0[i2]
       
-      for(i3 in 1:length(sigmaEpsilon)) {
+      for(i3 in 1:length(nEAsFac)) {
         thisNEAsFac = nEAsFac[i3]
         
-        for(i4 in 1:length(effRange)) {
+        for(i4 in 1:length(nClustFac)) {
           thisNClustFac = nClustFac[i4]
           
           thisGamma = gamma
