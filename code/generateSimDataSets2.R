@@ -228,7 +228,7 @@ generateSimDataSetsLCPB2 = function(nsim=100, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2
     obsNs = clustDat$N
     obsCounts = clustDat$Z
     zlim = c(0, quantile(c(eaDat$pFineScalePrevalence, clustDat$pFineScalePrevalence, 
-                           eaDat$pFineScaleRisk), probs=.975))
+                           eaDat$pFineScaleRisk), probs=.975, na.rm=TRUE))
     quilt.plot(eaDat$east, eaDat$north, eaDat$pFineScalePrevalence, main="Population Prevalences (LCPB)", 
                xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
     plotMapDat(project=TRUE)
@@ -291,7 +291,7 @@ generateAllDataSets = function() {
 
 ## TODO: modify function to take in vector of seeds, make different population replication 
 ##       from same parameters for each seed
-generateAllDataSets2 = function() {
+generateAllDataSets2 = function(startInd=1) {
   # generateSimDataSets(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9)
   # generateSimDataSets(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9)
   # generateSimDataSets(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
@@ -304,9 +304,14 @@ generateAllDataSets2 = function() {
   out = load("savedOutput/simStudyResults/spde_prevRiskSimStudyCommandArgs.RData")
   
   nPar = length(spde_prevRiskSimStudyCommandArgs)
+  
+  if(startInd > nPar) {
+    stop(paste0("startInd (", startInd, ") is great than nPar (", nPar, ")"))
+  }
+  
   set.seed(1)
   allSeeds = sample(1:1000000, nPar, replace=FALSE)
-  for(i in 1:nPar) {
+  for(i in startInd:nPar) {
     print(paste0("simulating dataset ", i, "/", nPar))
     set.seed(allSeeds[i])
     
