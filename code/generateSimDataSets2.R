@@ -311,6 +311,7 @@ generateAllDataSets2 = function(startInd=1) {
   
   set.seed(1)
   allSeeds = sample(1:1000000, nPar, replace=FALSE)
+  browser()
   for(i in startInd:nPar) {
     print(paste0("simulating dataset ", i, "/", nPar))
     set.seed(allSeeds[i])

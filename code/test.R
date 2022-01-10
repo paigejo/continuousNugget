@@ -419,6 +419,36 @@ testValidationWeights = function() {
   
 }
 
+profileDataSimCode = function() {
+  ## Setup 
+  out = load("savedOutput/simStudyResults/spde_prevRiskSimStudyCommandArgs.RData")
+  
+  nPar = length(spde_prevRiskSimStudyCommandArgs)
+  
+  set.seed(1)
+  allSeeds = sample(1:1000000, nPar, replace=FALSE)
+  i = 7
+  print(paste0("simulating dataset ", i, "/", nPar))
+  set.seed(allSeeds[i])
+  
+  theseArgs = spde_prevRiskSimStudyCommandArgs[[i]]
+  theseArgs$nsim = 1
+  theseArgs$nEAsFac = 1
+  
+  # Start profiler
+  Rprof("savedOutput/data.Rprof", interval = 0.05, line.profiling = TRUE,
+        gc.profiling = FALSE, memory.profiling = FALSE, bufsize=10L*10000L)
+  
+  ## Run your code here
+  do.call("generateSimDataSetsLCPB2", theseArgs)
+  
+  # Stop profiler
+  Rprof(NULL)
+  
+  # Visualize results
+  profvis(prof_input = "data.Rprof")
+}
+
 
 
 

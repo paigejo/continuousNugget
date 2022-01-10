@@ -2155,29 +2155,187 @@ simDatSPDE = function(eaDat, clustDat=NULL, nsim=1, margVar=1, effRange=300,
 
 ## TODO: add in multiple seeds, one population for each
 runSimStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9, 
-                       maxDataSets=NULL) {
-  tausq = sigmaEpsilon^2
+                       nEAsFac=1, nClustFac=1, seed=123, i=NULL, jRange=1:100, 
+                       clust=NULL, nClustProc=16) {
   set.seed(seed)
   
+  if(!is.null(i)) {
+    out = load("savedOutput/simStudyResults/spde_prevRiskSimStudyCommandArgs.RData")
+    
+    theseArgs = spde_prevRiskSimStudyCommandArgs[[i]]
+    beta0 = theseArgs$beta0
+    gamma = theseArgs$gamma
+    rho = theseArgs$rho
+    sigmaEpsilon = theseArgs$sigmaEpsilon
+    effRange = theseArgs$effRange
+    nEAsFac = theseArgs$nEasFac
+    nClustFac = theseArgs$nClustFac
+    
+    allSeeds = matrix(sample(1:100000000, length(spde_prevRiskSimStudyCommandArgs)*100, replace=FALSE), ncol=100)
+  }
+  
   # make strings representing the simulation with and without cluster effects
-  dataID = paste0("Beta", round(beta0, 4), "rho", round(rho, 4), "sigmaEps", 
-                  round(sigmaEpsilon, 4), "gamma", round(gamma, 4))
+  dataID = paste0("Bet", signif(beta0, 3), "rho", signif(rho, 3), "sigEps", 
+                  signif(sigmaEpsilon, 3), "gam", signif(gamma, 3), 
+                  "nEAsFac", signif(nEAsFac, 3), "nClustFac", signif(nClustFac, 3))
   
   # load data (overSampDat, SRSDat)
-  out = load(paste0(dataSaveDirectory, "simDataMulti", dataID, ".RData"))
-  eaDat = SRSDat$eaDat
-  clustDat = SRSDat$clustDat
+  out = load(paste0(dataSaveDirectory, "simData", dataID, ".RData"))
+  clustDat = stratDat$clustDatList[j]
   
-  if(is.null(maxDataSets)) {
-    maxDataSets = length(clustDat)
+  # TODO:
+  # make easpa based on nEAsFac
+  # make other necessary inputs to simPopSPDE
+  
+  # make easpa based on nEAsFac
+  easpa = makeDefaultEASPA()
+  
+  # scale easpa and poppsub using nEAsFac
+  easpa[,c("EAUrb", "EARur", "EATotal", 
+           "HHUrb", "HHRur", "HHTotal", 
+           "popUrb", "popRur", "popTotal")] = 
+    round(nEAsFac * easpa[,c("EAUrb", "EARur", "EATotal", 
+                             "HHUrb", "HHRur", "HHTotal", 
+                             "popUrb", "popRur", "popTotal")])
+  easpa$EATotal = easpa$EAUrb + easpa$EARur
+  easpa$HHTotal = easpa$HHUrb + easpa$HHRur
+  easpa$popTotal = easpa$popUrb + easpa$popRur
+  
+  poppsub = poppsubKenya
+  poppsub[,c("popUrb", "popRur", "popTotal")] = 
+    nEAsFac * poppsub[,c("popUrb", "popRur", "popTotal")]
+  poppsub$popTotal = poppsub$popUrb + poppsub$popRur
+  
+  # make parallel cluster, and export relevant values
+  if(is.null(clust)) {
+    library(parallel)
+    cl <- makeCluster(nClustProc)
+    clusterEvalQ(cl, {
+      setwd("~/git/continuousNugget/")
+      source("code/setup.R")
+    })
+    clusterExport(cl, c("allSeeds", "beta0", "gamma", "rho", "sigmaEpsilon", 
+                        "effRange", "nEAsFac", "nClustFac", "easpa", "poppsub"))
   }
   
-  # calculate the true aggregated prevalences and risks
+  simOne = function(j) {
+    
+    thisSeed = allSeeds[i,j]
+    set.seed(thisSeed)
+    
+    # run the models
+    out = simPopSPDE(nsim=1000, easpa=easpa, popMat=popMatKenya, 
+                     targetPopMat=popMatKenyaNeonatal, poppsub=poppsub, 
+                     spdeMesh=NULL, margVar=rho, sigmaEpsilon=sigmaEpsilon, 
+                     gamma=gamma, effRange=effRange, beta0=beta0, 
+                     stratifyByUrban=TRUE, subareaLevel=TRUE, gridLevel=FALSE, 
+                     doFineScaleRisk=TRUE, doSmoothRisk=TRUE, 
+                     doGriddedRisk=FALSE, doSmoothRiskLogisticApprox=FALSE, 
+                     min1PerSubarea=TRUE)
+    
+    subareaPop = out$subareaPop$aggregationResults
+    areaPop = out$areaPop$aggregationResults
+    timings = out$timings
+    
+    # subset results we care about (save burden to scratch directory)
+    subareaPopP = subareaPop[c("pFineScalePrevalence", "pFineScaleRisk", "pSmoothRisk")]
+    areaPopP = areaPop[c("pFineScalePrevalence", "pFineScaleRisk", "pSmoothRisk")]
+    subareaPopZ = subareaPop[c("ZFineScalePrevalence", "ZFineScaleRisk", "ZSmoothRisk")]
+    areaPopZ = areaPop[c("ZFineScalePrevalence", "ZFineScaleRisk", "ZSmoothRisk")]
+    
+    # save file
+    dataIDout = paste0(dataID, "_i", i, "j", j)
+    save(subareaPopP, areaPopP, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_p.RData"))
+    save(subareaPopZ, areaPopZ, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_Z.RData"))
+    
+    list(subareaPopAggRes=subareaPop, areaPopAggRes=areaPop)
+  }
+  
+}
+
+runSimStudyij = function(i, j, seed=123) {
+  set.seed(seed)
+  
+  out = load("savedOutput/simStudyResults/spde_prevRiskSimStudyCommandArgs.RData")
+  
+  theseArgs = spde_prevRiskSimStudyCommandArgs[[i]]
+  beta0 = theseArgs$beta0
+  gamma = theseArgs$gamma
+  rho = theseArgs$rho
+  sigmaEpsilon = theseArgs$sigmaEpsilon
+  effRange = theseArgs$effRange
+  nEAsFac = theseArgs$nEasFac
+  nClustFac = theseArgs$nClustFac
+  
+  allSeeds = matrix(sample(1:100000000, length(spde_prevRiskSimStudyCommandArgs)*100, replace=FALSE), ncol=100)
+  
+  # make strings representing the simulation with and without cluster effects
+  dataID = paste0("i", signif(beta0, 3), "rho", signif(rho, 3), "sigEps", 
+                  signif(sigmaEpsilon, 3), "gam", signif(gamma, 3), 
+                  "nEAsFac", signif(nEAsFac, 3), "nClustFac", signif(nClustFac, 3))
+  
+  # load data (overSampDat, SRSDat)
+  out = load(paste0(dataSaveDirectory, "simData", dataID, ".RData"))
+  clustDat = stratDat$clustDatList[j]
+  
+  # TODO:
+  # make easpa based on nEAsFac
+  # make other necessary inputs to simPopSPDE
+  
+  # make easpa based on nEAsFac
+  easpa = makeDefaultEASPA()
+  
+  # scale easpa and poppsub using nEAsFac
+  easpa[,c("EAUrb", "EARur", "EATotal", 
+           "HHUrb", "HHRur", "HHTotal", 
+           "popUrb", "popRur", "popTotal")] = 
+    round(nEAsFac * easpa[,c("EAUrb", "EARur", "EATotal", 
+                             "HHUrb", "HHRur", "HHTotal", 
+                             "popUrb", "popRur", "popTotal")])
+  easpa$EATotal = easpa$EAUrb + easpa$EARur
+  easpa$HHTotal = easpa$HHUrb + easpa$HHRur
+  easpa$popTotal = easpa$popUrb + easpa$popRur
+  
+  poppsub = poppsubKenya
+  poppsub[,c("popUrb", "popRur", "popTotal")] = 
+    nEAsFac * poppsub[,c("popUrb", "popRur", "popTotal")]
+  poppsub$popTotal = poppsub$popUrb + poppsub$popRur
+  
+  thisSeed = allSeeds[i,j]
+  set.seed(thisSeed)
+  
+  # Fit the risk model:
+  riskOut = fitSPDEKenyaDat(dat=clustDat, nPostSamples=1000)
+  logitDraws = riskOut$uDraws # uDraws includes fixed effects and is on logit scale
+  sigmaEpsilonDraws = riskOut$sigmaEpsilonDraws
   
   # run the models
-  for(i in 1:maxDataSets) {
-    
-  }
+  out = simPopCustom(logitRiskDraws=logitDraws, sigmaEpsilonDraws=sigmaEpsilonDraws, 
+                     nsim=1000, easpa=easpa, popMat=popMatKenya, 
+                     targetPopMat=popMatKenyaNeonatal, poppsub=poppsub, 
+                     spdeMesh=NULL, margVar=rho, sigmaEpsilon=sigmaEpsilon, 
+                     gamma=gamma, effRange=effRange, beta0=beta0, 
+                     stratifyByUrban=TRUE, subareaLevel=TRUE, gridLevel=FALSE, 
+                     doFineScaleRisk=TRUE, doSmoothRisk=TRUE, 
+                     doGriddedRisk=FALSE, doSmoothRiskLogisticApprox=FALSE, 
+                     min1PerSubarea=TRUE)
+  
+  subareaPop = out$subareaPop$aggregationResults
+  areaPop = out$areaPop$aggregationResults
+  timings = out$timings
+  
+  # subset results we care about (save burden to scratch directory)
+  subareaPopP = subareaPop[c("pFineScalePrevalence", "pFineScaleRisk", "pSmoothRisk")]
+  areaPopP = areaPop[c("pFineScalePrevalence", "pFineScaleRisk", "pSmoothRisk")]
+  subareaPopZ = subareaPop[c("ZFineScalePrevalence", "ZFineScaleRisk", "ZSmoothRisk")]
+  areaPopZ = areaPop[c("ZFineScalePrevalence", "ZFineScaleRisk", "ZSmoothRisk")]
+  
+  # save file
+  dataIDout = paste0("simOut_i", i, "j", j)
+  save(subareaPopP, areaPopP, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_p.RData"))
+  save(subareaPopZ, areaPopZ, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_Z.RData"))
+  
+  list(subareaPopAggRes=subareaPop, areaPopAggRes=areaPop)
 }
 
 

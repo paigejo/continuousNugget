@@ -75,13 +75,9 @@ if(inf$platform == "x86_64-apple-darwin17.0 (64-bit)") {
 } else if(inf$platform != "x86_64-w64-mingw32/x64 (64-bit)" && inf$platform != "x86_64-pc-linux-gnu (64-bit)") {
   setwd("~/git/continuousNugget/")
   options(error=recover)
-} else if(inf$platform == "x86_64-pc-linux-gnu (64-bit)") {
+} else {
   setwd("~/git/continuousNugget/")
   inla.setOption(num.threads=1) # consider raising
-  options(error=recover)
-} else {
-  setwd("U:/git/continuousNugget/")
-  inla.setOption(num.threads=1)
   options(error=recover)
 }
 

@@ -5752,4 +5752,18 @@ approxSDPctIncrease = function(currSDPctIncrease, facVarPctIncrease=2) {
   currVarPctIncrease = (currSDPctIncrease + 1)^2 - 1
 }
 
+# i: either the first index of the two input parameters, or the job index if rev==TRUE
+# j: the second index of the two input parameters
+# maxJ: maximum of j for each i if rev==FALSE
+# rev: if TRUE, performs inverse operation of if rev==FALSE given the job index i
+getJobIndices = function(i=1, j=1:100, maxJ=100, rev=FALSE) {
+  if(rev) {
+    outI = ((i-1) %/% maxJ) + 1
+    outJ = ((i-1) %% maxJ) + 1
+    return(cbind(i=outI, j=outJ))
+  } else {
+    c(jobIndex=(i-1)*maxJ + j)
+  }
+}
+
 
