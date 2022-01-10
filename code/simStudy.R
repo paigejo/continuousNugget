@@ -2264,7 +2264,7 @@ runSimStudyij = function(i, j, seed=123) {
   rho = theseArgs$rho
   sigmaEpsilon = theseArgs$sigmaEpsilon
   effRange = theseArgs$effRange
-  nEAsFac = theseArgs$nEasFac
+  nEAsFac = theseArgs$nEAsFac
   nClustFac = theseArgs$nClustFac
   
   allSeeds = matrix(sample(1:100000000, length(spde_prevRiskSimStudyCommandArgs)*100, replace=FALSE), ncol=100)
