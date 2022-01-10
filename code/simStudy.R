@@ -2276,7 +2276,7 @@ runSimStudyij = function(i, j, seed=123) {
   # load data (overSampDat, SRSDat)
   dataSaveDirectory = "savedOutput/simDataSets/"
   out = load(paste0(dataSaveDirectory, "simData", dataID, ".RData"))
-  clustDat = stratDat$clustDatList[j]
+  clustDat = stratDat$clustDatList[[j]]
   
   # TODO:
   # make easpa based on nEAsFac
