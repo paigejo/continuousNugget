@@ -2257,7 +2257,6 @@ runSimStudyij = function(i, j, seed=123) {
   set.seed(seed)
   
   out = load("savedOutput/simStudyResults/spde_prevRiskSimStudyCommandArgs.RData")
-  
   theseArgs = spde_prevRiskSimStudyCommandArgs[[i]]
   beta0 = theseArgs$beta0
   gamma = theseArgs$gamma
@@ -2270,11 +2269,12 @@ runSimStudyij = function(i, j, seed=123) {
   allSeeds = matrix(sample(1:100000000, length(spde_prevRiskSimStudyCommandArgs)*100, replace=FALSE), ncol=100)
   
   # make strings representing the simulation with and without cluster effects
-  dataID = paste0("i", signif(beta0, 3), "rho", signif(rho, 3), "sigEps", 
+  dataID = paste0("Bet", signif(beta0, 3), "rho", signif(rho, 3), "sigEps", 
                   signif(sigmaEpsilon, 3), "gam", signif(gamma, 3), 
                   "nEAsFac", signif(nEAsFac, 3), "nClustFac", signif(nClustFac, 3))
   
   # load data (overSampDat, SRSDat)
+  dataSaveDirectory = "savedOutput/simDataSets/"
   out = load(paste0(dataSaveDirectory, "simData", dataID, ".RData"))
   clustDat = stratDat$clustDatList[j]
   
