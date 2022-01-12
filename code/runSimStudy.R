@@ -11,4 +11,4 @@ j = jobInds[2]
 # argList = spde_prevRiskSimStudyCommandArgs[[i]]
 # argList$j = j
 
-runSimStudyij(i, j)
+system.time(invisible(runSimStudyij(i, j)))
