@@ -2154,8 +2154,9 @@ simDatSPDE = function(eaDat, clustDat=NULL, nsim=1, margVar=1, effRange=300,
 }
 
 ## TODO: add in multiple seeds, one population for each
-runSimStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9, 
-                       nEAsFac=1, nClustFac=1, seed=123, i=NULL, jRange=1:100, 
+runSimStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), 
+                       effRange=400, beta0=-3.9, nEAsFac=1, nClustFac=1, 
+                       seed=123, i=NULL, jRange=1:100, 
                        clust=NULL, nClustProc=16) {
   set.seed(seed)
   
@@ -2311,10 +2312,8 @@ runSimStudyij = function(i, j, seed=123) {
   
   # run the models
   out = simPopCustom(logitRiskDraws=logitDraws, sigmaEpsilonDraws=sigmaEpsilonDraws, 
-                     nsim=1000, easpa=easpa, popMat=popMatKenya, 
+                     easpa=easpa, popMat=popMatKenya, 
                      targetPopMat=popMatKenyaNeonatal, poppsub=poppsub, 
-                     spdeMesh=NULL, margVar=rho, sigmaEpsilon=sigmaEpsilon, 
-                     gamma=gamma, effRange=effRange, beta0=beta0, 
                      stratifyByUrban=TRUE, subareaLevel=TRUE, gridLevel=FALSE, 
                      doFineScaleRisk=TRUE, doSmoothRisk=TRUE, 
                      doGriddedRisk=FALSE, doSmoothRiskLogisticApprox=FALSE, 
