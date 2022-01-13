@@ -2332,7 +2332,8 @@ runSimStudyij = function(i, j, seed=123) {
   # get timings
   rawTimes = c(time1, time2, time3, time4)
   totalTimes = diff(rawTimes)
-  names(totalTimes) = c("setup", "SPDEmodel", "aggregationModel")
+  totalTimes = c(totalTimes, sum(totalTimes))
+  names(totalTimes) = c("setup", "SPDEmodel", "aggregationModel", "totalTime")
   
   # subset results we care about (save burden to scratch directory)
   subareaPopP = subareaPop[c("pFineScalePrevalence", "pFineScaleRisk", "pSmoothRisk")]
