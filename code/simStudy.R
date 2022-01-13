@@ -2321,7 +2321,8 @@ runSimStudyij = function(i, j, seed=123) {
   
   subareaPop = out$subareaPop$aggregationResults
   areaPop = out$areaPop$aggregationResults
-  timings = out$timings
+  allTimings = out$allTimings
+  processedTimings = out$processedTimings
   
   # subset results we care about (save burden to scratch directory)
   subareaPopP = subareaPop[c("pFineScalePrevalence", "pFineScaleRisk", "pSmoothRisk")]
@@ -2331,10 +2332,10 @@ runSimStudyij = function(i, j, seed=123) {
   
   # save file
   dataIDout = paste0("simOut_i", i, "j", j)
-  save(subareaPopP, areaPopP, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_p.RData"))
-  save(subareaPopZ, areaPopZ, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_Z.RData"))
+  save(subareaPopP, areaPopP, allTimings, processedTimings, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_p.RData"))
+  save(subareaPopZ, areaPopZ, allTimings, processedTimings, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_Z.RData"))
   
-  list(subareaPopAggRes=subareaPop, areaPopAggRes=areaPop)
+  list(subareaPopAggRes=subareaPop, areaPopAggRes=areaPop, allTimings=allTimings, processedTimings=processedTimings)
 }
 
 
