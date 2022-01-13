@@ -1601,6 +1601,9 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
                          pFineScaleRisk=NULL, ZFineScaleRisk=NULL, NFineScaleRisk=NULL, 
                          pSmoothRisk=smoothRisk, ZSmoothRisk=zSamplesSmoothRisk, NSmoothRisk=nSamplesSmoothRisk, 
                          pGriddedRisk=griddedRisk, ZGriddedRisk=zSamplesGriddedRisk, NGriddedRisk=nSamplesGriddedRisk)
+    
+    time11 = proc.time()[3]
+    time12 = proc.time()[3]
   } else {
     pixelLevelPop = NULL
     
@@ -1748,7 +1751,8 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
   }
   
   # setup computation time table
-  rawTimes = sapply(paste("time", 1:22, sep=""), get)
+  env = environment()
+  rawTimes = sapply(paste("time", 1:22, sep=""), get, envir=env)
   allTimings = diff(rawTimes)
   names(allTimings) = c("setup", "samplingEAs", "EAtoPixelIndexMapAndVariables", 
                         "drawingClusterEffects", "drawingNc", "drawing_uc_muc", 
@@ -1835,7 +1839,8 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
     eaDatList = lapply(1:nDraws, getEADat)
     time23 = proc.time()[3]
     
-    rawTimes = sapply(paste("time", 1:23, sep=""), get)
+    env = environment()
+    rawTimes = sapply(paste("time", 1:23, sep=""), get, envir=env)
     allTimings = diff(rawTimes)
     names(allTimings) = c("setup", "samplingEAs", "EAtoPixelIndexMapAndVariables", 
                           "drawingClusterEffects", "drawingNc", "drawing_uc_muc", 
