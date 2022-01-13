@@ -2255,6 +2255,7 @@ runSimStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5),
 }
 
 runSimStudyij = function(i, j, seed=123) {
+  time1 = proc.time()[3]
   set.seed(seed)
   
   out = load("savedOutput/simStudyResults/spde_prevRiskSimStudyCommandArgs.RData")
@@ -2306,9 +2307,11 @@ runSimStudyij = function(i, j, seed=123) {
   set.seed(thisSeed)
   
   # Fit the risk model:
+  time2 = proc.time()[3]
   riskOut = fitSPDEKenyaDat(dat=clustDat, nPostSamples=1000)
   logitDraws = riskOut$uDraws # uDraws includes fixed effects and is on logit scale
   sigmaEpsilonDraws = riskOut$sigmaEpsilonDraws
+  time3 = proc.time()[3]
   
   # run the models
   out = simPopCustom(logitRiskDraws=logitDraws, sigmaEpsilonDraws=sigmaEpsilonDraws, 
@@ -2323,6 +2326,13 @@ runSimStudyij = function(i, j, seed=123) {
   areaPop = out$areaPop$aggregationResults
   allTimings = out$allTimings
   processedTimings = out$processedTimings
+  aggregationTimings=list(allTimings=allTimings, processedTimings=processedTimings)
+  time4 = proc.time()[3]
+  
+  # get timings
+  rawTimes = c(time1, time2, time3, time4)
+  totalTimes = diff(rawTimes)
+  names(totalTimes) = c("setup", "SPDEmodel", "aggregationModel")
   
   # subset results we care about (save burden to scratch directory)
   subareaPopP = subareaPop[c("pFineScalePrevalence", "pFineScaleRisk", "pSmoothRisk")]
@@ -2330,12 +2340,14 @@ runSimStudyij = function(i, j, seed=123) {
   subareaPopZ = subareaPop[c("ZFineScalePrevalence", "ZFineScaleRisk", "ZSmoothRisk")]
   areaPopZ = areaPop[c("ZFineScalePrevalence", "ZFineScaleRisk", "ZSmoothRisk")]
   
-  # save file
+  # save files
   dataIDout = paste0("simOut_i", i, "j", j)
-  save(subareaPopP, areaPopP, allTimings, processedTimings, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_p.RData"))
-  save(subareaPopZ, areaPopZ, allTimings, processedTimings, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_Z.RData"))
+  save(subareaPopP, areaPopP, aggregationTimings, rawTimes, totalTimes, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_p.RData"))
+  save(subareaPopZ, areaPopZ, aggregationTimings, rawTimes, totalTimes, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_Z.RData"))
   
-  list(subareaPopAggRes=subareaPop, areaPopAggRes=areaPop, allTimings=allTimings, processedTimings=processedTimings)
+  list(subareaPopAggRes=subareaPop, areaPopAggRes=areaPop, 
+       aggregationTimings=aggregationTimings, 
+       rawTimes=rawTimes, totalTimes=totalTimes)
 }
 
 
