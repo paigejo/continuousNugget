@@ -1642,7 +1642,7 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
         urbanMat = NULL
       }
       
-      time13 = proc.time()
+      time13 = proc.time()[3]
       
       # fine scale prevalence
       fineScalePrevalenceSubarea <- aggPredsVariablePerArea(popNumerators=Zcs, popDenominators=Ncs, 
@@ -1679,8 +1679,8 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
         smoothGriddedRiskSubarea$aggregationResults$region = NULL
         subareaLevelPop = c(subareaLevelPop, smoothGriddedRiskSubarea$aggregationResults)
         
-        time16 = subareaLevelPop$rawTimes[5]
-        time17 = subareaLevelPop$rawTimes[6]
+        time16 = smoothGriddedRiskSubarea$rawTimes[5]
+        time17 = smoothGriddedRiskSubarea$rawTimes[6]
       }
       
       # aggregation matrices are not applicable for aggregating from EA level to subarea level
