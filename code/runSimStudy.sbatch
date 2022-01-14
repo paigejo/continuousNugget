@@ -8,10 +8,10 @@
 #SBATCH -e runSimStudy_%A_%a.err    # File to which STDERR will be written
 #SBATCH --mail-type=ALL       # Type of email notification- BEGIN,END,FAIL,ALL
 #SBATCH --mail-user=john.paige@ntnu.no # Email to which notifications will be sent
-#SBATCH --exclusive=user # don't allow other users to share nodes with these jobs
-#SBATCH --nodelist=idun-03-0[1-9],idun-03-[10-12] # [1-12] 0[1-9],[10-12] see https://www.hpc.ntnu.no/idun/hardware/
+#SBATCH --account=share-ie-imf # see https://www.hpc.ntnu.no/idun/getting-started-on-idun/accounting/
+#SBATCH --nodelist=idun-03-[21-22] # idun-03-0[1-9],idun-03-[10-12] see https://www.hpc.ntnu.no/idun/hardware/
 
-# --account=share-ie-imf # see https://www.hpc.ntnu.no/idun/getting-started-on-idun/accounting/
+# --exclusive=user # don't allow other users to share nodes with these jobs
 
 module purge
 module load R/4.0.3-foss-2020b
