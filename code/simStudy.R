@@ -2254,7 +2254,7 @@ runSimStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5),
   
 }
 
-runSimStudyij = function(i, j, seed=123) {
+runSimStudyij = function(i, j, seed=123, doSmoothRiskLogisticApprox=FALSE) {
   time1 = proc.time()[3]
   set.seed(seed)
   
@@ -2319,7 +2319,7 @@ runSimStudyij = function(i, j, seed=123) {
                      targetPopMat=popMatKenyaNeonatal, poppsub=poppsub, 
                      stratifyByUrban=TRUE, subareaLevel=TRUE, gridLevel=FALSE, 
                      doFineScaleRisk=TRUE, doSmoothRisk=TRUE, 
-                     doGriddedRisk=FALSE, doSmoothRiskLogisticApprox=FALSE, 
+                     doGriddedRisk=FALSE, doSmoothRiskLogisticApprox=doSmoothRiskLogisticApprox, 
                      min1PerSubarea=TRUE)
   
   subareaPop = out$subareaPop$aggregationResults
@@ -2351,6 +2351,39 @@ runSimStudyij = function(i, j, seed=123) {
        rawTimes=rawTimes, totalTimes=totalTimes)
 }
 
-
+processSimStudyResultsij = function(i, j) {
+  
+  out = load("savedOutput/simStudyResults/spde_prevRiskSimStudyCommandArgs.RData")
+  theseArgs = spde_prevRiskSimStudyCommandArgs[[i]]
+  beta0 = theseArgs$beta0
+  gamma = theseArgs$gamma
+  rho = theseArgs$rho
+  sigmaEpsilon = theseArgs$sigmaEpsilon
+  effRange = theseArgs$effRange
+  nEAsFac = theseArgs$nEAsFac
+  nClustFac = theseArgs$nClustFac
+  
+  allSeeds = matrix(sample(1:100000000, length(spde_prevRiskSimStudyCommandArgs)*100, replace=FALSE), ncol=100)
+  
+  # make strings representing the simulation with and without cluster effects
+  dataID = paste0("Bet", signif(beta0, 3), "rho", signif(rho, 3), "sigEps", 
+                  signif(sigmaEpsilon, 3), "gam", signif(gamma, 3), 
+                  "nEAsFac", signif(nEAsFac, 3), "nClustFac", signif(nClustFac, 3))
+  
+  # load data (overSampDat, SRSDat)
+  dataSaveDirectory = "savedOutput/simDataSets/"
+  out = load(paste0(dataSaveDirectory, "simData", dataID, ".RData"))
+  # clustDat = stratDat$clustDatList[[j]]
+  thisPop = stratDat$aggregatedPop
+  
+  # load results
+  dataIDout = paste0("simOut_i", i, "j", j)
+  load(subareaPopP, areaPopP, aggregationTimings, rawTimes, totalTimes, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_p.RData"))
+  load(subareaPopZ, areaPopZ, aggregationTimings, rawTimes, totalTimes, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_Z.RData"))
+  
+  # compare results to population via scores
+  
+  
+}
 
 
