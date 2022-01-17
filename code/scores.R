@@ -693,7 +693,7 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
   thisCRPS = crps(truth, est, var, estMat=estMat, getAverage=getAverage)
   
   # collect the results in a data frame
-  results = matrix(cbind(thisBias, thisVar, thisMSE, sqrt(thisMSE), thisCRPS, thisIntScore, thisCoverage, 
+  results = matrix(c(thisBias, thisVar, thisMSE, sqrt(thisMSE), thisCRPS, thisIntScore, thisCoverage, 
                      thisWidth), ncol=5 + 3*length(significance))
   colnames(results) = c("Bias", "Var", "MSE", "RMSE", "CRPS", 
                         paste("IntervalScore", 100*significance, sep=""), 
