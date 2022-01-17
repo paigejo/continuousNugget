@@ -1076,26 +1076,26 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     width = upper - lower
   
   if(doFuzzyReject) {
-    # in this case, we fuzy reject if the truth is at the edge of the coverage interval. First 
+    # in this case, we fuzzy reject if the truth is at the edge of the coverage interval. First 
     # determine what values are at the edge of the intervals, then determine the probability of rejection 
-    # for each, then randomly reject
-    atLowerEdge = which(lower == truth)
-    atUpperEdge = which(upper == truth)
+    # for each, then subtract fuzzy rejection probability from the coverage for that observation at the edge
+    atLowerEdge = lower == truth
+    atUpperEdge = upper == truth
+    lowerEdgeInds = which(atLowerEdge)
+    upperEdgeInds = which(atUpperEdge)
     
-    if(length(atLowerEdge) != 0) {
-      probRejectLower = sapply(atLowerEdge, function(i) {((1 - significance) / 2 - mean(estMat[i,] < lower[i])) / mean(estMat[i,] == lower[i])})
-      rejectLower = probRejectLower
-    } else {
-      rejectLower = 0
+    # Fuzzy rejection probabilities at the interval boundaries. Nonzero only at 
+    # respective interval boundaries
+    rejectLower = rep(0, length(truth))
+    rejectUpper = rep(0, length(truth))
+    if(length(lowerEdgeInds) != 0) {
+      probRejectLower = sapply(lowerEdgeInds, function(i) {((1 - significance) / 2 - mean(estMat[i,] < lower[i])) / mean(estMat[i,] == lower[i])})
+      rejectLower[lowerEdgeInds] = probRejectLower
     }
-    if(length(atUpperEdge) != 0) {
+    if(length(upperEdgeInds) != 0) {
       probRejectUpper = sapply(atUpperEdge, function(i) {((1 - significance) / 2 - mean(estMat[i,] > upper[i])) / mean(estMat[i,] == upper[i])})
       rejectUpper = probRejectUpper
-    } else {
-      rejectUpper = 0
     }
-    
-    
     
     # determine minimum differences between probabilities
     if(is.null(ns))
@@ -1109,13 +1109,15 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     lower = lower + deltas*rejectLower
     # width = upper - lower (this should be the same as above)
     
+    # cvg at the boundaries was 1, but the fuzzy coverage is 1 minus the rejection probability
     if(returnCoverage) {
-      if(length(atLowerEdge) != 0) {
-        cvg[atLowerEdge] = sapply(1:length(atLowerEdge), function(i) {min(cvg[atLowerEdge][i], (1-rejectLower[i]))})
-        
+      if(length(lowerEdgeInds) != 0) {
+        # cvg[lowerEdgeInds] = sapply(lowerEdgeInds, function(i) {min(cvg[i], (1-rejectLower[i]))})
+        cvg[lowerEdgeInds] = 1-rejectLower[lowerEdgeInds]
       }
-      if(length(atUpperEdge) != 0) {
-        cvg[atUpperEdge] = sapply(1:length(atUpperEdge), function(i) {min(cvg[atUpperEdge][i], (1-rejectUpper[i]))})
+      if(length(upperEdgeInds) != 0) {
+        # cvg[upperEdgeInds] = sapply(upperEdgeInds, function(i) {min(cvg[i], (1-rejectUpper[i]))})
+        cvg[upperEdgeInds] = 1-rejectUpper[upperEdgeInds]
       }
     }
   }
