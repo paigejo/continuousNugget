@@ -2385,49 +2385,55 @@ processSimStudyResultsij = function(i, j) {
   
   ## compare results to population via scores
   
+  # first obtain central estimates, which are the same for all models
+  subareaEstsP = rowMeans(subareaPopP$pSmoothRisk)
+  subareaEstsZ = rowMeans(subareaPopZ$ZSmoothRisk)
+  areaEstsP = rowMeans(areaPopP$pSmoothRisk)
+  areaEstsZ = rowMeans(areaPopZ$ZSmoothRisk)
+  
   # fine scale prevalence scores
   subareaScoresPprev = getScores(truth=thisPop$subareaPop$aggregationResults$pFineScalePrevalence[,j], 
-                             estMat=subareaPopP$pFineScalePrevalence, 
+                                 est=subareaEstsP, estMat=subareaPopP$pFineScalePrevalence, 
                              significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   subareaScoresZprev = getScores(truth=thisPop$subareaPop$aggregationResults$ZFineScalePrevalence[,j], 
-                             estMat=subareaPopZ$ZFineScalePrevalence, 
+                                 est=subareaEstsZ, estMat=subareaPopZ$ZFineScalePrevalence, 
                              significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   
   areaScoresPprev = getScores(truth=thisPop$areaPop$aggregationResults$pFineScalePrevalence[,j], 
-                             estMat=areaPopP$pFineScalePrevalence, 
+                              est=areaEstsP, estMat=areaPopP$pFineScalePrevalence, 
                              significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   areaScoresZprev = getScores(truth=thisPop$areaPop$aggregationResults$ZFineScalePrevalence[,j], 
-                             estMat=areaPopZ$ZFineScalePrevalence, 
+                              est=areaEstsZ, estMat=areaPopZ$ZFineScalePrevalence, 
                              significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   
   # fine scale risk scores
   subareaScoresPrisk = getScores(truth=thisPop$subareaPop$aggregationResults$pFineScalePrevalence[,j], 
-                                 estMat=subareaPopP$pFineScaleRisk, 
+                                 est=subareaEstsP, estMat=subareaPopP$pFineScaleRisk, 
                                  significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   subareaScoresZrisk = getScores(truth=thisPop$subareaPop$aggregationResults$ZFineScalePrevalence[,j], 
-                                 estMat=subareaPopZ$ZFineScaleRisk, 
+                                 est=subareaEstsZ, estMat=subareaPopZ$ZFineScaleRisk, 
                                  significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   
   areaScoresPrisk = getScores(truth=thisPop$areaPop$aggregationResults$pFineScalePrevalence[,j], 
-                              estMat=areaPopP$pFineScaleRisk, 
+                              est=areaEstsP, estMat=areaPopP$pFineScaleRisk, 
                               significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   areaScoresZrisk = getScores(truth=thisPop$areaPop$aggregationResults$ZFineScalePrevalence[,j], 
-                              estMat=areaPopZ$ZFineScaleRisk, 
+                              est=areaEstsZ, estMat=areaPopZ$ZFineScaleRisk, 
                               significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   
   # smooth risk scores
   subareaScoresPsmoothRisk = getScores(truth=thisPop$subareaPop$aggregationResults$pFineScalePrevalence[,j], 
-                                 estMat=subareaPopP$pSmoothRisk, 
+                                       est=subareaEstsP, estMat=subareaPopP$pSmoothRisk, 
                                  significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   subareaScoresZsmoothRisk = getScores(truth=thisPop$subareaPop$aggregationResults$ZFineScalePrevalence[,j], 
-                                 estMat=subareaPopZ$ZSmoothRisk, 
+                                       est=subareaEstsZ, estMat=subareaPopZ$ZSmoothRisk, 
                                  significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   
   areaScoresPsmoothRisk = getScores(truth=thisPop$areaPop$aggregationResults$pFineScalePrevalence[,j], 
-                              estMat=areaPopP$pSmoothRisk, 
+                                    est=areaEstsP, estMat=areaPopP$pSmoothRisk, 
                               significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   areaScoresZsmoothRisk = getScores(truth=thisPop$areaPop$aggregationResults$ZFineScalePrevalence[,j], 
-                              estMat=areaPopZ$ZSmoothRisk, 
+                                    est=areaEstsZ, estMat=areaPopZ$ZSmoothRisk, 
                               significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   
   # add computation times to the scores
@@ -2468,7 +2474,6 @@ combineProcessedResults = function(is=1:57, maxJ=100, initialProcess=TRUE, combi
   if(initialProcess) {
     print("Doing initial processing/scoring...")
     for(i in is) {
-      print(paste0("processing for i=", i))
       for(j in 1:maxJ) {
         if((j %% 10) == 1) {
           print(paste0("processing for i=", i, ", j=", j))
@@ -2481,7 +2486,6 @@ combineProcessedResults = function(is=1:57, maxJ=100, initialProcess=TRUE, combi
   if(combineScores) {
     print("Combining scores...")
     for(i in is) {
-      print(paste0("combining scores for i=", i))
       
       subareaScoresPprevAll = c()
       subareaScoresZprevAll = c()
@@ -2562,6 +2566,65 @@ combineProcessedResults = function(is=1:57, maxJ=100, initialProcess=TRUE, combi
            file=paste0("savedOutput/simStudyResults/simScoresAll_i", i, "maxJ", maxJ, ".RData"))
     }
   }
+}
+
+printSimStudyTablei = function(i=1, maxJ=100) {
+  # save(subareaScoresPprevAll, subareaScoresZprevAll, areaScoresPprevAll, areaScoresZprevAll, 
+  #      subareaScoresPriskAll, subareaScoresZriskAll, areaScoresPriskAll, areaScoresZriskAll, 
+  #      subareaScoresPsmoothRiskAll, subareaScoresZsmoothRiskAll, areaScoresPsmoothRiskAll, areaScoresZsmoothRiskAll, 
+  #      aggregationTimingsDetailedAll, aggregationTimingsProcessedAll, totalTimesAll, 
+  #      subareaScoresPprevAvg, subareaScoresZprevAvg, areaScoresPprevAvg, areaScoresZprevAvg, 
+  #      subareaScoresPriskAvg, subareaScoresZriskAvg, areaScoresPriskAvg, areaScoresZriskAvg, 
+  #      subareaScoresPsmoothRiskAvg, subareaScoresZsmoothRiskAvg, areaScoresPsmoothRiskAvg, areaScoresZsmoothRiskAvg, 
+  #      aggregationTimingsDetailedAvg, aggregationTimingsProcessedAvg, totalTimesAvg, 
+  #      file=paste0("savedOutput/simStudyResults/simScoresAll_i", i, "maxJ", maxJ, ".RData"))
+  
+  out = load(paste0("savedOutput/simStudyResults/simScoresAll_i", i, "maxJ", maxJ, ".RData"))
+  
+  # make 4 tables: subareaPScores, subareaZScores, areaPScores, and areaZScores
+  
+  subareaPScores = rbind(subareaScoresPprevAvg, 
+                         subareaScoresPriskAvg, 
+                         subareaScoresPsmoothRiskAvg)
+  row.names(subareaPScores) = c("Prevalence", "Risk", "SmoothRisk")
+  
+  subareaZScores = rbind(subareaScoresZprevAvg, 
+                         subareaScoresZriskAvg, 
+                         subareaScoresZsmoothRiskAvg)
+  row.names(subareaZScores) = c("Prevalence", "Risk", "SmoothRisk")
+  
+  areaPScores = rbind(areaScoresPprevAvg, 
+                         areaScoresPriskAvg, 
+                         areaScoresPsmoothRiskAvg)
+  row.names(areaPScores) = c("Prevalence", "Risk", "SmoothRisk")
+  
+  areaZScores = rbind(areaScoresZprevAvg, 
+                         areaScoresZriskAvg, 
+                         areaScoresZsmoothRiskAvg)
+  row.names(areaZScores) = c("Prevalence", "Risk", "SmoothRisk")
+  
+  # multiply coverages by 100 to be in percent units, remove variance and MSE
+  coverageCols = grep("Coverage", colnames(subareaPScores))
+  varCols = grep("Var", colnames(subareaPScores))
+  mseCols = grep("MSE", colnames(subareaPScores))
+  
+  subareaPScores[,coverageCols] = 100 * subareaPScores[,coverageCols]
+  subareaPScores = subareaPScores[,-varCols]
+  subareaPScores = subareaPScores[,-mseCols]
+  
+  subareaZScores[,coverageCols] = 100 * subareaZScores[,coverageCols]
+  subareaZScores = subareaZScores[,-varCols]
+  subareaZScores = subareaZScores[,-mseCols]
+  
+  areaPScores[,coverageCols] = 100 * areaPScores[,coverageCols]
+  areaPScores = areaPScores[,-varCols]
+  areaPScores = areaPScores[,-mseCols]
+  
+  areaZScores[,coverageCols] = 100 * areaZScores[,coverageCols]
+  areaZScores = areaZScores[,-varCols]
+  areaZScores = areaZScores[,-mseCols]
+  
+  browser()
 }
 
 
