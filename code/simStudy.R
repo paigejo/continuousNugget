@@ -2377,6 +2377,7 @@ processSimStudyResultsij = function(i, j) {
   thisPop = stratDat$aggregatedPop
   
   # load results
+  browser()
   dataIDout = paste0("simOut_i", i, "j", j)
   load(subareaPopP, areaPopP, aggregationTimings, rawTimes, totalTimes, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_p.RData"))
   load(subareaPopZ, areaPopZ, aggregationTimings, rawTimes, totalTimes, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_Z.RData"))
@@ -2384,7 +2385,7 @@ processSimStudyResultsij = function(i, j) {
   ## compare results to population via scores
   
   # fine scale prevalence scores
-  subareaScoresPprev = getScores(truth=thisPop$subareaPop$pFineScalePrevalence, 
+  subareaScoresPprev = getScores(truth=thisPop$subareaPopP$pFineScalePrevalence, 
                              estMat=subareaPopP$pFineScalePrevalence, 
                              significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   subareaScoresZprev = getScores(truth=thisPop$subareaPop$ZFineScalePrevalence, 
