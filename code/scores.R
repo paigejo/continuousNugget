@@ -680,22 +680,25 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
                            returnCoverage=TRUE, 
                            doFuzzyReject=doFuzzyReject, getAverage=getAverage)
   if(getAverage) {
-    thisIntScore = intScore[1]
-    thisCoverage = intScore[2]
-    thisWidth = intScore[3]
+    thisIntScore = intScore[grepl("intScore", names(intScore))]
+    thisCoverage = intScore[grepl("coverage", names(intScore))]
+    thisWidth = intScore[grepl("width", names(intScore))]
   } else {
-    thisIntScore = intScore[,1]
-    thisCoverage = intScore[,2]
-    thisWidth = intScore[,3]
+    thisIntScore = intScore[,grepl("intScore", colnames(intScore))]
+    thisCoverage = intScore[,grepl("coverage", colnames(intScore))]
+    thisWidth = intScore[grepl("width", colnames(intScore))]
   }
   
   # calculate CRPS
   thisCRPS = crps(truth, est, var, estMat=estMat, getAverage=getAverage)
   
   # collect the results in a data frame
-  results = matrix(c(thisBias, thisVar, thisMSE, sqrt(thisMSE), thisCRPS, thisIntScore, thisCoverage, 
-                     thisWidth), ncol=8)
-  colnames(results) = c("Bias", "Var", "MSE", "RMSE", "CRPS", "IntervalScore", "Coverage", "Width")
+  results = matrix(cbind(thisBias, thisVar, thisMSE, sqrt(thisMSE), thisCRPS, thisIntScore, thisCoverage, 
+                     thisWidth), ncol=5 + 3*length(significance))
+  colnames(results) = c("Bias", "Var", "MSE", "RMSE", "CRPS", 
+                        paste("IntervalScore", 100*significance, sep=""), 
+                        paste("Coverage", 100*significance, sep=""), 
+                        paste("Width", 100*significance, sep=""))
   results = as.data.frame(results)
   
   # include both binned and pooled results in one final table
@@ -759,6 +762,14 @@ mse <- function(truth, est, weights=NULL, getAverage=TRUE){
 coverage = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, 
                     estMat=NULL, significance=.8, returnIntervalWidth=FALSE, 
                     doFuzzyReject=TRUE, getAverage=TRUE, ns=NULL){
+  
+  # if more than 1 significance level, return results for each
+  if(length(significance) > 1) {
+    res = lapply(significance, coverage, truth=truth, est=est, var=var, lower=lower, upper=upper, 
+                 estMat=estMat, returnIntervalWidth=returnIntervalWidth, 
+                 doFuzzyReject=doFuzzyReject, getAverage=getAverage, ns=ns)
+    out = do.call("cbind", res)
+  }
   
   if(any(is.null(lower)) || any(is.null(upper))) {
     # if the user did not supply their own credible intervals, we must get them ourselves given the other information
@@ -840,6 +851,13 @@ coverage = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
       allResults = c(allResults, width=mean(width, na.rm=TRUE))
     else
       allResults = cbind(allResults, width=width)
+  }
+  
+  # adjust names to match the significance in case there are multiple significances
+  if(is.matrix(allResults)) {
+    colnames(allResults) = paste(colnames(allResults), 100*significance, sep="")
+  } else {
+    names(allResults) = paste(names(allResults), 100*significance, sep="")
   }
   
   allResults
@@ -1006,6 +1024,14 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
                          estMat=NULL, significance=.8, returnIntervalWidth=FALSE, 
                          returnCoverage=FALSE, doFuzzyReject=TRUE, getAverage=TRUE, ns=NULL){
   
+  # if more than 1 significance level, return results for each
+  if(length(significance) > 1) {
+    res = lapply(significance, intervalScore, truth=truth, est=est, var=var, lower=lower, upper=upper, 
+                 estMat=estMat, returnIntervalWidth=returnIntervalWidth, returnCoverage=returnCoverage, 
+                 doFuzzyReject=doFuzzyReject, getAverage=getAverage, ns=ns)
+    out = do.call("cbind", res)
+  }
+  
   if(any(is.null(lower)) || any(is.null(upper))) {
     # if the user did not supply their own credible intervals, we must get them ourselves given the other information
     
@@ -1104,6 +1130,13 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
       allResults = c(allResults, width=mean(width, na.rm=TRUE))
     else
       allResults = cbind(allResults, width=width)
+  }
+  
+  # adjust names to match the significance in case there are multiple significances
+  if(is.matrix(allResults)) {
+    colnames(allResults) = paste(colnames(allResults), 100*significance, sep="")
+  } else {
+    names(allResults) = paste(names(allResults), 100*significance, sep="")
   }
   
   allResults
