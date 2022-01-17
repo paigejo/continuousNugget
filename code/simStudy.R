@@ -2524,15 +2524,27 @@ combineProcessedResults = function(is=1:57, maxJ=100, initialProcess=TRUE, combi
         areaScoresPsmoothRiskAll = rbind(areaScoresPsmoothRiskAll, areaScoresPsmoothRisk)
         areaScoresZsmoothRiskAll = rbind(areaScoresZsmoothRiskAll, areaScoresZsmoothRisk)
         
-        aggregationTimingsDetailedAll = rbind(aggregationTimingsDetailedAll, aggregationTimings$allTimings)
+        aggregationTimingsDetailedAll = rbind(aggregationTimingsDetailedAll, aggregationTimings$allTimings[,1])
         aggregationTimingsProcessedAll = rbind(aggregationTimingsProcessedAll, aggregationTimings$processedTimings)
-        totalTimesAll = rbind(totalTimesAll, totalTimesAll)
+        totalTimesAll = rbind(totalTimesAll, totalTimes)
       }
-      
-      browser()
+      colnames(aggregationTimingsDetailedAll) = row.names(aggregationTimings$allTimings)
       
       # calculate average scores
       subareaScoresPprevAvg = colMeans(as.matrix(subareaScoresPprevAll))
+      subareaScoresZprevAvg = colMeans(as.matrix(subareaScoresZprevAll))
+      areaScoresPprevAvg = colMeans(as.matrix(areaScoresPprevAll))
+      areaScoresZprevAvg = colMeans(as.matrix(areaScoresZprevAll))
+      
+      subareaScoresPriskAvg = colMeans(as.matrix(subareaScoresPriskAll))
+      subareaScoresZriskAvg = colMeans(as.matrix(subareaScoresZriskAll))
+      areaScoresPriskAvg = colMeans(as.matrix(areaScoresPriskAll))
+      areaScoresZriskAvg = colMeans(as.matrix(areaScoresZriskAll))
+      
+      subareaScoresPsmoothRiskAvg = colMeans(as.matrix(subareaScoresPsmoothRiskAll))
+      subareaScoresZsmoothRiskAvg = colMeans(as.matrix(subareaScoresZsmoothRiskAll))
+      areaScoresPsmoothRiskAvg = colMeans(as.matrix(areaScoresPsmoothRiskAll))
+      areaScoresZsmoothRiskAvg = colMeans(as.matrix(areaScoresZsmoothRiskAll))
       
       # calculate average timing of individual parts of the code
       aggregationTimingsDetailedAvg = colMeans(aggregationTimingsDetailedAll)
