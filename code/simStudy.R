@@ -2384,7 +2384,7 @@ processSimStudyResultsij = function(i, j) {
   load(paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_Z.RData"))
   
   ## compare results to population via scores
-  browser()
+  
   # fine scale prevalence scores
   subareaScoresPprev = getScores(truth=thisPop$subareaPop$aggregationResults$pFineScalePrevalence[,j], 
                              estMat=subareaPopP$pFineScalePrevalence, 
