@@ -2381,9 +2381,120 @@ processSimStudyResultsij = function(i, j) {
   load(subareaPopP, areaPopP, aggregationTimings, rawTimes, totalTimes, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_p.RData"))
   load(subareaPopZ, areaPopZ, aggregationTimings, rawTimes, totalTimes, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_Z.RData"))
   
-  # compare results to population via scores
+  ## compare results to population via scores
+  
+  # fine scale prevalence scores
+  subareaScoresPprev = getScores(truth=thisPop$subareaPop$pFineScalePrevalence, 
+                             estMat=subareaPopP$pFineScalePrevalence, 
+                             significance=c(.8, .9, .95), doFuzzyReject=TRUE)
+  subareaScoresZprev = getScores(truth=thisPop$subareaPop$ZFineScalePrevalence, 
+                             estMat=subareaPopP$ZFineScalePrevalence, 
+                             significance=c(.8, .9, .95), doFuzzyReject=TRUE)
+  
+  areaScoresPprev = getScores(truth=thisPop$areaPop$pFineScalePrevalence, 
+                             estMat=areaPopP$pFineScalePrevalence, 
+                             significance=c(.8, .9, .95), doFuzzyReject=TRUE)
+  areaScoresZprev = getScores(truth=thisPop$areaPop$ZFineScalePrevalence, 
+                             estMat=areaPopP$ZFineScalePrevalence, 
+                             significance=c(.8, .9, .95), doFuzzyReject=TRUE)
+  
+  # fine scale risk scores
+  subareaScoresPrisk = getScores(truth=thisPop$subareaPop$pFineScalePrevalence, 
+                                 estMat=subareaPopP$pFineScaleRisk, 
+                                 significance=c(.8, .9, .95), doFuzzyReject=TRUE)
+  subareaScoresZrisk = getScores(truth=thisPop$subareaPop$ZFineScalePrevalence, 
+                                 estMat=subareaPopP$ZFineScaleRisk, 
+                                 significance=c(.8, .9, .95), doFuzzyReject=TRUE)
+  
+  areaScoresPrisk = getScores(truth=thisPop$areaPop$pFineScalePrevalence, 
+                              estMat=areaPopP$pFineScaleRisk, 
+                              significance=c(.8, .9, .95), doFuzzyReject=TRUE)
+  areaScoresZrisk = getScores(truth=thisPop$areaPop$ZFineScalePrevalence, 
+                              estMat=areaPopP$ZFineScaleRisk, 
+                              significance=c(.8, .9, .95), doFuzzyReject=TRUE)
+  
+  # smooth risk scores
+  subareaScoresPsmoothRisk = getScores(truth=thisPop$subareaPop$pFineScalePrevalence, 
+                                 estMat=subareaPopP$pSmoothRisk, 
+                                 significance=c(.8, .9, .95), doFuzzyReject=TRUE)
+  subareaScoresZsmoothisk = getScores(truth=thisPop$subareaPop$ZFineScalePrevalence, 
+                                 estMat=subareaPopP$ZSmoothRisk, 
+                                 significance=c(.8, .9, .95), doFuzzyReject=TRUE)
+  
+  areaScoresPsmoothRisk = getScores(truth=thisPop$areaPop$pFineScalePrevalence, 
+                              estMat=areaPopP$pSmoothRisk, 
+                              significance=c(.8, .9, .95), doFuzzyReject=TRUE)
+  areaScoresZsmoothRisk = getScores(truth=thisPop$areaPop$ZFineScalePrevalence, 
+                              estMat=areaPopP$ZSmoothRisk, 
+                              significance=c(.8, .9, .95), doFuzzyReject=TRUE)
+  
+  # add computation times to the scores
+  browser()
   
   
+  save(subareaScoresPprev, subareaScoresZprev, areaScoresPprev, areaScoresZprev, 
+       subareaScoresPrisk, subareaScoresZrisk, areaScoresPrisk, areaScoresZrisk, 
+       subareaScoresPsmoothRisk, subareaScoresZsmoothRisk, areaScoresPsmoothRisk, areaScoresZsmoothRisk, 
+       file=paste0("savedOutput/simStudyResults/tempFiles/simScores_i", i, "j", j, ".RData"))
+  
+  res = list(subareaScoresPprev, subareaScoresZprev, areaScoresPprev, areaScoresZprev, 
+             subareaScoresPrisk, subareaScoresZrisk, areaScoresPrisk, areaScoresZrisk, 
+             subareaScoresPsmoothRisk, subareaScoresZsmoothRisk, areaScoresPsmoothRisk, areaScoresZsmoothRisk)
+  names(res) = c("subareaScoresPprev", "subareaScoresZprev", "areaScoresPprev", "areaScoresZprev", 
+                 "subareaScoresPrisk", "subareaScoresZrisk", "areaScoresPrisk", "areaScoresZrisk", 
+                 "subareaScoresPsmoothRisk", "subareaScoresZsmoothRisk", "areaScoresPsmoothRisk", "areaScoresZsmoothRisk")
+  invisible(res)
+}
+
+combineProcessedResults = function(is=1:57, maxJ=100, initialCombine=TRUE) {
+  
+  if(initialCombine) {
+    for(i in is) {
+      subareaScoresPprevAll = c()
+      subareaScoresZprevAll = c()
+      areaScoresPprevAll = c()
+      areaScoresZprevAll = c()
+      
+      subareaScoresPriskAll = c()
+      subareaScoresZriskAll = c()
+      areaScoresPriskAll = c()
+      areaScoresZriskAll = c()
+      
+      subareaScoresPsmoothRiskAll = c()
+      subareaScoresZsmoothRiskAll = c()
+      areaScoresPsmoothRiskAll = c()
+      areaScoresZsmoothRiskAll = c()
+      
+      for(j in 1:maxJ) {
+        out = load(paste0("savedOutput/simStudyResults/tempFiles/simScores_i", i, "j", j, ".RData"))
+        
+        subareaScoresPprevAll = rbind(subareaScoresPprevAll, subareaScoresPprev)
+        subareaScoresZprevAll = rbind(subareaScoresZprevAll, subareaScoresZprev)
+        areaScoresPprevAll = rbind(areaScoresPprevAll, areaScoresPprev)
+        areaScoresZprevAll = rbind(areaScoresZprevAll, areaScoresZprev)
+        
+        subareaScoresPriskAll = rbind(subareaScoresPriskAll, subareaScoresPrisk)
+        subareaScoresZriskAll = rbind(subareaScoresZriskAll, subareaScoresZrisk)
+        areaScoresPriskAll = rbind(areaScoresPriskAll, areaScoresPrisk)
+        areaScoresZriskAll = rbind(areaScoresZriskAll, areaScoresZrisk)
+        
+        subareaScoresPsmoothRiskAll = rbind(subareaScoresPsmoothRiskAll, subareaScoresPsmoothRisk)
+        subareaScoresZsmoothRiskAll = rbind(subareaScoresZsmoothRiskAll, subareaScoresZsmoothRisk)
+        areaScoresPsmoothRiskAll = rbind(areaScoresPsmoothRiskAll, areaScoresPsmoothRisk)
+        areaScoresZsmoothRiskAll = rbind(areaScoresZsmoothRiskAll, areaScoresZsmoothRisk)
+      }
+      
+      save(subareaScoresPprevAll, subareaScoresZprevAll, areaScoresPprevAll, areaScoresZprevAll, 
+           subareaScoresPriskAll, subareaScoresZriskAll, areaScoresPriskAll, areaScoresZriskAll, 
+           subareaScoresPsmoothRiskAll, subareaScoresZsmoothRiskAll, areaScoresPsmoothRiskAll, areaScoresZsmoothRiskAll, 
+           file=paste0("savedOutput/simStudyResults/simScoresAll_i", i, "maxJ", maxJ, ".RData"))
+    }
+  }
+  
+  # now combine into a single list of scores
+  for(i in is) {
+    
+  }
 }
 
 
