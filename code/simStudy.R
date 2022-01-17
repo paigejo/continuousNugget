@@ -2606,7 +2606,9 @@ printSimStudyTablei = function(i=1, maxJ=100) {
   # multiply coverages by 100 to be in percent units, remove variance and MSE
   coverageCols = grep("Coverage", colnames(subareaPScores))
   varCols = grep("Var", colnames(subareaPScores))
-  mseCols = grep("MSE", colnames(subareaPScores))
+  mseCols = grep("MSE", colnames(subareaPScores[,-varCols]))
+  rmseCols = grep("RMSE", colnames(subareaPScores[,-varCols]))
+  mseCols = mseCols[-which(mseCols == rmseCols)]
   
   subareaPScores[,coverageCols] = 100 * subareaPScores[,coverageCols]
   subareaPScores = subareaPScores[,-varCols]
@@ -2625,6 +2627,14 @@ printSimStudyTablei = function(i=1, maxJ=100) {
   areaZScores = areaZScores[,-mseCols]
   
   browser()
+  
+  # print tables
+  displayP = c("s", rep("e", 3), rep("e", 3), rep("d", 3), rep("f", 4))
+  digitsP = c(0, rep(-2, 3), rep(2, 3), rep(0, 3), rep(3, 3), 1)
+  displayZ = c("s", rep("e", 3), rep("e", 3), rep("d", 3), rep("f", 4))
+  digitsZ = c(0, rep(-2, 3), rep(2, 3), rep(0, 3), rep(3, 3), 1)
+  print(xtable(subareaPScores, display=displayP, digits=digitsP), math.style.exponents=TRUE)
+  print(xtable(subareaZScores, display=displayP, digits=digitsP), math.style.exponents=TRUE)
 }
 
 
