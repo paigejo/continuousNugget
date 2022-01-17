@@ -2384,7 +2384,7 @@ processSimStudyResultsij = function(i, j) {
   load(paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_Z.RData"))
   
   ## compare results to population via scores
-  
+  browser()
   # fine scale prevalence scores
   subareaScoresPprev = getScores(truth=thisPop$subareaPop$aggregationResults$pFineScalePrevalence[,j], 
                              estMat=subareaPopP$pFineScalePrevalence, 
@@ -2463,18 +2463,26 @@ processSimStudyResultsij = function(i, j) {
   invisible(res)
 }
 
-combineProcessedResults = function(is=1:57, maxJ=100, initialProcess=TRUE, initialCombine=TRUE) {
+combineProcessedResults = function(is=1:57, maxJ=100, initialProcess=TRUE, combineScores=TRUE) {
   
   if(initialProcess) {
+    print("Doing initial processing/scoring...")
     for(i in is) {
+      print(paste0("processing for i=", i))
       for(j in 1:maxJ) {
+        if((j %% 10) == 1) {
+          print(paste0("processing for i=", i, ", j=", j))
+        }
         processSimStudyResultsij(i, j)
       }
     }
   }
   
-  if(initialCombine) {
+  if(combineScores) {
+    print("Combining scores...")
     for(i in is) {
+      print(paste0("combining scores for i=", i))
+      
       subareaScoresPprevAll = c()
       subareaScoresZprevAll = c()
       areaScoresPprevAll = c()
@@ -2495,6 +2503,10 @@ combineProcessedResults = function(is=1:57, maxJ=100, initialProcess=TRUE, initi
       totalTimesAll = c()
       
       for(j in 1:maxJ) {
+        if((j %% 10) == 1) {
+          print(paste0("combining scores for i=", i, ", j=", j))
+        }
+        
         out = load(paste0("savedOutput/simStudyResults/tempFiles/simScores_i", i, "j", j, ".RData"))
         
         subareaScoresPprevAll = rbind(subareaScoresPprevAll, subareaScoresPprev)
