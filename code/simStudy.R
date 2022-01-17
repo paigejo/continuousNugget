@@ -2482,6 +2482,10 @@ combineProcessedResults = function(is=1:57, maxJ=100, initialCombine=TRUE) {
       areaScoresPsmoothRiskAll = c()
       areaScoresZsmoothRiskAll = c()
       
+      aggregationTimingsDetailedAll = c()
+      aggregationTimingsProcessedAll = c()
+      totalTimesAll = c()
+      
       for(j in 1:maxJ) {
         out = load(paste0("savedOutput/simStudyResults/tempFiles/simScores_i", i, "j", j, ".RData"))
         
@@ -2499,19 +2503,36 @@ combineProcessedResults = function(is=1:57, maxJ=100, initialCombine=TRUE) {
         subareaScoresZsmoothRiskAll = rbind(subareaScoresZsmoothRiskAll, subareaScoresZsmoothRisk)
         areaScoresPsmoothRiskAll = rbind(areaScoresPsmoothRiskAll, areaScoresPsmoothRisk)
         areaScoresZsmoothRiskAll = rbind(areaScoresZsmoothRiskAll, areaScoresZsmoothRisk)
+        
+        aggregationTimingsDetailedAll = rbind(aggregationTimingsDetailedAll, aggregationTimings$allTimings)
+        aggregationTimingsProcessedAll = rbind(aggregationTimingsProcessedAll, aggregationTimings$processedTimings)
+        totalTimesAll = rbind(totalTimesAll, totalTimesAll)
       }
+      
+      browser()
+      
+      # calculate average scores
+      subareaScoresPprevAvg = colMeans(as.matrix(subareaScoresPprevAll))
+      
+      # calculate average timing of individual parts of the code
+      aggregationTimingsDetailedAvg = colMeans(aggregationTimingsDetailedAll)
+      aggregationTimingsProcessedAvg = colMeans(aggregationTimingsProcessedAll)
+      totalTimesAvg = colMeans(totalTimesAll)
       
       save(subareaScoresPprevAll, subareaScoresZprevAll, areaScoresPprevAll, areaScoresZprevAll, 
            subareaScoresPriskAll, subareaScoresZriskAll, areaScoresPriskAll, areaScoresZriskAll, 
            subareaScoresPsmoothRiskAll, subareaScoresZsmoothRiskAll, areaScoresPsmoothRiskAll, areaScoresZsmoothRiskAll, 
+           aggregationTimingsDetailedAll, aggregationTimingsProcessedAll, totalTimesAll, 
+           subareaScoresPprevAvg, subareaScoresZprevAvg, areaScoresPprevAvg, areaScoresZprevAvg, 
+           subareaScoresPriskAvg, subareaScoresZriskAvg, areaScoresPriskAvg, areaScoresZriskAvg, 
+           subareaScoresPsmoothRiskAvg, subareaScoresZsmoothRiskAvg, areaScoresPsmoothRiskAvg, areaScoresZsmoothRiskAvg, 
+           aggregationTimingsDetailedAvg, aggregationTimingsProcessedAvg, totalTimesAvg, 
            file=paste0("savedOutput/simStudyResults/simScoresAll_i", i, "maxJ", maxJ, ".RData"))
     }
   }
-  
-  # now combine into a single list of scores
-  for(i in is) {
-    
-  }
 }
+
+
+
 
 
