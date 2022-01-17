@@ -1078,11 +1078,20 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     atLowerEdge = which(lower == truth)
     atUpperEdge = which(upper == truth)
     
-    probRejectLower = sapply(atLowerEdge, function(i) {((1 - significance) / 2 - mean(estMat[i,] < lower[i])) / mean(estMat[i,] == lower[i])})
-    probRejectUpper = sapply(atUpperEdge, function(i) {((1 - significance) / 2 - mean(estMat[i,] > upper[i])) / mean(estMat[i,] == upper[i])})
+    if(length(atLowerEdge) != 0) {
+      probRejectLower = sapply(atLowerEdge, function(i) {((1 - significance) / 2 - mean(estMat[i,] < lower[i])) / mean(estMat[i,] == lower[i])})
+      rejectLower = probRejectLower
+    } else {
+      rejectLower = 0
+    }
+    if(length(atUpperEdge) != 0) {
+      probRejectUpper = sapply(atUpperEdge, function(i) {((1 - significance) / 2 - mean(estMat[i,] > upper[i])) / mean(estMat[i,] == upper[i])})
+      rejectUpper = probRejectUpper
+    } else {
+      rejectUpper = 0
+    }
     
-    rejectLower = probRejectLower
-    rejectUpper = probRejectUpper
+    
     
     # determine minimum differences between probabilities
     if(is.null(ns))
