@@ -2463,7 +2463,15 @@ processSimStudyResultsij = function(i, j) {
   invisible(res)
 }
 
-combineProcessedResults = function(is=1:57, maxJ=100, initialCombine=TRUE) {
+combineProcessedResults = function(is=1:57, maxJ=100, initialProcess=TRUE, initialCombine=TRUE) {
+  
+  if(initialProcess) {
+    for(i in is) {
+      for(j in 1:maxJ) {
+        processSimStudyResultsij(i, j)
+      }
+    }
+  }
   
   if(initialCombine) {
     for(i in is) {
