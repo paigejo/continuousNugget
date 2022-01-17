@@ -1029,7 +1029,11 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     res = lapply(significance, intervalScore, truth=truth, est=est, var=var, lower=lower, upper=upper, 
                  estMat=estMat, returnIntervalWidth=returnIntervalWidth, returnCoverage=returnCoverage, 
                  doFuzzyReject=doFuzzyReject, getAverage=getAverage, ns=ns)
-    return(do.call("rbind", res))
+    if(getAverage) {
+      return(unlist(res))
+    } else {
+      return(do.call("cbind", res))
+    }
   }
   
   if(any(is.null(lower)) || any(is.null(upper))) {
