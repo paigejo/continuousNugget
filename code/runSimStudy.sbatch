@@ -9,6 +9,7 @@
 #SBATCH --mail-type=ALL       # Type of email notification- BEGIN,END,FAIL,ALL
 #SBATCH --mail-user=john.paige@ntnu.no # Email to which notifications will be sent
 #SBATCH --nodelist=idun-03-0[1-9],idun-03-[10-12] # idun-03-0[1-9],idun-03-[10-12] see https://www.hpc.ntnu.no/idun/hardware/
+#SBATCH --account=share-ie-imf # see https://www.hpc.ntnu.no/idun/getting-started-on-idun/accounting/
 
 # --account=share-ie-imf # see https://www.hpc.ntnu.no/idun/getting-started-on-idun/accounting/
 # --exclusive=user # don't allow other users to share nodes with these jobs
