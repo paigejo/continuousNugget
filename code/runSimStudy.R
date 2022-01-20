@@ -2,6 +2,7 @@
 
 source("setup.R")
 index = as.numeric(commandArgs(trailingOnly = TRUE)) # test with index == 700
+coarse=TRUE
 
 jobInds = getJobIndices(index, rev=TRUE)
 i = jobInds[1]
@@ -11,4 +12,4 @@ j = jobInds[2]
 # argList = spde_prevRiskSimStudyCommandArgs[[i]]
 # argList$j = j
 
-system.time(out <- runSimStudyij(i, j))
+system.time(out <- runSimStudyij(i, j, coarse=coarse))

@@ -225,6 +225,8 @@ load(paste0(globalDirectory, "kenyaData.RData"))
 load(paste0(globalDirectory, "kenyaPopulationMats.RData"))
 popGrid = popMatKenya
 popGridAdjusted = popMatKenyaNeonatal
+load(paste0(globalDirectory, "popGridCoarse.RData"))
+load(paste0(globalDirectory, "popGridCoarseAdjusted.RData"))
 
 # load limits
 load(paste0(globalDirectory, "lims.RData"))

@@ -1,42 +1,86 @@
 # this script is for setting up basic global variables from preprocessing
 
-# map data
-adm0 = readRDS(paste0(dataDirectory, "mapData/KEN_adm0.rds"))
-adm1 = readRDS(paste0(dataDirectory, "mapData/KEN_adm1.rds"))
-# adm2 = readRDS(paste0(dataDirectory, "mapData/KEN_adm2.rds"))
-require(rgdal)
-adm2 = readOGR(dsn = "data/mapData/constituencies", layer = "constituencies")
-# MARAKWET WEST was mislabeled as being in WEST POKOT instead of Elgeyo-Marakwet
-# we will also relabel Lugari and Likuyani as being in Bungoma for consistency's sake
-adm2@data[which(grepl("MARAKWET WEST", adm2@data$CONSTITUEN)),]$COUNTY_NAM = "ELGEYO-MARAKWET"
-adm2@data[which(grepl("LUGARI", adm2@data$CONSTITUEN)),]$COUNTY_NAM = "BUNGOMA"
-adm2@data[which(grepl("LIKUYANI", adm2@data$CONSTITUEN)),]$COUNTY_NAM = "BUNGOMA"
-require(spatialEco)
-# fix discrepancies due to border disputes, combine small (<25 km^2) constituencies, remove NAs
-adm2 = sp.na.omit(adm2, col.name="CONSTITUEN")
-require(tools)
-# fix constituency and county strings. County strings must match those of other data frames
-adm2@data$CONSTITUEN = toTitleCase(tolower(adm2@data$CONSTITUEN))
-adm2@data$COUNTY_NAM = toTitleCase(tolower(adm2@data$COUNTY_NAM))
-adm2@data$COUNTY_NAM[adm2@data$COUNTY_NAM == "Elegeyo-Marakwet"] = "Elgeyo Marakwet"
-adm2@data$COUNTY_NAM[adm2@data$COUNTY_NAM == "Elgeyo-Marakwet" ] = "Elgeyo Marakwet"
-adm2@data$COUNTY_NAM[adm2@data$COUNTY_NAM == "Tharaka - Nithi" ] = "Tharaka-Nithi"
-adm2@data$COUNTY_NAM[adm2@data$COUNTY_NAM == "Trans Nzoia" ] = "Trans-Nzoia"
+# # map data
+# adm0 = readRDS(paste0(dataDirectory, "mapData/KEN_adm0.rds"))
+# adm1 = readRDS(paste0(dataDirectory, "mapData/KEN_adm1.rds"))
+# # adm2 = readRDS(paste0(dataDirectory, "mapData/KEN_adm2.rds"))
+# require(rgdal)
+# adm2 = readOGR(dsn = "data/mapData/constituencies", layer = "constituencies")
+# # MARAKWET WEST was mislabeled as being in WEST POKOT instead of Elgeyo-Marakwet
+# # we will also relabel Lugari and Likuyani as being in Bungoma for consistency's sake
+# adm2@data[which(grepl("MARAKWET WEST", adm2@data$CONSTITUEN)),]$COUNTY_NAM = "ELGEYO-MARAKWET"
+# adm2@data[which(grepl("LUGARI", adm2@data$CONSTITUEN)),]$COUNTY_NAM = "BUNGOMA"
+# adm2@data[which(grepl("LIKUYANI", adm2@data$CONSTITUEN)),]$COUNTY_NAM = "BUNGOMA"
+# require(spatialEco)
+# # fix discrepancies due to border disputes, combine small (<25 km^2) constituencies, remove NAs
+# adm2 = sp.na.omit(adm2, col.name="CONSTITUEN")
+# require(tools)
+# # fix constituency and county strings. County strings must match those of other data frames
+# adm2@data$CONSTITUEN = toTitleCase(tolower(adm2@data$CONSTITUEN))
+# adm2@data$COUNTY_NAM = toTitleCase(tolower(adm2@data$COUNTY_NAM))
+# adm2@data$COUNTY_NAM[adm2@data$COUNTY_NAM == "Elegeyo-Marakwet"] = "Elgeyo Marakwet"
+# adm2@data$COUNTY_NAM[adm2@data$COUNTY_NAM == "Elgeyo-Marakwet" ] = "Elgeyo Marakwet"
+# adm2@data$COUNTY_NAM[adm2@data$COUNTY_NAM == "Tharaka - Nithi" ] = "Tharaka-Nithi"
+# adm2@data$COUNTY_NAM[adm2@data$COUNTY_NAM == "Trans Nzoia" ] = "Trans-Nzoia"
+# 
+# # adm2 = combineConstituencies(adm2, threshold=50)
+# adm2 = makeInBorder(adm2)
+# adm2@data$Shape_Area = getArea(thisMap=adm2, areaLevel="Constituency")
+# 
+# # test = removeConstituencyGaps(adm2)
+# save(adm2, adm1, adm0, file=paste0(globalDirectory, "adminMapData.RData"))
+# load(paste0(globalDirectory, "adminMapData.RData"))
+# 
+# if(FALSE) {
+#   # test mapping of shapefiles
+#   plotMapDat(mapDat=adm2, new=TRUE)
+#   plotMapDat(mapDat=adm1, new=TRUE)
+#   plotMapDat(mapDat=adm0, new=TRUE)
+# }
 
-# adm2 = combineConstituencies(adm2, threshold=50)
-adm2 = makeInBorder(adm2)
-adm2@data$Shape_Area = getArea(thisMap=adm2, areaLevel="Constituency")
-
-# test = removeConstituencyGaps(adm2)
-save(adm2, adm1, adm0, file=paste0(globalDirectory, "adminMapData.RData"))
-load(paste0(globalDirectory, "adminMapData.RData"))
-
-if(FALSE) {
-  # test mapping of shapefiles
-  plotMapDat(mapDat=adm2, new=TRUE)
-  plotMapDat(mapDat=adm1, new=TRUE)
-  plotMapDat(mapDat=adm0, new=TRUE)
+githubURL <- paste0("https://github.com/paigejo/SUMMERdata/blob/main/data/", 
+                    "kenyaMaps.rda?raw=true")
+tempDirectory = "~/"
+popMatFilename = paste0(tempDirectory, "/kenyaMaps.RData")
+if(!file.exists(popMatFilename)) {
+  download.file(githubURL,popMatFilename)
 }
+
+# load it in
+out = load(popMatFilename)
+out
+
+# save it
+save(adm1, adm2, kenyaPoly, "savedOoutput/global/kenyaMapData.RData")
+
+# download 2014 Kenya population density and associated TIF file
+tempDirectory = "~/git/continuousNugget/data/popData"
+saveDirectory = "~/git/continuousNugget/savedOutput/global"
+githubURL <- paste0("https://github.com/paigejo/SUMMERdata/blob/main/data/", 
+                    "Kenya2014Pop/pop.rda?raw=true")
+popFilename = paste0(saveDirectory, "/pop.rda")
+if(!file.exists(popFilename)) {
+  download.file(githubURL, popFilename)
+}
+
+githubURL <- paste0("https://github.com/paigejo/SUMMERdata/blob/main/data/", 
+                    "Kenya2014Pop/worldpop_total_1y_2014_00_00.tif?raw=true")
+popTIFFilename = paste0(tempDirectory, "/worldpop_total_1y_2014_00_00.tif")
+if(!file.exists(popTIFFilename)) {
+  download.file(githubURL,popTIFFilename)
+}
+
+# load it in
+require(raster)
+out = load(popFilename)
+
+# make sure this is correct for re-projections
+pop@file@name = "~/git/continuousNugget/data/popData/worldpop_total_1y_2014_00_00.tif"
+
+
+# save it
+save(pop, file=popFilename)
+save(pop, file="savedOutput/global/pop.RData")
 
 # county to region mapping
 ctp = read.csv(paste0(dataDirectory, "mapData/kenya-prov-county-map.csv"))
@@ -145,6 +189,21 @@ popGridAdjusted = makeInterpPopGrid(kmRes=5, adjustPopSurface=TRUE, poppcon=popp
 save(popGridAdjusted, file=paste0(globalDirectory, "popGridAdjusted.RData"))
 popGridAdjustedWomen = makeInterpPopGrid(kmRes=5, adjustPopSurface=TRUE, "women", poppcon=poppcon, conMap=adm2)
 save(popGridAdjustedWomen, file=paste0(globalDirectory, "popGridAdjustedWomen.RData"))
+
+# make the 25 km resolution pixellated grid and get associated population densities, urbanicitites, 
+# counties, and constituencies using precomputed populations of constituencies from extra fine scale grid
+out = load("savedOutput/global/pop.RData")
+popGridCoarse = makePopIntegrationTab(kmRes=25, pop=pop, domainPoly=kenyaPoly, 
+                                    eastLim=eastLim, northLim=northLim, 
+                                    mapProjection=SUMMER::projKenya, poppa=poppaKenya, 
+                                    poppsub=poppsubKenya, stratifyByUrban=TRUE, 
+                                    areaMapDat=adm1, subareaMapDat=adm2)
+
+popGridCoarseAdjusted = adjustPopMat(popGridCoarse, poppaTarget=poppsubKenyaNeonatal, adjustBy="subarea")
+save(popGridCoarse, file=paste0(globalDirectory, "popGridCoarse.RData"))
+save(popGridCoarseAdjusted, file=paste0(globalDirectory, "popGridCoarseAdjusted.RData"))
+# popGridCoarseAdjustedWomen = makeInterpPopGrid(kmRes=25, adjustPopSurface=TRUE, "women", poppcon=poppcon, conMap=adm2)
+# save(popGridCoarseAdjustedWomen, file=paste0(globalDirectory, "popGridCoarseAdjustedWomen.RData"))
 
 # datasets (these were already created in readDat3)
 source("code/readDat3.R")

@@ -2254,7 +2254,7 @@ runSimStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5),
   
 }
 
-runSimStudyij = function(i, j, seed=123, doSmoothRiskLogisticApprox=FALSE) {
+runSimStudyij = function(i, j, seed=123, doSmoothRiskLogisticApprox=FALSE, coarse=TRUE) {
   time1 = proc.time()[3]
   set.seed(seed)
   
@@ -2306,17 +2306,25 @@ runSimStudyij = function(i, j, seed=123, doSmoothRiskLogisticApprox=FALSE) {
   thisSeed = allSeeds[i,j]
   set.seed(thisSeed)
   
+  if(coarse) {
+    popMat = popGridCoarse
+    popMatAdjusted = popGridCoarseAdjusted
+  } else {
+    popMat = popGrid
+    popMatAdjusted = popGridAdjusted
+  }
+  
   # Fit the risk model:
   time2 = proc.time()[3]
-  riskOut = fitSPDEKenyaDat(dat=clustDat, nPostSamples=1000)
+  riskOut = fitSPDEKenyaDat(dat=clustDat, nPostSamples=1000, popMat=popMat)
   logitDraws = riskOut$uDraws # uDraws includes fixed effects and is on logit scale
   sigmaEpsilonDraws = riskOut$sigmaEpsilonDraws
   time3 = proc.time()[3]
   
   # run the models
   out = simPopCustom(logitRiskDraws=logitDraws, sigmaEpsilonDraws=sigmaEpsilonDraws, 
-                     easpa=easpa, popMat=popMatKenya, 
-                     targetPopMat=popMatKenyaNeonatal, poppsub=poppsub, 
+                     easpa=easpa, popMat=popMat, 
+                     targetPopMat=popMatAdjusted, poppsub=poppsub, 
                      stratifyByUrban=TRUE, subareaLevel=TRUE, gridLevel=FALSE, 
                      doFineScaleRisk=TRUE, doSmoothRisk=TRUE, 
                      doGriddedRisk=FALSE, doSmoothRiskLogisticApprox=doSmoothRiskLogisticApprox, 
@@ -2342,7 +2350,8 @@ runSimStudyij = function(i, j, seed=123, doSmoothRiskLogisticApprox=FALSE) {
   areaPopZ = areaPop[c("ZFineScalePrevalence", "ZFineScaleRisk", "ZSmoothRisk")]
   
   # save files
-  dataIDout = paste0("simOut_i", i, "j", j)
+  coarseText = ifelse(coarse, "Coarse", "")
+  dataIDout = paste0("simOut_i", i, "j", j, coarseText)
   save(subareaPopP, areaPopP, aggregationTimings, rawTimes, totalTimes, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_p.RData"))
   save(subareaPopZ, areaPopZ, aggregationTimings, rawTimes, totalTimes, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_Z.RData"))
   
@@ -2351,7 +2360,7 @@ runSimStudyij = function(i, j, seed=123, doSmoothRiskLogisticApprox=FALSE) {
        rawTimes=rawTimes, totalTimes=totalTimes)
 }
 
-processSimStudyResultsij = function(i, j) {
+processSimStudyResultsij = function(i, j, coarse=TRUE) {
   
   out = load("savedOutput/simStudyResults/spde_prevRiskSimStudyCommandArgs.RData")
   theseArgs = spde_prevRiskSimStudyCommandArgs[[i]]
@@ -2377,7 +2386,8 @@ processSimStudyResultsij = function(i, j) {
   thisPop = stratDat$aggregatedPop
   
   # load results
-  dataIDout = paste0("simOut_i", i, "j", j)
+  coarseText = ifelse(coarse, "Coarse", "")
+  dataIDout = paste0("simOut_i", i, "j", j, coarseText)
   # load(subareaPopP, areaPopP, aggregationTimings, rawTimes, totalTimes, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_p.RData"))
   # load(subareaPopZ, areaPopZ, aggregationTimings, rawTimes, totalTimes, file=paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_Z.RData"))
   load(paste0("savedOutput/simStudyResults/tempFiles/", dataIDout, "_p.RData"))
@@ -2456,7 +2466,7 @@ processSimStudyResultsij = function(i, j) {
        subareaScoresPrisk, subareaScoresZrisk, areaScoresPrisk, areaScoresZrisk, 
        subareaScoresPsmoothRisk, subareaScoresZsmoothRisk, areaScoresPsmoothRisk, areaScoresZsmoothRisk, 
        aggregationTimings, totalTimes, 
-       file=paste0("savedOutput/simStudyResults/tempFiles/simScores_i", i, "j", j, ".RData"))
+       file=paste0("savedOutput/simStudyResults/tempFiles/simScores_i", i, "j", j, coarseText, ".RData"))
   
   res = list(subareaScoresPprev, subareaScoresZprev, areaScoresPprev, areaScoresZprev, 
              subareaScoresPrisk, subareaScoresZrisk, areaScoresPrisk, areaScoresZrisk, 
@@ -2469,7 +2479,7 @@ processSimStudyResultsij = function(i, j) {
   invisible(res)
 }
 
-combineProcessedResults = function(is=1:57, maxJ=100, initialProcess=TRUE, combineScores=TRUE) {
+combineProcessedResults = function(is=1:57, maxJ=100, initialProcess=TRUE, combineScores=TRUE, coarse=TRUE) {
   
   if(initialProcess) {
     print("Doing initial processing/scoring...")
@@ -2478,7 +2488,7 @@ combineProcessedResults = function(is=1:57, maxJ=100, initialProcess=TRUE, combi
         if((j %% 10) == 1) {
           print(paste0("processing for i=", i, ", j=", j))
         }
-        processSimStudyResultsij(i, j)
+        processSimStudyResultsij(i, j, coarse=coarse)
       }
     }
   }
@@ -2510,8 +2520,8 @@ combineProcessedResults = function(is=1:57, maxJ=100, initialProcess=TRUE, combi
         if((j %% 10) == 1) {
           print(paste0("combining scores for i=", i, ", j=", j))
         }
-        
-        out = load(paste0("savedOutput/simStudyResults/tempFiles/simScores_i", i, "j", j, ".RData"))
+        coarseText = ifelse(coarse, "Coarse", "")
+        out = load(paste0("savedOutput/simStudyResults/tempFiles/simScores_i", i, "j", j, coarseText, ".RData"))
         
         subareaScoresPprevAll = rbind(subareaScoresPprevAll, subareaScoresPprev)
         subareaScoresZprevAll = rbind(subareaScoresZprevAll, subareaScoresZprev)
@@ -2563,12 +2573,12 @@ combineProcessedResults = function(is=1:57, maxJ=100, initialProcess=TRUE, combi
            subareaScoresPriskAvg, subareaScoresZriskAvg, areaScoresPriskAvg, areaScoresZriskAvg, 
            subareaScoresPsmoothRiskAvg, subareaScoresZsmoothRiskAvg, areaScoresPsmoothRiskAvg, areaScoresZsmoothRiskAvg, 
            aggregationTimingsDetailedAvg, aggregationTimingsProcessedAvg, totalTimesAvg, 
-           file=paste0("savedOutput/simStudyResults/simScoresAll_i", i, "maxJ", maxJ, ".RData"))
+           file=paste0("savedOutput/simStudyResults/simScoresAll_i", i, "maxJ", maxJ, coarseText, ".RData"))
     }
   }
 }
 
-printSimStudyTablei = function(i=1, maxJ=100) {
+printSimStudyTablei = function(i=1, maxJ=100, coarse=TRUE) {
   # save(subareaScoresPprevAll, subareaScoresZprevAll, areaScoresPprevAll, areaScoresZprevAll, 
   #      subareaScoresPriskAll, subareaScoresZriskAll, areaScoresPriskAll, areaScoresZriskAll, 
   #      subareaScoresPsmoothRiskAll, subareaScoresZsmoothRiskAll, areaScoresPsmoothRiskAll, areaScoresZsmoothRiskAll, 
@@ -2578,8 +2588,8 @@ printSimStudyTablei = function(i=1, maxJ=100) {
   #      subareaScoresPsmoothRiskAvg, subareaScoresZsmoothRiskAvg, areaScoresPsmoothRiskAvg, areaScoresZsmoothRiskAvg, 
   #      aggregationTimingsDetailedAvg, aggregationTimingsProcessedAvg, totalTimesAvg, 
   #      file=paste0("savedOutput/simStudyResults/simScoresAll_i", i, "maxJ", maxJ, ".RData"))
-  
-  out = load(paste0("savedOutput/simStudyResults/simScoresAll_i", i, "maxJ", maxJ, ".RData"))
+  coarseText = ifelse(coarse, "Coarse", "")
+  out = load(paste0("savedOutput/simStudyResults/simScoresAll_i", i, "maxJ", maxJ, coarseText, ".RData"))
   
   # make 4 tables: subareaPScores, subareaZScores, areaPScores, and areaZScores
   
@@ -2626,15 +2636,16 @@ printSimStudyTablei = function(i=1, maxJ=100) {
   areaZScores = areaZScores[,-varCols]
   areaZScores = areaZScores[,-mseCols]
   
-  browser()
-  
   # print tables
   displayP = c("s", rep("e", 3), rep("e", 3), rep("d", 3), rep("f", 4))
   digitsP = c(0, rep(-2, 3), rep(2, 3), rep(0, 3), rep(3, 3), 1)
-  displayZ = c("s", rep("e", 3), rep("e", 3), rep("d", 3), rep("f", 4))
-  digitsZ = c(0, rep(-2, 3), rep(2, 3), rep(0, 3), rep(3, 3), 1)
+  displayZ = c("s", rep("f", 3), rep("f", 3), rep("d", 3), rep("f", 4))
+  digitsZ = c(0, rep(1, 2), 2, rep(1, 3), rep(0, 3), rep(1, 3), 1)
   print(xtable(subareaPScores, display=displayP, digits=digitsP), math.style.exponents=TRUE)
-  print(xtable(subareaZScores, display=displayP, digits=digitsP), math.style.exponents=TRUE)
+  print(xtable(subareaZScores, display=displayZ, digits=digitsZ), math.style.exponents=TRUE)
+  
+  print(xtable(areaPScores, display=displayP, digits=digitsP), math.style.exponents=TRUE)
+  print(xtable(areaZScores, display=displayZ, digits=digitsZ), math.style.exponents=TRUE)
 }
 
 
