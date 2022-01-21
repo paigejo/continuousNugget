@@ -803,21 +803,29 @@ coverage = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
   
   res = lower <= truth & upper >= truth
   
-  if(returnIntervalWidth)
-    width = upper - lower
+  width = upper - lower
   
   if(doFuzzyReject) {
-    # in this case, we sometimes randomly reject if the truth is at the edge of the coverage interval. First 
+    # in this case, we fuzzy reject if the truth is at the edge of the coverage interval. First 
     # determine what values are at the edge of the intervals, then determine the probability of rejection 
-    # for each, then randomly reject
-    atLowerEdge = which(lower == truth)
-    atUpperEdge = which(upper == truth)
+    # for each, then subtract fuzzy rejection probability from the coverage for that observation at the edge
+    atLowerEdge = lower == truth
+    atUpperEdge = upper == truth
+    lowerEdgeInds = which(atLowerEdge)
+    upperEdgeInds = which(atUpperEdge)
     
-    probRejectLower = sapply(atLowerEdge, function(i) {((1 - significance) / 2 - mean(estMat[i,] < lower[i])) / mean(estMat[i,] == lower[i])})
-    probRejectUpper = sapply(atUpperEdge, function(i) {((1 - significance) / 2 - mean(estMat[i,] > upper[i])) / mean(estMat[i,] == upper[i])})
-    
-    rejectLower = probRejectLower
-    rejectUpper = probRejectUpper
+    # Fuzzy rejection probabilities at the interval boundaries. Nonzero only at 
+    # respective interval boundaries
+    rejectLower = rep(0, length(truth))
+    rejectUpper = rep(0, length(truth))
+    if(length(lowerEdgeInds) != 0) {
+      probRejectLower = sapply(lowerEdgeInds, function(i) {((1 - significance) / 2 - mean(estMat[i,] < lower[i])) / mean(estMat[i,] == lower[i])})
+      rejectLower[lowerEdgeInds] = probRejectLower
+    }
+    if(length(upperEdgeInds) != 0) {
+      probRejectUpper = sapply(upperEdgeInds, function(i) {((1 - significance) / 2 - mean(estMat[i,] > upper[i])) / mean(estMat[i,] == upper[i])})
+      rejectUpper[upperEdgeInds] = probRejectUpper
+    }
     
     # determine minimum differences between probabilities
     if(is.null(ns))
@@ -825,20 +833,17 @@ coverage = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     else
       deltas = 1 / ns
     
-    if(length(atLowerEdge) != 0) {
-      res[atLowerEdge] = sapply(1:length(atLowerEdge), function(i) {min(res[atLowerEdge][i], (1-rejectLower[i]))})
-      
-      # if reject, reduce CI width
-      width[atLowerEdge] = width[atLowerEdge] - deltas[atLowerEdge] * as.numeric(rejectLower)
+    # reduce CI width based on fuzzy boundaries
+    width = width - deltas*rejectLower - deltas*rejectUpper
+    upper = upper - deltas*rejectUpper
+    lower = lower + deltas*rejectLower
+    
+    if(length(lowerEdgeInds) != 0) {
+      res[lowerEdgeInds] = 1-rejectLower[lowerEdgeInds]
     }
-    if(length(atUpperEdge) != 0) {
-      res[atUpperEdge] = sapply(1:length(atUpperEdge), function(i) {min(res[atUpperEdge][i], (1-rejectUpper[i]))})
-      
-      # if reject, reduce CI width
-      width[atUpperEdge] = width[atUpperEdge] - deltas[atUpperEdge] * as.numeric(rejectUpper)
+    if(length(upperEdgeInds) != 0) {
+      res[upperEdgeInds] = 1-rejectUpper[upperEdgeInds]
     }
-    # res[atLowerEdge] = res[atLowerEdge] & (!rejectLower)
-    # res[atUpperEdge] = res[atUpperEdge] & (!rejectUpper)
   }
   
   if(getAverage)
