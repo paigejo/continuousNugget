@@ -1072,8 +1072,7 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     cvg = greaterThanLower & lessThanUpper
   }
   
-  if(returnIntervalWidth)
-    width = upper - lower
+  width = upper - lower
   
   if(doFuzzyReject) {
     # in this case, we fuzzy reject if the truth is at the edge of the coverage interval. First 
@@ -1093,8 +1092,8 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
       rejectLower[lowerEdgeInds] = probRejectLower
     }
     if(length(upperEdgeInds) != 0) {
-      probRejectUpper = sapply(atUpperEdge, function(i) {((1 - significance) / 2 - mean(estMat[i,] > upper[i])) / mean(estMat[i,] == upper[i])})
-      rejectUpper = probRejectUpper
+      probRejectUpper = sapply(upperEdgeInds, function(i) {((1 - significance) / 2 - mean(estMat[i,] > upper[i])) / mean(estMat[i,] == upper[i])})
+      rejectUpper[upperEdgeInds] = probRejectUpper
     }
     
     # determine minimum differences between probabilities
