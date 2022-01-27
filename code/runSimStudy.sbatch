@@ -10,6 +10,7 @@
 #SBATCH --mail-user=john.paige@ntnu.no # Email to which notifications will be sent
 #SBATCH --nodelist=idun-03-0[1-9],idun-03-[11-12] # idun-03-0[1-9],idun-03-[10-12] see https://www.hpc.ntnu.no/idun/hardware/
 #SBATCH --account=share-ie-imf # see https://www.hpc.ntnu.no/idun/getting-started-on-idun/accounting/
+#SBATCH --nodes=2
 
 # --nodelist=idun-03-0[1-9],idun-03-[10-12] # idun-03-0[1-9],idun-03-[10-12] see https://www.hpc.ntnu.no/idun/hardware/
 # --account=share-ie-imf # see https://www.hpc.ntnu.no/idun/getting-started-on-idun/accounting/
