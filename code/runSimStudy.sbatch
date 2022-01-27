@@ -2,14 +2,13 @@
 #SBATCH --job-name runSimStudy      # Set a name for your job. This is especially useful if you have multiple jobs queued.
 #SBATCH --partition CPUQ    # Slurm partition to use
 #SBATCH --ntasks 1          # Number of tasks to run. By default, one CPU core will be allocated per task
-#SBATCH --time 0-01:00        # Wall time limit in D-HH:MM
-#SBATCH --mem-per-cpu=10000     # Memory limit for each tasks (in MB) 6850
+#SBATCH --time 0-02:00        # Wall time limit in D-HH:MM
+#SBATCH --mem-per-cpu=20000     # Memory limit for each tasks (in MB) 6850
 #SBATCH -o runSimStudy_%A_%a.out    # File to which STDOUT will be written
 #SBATCH -e runSimStudy_%A_%a.err    # File to which STDERR will be written
 #SBATCH --mail-type=ALL       # Type of email notification- BEGIN,END,FAIL,ALL
 #SBATCH --mail-user=john.paige@ntnu.no # Email to which notifications will be sent
 #SBATCH --account=share-ie-imf # see https://www.hpc.ntnu.no/idun/getting-started-on-idun/accounting/
-#SBATCH --nodes=2
 #SBATCH --constraint="switch3&intel&pec6420" # use sinfo -o "%20N  %10c  %10m  %25f  %10G " to show features
 
 # --nodelist=idun-03-0[1-9],idun-03-[10-12] # idun-03-0[1-9],idun-03-[10-12] see https://www.hpc.ntnu.no/idun/hardware/

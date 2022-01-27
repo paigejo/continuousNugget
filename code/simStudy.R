@@ -2254,7 +2254,7 @@ runSimStudy = function(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5),
   
 }
 
-runSimStudyij = function(i, j, seed=123, doSmoothRiskLogisticApprox=FALSE, coarse=TRUE) {
+runSimStudyij = function(i, j, seed=123, doSmoothRiskLogisticApprox=FALSE, coarse=TRUE, doGC=FALSE) {
   time1 = proc.time()[3]
   set.seed(seed)
   
@@ -2319,6 +2319,9 @@ runSimStudyij = function(i, j, seed=123, doSmoothRiskLogisticApprox=FALSE, coars
   riskOut = fitSPDEKenyaDat(dat=clustDat, nPostSamples=1000, popMat=popMat)
   logitDraws = riskOut$uDraws # uDraws includes fixed effects and is on logit scale
   sigmaEpsilonDraws = riskOut$sigmaEpsilonDraws
+  if(doGC) {
+    rm(riskOut)
+  }
   time3 = proc.time()[3]
   
   # run the models
