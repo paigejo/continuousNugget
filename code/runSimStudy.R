@@ -12,4 +12,13 @@ j = jobInds[2]
 # argList = spde_prevRiskSimStudyCommandArgs[[i]]
 # argList$j = j
 
-system.time(out <- runSimStudyij(i, j, coarse=coarse))
+# Rprof("savedOutput/simStudyResults/tempFiles/data.Rprof", interval = 0.01, line.profiling = TRUE,
+#       gc.profiling = TRUE, memory.profiling = TRUE)
+
+# p = profvis({
+system.time(out <- runSimStudyij(i, j, coarse=coarse, doGC=TRUE))
+# })
+
+
+# Rprof(NULL)
+# profvis(prof_input = "data.Rprof")

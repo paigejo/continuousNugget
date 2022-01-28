@@ -2321,17 +2321,18 @@ runSimStudyij = function(i, j, seed=123, doSmoothRiskLogisticApprox=FALSE, coars
   sigmaEpsilonDraws = riskOut$sigmaEpsilonDraws
   if(doGC) {
     rm(riskOut)
+    gc(TRUE)
   }
   time3 = proc.time()[3]
   
   # run the models
-  out = simPopCustom(logitRiskDraws=logitDraws, sigmaEpsilonDraws=sigmaEpsilonDraws, 
+  out = simPopCustomTest(logitRiskDraws=logitDraws, sigmaEpsilonDraws=sigmaEpsilonDraws, 
                      easpa=easpa, popMat=popMat, 
                      targetPopMat=popMatAdjusted, poppsub=poppsub, 
                      stratifyByUrban=TRUE, subareaLevel=TRUE, gridLevel=FALSE, 
                      doFineScaleRisk=TRUE, doSmoothRisk=TRUE, 
                      doGriddedRisk=FALSE, doSmoothRiskLogisticApprox=doSmoothRiskLogisticApprox, 
-                     min1PerSubarea=TRUE)
+                     min1PerSubarea=TRUE, doGC=doGC)
   
   subareaPop = out$subareaPop$aggregationResults
   areaPop = out$areaPop$aggregationResults
