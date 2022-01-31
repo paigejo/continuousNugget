@@ -351,19 +351,48 @@ areaPopToAreaTest = function(areaLevelPop, areasFrom, areasTo,
 simPopCustomTest = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, targetPopMat, 
                         stratifyByUrban=TRUE, validationPixelI=NULL, validationClusterI=NULL, 
                         clustersPerPixel=NULL, 
-                        doFineScaleRisk=FALSE, doSmoothRisk=FALSE, 
+                        doFineScaleRisk=FALSE, doSmoothRisk=FALSE, doGriddedRisk=FALSE, 
                         doSmoothRiskLogisticApprox=FALSE, 
-                        poppsub=NULL, subareaLevel=FALSE, 
+                        poppsub=NULL, subareaLevel=FALSE, gridLevel=FALSE, 
                         min1PerSubarea=TRUE, 
-                        returnEAinfo=FALSE, epsc=NULL) {
+                        fixPopPerEA=NULL, fixHHPerEA=NULL, fixPopPerHH=NULL, 
+                        returnEAinfo=FALSE, epsc=NULL, stopOnFrameMismatch=FALSE, tol=1e-3, 
+                        verbose=TRUE, doGC=FALSE) {
   
-  if(is.null(poppsub) && subareaLevel) {
-    stop("if subareaLevel is TRUE, user must specify poppsub")
-  }
+  time1 = proc.time()[3]
   
   if(!is.null(validationPixelI) || !is.null(validationClusterI) || !is.null(clustersPerPixel)) {
     stop("validationPixelI, validationClusterI, and clustersPerPixel not yet fully implemented")
   }
+  
+  if(any(c(!is.null(fixPopPerEA), !is.null(fixHHPerEA), !is.null(fixPopPerHH)))) {
+    if(verbose) {
+      print("adjusting easpa population and households based on fixPopPerEA, fixHHPerEA, and fixPopPerHH")
+    }
+  }
+  if(!is.null(fixPopPerEA)) {
+    easpa$popUrb = easpa$EAUrb * fixPopPerEA
+    easpa$popRur = easpa$EARur * fixPopPerEA
+    easpa$popTotal = easpa$EATotal * fixPopPerEA
+  }
+  if(!is.null(fixHHPerEA)) {
+    easpa$HHUrb = easpa$EAUrb * fixHHPerEA
+    easpa$HHRur = easpa$EARur * fixHHPerEA
+    easpa$HHTotal = easpa$EATotal * fixHHPerEA
+  }
+  if(!is.null(fixPopPerHH)) {
+    if(fixPopPerHH * fixHHPerEA != fixPopPerEA) {
+      stop("fixPopPerHH * fixHHPerEA != fixPopPerEA")
+    }
+  }
+  
+  # make sure the population integration grids match the population frame
+  out = checkPopFrameAndIntWeights(popMat=popMat, targetPopMat=targetPopMat, 
+                                   easpa=easpa, poppsub=poppsub, 
+                                   stopOnFrameMismatch=stopOnFrameMismatch, 
+                                   tol=tol)
+  popMat = out$popMat
+  targetPopMat = out$targetPopMat
   
   nDraws = ncol(logitRiskDraws)
   
@@ -381,18 +410,23 @@ simPopCustomTest = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, ta
     stop("area names and easpa do not match popMat or are not in the correct order")
   
   # determine if we care about subareas (smallest areas we care about. No info of EAs per subarea)
-  subareaLevel = !is.null(popMat$subarea)
+  sampleBySubarea = !is.null(popMat$subarea) && !is.null(poppsub)
   
   ##### Line 1 (of the algorithm): take draws from the binomial process for each stratum (each row of easpa)
   # get probabilities for each pixel (or at least something proportional within each stratum)
+  time2 = proc.time()[3]
+  
   print("drawing EAs")
   pixelProbs = popMat$pop
   
   # take draws from the stratified binomial process for each posterior sample
   if(is.null(clustersPerPixel)) {
-    if(subareaLevel) {
+    if(verbose) {
+      print("Sampling EAs per pixel...")
+    }
+    if(sampleBySubarea) {
       eaSamples = rStratifiedMultnomialBySubareaTest(nDraws, popMat, easpa, stratifyByUrban, poppsub=poppsub, 
-                                                 min1PerSubarea=min1PerSubarea)
+                                                          min1PerSubarea=min1PerSubarea)
     } else {
       eaSamples = rStratifiedMultnomialTest(nDraws, popMat, easpa, stratifyByUrban)
     }
@@ -401,6 +435,7 @@ simPopCustomTest = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, ta
   if(!is.null(clustersPerPixel) && !exists("eaSamples")) {
     eaSamples = matrix(rep(clustersPerPixel, nDraws), ncol=nDraws)
   }
+  time3 = proc.time()[3]
   
   # make matrix (or list) of pixel indices mapping matrices of EA values to matrices of pixel values
   if(!is.null(clustersPerPixel)) {
@@ -416,9 +451,8 @@ simPopCustomTest = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, ta
     if(!is.null(clustersPerPixel)) {
       urbanVals = popMat$urban[pixelIndices]
       uniqueUrbanVals = popMat$urban[uniquePixelIndices]
-    } else {
-      # urbanMat = matrix(popMat$urban[pixelIndexMat], ncol=nDraws)
-      urbanMat = NULL # don't calculate here for memory's sake
+    }else {
+      urbanMat = matrix(popMat$urban[pixelIndexMat], ncol=nDraws)
     }
   } else {
     urbanMat = NULL
@@ -429,17 +463,20 @@ simPopCustomTest = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, ta
     areaVals = popMat$area[pixelIndices]
     uniqueAreaVals = popMat$area[uniquePixelIndices]
   } else {
-    # areaMat = matrix(popMat$area[pixelIndexMat], ncol=nDraws)
-    areaMat = NULL # don't calculate here for memory's sake
+    areaMat = matrix(popMat$area[pixelIndexMat], ncol=nDraws)
   }
+  time4 = proc.time()[3]
   
   ##### Line 2: draw cluster effects, epsilon
   # NOTE1: we assume there are many more EAs then sampled clusters, so that 
   #       the cluster effects for each EA, including those sampled, are iid
-  print("simulating EA level risks, numerators, and denominators")
+  if(verbose) {
+    print("simulating EA level risks, numerators, and denominators")
+  }
   if(is.null(epsc)) {
     epsc = matrix(stats::rnorm(totalEAs*nDraws, sd=rep(sigmaEpsilonDraws, each=totalEAs)), ncol=nDraws)
   }
+  time5 = proc.time()[3]
   
   ##### Line 3: draw EA population denominators, N
   
@@ -449,24 +486,35 @@ simPopCustomTest = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, ta
     
     # in this case, every left out cluster has exactly 25 households. Simply sample target population 
     # with equal probability from each cluster/faux EA
-    Ncs = sampleNMultilevelMultinomialFixedTest(clustersPerPixel, nDraws=nDraws, pixelIndices=pixelIndices, 
-                                            urbanVals=urbanVals, areaVals=areaVals, easpa=easpa, popMat=popMat, stratifyByUrban=stratifyByUrban, 
-                                            verbose=TRUE)
+    if(is.null(fixPopPerEA)) {
+      Ncs = sampleNMultilevelMultinomialFixedTest(clustersPerPixel, nDraws=nDraws, pixelIndices=pixelIndices, 
+                                                       urbanVals=urbanVals, areaVals=areaVals, easpa=easpa, popMat=popMat, stratifyByUrban=stratifyByUrban, 
+                                                       verbose=verbose)
+    } else {
+      if(verbose) {
+        print(paste0("drawing Ns for each EA..."))
+      }
+      Ncs = matrix(rep(fixPopPerEA, totalEAs*nDraws), ncol=nDraws)
+    }
   } else {
+    out = sampleNMultilevelMultinomialTest(pixelIndexMat=pixelIndexMat, urbanMat=urbanMat, areaMat=areaMat, easpaList=list(easpa), 
+                                                popMat=popMat, stratifyByUrban=stratifyByUrban, verbose=verbose, returnEAinfo=returnEAinfo, 
+                                                fixPopPerHH=fixPopPerHH)
     if(returnEAinfo) {
-      out = sampleNMultilevelMultinomialTest(pixelIndexMat=pixelIndexMat, easpaList=list(easpa), 
-                                         popMat=popMat, stratifyByUrban=stratifyByUrban, verbose=TRUE, returnEAinfo=returnEAinfo)
       householdDraws = out$householdDraws
       Ncs = out$targetPopDraws
     } else {
-      Ncs <- sampleNMultilevelMultinomialTest(pixelIndexMat=pixelIndexMat, easpaList=list(easpa), 
-                                          popMat=popMat, stratifyByUrban=stratifyByUrban, verbose=TRUE, returnEAinfo=returnEAinfo)
+      Ncs = out
       householdDraws = NULL
     }
   }
+  time6 = proc.time()[3]
   
   ##### do part of Line 7 in advance
   # calculate mu_{ic} for each EA in each pixel
+  if(verbose) {
+    print("Calculating EA level risk and number of deaths...")
+  }
   if(!is.null(clustersPerPixel)) {
     uc = logitRiskDraws[pixelIndices,]
     muc = expit(uc + epsc)
@@ -474,9 +522,11 @@ simPopCustomTest = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, ta
     uc = matrix(logitRiskDraws[cbind(rep(rep(1:nrow(logitRiskDraws), nDraws), times=c(eaSamples)), rep(1:nDraws, each=totalEAs))], ncol=nDraws)
     muc = expit(uc + epsc)
   }
+  time7 = proc.time()[3]
   
   # calculate Z_{ic} for each EA in each pixel
-  Zc = matrix(stats::rbinom(n=totalEAs * nDraws, size=Ncs, prob=as.matrix(muc)), ncol=nDraws)
+  Zcs = matrix(stats::rbinom(n=totalEAs * nDraws, size=Ncs, prob=as.matrix(muc)), ncol=nDraws)
+  time8 = proc.time()[3]
   
   ##### Line 4: Aggregate appropriate values from EAs to the grid cell level
   
@@ -521,60 +571,300 @@ simPopCustomTest = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, ta
   ##### Line 5: We already did this, resulting in logitRiskDraws input
   
   ##### Line 6: aggregate population denominators for each grid cell to get N_{ig}
-  print("Aggregating from EA level to the pixel level")
-  Ng <- sapply(1:ncol(Ncs), getPixelColumnFromEAs, vals=Ncs)
-  Ng[is.na(Ng)] = 0
-  
-  ##### Line 7: aggregate response for each grid cell to get Z_{ig}
-  Zg <- sapply(1:ncol(Zc), getPixelColumnFromEAs, vals=Zc)
-  
-  ##### Line 8: Calculate empirical mortality proportions for each grid cell, p_{ig}. 
-  #####         Whenever N_{ig} is 0, set p_{ig} to NA as well
-  pg = Zg / Ng
-  pg[Ng == 0] = NA
-  
-  ##### calculate results for the other models if necessary
-  if(doFineScaleRisk || doSmoothRisk) {
-    nPerEA = getExpectedNperEATest(easpa, targetPopMat)
+  if(verbose) {
+    print("Aggregating from EA level to the pixel level...")
   }
   
-  if(doFineScaleRisk) {
-    fineScaleRisk = sapply(1:ncol(muc), getPixelColumnFromEAs, vals=muc, applyFun=function(x) {mean(x, na.rm=TRUE)})
-    fineScaleRisk[!is.finite(fineScaleRisk)] = NA
+  # Ng <- sapply(1:ncol(Ncs), getPixelColumnFromEAs, vals=Ncs)
+  # Ng[is.na(Ng)] = 0
+  # 
+  # ##### Line 7: aggregate response for each grid cell to get Z_{ig}
+  # Zg <- sapply(1:ncol(Zc), getPixelColumnFromEAs, vals=Zc)
+  # 
+  # ##### Line 8: Calculate empirical mortality proportions for each grid cell, p_{ig}. 
+  # #####         Whenever N_{ig} is 0, set p_{ig} to NA as well
+  # pg = Zg / Ng
+  # pg[Ng == 0] = NA
+  
+  # even if we aren't producing grid level results in general, gridded and smooth risk 
+  # require it
+  griddedRisk = NULL
+  zSamplesGriddedRisk = NULL
+  nSamplesGriddedRisk = NULL
+  smoothRisk = NULL
+  zSamplesSmoothRisk = NULL
+  nSamplesSmoothRisk = NULL
+  if(doGriddedRisk) {
+    # NOTE: these cluster effects aren't necessarily in agreement with the 
+    #       cluster effects of the fine scale models, since they're drawn 
+    #       independently
+    pixelEps = matrix(rnorm(length(logitRiskDraws), mean=0, sd=rep(sigmaEpsilonDraws, each=nrow(logitRiskDraws))), ncol=nDraws)
+    griddedRisk = expit(logitRiskDraws + pixelEps)
     
-    # in order to get valid count estimates, we also need the expected denominator per EA in each stratum:
-    nSamplesFineScaleRisk = sweep(eaSamples, 1, nPerEA, "*")
-    zSamplesFineScaleRisk = fineScaleRisk * nSamplesFineScaleRisk
-    zSamplesFineScaleRisk[is.na(zSamplesFineScaleRisk)] = 0
-  } else {
-    fineScaleRisk = NULL
-    zSamplesFineScaleRisk = NULL
-    nSamplesFineScaleRisk = NULL
+    # get expected numerator and denominators
+    nSamplesGriddedRisk = matrix(rep(targetPopMat$pop, nDraws), ncol=nDraws)
+    zSamplesGriddedRisk = sweep(griddedRisk, 1, targetPopMat$pop, "*")
   }
+  time9 = proc.time()[3]
   
   if(doSmoothRisk) {
     # integrate out the cluster effect in the risk
-    smoothRisk = matrix(SUMMER::logitNormMean(cbind(c(as.matrix(logitRiskDraws)), rep(sigmaEpsilonDraws, each=nrow(logitRiskDraws))), logisticApprox=doSmoothRiskLogisticApprox), nrow=nrow(logitRiskDraws))
+    smoothRisk = matrix(logitNormMean(cbind(c(as.matrix(logitRiskDraws)), rep(sigmaEpsilonDraws, each=nrow(logitRiskDraws))), logisticApprox=doSmoothRiskLogisticApprox), nrow=nrow(logitRiskDraws))
     
     # get expected numerator and denominators
     nSamplesSmoothRisk = matrix(rep(targetPopMat$pop, nDraws), ncol=nDraws)
     zSamplesSmoothRisk = sweep(smoothRisk, 1, targetPopMat$pop, "*")
+  }
+  time10 = proc.time()[3]
+  
+  ZcsFineScaleRisk = NULL
+  NcsSamplesFineScaleRisk = NULL
+  if(gridLevel) {
+    # calculate pixel/grid level results
+    # time1=system.time(out <- aggPredsVariablePerArea(popNumerators=Zcs, popDenominators=Ncs, 
+    #                               areaMat=pixelIndexMat, areaLevels=1:nrow(popMat)))
+    # time2=system.time(out <- aggPredsVariablePerAreaDT(popNumerators=Zcs, popDenominators=Ncs, 
+    #                               areaMat=pixelIndexMat, areaLevels=1:nrow(popMat)))
+    out <- aggPredsVariablePerArea(popNumerators=Zcs, popDenominators=Ncs, 
+                                   areaMat=pixelIndexMat, areaLevels=1:nrow(popMat))
+    Ng = out$N
+    Zg = out$Z
+    pg = out$p
+    
+    time11 = proc.time()[3]
+    
+    ##### calculate results for the other models if necessary
+    
+    if(doFineScaleRisk) {
+      ## the following code is for a previous model that is no longer used, and so is commented out:
+      # in order to get valid count estimates, we also need the expected denominator per EA in each stratum:
+      # fineScaleRisk = sapply(1:ncol(muc), getPixelColumnFromEAs, vals=muc, applyFun=function(x) {mean(x, na.rm=TRUE)})
+      # fineScaleRisk[!is.finite(fineScaleRisk)] = NA
+      # nPerEA = SUMMER:::getExpectedNperEA(easpa, targetPopMat)
+      # nSamplesFineScaleRisk = sweep(eaSamples, 1, nPerEA, "*")
+      # zSamplesFineScaleRisk[is.na(zSamplesFineScaleRisk)] = 0
+      
+      # We aggregate just like for the fine scale prevalence model, but using the expected population 
+      # numerators conditional on the true denominators.
+      NcsFineScaleRisk = Ncs
+      ZcsFineScaleRisk = muc * NcsFineScaleRisk
+      out = aggPredsVariablePerArea(popNumerators=ZcsFineScaleRisk, popDenominators=Ncs, 
+                                    areaMat=pixelIndexMat, areaLevels=1:nrow(popMat))
+      nSamplesFineScaleRisk = out$N
+      zSamplesFineScaleRisk = out$Z
+      fineScaleRisk = out$p
+    } else {
+      nSamplesFineScaleRisk = NULL
+      zSamplesFineScaleRisk = NULL
+    }
+    time12 = proc.time()[3]
+    
+    ##### Extra steps: collect draws at each level and generate:
+    ##### areas, preds, 
+    pixelLevelPop = list(pFineScalePrevalence=pg, ZFineScalePrevalence=Zg, NFineScalePrevalence=Ng, 
+                         pFineScaleRisk=fineScaleRisk, ZFineScaleRisk=zSamplesFineScaleRisk, NFineScaleRisk=nSamplesFineScaleRisk, 
+                         pSmoothRisk=smoothRisk, ZSmoothRisk=zSamplesSmoothRisk, NSmoothRisk=nSamplesSmoothRisk, 
+                         pGriddedRisk=griddedRisk, ZGriddedRisk=zSamplesGriddedRisk, NGriddedRisk=nSamplesGriddedRisk)
+  } else if(doGriddedRisk || doSmoothRisk) {
+    pixelLevelPop = list(pFineScalePrevalence=NULL, ZFineScalePrevalence=NULL, NFineScalePrevalence=NULL, 
+                         pFineScaleRisk=NULL, ZFineScaleRisk=NULL, NFineScaleRisk=NULL, 
+                         pSmoothRisk=smoothRisk, ZSmoothRisk=zSamplesSmoothRisk, NSmoothRisk=nSamplesSmoothRisk, 
+                         pGriddedRisk=griddedRisk, ZGriddedRisk=zSamplesGriddedRisk, NGriddedRisk=nSamplesGriddedRisk)
+    
+    time11 = proc.time()[3]
+    time12 = proc.time()[3]
   } else {
-    smoothRisk = NULL
-    zSamplesSmoothRisk = NULL
-    nSamplesSmoothRisk = NULL
+    pixelLevelPop = NULL
+    
+    time11 = proc.time()[3]
+    time12 = proc.time()[3]
   }
   
-  ##### Extra steps: collect draws at each level and generate:
-  ##### areas, preds, 
-  pixelLevelPop = list(pFineScalePrevalence=pg, ZFineScalePrevalence=Zg, NFineScalePrevalence=Ng, 
-                       pFineScaleRisk=fineScaleRisk, ZFineScaleRisk=zSamplesFineScaleRisk, NFineScaleRisk=nSamplesFineScaleRisk, 
-                       pSmoothRisk=smoothRisk, ZSmoothRisk=zSamplesSmoothRisk, NSmoothRisk=nSamplesSmoothRisk)
+  if(subareaLevel) {
+    # aggregate up from the most aggregated set of results we have: pixel/grid level if we have them, 
+    # EA level results otherwise.
+    if(verbose) {
+      print("Aggregating to the subarea level...")
+    }
+    
+    subareas = sort(unique(popMat$subarea))
+    if(gridLevel) {
+      # first get results for fine scale prevalence
+      subareaLevelPop = pixelPopToArea(pixelLevelPop, eaSamples=eaSamples, areas=popMat$subarea, 
+                                       stratifyByUrban=stratifyByUrban, targetPopMat=targetPopMat, 
+                                       doFineScaleRisk=doFineScaleRisk, doSmoothRisk=doSmoothRisk, 
+                                       doGriddedRisk=doGriddedRisk)
+      time13 = subareaLevelPop$rawTimes[2]
+      time14 = subareaLevelPop$rawTimes[3]
+      time15 = subareaLevelPop$rawTimes[4]
+      time16 = subareaLevelPop$rawTimes[5]
+      time17 = subareaLevelPop$rawTimes[6]
+    } else {
+      # we aggregate EA level results to subarea level. This takes a bit more leg work
+      subareaLevelPop = list()
+      
+      ## create matrices of relevant variable values at the EA level
+      subareaMat = matrix(popMat$subarea[pixelIndexMat], ncol=ncol(pixelIndexMat))
+      if(stratifyByUrban) {
+        urbanMat = matrix(popMat$urban[pixelIndexMat], ncol=ncol(pixelIndexMat))
+      } else {
+        urbanMat = NULL
+      }
+      
+      time13 = proc.time()[3]
+      
+      # fine scale prevalence
+      fineScalePrevalenceSubarea <- aggPredsVariablePerArea(popNumerators=Zcs, popDenominators=Ncs, 
+                                                            areaMat=subareaMat, urbanMat=urbanMat, 
+                                                            areaLevels=sort(as.character(poppsub$subarea)))
+      # time2 = system.time(fineScalePrevalenceSubarea <- aggPredsVariablePerAreaDT(popNumerators=Zcs, popDenominators=Ncs,
+      # areaMat=subareaMat, urbanMat=urbanMat,
+      # areaLevels=sort(as.character(poppsub$subarea))))
+      names(fineScalePrevalenceSubarea)[-1] = paste(names(fineScalePrevalenceSubarea)[-1], "FineScalePrevalence", sep="")
+      subareaLevelPop = c(subareaLevelPop, fineScalePrevalenceSubarea)
+      time14 = proc.time()[3]
+      
+      # fine scale risk
+      if(doFineScaleRisk) {
+        NcsFineScaleRisk = Ncs
+        ZcsFineScaleRisk = NcsFineScaleRisk * muc
+        fineScaleRiskSubarea = aggPredsVariablePerArea(popNumerators=ZcsFineScaleRisk, 
+                                                       popDenominators=NcsFineScaleRisk, 
+                                                       areaMat=subareaMat, urbanMat=urbanMat, 
+                                                       areaLevels=sort(as.character(poppsub$subarea)))
+        names(fineScaleRiskSubarea)[-1] = paste(names(fineScaleRiskSubarea)[-1], "FineScaleRisk", sep="")
+        subareaLevelPop = c(subareaLevelPop, fineScaleRiskSubarea)
+      }
+      time15 = proc.time()[3]
+      
+      # smooth risk
+      if(doSmoothRisk || doGriddedRisk) {
+        # we have pixel level results, so use them instead of EA level results since it's faster
+        
+        smoothGriddedRiskSubarea = pixelPopToArea(pixelLevelPop, eaSamples=eaSamples, areas=popMat$subarea, 
+                                                  stratifyByUrban=stratifyByUrban, targetPopMat=targetPopMat, 
+                                                  doFineScalePrevalence=FALSE, doFineScaleRisk=FALSE, 
+                                                  doSmoothRisk=doSmoothRisk, doGriddedRisk=doGriddedRisk)
+        smoothGriddedRiskSubarea$aggregationResults$region = NULL
+        subareaLevelPop = c(subareaLevelPop, smoothGriddedRiskSubarea$aggregationResults)
+        
+        time16 = smoothGriddedRiskSubarea$rawTimes[5]
+        time17 = smoothGriddedRiskSubarea$rawTimes[6]
+      }
+      
+      # aggregation matrices are not applicable for aggregating from EA level to subarea level
+      subareaLevelPop = list(aggregationResults=subareaLevelPop, aggregationMatrices=NULL)
+    }
+  } else {
+    subareaLevelPop = NULL
+  }
+  
+  # aggregate to the area level. Aggregate up from largest possible level to save time
+  if(verbose) {
+    print("Aggregating to the area level...")
+  }
+  if(subareaLevel) {
+    areasFrom = subareaLevelPop$aggregationResults$region
+    areasTo = poppsub$area[match(subareaLevelPop$aggregationResults$region, 
+                                 poppsub$subarea)]
+    areaLevelPop = areaPopToArea(subareaLevelPop, areasFrom=areasFrom, areasTo=areasTo, 
+                                 stratifyByUrban=stratifyByUrban, doFineScaleRisk=doFineScaleRisk, 
+                                 doSmoothRisk=doSmoothRisk, doGriddedRisk=doGriddedRisk)
+    
+    time18 = areaLevelPop$rawTimes[2]
+    time19 = areaLevelPop$rawTimes[3]
+    time20 = areaLevelPop$rawTimes[4]
+    time21 = areaLevelPop$rawTimes[5]
+    time22 = areaLevelPop$rawTimes[6]
+  } else if(gridLevel) {
+    areaLevelPop = pixelPopToArea(pixelLevelPop, eaSamples=eaSamples, areas=popMat$areas, 
+                                  stratifyByUrban=stratifyByUrban, targetPopMat=targetPopMat, 
+                                  doFineScaleRisk=doFineScaleRisk, doSmoothRisk=doSmoothRisk, 
+                                  doGriddedRisk=doGriddedRisk)
+    
+    time18 = areaLevelPop$rawTimes[2]
+    time19 = areaLevelPop$rawTimes[3]
+    time20 = areaLevelPop$rawTimes[4]
+    time21 = areaLevelPop$rawTimes[5]
+    time22 = areaLevelPop$rawTimes[6]
+  } else {
+    # In this case we must aggregate up from EA level for all risk/prevalence types except 
+    # those only defined at the pixel level, and als aggregate those from the pixel level
+    
+    # First aggregate from EA level
+    EALevelPop = list(pixelIndexMat=pixelIndexMat, 
+                      ZFineScalePrevalence=Zcs, NFineScalePrevalence=Ncs, 
+                      ZFineScaleRisk=ZcsFineScaleRisk, NFineScaleRisk=Ncs)
+    
+    areaLevelPop = EAPopToArea(EALevelPop, areaMat=areaMat, areaLevels=sort(as.character(poppsub$subarea)), 
+                               urbanMat=urbanMat, doFineScalePrevalence=TRUE, 
+                               doFineScaleRisk=doFineScaleRisk)
+    time18 = areaLevelPop$rawTimes[2]
+    time19 = areaLevelPop$rawTimes[3]
+    time20 = areaLevelPop$rawTimes[4]
+    
+    # now aggregate grid level models
+    if(doSmoothRisk || doGriddedRisk) {
+      out = pixelPopToArea(pixelLevelPop, eaSamples=eaSamples, areas=popMat$area, 
+                           stratifyByUrban=stratifyByUrban, targetPopMat=targetPopMat, 
+                           doFineScalePrevalence=FALSE, doFineScaleRisk=FALSE, 
+                           doSmoothRisk=doSmoothRisk, doGriddedRisk=doGriddedRisk)
+      out = out$aggregationResults
+      out$region = NULL
+      
+      time21 = out$rawTimes[5]
+      time22 = out$rawTimes[6]
+    }
+    
+    areaLevelPop = c(areaLevelPop, out)
+  }
+  
+  # setup computation time table
+  env = environment()
+  rawTimes = sapply(paste("time", 1:22, sep=""), get, envir=env)
+  allTimings = diff(rawTimes)
+  names(allTimings) = c("setup", "samplingEAs", "EAtoPixelIndexMapAndVariables", 
+                        "drawingClusterEffects", "drawingNc", "drawing_uc_muc", 
+                        "drawingZc", "getPixelGriddedRisk", "getPixelSmoothRisk", 
+                        "getPixelPrevalence", "getPixelRisk", "subareaAggSetup", 
+                        "getSubareaPrevalence", "getSubareaRisk", 
+                        "getSubareaSmoothRisk", "getSubareaGriddedRisk", 
+                        "areaAggSetup", "getAreaPrevalence", "getAreaRisk", 
+                        "getAreaSmoothRisk", "getAreaGriddedRisk")
+  temp = as.list(allTimings)
+  processedTimings = c(prevalence = temp$setup + temp$samplingEAs + 
+                         temp$EAtoPixelIndexMapAndVariables + 
+                         temp$drawingClusterEffects + temp$drawingNc + 
+                         temp$drawing_uc_muc + temp$drawingZc + 
+                         temp$getPixelPrevalence + temp$subareaAggSetup +
+                         temp$getSubareaPrevalence + temp$areaAggSetup + 
+                         temp$getAreaPrevalence, 
+                       risk = temp$setup + temp$samplingEAs + 
+                         temp$EAtoPixelIndexMapAndVariables + 
+                         temp$drawingClusterEffects + temp$drawingNc + 
+                         temp$drawing_uc_muc + 
+                         temp$getPixelRisk + temp$subareaAggSetup +
+                         temp$getSubareaRisk + temp$areaAggSetup + 
+                         temp$getAreaRisk, 
+                       smoothRisk = temp$setup + 
+                         temp$drawing_uc_muc + 
+                         temp$getPixelSmoothRisk + temp$subareaAggSetup +
+                         temp$getSubareaSmoothRisk + temp$areaAggSetup + 
+                         temp$getAreaSmoothRisk, 
+                       griddedRisk = temp$setup + 
+                         temp$drawing_uc_muc + 
+                         temp$getPixelGriddedRisk + temp$subareaAggSetup +
+                         temp$getSubareaGriddedRisk + temp$areaAggSetup + 
+                         temp$getAreaGriddedRisk, 
+                       total = sum(allTimings))
   
   if(!returnEAinfo) {
-    pixelLevelPop
+    totalTime = sum(allTimings)
+    allTimings = c(allTimings, totalTime=totalTime)
+    allTimings = cbind(allTimings, allTimings/totalTime)
+    list(pixelPop=pixelLevelPop, subareaPop=subareaLevelPop, areaPop=areaLevelPop, 
+         allTimings=allTimings, processedTimings=processedTimings)
   } else {
-    
     
     # return list of eaDat objects
     getEADat = function(i) {
@@ -584,16 +874,23 @@ simPopCustomTest = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, ta
                          area=popMat$area[theseI], subarea=rep("temp", length(theseI)), 
                          urban=popMat$urban[theseI], east=popMat$east[theseI], north=popMat$north[theseI], 
                          popDensity=popMat$pop[theseI], popDensityTarget=targetPopMat$pop[theseI], pixelIs=theseI, 
-                         nHH=householdDraws[,i], N=Ncs[,i], Z=Zc[,i], 
-                         pFineScalePrevalence=Zc[,i]/Ncs[,i])
+                         nHH=householdDraws[,i], N=Ncs[,i], Z=Zcs[,i], 
+                         pFineScalePrevalence=Zcs[,i]/Ncs[,i])
       if(doFineScaleRisk) {
-        eaDat$pFineScaleRisk=muc[,i]
+        eaDat$pFineScaleRisk = muc[,i]
+        eaDat$ZFineScaleRisk = muc[,i] * Ncs[,i]
+        eaDat$NFineScaleRisk = Ncs[,i]
       }
       if(doSmoothRisk) {
         eaDat$pSmoothRisk=smoothRisk[theseI,i]
+        # N and Z not defined at the EA level
+      }
+      if(doGriddedRisk) {
+        eaDat$pGriddedRisk=griddedRisk[theseI,i]
+        # N and Z not defined at the EA level
       }
       
-      if(subareaLevel) {
+      if("subarea" %in% names(popMat)) {
         eaDat$subarea = popMat$subarea[theseI]
       } else {
         eaDat$subarea = NULL
@@ -604,10 +901,58 @@ simPopCustomTest = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, ta
       eaDat
     }
     
-    print("Constructing list of simulated EA data.frames")
-    eaDatList = lapply(1:nDraws, getEADat)
+    if(verbose) {
+      print("Constructing list of simulated EA data.frames...")
+    }
     
-    c(pixelLevelPop, list(eaDatList=eaDatList, eaSamples=eaSamples))
+    eaDatList = lapply(1:nDraws, getEADat)
+    time23 = proc.time()[3]
+    
+    env = environment()
+    rawTimes = sapply(paste("time", 1:23, sep=""), get, envir=env)
+    allTimings = diff(rawTimes)
+    names(allTimings) = c("setup", "samplingEAs", "EAtoPixelIndexMapAndVariables", 
+                          "drawingClusterEffects", "drawingNc", "drawing_uc_muc", 
+                          "drawingZc", "getPixelGriddedRisk", "getPixelSmoothRisk", 
+                          "getPixelPrevalence", "getPixelRisk", "subareaAggSetup", 
+                          "getSubareaPrevalence", "getSubareaRisk", 
+                          "getSubareaSmoothRisk", "getSubareaGriddedRisk", 
+                          "areaAggSetup", "getAreaPrevalence", "getAreaRisk", 
+                          "getAreaSmoothRisk", "getAreaGriddedRisk", "getEAdat")
+    temp = as.list(allTimings)
+    processedTimings = c(prevalence = temp$setup + temp$samplingEAs + 
+                           temp$EAtoPixelIndexMapAndVariables + 
+                           temp$drawingClusterEffects + temp$drawingNc + 
+                           temp$drawing_uc_muc + temp$drawingZc + 
+                           temp$getPixelPrevalence + temp$subareaAggSetup +
+                           temp$getSubareaPrevalence + temp$areaAggSetup + 
+                           temp$getAreaPrevalence, 
+                         risk = temp$setup + temp$samplingEAs + 
+                           temp$EAtoPixelIndexMapAndVariables + 
+                           temp$drawingClusterEffects + temp$drawingNc + 
+                           temp$drawing_uc_muc + 
+                           temp$getPixelRisk + temp$subareaAggSetup +
+                           temp$getSubareaRisk + temp$areaAggSetup + 
+                           temp$getAreaRisk, 
+                         smoothRisk = temp$setup + 
+                           temp$drawing_uc_muc + 
+                           temp$getPixelSmoothRisk + temp$subareaAggSetup +
+                           temp$getSubareaSmoothRisk + temp$areaAggSetup + 
+                           temp$getAreaSmoothRisk, 
+                         griddedRisk = temp$setup + 
+                           temp$drawing_uc_muc + 
+                           temp$getPixelGriddedRisk + temp$subareaAggSetup +
+                           temp$getSubareaGriddedRisk + temp$areaAggSetup + 
+                           temp$getAreaGriddedRisk, 
+                         total = sum(allTimings))
+    
+    totalTime = sum(allTimings)
+    allTimings = c(allTimings, totalTime=totalTime)
+    allTimings = cbind(allTimings, allTimings/totalTime)
+    
+    list(pixelPop=pixelLevelPop, subareaPop=subareaLevelPop, areaPop=areaLevelPop, 
+         eaDatList=eaDatList, eaSamples=eaSamples, 
+         allTimings=allTimings, processedTimings=processedTimings)
   }
 }
 

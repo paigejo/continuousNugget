@@ -18,7 +18,7 @@ j = jobInds[2]
 # p = profvis({
 system.time(out <- runSimStudyij(i, j, coarse=coarse, doGC=TRUE))
 # })
-
+# save(p, file="savedOutput/simStudyResults/tempFiles/profFile.RData")
 
 # Rprof(NULL)
 # profvis(prof_input = "data.Rprof")

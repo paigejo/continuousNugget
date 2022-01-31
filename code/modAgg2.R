@@ -1288,7 +1288,7 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
                         min1PerSubarea=TRUE, 
                         fixPopPerEA=NULL, fixHHPerEA=NULL, fixPopPerHH=NULL, 
                         returnEAinfo=FALSE, epsc=NULL, stopOnFrameMismatch=FALSE, tol=1e-3, 
-                        verbose=TRUE) {
+                        verbose=TRUE, doGC=FALSE) {
   
   time1 = proc.time()[3]
   
