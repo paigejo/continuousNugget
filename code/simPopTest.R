@@ -1505,7 +1505,7 @@ sampleNMultilevelMultinomialTest = function(nDraws = ncol(pixelIndexMat), pixelI
   ##### Draw the totals
   
   # get the total number of enumeration areas per stratum (this does not change between draws)
-  areasIs = match(areas, sort(unique(areasIs))) # convert from character to indices
+  areasIs = match(areas, sort(unique(areas))) # convert from character to indices
   totalEAsUrban = easpaList[[1]]$EAUrb
   totalEAsRural = easpaList[[1]]$EARur
   totalEAs = easpaList[[1]]$EATotal
