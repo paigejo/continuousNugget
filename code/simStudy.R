@@ -2676,7 +2676,7 @@ generateJobList = function(workDir="savedOutput/simStudyResults/tempFiles/", iRa
     thisJ = as.numeric(substr(thisFilename, jI+1, CI-1))
     fileExists[thisI, thisJ] = TRUE
   }
-  missingJobInds = which(c(t(fileExists)))
+  missingJobInds = (1:length(fileExists))[c(t(fileExists))]
   
   if(length(missingJobInds) == 1) {
     return(missingJobInds)
