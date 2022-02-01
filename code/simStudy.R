@@ -2679,6 +2679,7 @@ generateJobList = function(workDir="savedOutput/simStudyResults/tempFiles/", iRa
   missingJobInds = (1:length(fileExists))[c(t(fileExists))]
   
   if(length(missingJobInds) == 1) {
+    setwd(thisDir)
     return(missingJobInds)
   }
   
