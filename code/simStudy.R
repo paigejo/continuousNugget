@@ -2326,7 +2326,7 @@ runSimStudyij = function(i, j, seed=123, doSmoothRiskLogisticApprox=FALSE, coars
   time3 = proc.time()[3]
   
   # run the models
-  out = simPopCustomTest(logitRiskDraws=logitDraws, sigmaEpsilonDraws=sigmaEpsilonDraws, 
+  out = simPopCustom(logitRiskDraws=logitDraws, sigmaEpsilonDraws=sigmaEpsilonDraws, 
                      easpa=easpa, popMat=popMat, 
                      targetPopMat=popMatAdjusted, poppsub=poppsub, 
                      stratifyByUrban=TRUE, subareaLevel=TRUE, gridLevel=FALSE, 
@@ -2659,7 +2659,6 @@ generateJobList = function(workDir="savedOutput/simStudyResults/tempFiles/", iRa
   
   # get indices of relevant characters in the file names
   out = system("ls simOut_*Coarse_p.RData", intern=TRUE)
-  out = "simOut_i23j12Coarse_p.RData"
   iIs = rep(8, length(out))
   jIs = sapply(out, function(x) {gregexpr("j", x)[[1]][1]})
   CIs = sapply(out, function(x) {gregexpr("C", x)[[1]][1]})
@@ -2676,7 +2675,7 @@ generateJobList = function(workDir="savedOutput/simStudyResults/tempFiles/", iRa
     thisJ = as.numeric(substr(thisFilename, jI+1, CI-1))
     fileExists[thisI, thisJ] = TRUE
   }
-  missingJobInds = (1:length(fileExists))[c(t(fileExists))]
+  missingJobInds = (1:length(fileExists))[!c(t(fileExists))]
   
   if(length(missingJobInds) == 1) {
     setwd(thisDir)
