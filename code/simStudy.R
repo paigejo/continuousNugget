@@ -2682,9 +2682,10 @@ generateJobList = function(workDir="savedOutput/simStudyResults/tempFiles/", iRa
     return(missingJobInds)
   }
   
-  # shorten the string to make it readable
-  jobIndDiffs = diff(missingJobInds)
-  consecutiveJobInds = jobIndDiffs == 1
+  # shorten the string to make it readable:
+  
+  # add a fake missing job index at the end to make sure we get the final missing jobs
+  missingJobInds = c(missingJobInds, length(fileExists) + 100)
   
   # look for groups of consecutive missing job indices
   lastInd = missingJobInds[1]
