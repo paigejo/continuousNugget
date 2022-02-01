@@ -1370,6 +1370,9 @@ rmultinom1Test = function(n=1, size, prob, maxSize=5000*5000, method=c("mult1", 
     
     while(any(is.na(samples))) {
       # calculate the number of remaining samples
+      # samplesLeft = is.na(samplesLeft)
+      # samplesLeft = apply(samplesLeft, 2, function(x) {any(x)})
+      # samplesLeft = sum(samplesLeft)
       samplesLeft = sum(apply(samples, 2, function(x) {any(is.na(x))}))
       
       # approximate expected number of samples so that, after some are rejected, we will 

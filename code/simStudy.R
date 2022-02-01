@@ -2652,6 +2652,74 @@ printSimStudyTablei = function(i=1, maxJ=100, coarse=TRUE) {
   print(xtable(areaZScores, display=displayZ, digits=digitsZ), math.style.exponents=TRUE)
 }
 
+generateJobList = function(workDir="savedOutput/simStudyResults/tempFiles/", iRange=1:57, jRange=1:100) {
+  # save current directory to return to later. Set directory to job file locations
+  thisDir = getwd()
+  setwd(workDir)
+  
+  # get indices of relevant characters in the file names
+  out = system("ls simOut_*Coarse_p.RData", intern=TRUE)
+  out = "simOut_i23j12Coarse_p.RData"
+  iIs = rep(8, length(out))
+  jIs = sapply(out, function(x) {gregexpr("j", x)[[1]][1]})
+  CIs = sapply(out, function(x) {gregexpr("C", x)[[1]][1]})
+  
+  # determine whether the relevant file exists or not
+  fileExists = matrix(FALSE, nrow=length(iRange), ncol=length(jRange))
+  for(i in 1:length(out)) {
+    thisFilename = out[i]
+    iI = iIs[i]
+    jI = jIs[i]
+    CI = CIs[i]
+    
+    thisI = as.numeric(substr(thisFilename, iI+1, jI-1))
+    thisJ = as.numeric(substr(thisFilename, jI+1, CI-1))
+    fileExists[thisI, thisJ] = TRUE
+  }
+  missingJobInds = which(c(t(fileExists)))
+  
+  if(length(missingJobInds) == 1) {
+    return(missingJobInds)
+  }
+  
+  # shorten the string to make it readable
+  jobIndDiffs = diff(missingJobInds)
+  consecutiveJobInds = jobIndDiffs == 1
+  
+  # look for groups of consecutive missing job indices
+  lastInd = missingJobInds[1]
+  firstJobInd = lastInd
+  jobList = ""
+  for(i in 2:length(missingJobInds)) {
+    thisInd = missingJobInds[i]
+    thisDiff = thisInd - lastInd
+    commaStr = ifelse(firstJobInd == missingJobInds[1], "", ",")
+    
+    if(thisDiff != 1) {
+      # this index and last index aren't in the same group, must add 
+      # last index (or its associated group) to the job list string
+      
+      if(firstJobInd == lastInd) {
+        # last index was a singleton
+        jobList = paste0(jobList, commaStr, lastInd)
+      } else {
+        # last index was the last consecutive job in the group
+        jobList = paste0(jobList, commaStr, "[", firstJobInd, "-", lastInd, "]")
+      }
+      
+      firstJobInd = thisInd
+    } else {
+      # this index and last index are in the same group. Don't need to 
+      # do anything here
+    }
+    lastInd = thisInd
+  }
+  
+  setwd(thisDir)
+  
+  return(jobList)
+}
+
 
 
 
