@@ -306,12 +306,11 @@ generateAllDataSets2 = function(startInd=1) {
   nPar = length(spde_prevRiskSimStudyCommandArgs)
   
   if(startInd > nPar) {
-    stop(paste0("startInd (", startInd, ") is great than nPar (", nPar, ")"))
+    stop(paste0("startInd (", startInd, ") is greater than nPar (", nPar, ")"))
   }
   
   set.seed(1)
   allSeeds = sample(1:1000000, nPar, replace=FALSE)
-  browser()
   for(i in startInd:nPar) {
     print(paste0("simulating dataset ", i, "/", nPar))
     set.seed(allSeeds[i])
@@ -319,6 +318,34 @@ generateAllDataSets2 = function(startInd=1) {
     theseArgs = spde_prevRiskSimStudyCommandArgs[[i]]
     do.call("generateSimDataSetsLCPB2", theseArgs)
   }
+}
+
+getMissingDatasetIndices = function(workDir="savedOutput/simDataSets/") {
+  out = load("savedOutput/simStudyResults/spde_prevRiskSimStudyCommandArgs.RData")
+  
+  filesExist = rep(FALSE, length(spde_prevRiskSimStudyCommandArgs))
+  for(i in 1:length(spde_prevRiskSimStudyCommandArgs)) {
+    theseArgs = spde_prevRiskSimStudyCommandArgs[[i]]
+    beta0 = theseArgs$beta0
+    rho = theseArgs$rho
+    sigmaEpsilon = theseArgs$sigmaEpsilon
+    gamma = theseArgs$gamma
+    nEAsFac = theseArgs$nEAsFac
+    nClustFac = theseArgs$nClustFac
+    
+    dataID = paste0("Bet", signif(beta0, 3), "rho", signif(rho, 3), "sigEps", 
+                    signif(sigmaEpsilon, 3), "gam", signif(gamma, 3), 
+                    "nEAsFac", signif(nEAsFac, 3), "nClustFac", signif(nClustFac, 3))
+    thisFile = paste0(dataSaveDirectory, "simData", dataID, ".RData")
+    
+    if(file.exists(thisFile)) {
+      filesExist[i] = TRUE
+    }
+  }
+  
+  print(paste0("Number of files missing: ", sum(!filesExist)))
+  
+  (1:length(spde_prevRiskSimStudyCommandArgs))[!filesExist]
 }
 
 # simulate and save datasets used for the simulation study with the given model parameters
