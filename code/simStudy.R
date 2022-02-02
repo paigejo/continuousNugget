@@ -2680,6 +2680,8 @@ generateJobList = function(workDir="savedOutput/simStudyResults/tempFiles/", iRa
   if(length(missingJobInds) == 1) {
     setwd(thisDir)
     return(missingJobInds)
+  } else {
+    print(paste0("Total missing job results: ", length(missingJobInds)))
   }
   
   # shorten the string to make it readable:
