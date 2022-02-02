@@ -291,7 +291,7 @@ generateAllDataSets = function() {
 
 ## TODO: modify function to take in vector of seeds, make different population replication 
 ##       from same parameters for each seed
-generateAllDataSets2 = function(startInd=1) {
+generateAllDataSets2 = function(startInd=1, inds=NULL) {
   # generateSimDataSets(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9)
   # generateSimDataSets(gamma=0, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=-3.9)
   # generateSimDataSets(gamma=-1, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2.5), effRange=400, beta0=0)
@@ -305,13 +305,19 @@ generateAllDataSets2 = function(startInd=1) {
   
   nPar = length(spde_prevRiskSimStudyCommandArgs)
   
+  if(is.null(inds)) {
+    inds = startInd:nPar
+  } else {
+    startInd = min(inds)
+  }
+  
   if(startInd > nPar) {
     stop(paste0("startInd (", startInd, ") is greater than nPar (", nPar, ")"))
   }
   
   set.seed(1)
   allSeeds = sample(1:1000000, nPar, replace=FALSE)
-  for(i in startInd:nPar) {
+  for(i in inds) {
     print(paste0("simulating dataset ", i, "/", nPar))
     set.seed(allSeeds[i])
     
@@ -336,7 +342,7 @@ getMissingDatasetIndices = function(workDir="savedOutput/simDataSets/") {
     dataID = paste0("Bet", signif(beta0, 3), "rho", signif(rho, 3), "sigEps", 
                     signif(sigmaEpsilon, 3), "gam", signif(gamma, 3), 
                     "nEAsFac", signif(nEAsFac, 3), "nClustFac", signif(nClustFac, 3))
-    thisFile = paste0(dataSaveDirectory, "simData", dataID, ".RData")
+    thisFile = paste0(workDir, "simData", dataID, ".RData")
     
     if(file.exists(thisFile)) {
       filesExist[i] = TRUE
