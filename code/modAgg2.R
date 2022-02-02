@@ -1681,6 +1681,9 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
         
         time16 = smoothGriddedRiskSubarea$rawTimes[5]
         time17 = smoothGriddedRiskSubarea$rawTimes[6]
+      } else {
+        time16 = proc.time()[3]
+        time17 = proc.time()[3]
       }
       
       # aggregation matrices are not applicable for aggregating from EA level to subarea level
