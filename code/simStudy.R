@@ -2652,7 +2652,7 @@ printSimStudyTablei = function(i=1, maxJ=100, coarse=TRUE) {
   print(xtable(areaZScores, display=displayZ, digits=digitsZ), math.style.exponents=TRUE)
 }
 
-generateJobList = function(workDir="savedOutput/simStudyResults/tempFiles/", iRange=1:57, jRange=1:100) {
+generateJobList = function(workDir="savedOutput/simStudyResults/tempFiles/", iRange=1:54, jRange=1:100) {
   # save current directory to return to later. Set directory to job file locations
   thisDir = getwd()
   setwd(workDir)
