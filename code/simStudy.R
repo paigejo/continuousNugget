@@ -2483,7 +2483,7 @@ processSimStudyResultsij = function(i, j, coarse=TRUE) {
   invisible(res)
 }
 
-combineProcessedResults = function(is=1:57, maxJ=100, initialProcess=TRUE, combineScores=TRUE, coarse=TRUE) {
+combineProcessedResults = function(is=1:54, maxJ=100, initialProcess=TRUE, combineScores=TRUE, coarse=TRUE) {
   
   if(initialProcess) {
     print("Doing initial processing/scoring...")
@@ -2652,7 +2652,7 @@ printSimStudyTablei = function(i=1, maxJ=100, coarse=TRUE) {
   print(xtable(areaZScores, display=displayZ, digits=digitsZ), math.style.exponents=TRUE)
 }
 
-generateJobList = function(workDir="savedOutput/simStudyResults/tempFiles/", iRange=1:54, jRange=1:100) {
+generateJobList = function(workDir="savedOutput/simStudyResults/tempFiles/", iRange=1:54, jRange=1:100, extensiveCheck=FALSE) {
   # save current directory to return to later. Set directory to job file locations
   thisDir = getwd()
   setwd(workDir)
@@ -2673,7 +2673,19 @@ generateJobList = function(workDir="savedOutput/simStudyResults/tempFiles/", iRa
     
     thisI = as.numeric(substr(thisFilename, iI+1, jI-1))
     thisJ = as.numeric(substr(thisFilename, jI+1, CI-1))
-    fileExists[thisI, thisJ] = TRUE
+    if(!extensiveCheck) {
+      fileExists[thisI, thisJ] = TRUE
+    } else {
+      # check to make sure we can actually load the relevant files
+      thisFilenameP = thisFilename
+      thisFilenameZ = gsub("_p", "_Z", thisFilenameP)
+      
+      canLoad <<- TRUE
+      tmp = tryCatch(load(thisFilenameP), error= function(e) {canLoad <<- FALSE})
+      tmp = tryCatch(load(thisFilenameZ), error= function(e) {canLoad <<- FALSE})
+      
+      fileExists[thisI, thisJ] = canLoad
+    }
   }
   missingJobInds = (1:length(fileExists))[!c(t(fileExists))]
   
