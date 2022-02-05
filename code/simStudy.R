@@ -2652,7 +2652,7 @@ printSimStudyTablei = function(i=1, maxJ=100, coarse=TRUE) {
   print(xtable(areaZScores, display=displayZ, digits=digitsZ), math.style.exponents=TRUE)
 }
 
-generateJobList = function(workDir="savedOutput/simStudyResults/tempFiles/", iRange=1:54, jRange=1:100, extensiveCheck=FALSE) {
+generateJobList = function(workDir="savedOutput/simStudyResults/tempFiles/", iRange=1:54, jRange=1:100, extensiveCheck=FALSE, extensiveNACheck=FALSE) {
   # save current directory to return to later. Set directory to job file locations
   thisDir = getwd()
   setwd(workDir)
@@ -2683,6 +2683,11 @@ generateJobList = function(workDir="savedOutput/simStudyResults/tempFiles/", iRa
       canLoad <<- TRUE
       tmp = tryCatch(load(thisFilenameP), error= function(e) {canLoad <<- FALSE})
       tmp = tryCatch(load(thisFilenameZ), error= function(e) {canLoad <<- FALSE})
+      
+      if(extensiveNACheck) {
+        if(all(is.na(subareaPopP$pFineScalePrevalence))) 
+          canLoad <<- FALSE
+      }
       
       fileExists[thisI, thisJ] = canLoad
     }
