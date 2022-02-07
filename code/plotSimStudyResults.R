@@ -5,29 +5,24 @@
 makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR")) {
   type = match.arg(type)
   
-  # meanScoresDF contains the following variables:
-  # beta, rho, nClustFac, nEAsFac, model, 
-  # rmse, bias, 
-  # intScore80, intScore90, intScore95, 
-  # cvg80, cvg90, cvg95, 
-  # width80, width90, with95, time
-  scoreVars = c("rmse", "bias", 
-                "intScore80", "intScore90", "intScore95", 
-                "cvg80", "cvg90", "cvg95", 
-                "width80", "width90", "width95", "time")
+  # meanScoresDF contains the following variables that we actually care about:
+  scoreVars = c("RMSE", "Bias", 
+                "IntervalScore80", "IntervalScore90", "IntervalScore95", 
+                "Coverage80", "Coverage90", "Coverage95", 
+                "Width80", "Width90", "Width95", "Time")
   
   # we want to calculate the percent increase of each score value for the 
   # proposed model versus the comparison model. Start by subsetting scores 
   # by relevant model types, then calculate percent increase in scores
   if(type == "PvSR") {
-    tab1 = meanScoresDF[meanScoresDF$model == "prev",]
-    tab2 = meanScoresDF[meanScoresDF$model == "smoothRisk",]
+    tab1 = meanScoresDF[meanScoresDF$model == "Prevalence",]
+    tab2 = meanScoresDF[meanScoresDF$model == "SmoothRisk",]
   } else if(type == "RvSR") {
-    tab1 = meanScoresDF[meanScoresDF$model == "risk",]
-    tab2 = meanScoresDF[meanScoresDF$model == "smoothRisk",]
+    tab1 = meanScoresDF[meanScoresDF$model == "Risk",]
+    tab2 = meanScoresDF[meanScoresDF$model == "SmoothRisk",]
   } else if(type == "PvR") {
-    tab1 = meanScoresDF[meanScoresDF$model == "prev",]
-    tab2 = meanScoresDF[meanScoresDF$model == "risk",]
+    tab1 = meanScoresDF[meanScoresDF$model == "Prevalence",]
+    tab2 = meanScoresDF[meanScoresDF$model == "Risk",]
   }
   if(type %in% c("PvSR", "RvSR", "PvR")) {
     tab1$model = NULL
