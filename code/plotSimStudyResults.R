@@ -76,3 +76,57 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR")) {
     
   }
 }
+
+# function for making input to makeFancyTable. 
+# meanScoresDF contains the following variables:
+# beta, rho, nClustFac, nEAsFac, model, 
+# rmse, bias, 
+# intScore80, intScore90, intScore95, 
+# cvg80, cvg90, cvg95, 
+# width80, width90, with95, time
+getFullMeanScoresDF = function(iRange=1:54, maxJ=100, coarse=TRUE, areaLevel=c("subarea", "area"), 
+                               response=c("p", "Z")) {
+  areaLevel = match.arg(areaLevel)
+  response = match.arg(response)
+  coarseText = ifelse(coarse, "Coarse", "")
+  
+  allDat = c()
+  for(i in iRange) {
+    # get population arguments
+    out = load("savedOutput/simStudyResults/spde_prevRiskSimStudyCommandArgs.RData")
+    theseArgs = spde_prevRiskSimStudyCommandArgs[[i]]
+    beta0 = theseArgs$beta0
+    rho = theseArgs$rho
+    nEAsFac = theseArgs$nEAsFac
+    nClustFac = theseArgs$nClustFac
+    popPar = c(beta=beta0, rho=rho, nEAsFac=nEAsFac, nClustFac=nClustFac)
+    
+    thisFile = paste0("savedOutput/simStudyResults/simScoresAll_i", i, "maxJ", maxJ, coarseText, ".RData")
+    out = load(thisFile)
+    
+    if(areaLevel == "subarea" && response == "p") {
+      allDat = rbind(allDat, c(popPar, model="Prevalence", subareaScoresPprevAvg))
+      allDat = rbind(allDat, c(popPar, model="Risk", subareaScoresPriskAvg))
+      allDat = rbind(allDat, c(popPar, model="SmoothRisk", subareaScoresPsmoothRiskAvg))
+    } else if(areaLevel == "subarea" && response == "Z") {
+      allDat = rbind(allDat, c(popPar, model="Prevalence", subareaScoresZprevAvg))
+      allDat = rbind(allDat, c(popPar, model="Risk", subareaScoresZriskAvg))
+      allDat = rbind(allDat, c(popPar, model="SmoothRisk", subareaScoresZsmoothRiskAvg))
+    } else if(areaLevel == "area" && response == "p") {
+      allDat = rbind(allDat, c(popPar, model="Prevalence", areaScoresPprevAvg))
+      allDat = rbind(allDat, c(popPar, model="Risk", areaScoresPriskAvg))
+      allDat = rbind(allDat, c(popPar, model="SmoothRisk", areaScoresPsmoothRiskAvg))
+    } else if(areaLevel == "area" && response == "Z") {
+      allDat = rbind(allDat, c(popPar, model="Prevalence", areaScoresZprevAvg))
+      allDat = rbind(allDat, c(popPar, model="Risk", areaScoresZriskAvg))
+      allDat = rbind(allDat, c(popPar, model="SmoothRisk", areaScoresZsmoothRiskAvg))
+    }
+  }
+  
+  allDat
+}
+
+
+
+
+
