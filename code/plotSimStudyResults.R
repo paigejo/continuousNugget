@@ -2,23 +2,47 @@
 # Refer to 
 # https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_pdf.pdf
 # for information about kableExtra
-makeFancyTable = function(meanScoresDF) {
-  # meanScoresDF contains the following variables:
-  # beta, rho, nClustFac, nEAsFac, rmse, bias, 
-  # intScore80, intScore90, intScore95, 
-  # cvg89, cvg90, cvg95, 
-  # width80, width90, with95
+makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR")) {
+  type = match.arg(type)
   
-  require(kableExtra)
+  # meanScoresDF contains the following variables:
+  # beta, rho, nClustFac, nEAsFac, model, 
+  # rmse, bias, 
+  # intScore80, intScore90, intScore95, 
+  # cvg80, cvg90, cvg95, 
+  # width80, width90, with95, time
   scoreVars = c("rmse", "bias", 
                 "intScore80", "intScore90", "intScore95", 
-                "cvg89", "cvg90", "cvg95", 
-                "width80", "width90", "with95")
+                "cvg80", "cvg90", "cvg95", 
+                "width80", "width90", "width95", "time")
   
-  # make a fancy table for each scoreVar
+  # we want to calculate the percent increase of each score value for the 
+  # proposed model versus the comparison model. Start by subsetting scores 
+  # by relevant model types, then calculate percent increase in scores
+  if(type == "PvSR") {
+    tab1 = meanScoresDF[meanScoresDF$model == "prev",]
+    tab2 = meanScoresDF[meanScoresDF$model == "smoothRisk",]
+  } else if(type == "RvSR") {
+    tab1 = meanScoresDF[meanScoresDF$model == "risk",]
+    tab2 = meanScoresDF[meanScoresDF$model == "smoothRisk",]
+  } else if(type == "PvR") {
+    tab1 = meanScoresDF[meanScoresDF$model == "prev",]
+    tab2 = meanScoresDF[meanScoresDF$model == "risk",]
+  }
+  if(type %in% c("PvSR", "RvSR", "PvR")) {
+    tab1$model = NULL
+    tab2$model = NULL
+    meanScoresDF[[scoreVars]] = (tab1[[scoreVars]] - tab2[[scoreVars]])/tab2[[scoreVars]] * 100
+  } 
+  
+  require(kableExtra)
+  
+  # make a fancy table for percent increase of each scoreVar
   for(i in 1:length(scoreVars)) {
     thisScore = scoreVars[i]
     thisTab = meanScoresTab[[c("beta", "rho", "nClustFac", "nEAsFac", thisScore)]]
+    
+    browser()
     
     # p. 15: nice color use illustration:
     # vs_dt <- iris[1:10, ]
