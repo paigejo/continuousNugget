@@ -6,7 +6,7 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR")) {
   type = match.arg(type)
   
   # meanScoresDF contains the following variables that we actually care about:
-  scoreVars = c("RMSE", "Bias", 
+  scoreVars = c("RMSE", "Bias", "CRPS", 
                 "IntervalScore80", "IntervalScore90", "IntervalScore95", 
                 "Coverage80", "Coverage90", "Coverage95", 
                 "Width80", "Width90", "Width95", "Time")
@@ -15,19 +15,21 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR")) {
   # proposed model versus the comparison model. Start by subsetting scores 
   # by relevant model types, then calculate percent increase in scores
   if(type == "PvSR") {
-    tab1 = meanScoresDF[meanScoresDF$model == "Prevalence",]
-    tab2 = meanScoresDF[meanScoresDF$model == "SmoothRisk",]
+    tab1 = meanScoresDF[meanScoresDF$Model == "Prevalence",]
+    tab2 = meanScoresDF[meanScoresDF$Model == "SmoothRisk",]
   } else if(type == "RvSR") {
-    tab1 = meanScoresDF[meanScoresDF$model == "Risk",]
-    tab2 = meanScoresDF[meanScoresDF$model == "SmoothRisk",]
+    tab1 = meanScoresDF[meanScoresDF$Model == "Risk",]
+    tab2 = meanScoresDF[meanScoresDF$Model == "SmoothRisk",]
   } else if(type == "PvR") {
-    tab1 = meanScoresDF[meanScoresDF$model == "Prevalence",]
-    tab2 = meanScoresDF[meanScoresDF$model == "Risk",]
+    tab1 = meanScoresDF[meanScoresDF$Model == "Prevalence",]
+    tab2 = meanScoresDF[meanScoresDF$Model == "Risk",]
   }
   if(type %in% c("PvSR", "RvSR", "PvR")) {
-    tab1$model = NULL
-    tab2$model = NULL
+    tab1$Model = NULL
+    tab2$Model = NULL
+    meanScoresDF = meanScoresDF[meanScoresDF$Model == "Prevalence",]
     meanScoresDF[scoreVars] = (tab1[scoreVars] - tab2[scoreVars])/tab2[scoreVars] * 100
+    digits = rep(1, 9)
   } 
   
   require(kableExtra)
@@ -36,8 +38,15 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR")) {
   for(i in 1:length(scoreVars)) {
     thisScore = scoreVars[i]
     thisTab = meanScoresDF[c("beta", "rho", "nClustFac", "nEAsFac", thisScore)]
+    thisTab = thisTab[order(thisTab$beta, decreasing=TRUE),]
+    thisTab = thisTab[order(thisTab$nClustFac, decreasing=TRUE),]
+    thisTab = thisTab[order(thisTab$rho),]
+    thisTab = thisTab[order(thisTab$nEAsFac),]
+    thisTab = matrix(unlist(thisTab[thisScore]), nrow=6, ncol=9)
     
     browser()
+    
+    options(knitr.table.format="latex")
     
     # p. 15: nice color use illustration:
     # vs_dt <- iris[1:10, ]
@@ -48,26 +57,51 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR")) {
     # })
     # vs_dt[5] <- cell_spec(vs_dt[[5]], color = "white", bold = T,
     #                       background = spec_color(1:10, end = 0.9, option = "A", direction = -1))
-    # kbl(vs_dt, booktabs = T, escape = F, align = "c") %>%
-    #   kable_classic("striped", full_width = F)
+    # kbl(vs_dt, booktabs = T, escape = F, align = "c", format="latex") %>%
+    #   kable_styling(latex_options="striped", full_width = F)
     
     #  p. 17: 3 headers with nice hlines
+    # dt <- mtcars[1:5, 1:6]
     # kbl(dt, booktabs = T) %>%
     #   kable_styling(latex_options = "striped") %>%
     #   add_header_above(c(" ", "Group 1" = 2, "Group 2" = 2, "Group 3" = 2)) %>%
     #   add_header_above(c(" ", "Group 4" = 4, "Group 5" = 2)) %>%
-    #   add_header_above(c(" ", "Group 6" = 6), bold = T, italic = T
+    #   add_header_above(c(" ", "Group 6" = 6), bold = T, italic = T)
     
     #  p. 20: collapse_rows with correct hlines
     # collapse_rows_dt <- data.frame(C1 = c(rep("a", 10), rep("b", 5)),
     #                                C2 = c(rep("c", 7), rep("d", 3), rep("c", 2), rep("d", 3)),
     #                                C3 = 1:15,
     #                                C4 = sample(c(0,1), 15, replace = TRUE))
-    # kbl(collapse_rows_dt, booktabs = T, align = "c") %>%
-    #   column_spec(1, bold=T) %>%
-    #   collapse_rows(columns = 1:2, latex_hline = "major", valign = "middle")
+    # kbl(collapse_rows_dt, booktabs = T, align = "c", format="latex") %>%
+    #   collapse_rows(columns = 1:2, latex_hline = "major", valign = "middle") %>%
+    #   column_spec(1, bold=T)
     
+    tempTab = matrix(as.numeric(format(thisTab, digits=rep(1, 9))), nrow=6)
+    valRange = range(tempTab)
+    tempTab = data.frame(tempTab)
+    tempTab <- lapply(tempTab, function(x) {
+      cell_spec(x, color = "white", bold = T, format="latex", 
+                background = spec_color(x, end = 0.9, option = "A", scale_from=valRange))
+    })
     
+    # add in buffer columns with small width
+    buffCol = list(rep("", 6))
+    tempTab = c(list(rep("$r_{mbox{clust}}$", 6), rep(c("1/3", "1", "3"), each=2), 
+                     paste(rep("$beta", 6), rep(c("1$", "2$", "3$"), each=2), sep=""), as.character(rep(c(0, -4), 3))), 
+                tempTab[1:3], buffCol, tempTab[4:6], buffCol, tempTab[7:9])
+    
+    rhoVals = c("$1/16$"=1, "$1/4$"=1, "$1/2$"=1)
+    kbl(data.frame(tempTab), booktabs = T, escape = F, align = "c", format="latex", 
+        linesep=c("", "\\addlinespace"), digits=2, caption="test", col.names=rep("a", 15), 
+        toprule=F) %>% 
+      column_spec(column=c(8, 12), width="0em") %>%  
+      collapse_rows(columns = 2, target=2, headers_to_remove=2, latex_hline = "none", valign = "middle") %>%
+      add_header_above(c(" "=4, rep(c(rhoVals, " "=1), 2), rhoVals), escape=F) %>%
+      add_header_above(c(" "=4, "$rho$" = 3, " "=1, "$rho$" = 3, " "=1, "$rho$" = 3), escape=F, line=F) %>%
+      add_header_above(c(" "=4, "$1/5$" = 3, " "=1, "$1$" = 3, " "=1, "$5$" = 3), escape=F) %>%
+      add_header_above(c(" "=4, "$r_{EAs}$" = 11), escape=F, line=F) %>%
+      kable_styling(latex_options="basic", full_width = F)
     
   }
 }
