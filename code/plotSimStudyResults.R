@@ -35,7 +35,7 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR")) {
   # make a fancy table for percent increase of each scoreVar
   for(i in 1:length(scoreVars)) {
     thisScore = scoreVars[i]
-    thisTab = meanScoresTab[c("beta", "rho", "nClustFac", "nEAsFac", thisScore)]
+    thisTab = meanScoresDF[c("beta", "rho", "nClustFac", "nEAsFac", thisScore)]
     
     browser()
     
