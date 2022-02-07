@@ -27,7 +27,7 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR")) {
   if(type %in% c("PvSR", "RvSR", "PvR")) {
     tab1$model = NULL
     tab2$model = NULL
-    meanScoresDF[[scoreVars]] = (tab1[[scoreVars]] - tab2[[scoreVars]])/tab2[[scoreVars]] * 100
+    meanScoresDF[scoreVars] = (tab1[scoreVars] - tab2[scoreVars])/tab2[scoreVars] * 100
   } 
   
   require(kableExtra)
@@ -35,7 +35,7 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR")) {
   # make a fancy table for percent increase of each scoreVar
   for(i in 1:length(scoreVars)) {
     thisScore = scoreVars[i]
-    thisTab = meanScoresTab[[c("beta", "rho", "nClustFac", "nEAsFac", thisScore)]]
+    thisTab = meanScoresTab[c("beta", "rho", "nClustFac", "nEAsFac", thisScore)]
     
     browser()
     
