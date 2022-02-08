@@ -4,7 +4,7 @@
 # for information about kableExtra
 # valRanges: matrix with 2 rows and ncols length equal to the number of scoring rules with 
 #            first row being the low end of the score range and second being the high end.
-makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR"), valRanges=NULL) {
+makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", "SR"), valRanges=NULL) {
   type = match.arg(type)
   
   # meanScoresDF contains the following variables that we actually care about:
@@ -39,10 +39,18 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR"), valRanges
       relMods = c("prevalence", "risk")
     else if(type == "RvSR")
       relMods = c("risk", "smooth risk")
-    captionRoot1 = "Percentage inrease in "
+    captionRoot1 = "Mean percent increase in "
     captionRoot2 = paste0(" of the ", relMods[1], " aggregation model relative to the ", 
                           relMods[2], " aggregation model.")
-  } 
+  } else if(type %in% c("P", "R", "S")) {
+    if(type == "P") {
+      meanScoresDF = meanScoresDF[meanScoresDF$Model == "Prevalence",]
+    } else if(type == "R") {
+      meanScoresDF = meanScoresDF[meanScoresDF$Model == "Risk",]
+    } else if(type == "SR") {
+      meanScoresDF = meanScoresDF[meanScoresDF$Model == "SmoothRisk",]
+    }
+  }
   
   require(kableExtra)
   
@@ -89,12 +97,47 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR"), valRanges
     #   collapse_rows(columns = 1:2, latex_hline = "major", valign = "middle") %>%
     #   column_spec(1, bold=T)
     
-    tempTab = matrix(as.numeric(format(thisTab, digits=rep(1, 9))), nrow=6)
+    if(type %in% c("PvSR", "RvSR", "PvR")) {
+      # we only care about X.X% increases, no more than one decimal place
+      tempTab = matrix(as.numeric(formatC(thisTab, digits=1, format="f")), nrow=6)
+    } else if(type %in% c("P", "R", "S")) {
+      # correct formatting is trickier here. Must make sure same for all models, 
+      # but can be different for difference scores
+      if(thisScore == "RMSE") {
+        tempTab = matrix(as.numeric(formatC(thisTab, digits=1, format="f")), nrow=6)
+      } else if(thisScore == "Bias") {
+        
+      } else if(thisScore == "CRPS") {
+        
+      } else if(thisScore == "IntervalScore80") {
+        
+      } else if(thisScore == "IntervalScore90") {
+        
+      } else if(thisScore == "IntervalScore95") {
+        
+      } else if(thisScore == "Coverage80") {
+        
+      } else if(thisScore == "Coverage90") {
+        
+      } else if(thisScore == "Coverage95") {
+        
+      } else if(thisScore == "Width80") {
+        
+      } else if(thisScore == "Width90") {
+        
+      } else if(thisScore == "Width95") {
+        
+      } else if(thisScore == "Time") {
+        
+      }
+    }
+    
     if(!is.null(valRanges)) {
       valRange = valRanges[,i]
     } else {
       valRange = range(tempTab)
     }
+    # tempTab = matrix(format(tempTab, digits=1, scientific=FALSE), nrow=6)
     tempTab = data.frame(tempTab)
     if(thisScore %in% c("RMSE", "CRPS", 
                         "IntervalScore80", "IntervalScore90", "IntervalScore95", 
@@ -144,14 +187,14 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR"), valRanges
     
     # add in buffer columns with small width
     buffCol = list(rep("", 6))
-    tempTab = c(list(c("\\multirow{6}{*}{$r_{\\tiny \\mbox{clust}}$}", rep(" ", 5)), c("\\multirow{2}{*}{$1/3$}", "", "\\multirow{2}{*}{$1$}", "", "\\multirow{2}{*}{$3$}", ""), 
+    tempTab = c(list(c("\\multirow{6}{*}{$r_{\\tiny \\mbox{clust}}$}", rep(" ", 5)), c("\\multirow{2}{*}{$3$}", "", "\\multirow{2}{*}{$1$}", "", "\\multirow{2}{*}{$1/3$}", ""), 
                      rep(c("\\multirow{2}{*}{$\\beta$}", " "), 3), as.character(rep(c(0, -4), 3))), 
                 tempTab[1:3], buffCol, tempTab[4:6], buffCol, tempTab[7:9])
     
     rhoVals = c("$1/16$"=1, "$1/4$"=1, "$1/2$"=1)
     kbl(data.frame(tempTab), booktabs = T, escape = F, align = "c", format="latex", 
         linesep=c("", "\\addlinespace"), digits=2, caption=paste0(captionRoot1, thisScore, captionRoot2), 
-        col.names=NULL, bottomrule=FALSE) %>% 
+        col.names=NULL, bottomrule=FALSE, label=paste0(type, "_", thisScore)) %>% 
       column_spec(column=c(8, 12), width="0em") %>%
       column_spec(column=2, border_right=TRUE) %>%
       add_header_above(c(" "=4, rep(c(rhoVals, " "=1), 2), rhoVals), escape=F) %>%
