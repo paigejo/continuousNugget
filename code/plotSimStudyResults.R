@@ -44,12 +44,18 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
                           relMods[2], " aggregation model.")
   } else if(type %in% c("P", "R", "S")) {
     if(type == "P") {
+      thisMod = "prevalence"
       meanScoresDF = meanScoresDF[meanScoresDF$Model == "Prevalence",]
     } else if(type == "R") {
+      thisMod = "risk"
       meanScoresDF = meanScoresDF[meanScoresDF$Model == "Risk",]
     } else if(type == "SR") {
+      thisMod = "smooth risk"
       meanScoresDF = meanScoresDF[meanScoresDF$Model == "SmoothRisk",]
     }
+    
+    captionRoot1 = "Mean "
+    captionRoot2 = paste0(" of the ", thisMod, " aggregation model.")
   }
   
   require(kableExtra)
@@ -100,13 +106,17 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
     if(type %in% c("PvSR", "RvSR", "PvR")) {
       # we only care about X.X% increases, no more than one decimal place
       tempTab = matrix(as.numeric(formatC(thisTab, digits=1, format="f")), nrow=6)
+      formattedTempTab = tempTab
     } else if(type %in% c("P", "R", "S")) {
       # correct formatting is trickier here. Must make sure same for all models, 
       # but can be different for difference scores
       if(thisScore == "RMSE") {
-        tempTab = matrix(as.numeric(formatC(thisTab, digits=1, format="f")), nrow=6)
+        tempTab = signif(thisTab, 1)
+        formattedTempTab = tempTab
       } else if(thisScore == "Bias") {
-        
+        tempTab = matrix(round(thisTab, digits=5), nrow=6)
+        formattedTempTab = format(tempTab, format="f", digits=1)
+        formattedTempTab = num(tempTab, digits=1, fixed_exponent=Inf, notation="eng")
       } else if(thisScore == "CRPS") {
         
       } else if(thisScore == "IntervalScore80") {
@@ -152,8 +162,7 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
       
     } else if(thisScore %in% c("")) {
       # higher is better (there are no scores like this)
-    } else {
-      # "Bias", "Coverage80", "Coverage90", "Coverage95"
+    } else if(thisScore %in% c("Bias", "Coverage80", "Coverage90", "Coverage95")) {
       # closer a particular value is better
       
       if(type %in% c("PvSR", "RvSR", "PvR")) {
@@ -261,6 +270,7 @@ getFullMeanScoresDF = function(iRange=1:54, maxJ=100, coarse=TRUE, areaLevel=c("
 my_spec_color = function(x, alpha = 1, begin = 0, end = 1, direction = 1, option = "D", 
           na_color = "#BBBBBB", scale_from = NULL, customScale=NULL) 
 {
+  require(scales)
   if (is.null(scale_from)) {
     x <- round(rescale(x, c(1, 256)))
   }
@@ -276,6 +286,29 @@ my_spec_color = function(x, alpha = 1, begin = 0, end = 1, direction = 1, option
   
   color_code[is.na(color_code)] <- na_color
   return(color_code)
+}
+
+# display the numbers in engineering notation (x 10^{scale}). For 
+# numbers larger than 10^{scale}, scale will continued to be used 
+# as the exponent.
+# scale: if -Inf, uses the smallest scale, if Inf, uses the largest, 
+#        otherwise it is the user specified power of the scale to 
+#        display the numbers with
+formatEngineering = function(df, scale=-Inf, digits=1) {
+  if(scale == -Inf) {
+    scale = floor(min(lapply(df, log10)))
+  } else if(scale == Inf) {
+    scale = floor(max(lapply(df, log10)))
+  }
+  
+  fac = 10^scale
+  
+  displayFun = function(x) {
+    firstNum = round(x / fac, digits=digits)
+    paste0(firstNum, " \\times 10^{", scale, "}")
+  }
+  
+  data.frame(lapply(df, displayFun))
 }
 
 
