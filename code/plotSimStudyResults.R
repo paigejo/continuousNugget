@@ -17,20 +17,31 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
   # proposed model versus the comparison model. Start by subsetting scores 
   # by relevant model types, then calculate percent increase in scores
   if(type == "PvSR") {
-    tab1 = meanScoresDF[meanScoresDF$Model == "Prevalence",]
-    tab2 = meanScoresDF[meanScoresDF$Model == "SmoothRisk",]
+    tab1PvSR = meanScoresDF[meanScoresDF$Model == "Prevalence",]
+    tab2PvSR = meanScoresDF[meanScoresDF$Model == "SmoothRisk",]
+    tab1 = tab1PvSR
+    tab2 = tab2PvSR
   } else if(type == "RvSR") {
-    tab1 = meanScoresDF[meanScoresDF$Model == "Risk",]
-    tab2 = meanScoresDF[meanScoresDF$Model == "SmoothRisk",]
+    tab1RvSR = meanScoresDF[meanScoresDF$Model == "Risk",]
+    tab2RvSR = meanScoresDF[meanScoresDF$Model == "SmoothRisk",]
+    tab1 = tab1RvSR
+    tab2 = tab2RvSR
   } else if(type == "PvR") {
-    tab1 = meanScoresDF[meanScoresDF$Model == "Prevalence",]
-    tab2 = meanScoresDF[meanScoresDF$Model == "Risk",]
+    tab1PvR = meanScoresDF[meanScoresDF$Model == "Prevalence",]
+    tab2PvR = meanScoresDF[meanScoresDF$Model == "Risk",]
+    tab1 = tab1PvR
+    tab2 = tab2PvR
   }
   if(type %in% c("PvSR", "RvSR", "PvR")) {
     tab1$Model = NULL
     tab2$Model = NULL
     meanScoresDF = meanScoresDF[meanScoresDF$Model == "Prevalence",]
     meanScoresDF[scoreVars] = (tab1[scoreVars] - tab2[scoreVars])/tab2[scoreVars] * 100
+    if(is.null(valRanges)) {
+      tab1Full = rbind(tab1PvSR, tab1RvSR, tab1PvR)
+      tab2Full = rbind(tab2PvSR, tab2RvSR, tab2PvR)
+      valRanges = apply((tab1[scoreVars] - tab2[scoreVars])/tab2[scoreVars], 2, range) * 100
+    }
     digits = rep(1, 9)
     
     if(type == "PvSR")
@@ -43,6 +54,10 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
     captionRoot2 = paste0(" of the ", relMods[1], " aggregation model relative to the ", 
                           relMods[2], " aggregation model.")
   } else if(type %in% c("P", "R", "S")) {
+    if(is.null(valRanges)) {
+      valRanges = apply(meanScoresDF[scoreVars], 2, range)
+    }
+    
     if(type == "P") {
       thisMod = "prevalence"
       meanScoresDF = meanScoresDF[meanScoresDF$Model == "Prevalence",]
@@ -63,12 +78,36 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
   # make a fancy table for percent increase of each scoreVar
   for(i in 1:length(scoreVars)) {
     thisScore = scoreVars[i]
+    if(thisScore %in% c("RMSE", "CRPS")) {
+      scoreText = thisScore
+    } else if(thisScore %in% c("Bias", "Time")) {
+      scoreText = tolower(thisScore)
+    } else if(thisScore == "IntervalScore80") {
+      scoreText = "80\\% interval score"
+    } else if(thisScore == "IntervalScore90") {
+      scoreText = "90\\% interval score"
+    } else if(thisScore == "IntervalScore95") {
+      scoreText = "95\\% interval score"
+    } else if(thisScore == "Coverage80") {
+      scoreText = "80\\% empirical coverage"
+    } else if(thisScore == "Coverage90") {
+      scoreText = "90\\% empirical coverage"
+    } else if(thisScore == "Coverage95") {
+      scoreText = "95\\% empirical coverage"
+    } else if(thisScore == "Width80") {
+      scoreText = "80\\% credible interval width"
+    } else if(thisScore == "Width90") {
+      scoreText = "90\\% credible interval width"
+    } else if(thisScore == "Width95") {
+      scoreText = "95\\% credible interval width"
+    }
     thisTab = meanScoresDF[c("beta", "rho", "nClustFac", "nEAsFac", thisScore)]
     thisTab = thisTab[order(thisTab$beta, decreasing=TRUE),]
     thisTab = thisTab[order(thisTab$nClustFac, decreasing=TRUE),]
     thisTab = thisTab[order(thisTab$rho),]
     thisTab = thisTab[order(thisTab$nEAsFac),]
     thisTab = matrix(unlist(thisTab[thisScore]), nrow=6, ncol=9)
+    tempTab = data.frame(thisTab)
     
     browser()
     
@@ -105,26 +144,38 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
     
     if(type %in% c("PvSR", "RvSR", "PvR")) {
       # we only care about X.X% increases, no more than one decimal place
-      tempTab = matrix(as.numeric(formatC(thisTab, digits=1, format="f")), nrow=6)
-      formattedTempTab = tempTab
+      formattedTab = matrix(as.numeric(formatC(thisTab, digits=1, format="f")), nrow=6)
     } else if(type %in% c("P", "R", "S")) {
       # correct formatting is trickier here. Must make sure same for all models, 
       # but can be different for difference scores
       if(thisScore == "RMSE") {
-        tempTab = signif(thisTab, 1)
-        formattedTempTab = tempTab
+        formattedTab = signif(thisTab, 1)
+        scale = 0
       } else if(thisScore == "Bias") {
-        tempTab = matrix(round(thisTab, digits=5), nrow=6)
-        formattedTempTab = format(tempTab, format="f", digits=1)
-        formattedTempTab = num(tempTab, digits=1, fixed_exponent=Inf, notation="eng")
+        out = formatEngineering(as.data.frame(round(thisTab, digits=5)), 
+                                scale=-4, digits=1)
+        formattedTab = out$scalars
+        scale = -4
       } else if(thisScore == "CRPS") {
-        
+        out = formatEngineering(as.data.frame(round(thisTab, digits=4)), 
+                                scale=-2, digits=3)
+        formattedTab = out$scalars
+        scale = -2
       } else if(thisScore == "IntervalScore80") {
-        
+        out = formatEngineering(as.data.frame(round(thisTab, digits=3)), 
+                                scale=-2, digits=1)
+        formattedTab = out$scalars
+        scale = -2
       } else if(thisScore == "IntervalScore90") {
-        
+        out = formatEngineering(as.data.frame(round(thisTab, digits=3)), 
+                                scale=-2, digits=1)
+        formattedTab = out$scalars
+        scale = -2
       } else if(thisScore == "IntervalScore95") {
-        
+        out = formatEngineering(as.data.frame(round(thisTab, digits=3)), 
+                                scale=-2, digits=1)
+        formattedTab = out$scalars
+        scale = -2
       } else if(thisScore == "Coverage80") {
         
       } else if(thisScore == "Coverage90") {
@@ -145,21 +196,32 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
     if(!is.null(valRanges)) {
       valRange = valRanges[,i]
     } else {
-      valRange = range(tempTab)
+      valRange = range(thisTab)
     }
-    # tempTab = matrix(format(tempTab, digits=1, scientific=FALSE), nrow=6)
-    tempTab = data.frame(tempTab)
+    
     if(thisScore %in% c("RMSE", "CRPS", 
                         "IntervalScore80", "IntervalScore90", "IntervalScore95", 
-                        "Coverage80", "Coverage90", "Coverage95", 
                         "Width80", "Width90", "Width95", "Time")) {
       # lower is better
-      customCols = centerColorScale(256, valRange=c(0,1), center=.46, colScale=makeBlueGreenYellowSequentialColors, rev=TRUE)
-      tempTab <- lapply(tempTab, function(x) {
-        cell_spec(x, color = "white", bold = T, format="latex", 
-                  background = my_spec_color(x, end = 0.9, option = "D", scale_from=valRange, customScale=customCols))
-      })
+      customCols = centerColorScale(256, valRange=c(0,1), center=0.46,
+                                    colScale=makeBlueGreenYellowSequentialColors,
+                                    rev=TRUE)
       
+      if(type %in% c("PvSR", "RvSR", "PvR")) {
+        scaleFun = function(x) {x}
+      } else {
+        scaleFun = log
+      }
+      
+      colorCaption = " Yellow-green values are better, while indigo values are worse."
+      
+      tempTab <- lapply(1:length(tempTab), function(j) {
+        cell_spec(formattedTab[[j]], color = "white", bold = T, format="latex", 
+                  background = my_spec_color(thisTab[,j], end = 0.9, option = "D", 
+                                             scale_from=valRange, customScale=customCols, 
+                                             scaleFun=scaleFun), 
+                  escape=FALSE)
+      })
     } else if(thisScore %in% c("")) {
       # higher is better (there are no scores like this)
     } else if(thisScore %in% c("Bias", "Coverage80", "Coverage90", "Coverage95")) {
@@ -183,16 +245,26 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
       valRange=valRange-closeVal
       customCols = centerColorScale(256, colScale=makeBlueGoldDivergingColors, 
                                     valRange=valRange, center=0)
+      colorCaption = paste0(" Gray values are better, while blue values are too low ", 
+                            "and gold values are too high.")
       
-      tempTab <- lapply(tempTab, function(x) {
-        cell_spec(x, color = "black", bold = T, format="latex", 
-                  background = my_spec_color(x-closeVal, scale_from=valRange, customScale=customCols))
+      tempTab <- lapply(1:length(tempTab), function(j) {
+        cell_spec(formattedTab[[j]], color = "black", bold = T, format="latex", 
+                  background = my_spec_color(thisTab[,j]-closeVal, scale_from=valRange, 
+                                             customScale=customCols), 
+                  escape=FALSE)
       })
     }
     # tempTab <- lapply(tempTab, function(x) {
     #   cell_spec(x, color = "white", bold = T, format="latex", 
     #             background = spec_color(x, end = 0.9, option = "A", scale_from=valRange))
     # })
+    
+    if(scale == 0) {
+      scaleCaption = ""
+    } else {
+      scaleCaption = paste0(" All values are on a $10^{", scale, "}$ scale.")
+    }
     
     # add in buffer columns with small width
     buffCol = list(rep("", 6))
@@ -202,7 +274,8 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
     
     rhoVals = c("$1/16$"=1, "$1/4$"=1, "$1/2$"=1)
     kbl(data.frame(tempTab), booktabs = T, escape = F, align = "c", format="latex", 
-        linesep=c("", "\\addlinespace"), digits=2, caption=paste0(captionRoot1, thisScore, captionRoot2), 
+        linesep=c("", "\\addlinespace"), digits=2, 
+        caption=paste0(captionRoot1, scoreText, captionRoot2, colorCaption, scaleCaption), 
         col.names=NULL, bottomrule=FALSE, label=paste0(type, "_", thisScore)) %>% 
       column_spec(column=c(8, 12), width="0em") %>%
       column_spec(column=2, border_right=TRUE) %>%
@@ -268,9 +341,15 @@ getFullMeanScoresDF = function(iRange=1:54, maxJ=100, coarse=TRUE, areaLevel=c("
 # same as kableExtra::spec_color, expect 'customScale' argument can be a custom 
 # vector of hex colors of length 256
 my_spec_color = function(x, alpha = 1, begin = 0, end = 1, direction = 1, option = "D", 
-          na_color = "#BBBBBB", scale_from = NULL, customScale=NULL) 
+          na_color = "#BBBBBB", scale_from = NULL, customScale=NULL, scaleFun = function(x) {x}) 
 {
   require(scales)
+  x = scaleFun(x)
+  if(is.null(scale_from)) {
+    scale_from = range(x)
+  }
+  scale_from = scaleFun(scale_from)
+  
   if (is.null(scale_from)) {
     x <- round(rescale(x, c(1, 256)))
   }
@@ -303,12 +382,20 @@ formatEngineering = function(df, scale=-Inf, digits=1) {
   
   fac = 10^scale
   
-  displayFun = function(x) {
+  displayFunFirstPart = function(x) {
     firstNum = round(x / fac, digits=digits)
-    paste0(firstNum, " \\times 10^{", scale, "}")
+    format(firstNum, digits=digits, nsmall=digits)
+  }
+  displayFunFull = function(x) {
+    firstNum = round(x / fac, digits=digits)
+    paste0("$", format(firstNum, digits=digits, nsmall=digits), " \\times 10^{", scale, "}$")
   }
   
-  data.frame(lapply(df, displayFun))
+  firstPart = data.frame(lapply(df, displayFunFirstPart))
+  fullPart = data.frame(lapply(df, displayFunFull))
+  scale = list(latex=paste0("$10^{", scale, "}$"), scale=scale)
+  
+  list(result=fullPart, scalars=firstPart, scale=scale)
 }
 
 
