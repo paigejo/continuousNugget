@@ -162,8 +162,8 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
         formattedTab = out$scalars
         scale = -4
       } else if(thisScore == "CRPS") {
-        out = formatEngineering(as.data.frame(round(thisTab, digits=4)), 
-                                scale=-2, digits=3)
+        out = formatEngineering(as.data.frame(round(thisTab, digits=3)), 
+                                scale=-2, digits=2)
         formattedTab = out$scalars
         scale = -2
       } else if(thisScore == "IntervalScore80") {
@@ -184,17 +184,17 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
       } else if(thisScore == "Coverage80") {
         thisTab = thisTab * 100
         tempTab = data.frame(thisTab)
-        formattedTab = matrix(as.numeric(formatC(thisTab, digits=0, format="f")), nrow=6)
+        formattedTab = data.frame(matrix(as.numeric(formatC(thisTab, digits=0, format="f")), nrow=6))
         scale = 0
       } else if(thisScore == "Coverage90") {
         thisTab = thisTab * 100
         tempTab = data.frame(thisTab)
-        formattedTab = matrix(as.numeric(formatC(thisTab, digits=0, format="f")), nrow=6)
+        formattedTab = data.frame(matrix(as.numeric(formatC(thisTab, digits=0, format="f")), nrow=6))
         scale = 0
       } else if(thisScore == "Coverage95") {
         thisTab = thisTab * 100
         tempTab = data.frame(thisTab)
-        formattedTab = matrix(as.numeric(formatC(thisTab, digits=0, format="f")), nrow=6)
+        formattedTab = data.frame(matrix(as.numeric(formatC(thisTab, digits=0, format="f")), nrow=6))
         scale = 0
       } else if(thisScore == "Width80") {
         out = formatEngineering(as.data.frame(round(thisTab, digits=3)), 
