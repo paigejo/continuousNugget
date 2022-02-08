@@ -56,6 +56,7 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
   } else if(type %in% c("P", "R", "S")) {
     if(is.null(valRanges)) {
       valRanges = apply(meanScoresDF[scoreVars], 2, range)
+      valRanges[,grepl("Coverage", colnames(valRanges))] = 100 * valRanges[,grepl("Coverage", colnames(valRanges))]
     }
     
     if(type == "P") {
@@ -80,8 +81,10 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
     thisScore = scoreVars[i]
     if(thisScore %in% c("RMSE", "CRPS")) {
       scoreText = thisScore
-    } else if(thisScore %in% c("Bias", "Time")) {
+    } else if(thisScore == "Bias") {
       scoreText = tolower(thisScore)
+    } else if(thisScore == "Time") {
+      scoreText = "computation time in minutes"
     } else if(thisScore == "IntervalScore80") {
       scoreText = "80\\% interval score"
     } else if(thisScore == "IntervalScore90") {
@@ -108,8 +111,6 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
     thisTab = thisTab[order(thisTab$nEAsFac),]
     thisTab = matrix(unlist(thisTab[thisScore]), nrow=6, ncol=9)
     tempTab = data.frame(thisTab)
-    
-    browser()
     
     options(knitr.table.format="latex")
     
@@ -145,11 +146,12 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
     if(type %in% c("PvSR", "RvSR", "PvR")) {
       # we only care about X.X% increases, no more than one decimal place
       formattedTab = matrix(as.numeric(formatC(thisTab, digits=1, format="f")), nrow=6)
+      scale = 0
     } else if(type %in% c("P", "R", "S")) {
       # correct formatting is trickier here. Must make sure same for all models, 
       # but can be different for difference scores
       if(thisScore == "RMSE") {
-        formattedTab = signif(thisTab, 1)
+        formattedTab = data.frame(signif(thisTab, 1))
         scale = 0
       } else if(thisScore == "Bias") {
         out = formatEngineering(as.data.frame(round(thisTab, digits=5)), 
@@ -177,19 +179,38 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
         formattedTab = out$scalars
         scale = -2
       } else if(thisScore == "Coverage80") {
-        
+        thisTab = thisTab * 100
+        tempTab = data.frame(thisTab)
+        formattedTab = matrix(as.numeric(formatC(thisTab, digits=0, format="f")), nrow=6)
+        scale = 0
       } else if(thisScore == "Coverage90") {
-        
+        thisTab = thisTab * 100
+        tempTab = data.frame(thisTab)
+        formattedTab = matrix(as.numeric(formatC(thisTab, digits=0, format="f")), nrow=6)
+        scale = 0
       } else if(thisScore == "Coverage95") {
-        
+        thisTab = thisTab * 100
+        tempTab = data.frame(thisTab)
+        formattedTab = matrix(as.numeric(formatC(thisTab, digits=0, format="f")), nrow=6)
+        scale = 0
       } else if(thisScore == "Width80") {
-        
+        out = formatEngineering(as.data.frame(round(thisTab, digits=3)), 
+                                scale=-2, digits=1)
+        formattedTab = out$scalars
+        scale = -2
       } else if(thisScore == "Width90") {
-        
+        out = formatEngineering(as.data.frame(round(thisTab, digits=3)), 
+                                scale=-2, digits=1)
+        formattedTab = out$scalars
+        scale = -2
       } else if(thisScore == "Width95") {
-        
+        out = formatEngineering(as.data.frame(round(thisTab, digits=3)), 
+                                scale=-2, digits=1)
+        formattedTab = out$scalars
+        scale = -2
       } else if(thisScore == "Time") {
-        
+        formattedTab = data.frame(matrix(as.numeric(formatC(thisTab, digits=0, format="f")), nrow=6))
+        scale = 0
       }
     }
     
@@ -255,10 +276,6 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
                   escape=FALSE)
       })
     }
-    # tempTab <- lapply(tempTab, function(x) {
-    #   cell_spec(x, color = "white", bold = T, format="latex", 
-    #             background = spec_color(x, end = 0.9, option = "A", scale_from=valRange))
-    # })
     
     if(scale == 0) {
       scaleCaption = ""
@@ -273,7 +290,7 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
                 tempTab[1:3], buffCol, tempTab[4:6], buffCol, tempTab[7:9])
     
     rhoVals = c("$1/16$"=1, "$1/4$"=1, "$1/2$"=1)
-    kbl(data.frame(tempTab), booktabs = T, escape = F, align = "c", format="latex", 
+    print(kbl(data.frame(tempTab), booktabs = T, escape = F, align = "c", format="latex", 
         linesep=c("", "\\addlinespace"), digits=2, 
         caption=paste0(captionRoot1, scoreText, captionRoot2, colorCaption, scaleCaption), 
         col.names=NULL, bottomrule=FALSE, label=paste0(type, "_", thisScore)) %>% 
@@ -283,9 +300,10 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
       add_header_above(c(" "=4, "$\\\\rho$" = 3, " "=1, "$\\\\rho$" = 3, " "=1, "$\\\\rho$" = 3), escape=F, line=F) %>%
       add_header_above(c(" "=4, "$1/5$" = 3, " "=1, "$1$" = 3, " "=1, "$5$" = 3), escape=F) %>%
       add_header_above(c(" "=4, "$r_{\\\\tiny \\\\mbox{EAs}}$" = 11), escape=F, line=F) %>% 
-      kable_styling(latex_options="basic", full_width = F) # %>%
+      kable_styling(latex_options="basic", full_width = F)) # %>%
     # collapse_rows(columns = 2, latex_hline = "linespace", valign = "middle") # this doesn't work. It's a problem with kableExtra
     
+    browser() # pause before continuing for easy copy-pasting :D
   }
 }
 
