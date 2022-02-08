@@ -148,7 +148,7 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
     
     if(type %in% c("PvSR", "RvSR", "PvR")) {
       # we only care about X.X% increases, no more than one decimal place
-      formattedTab = matrix(as.numeric(formatC(thisTab, digits=1, format="f")), nrow=6)
+      formattedTab = data.frame(matrix(as.numeric(formatC(thisTab, digits=1, format="f")), nrow=6))
       scale = 0
     } else if(type %in% c("P", "R", "S")) {
       # correct formatting is trickier here. Must make sure same for all models, 
@@ -226,6 +226,12 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
     if(thisScore %in% c("RMSE", "CRPS", 
                         "IntervalScore80", "IntervalScore90", "IntervalScore95", 
                         "Width80", "Width90", "Width95", "Time")) {
+      
+      if((type %in% c("PvSR", "RvSR", "PvR")) && (thisScore == "RMSE")) {
+        # all the central predictions are the same, so pct diff is 0 alwaus
+        next
+      }
+      
       # lower is better
       customCols = centerColorScale(256, valRange=c(0,1), center=0.46,
                                     colScale=makeBlueGreenYellowSequentialColors,
