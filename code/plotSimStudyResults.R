@@ -265,11 +265,11 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
       # we are making a table of the absolute score, coloring by distance from best value
       if(thisScore == "Bias") {
         closeVal = 0
-      } else if(thisScores == "Coverage80") {
+      } else if(thisScore == "Coverage80") {
         closeVal = 80
-      } else if(thisScores == "Coverage90") {
+      } else if(thisScore == "Coverage90") {
         closeVal = 90
-      } else if(thisScores == "Coverage95") {
+      } else if(thisScore == "Coverage95") {
         closeVal = 95
       }
       valRange=valRange-closeVal
