@@ -56,7 +56,7 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
     captionRoot1 = "Mean percent increase in "
     captionRoot2 = paste0(" of the ", relMods[1], " aggregation model relative to the ", 
                           relMods[2], " aggregation model.")
-  } else if(type %in% c("P", "R", "S")) {
+  } else if(type %in% c("P", "R", "SR")) {
     if(is.null(valRanges)) {
       valRanges = apply(meanScoresDF[scoreVars], 2, range)
       valRanges[,grepl("Coverage", colnames(valRanges))] = 100 * valRanges[,grepl("Coverage", colnames(valRanges))]
@@ -150,7 +150,7 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
       # we only care about X.X% increases, no more than one decimal place
       formattedTab = data.frame(matrix(as.numeric(formatC(thisTab, digits=1, format="f")), nrow=6))
       scale = 0
-    } else if(type %in% c("P", "R", "S")) {
+    } else if(type %in% c("P", "R", "SR")) {
       # correct formatting is trickier here. Must make sure same for all models, 
       # but can be different for difference scores
       if(thisScore == "RMSE") {
