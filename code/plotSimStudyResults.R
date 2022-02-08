@@ -351,15 +351,15 @@ getFullMeanScoresDF = function(iRange=1:54, maxJ=100, coarse=TRUE, areaLevel=c("
       allDat = rbind(allDat, c(popPar, Model="Risk", subareaScoresPriskAvg))
       allDat = rbind(allDat, c(popPar, Model="SmoothRisk", subareaScoresPsmoothRiskAvg))
     } else if(areaLevel == "subarea" && response == "Z") {
-      allDat = rbind(allDat, c(popPar, Model="Prevalence", subareaScoresZprevAvg))
+      allDat = rbind(allDat, data.frame(c(popPar, list(Model="Prevalence"), as.list(subareaScoresZprevAvg))))
       allDat = rbind(allDat, c(popPar, Model="Risk", subareaScoresZriskAvg))
       allDat = rbind(allDat, c(popPar, Model="SmoothRisk", subareaScoresZsmoothRiskAvg))
     } else if(areaLevel == "area" && response == "p") {
-      allDat = rbind(allDat, c(popPar, Model="Prevalence", areaScoresPprevAvg))
+      allDat = rbind(allDat, data.frame(c(popPar, list(Model="Prevalence"), as.list(areaScoresPprevAvg))))
       allDat = rbind(allDat, c(popPar, Model="Risk", areaScoresPriskAvg))
       allDat = rbind(allDat, c(popPar, Model="SmoothRisk", areaScoresPsmoothRiskAvg))
     } else if(areaLevel == "area" && response == "Z") {
-      allDat = rbind(allDat, c(popPar, Model="Prevalence", areaScoresZprevAvg))
+      allDat = rbind(allDat, data.frame(c(popPar, list(Model="Prevalence"), as.list(areaScoresZprevAvg))))
       allDat = rbind(allDat, c(popPar, Model="Risk", areaScoresZriskAvg))
       allDat = rbind(allDat, c(popPar, Model="SmoothRisk", areaScoresZsmoothRiskAvg))
     }
