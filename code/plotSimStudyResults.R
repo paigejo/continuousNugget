@@ -2,7 +2,9 @@
 # Refer to 
 # https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_pdf.pdf
 # for information about kableExtra
-makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR")) {
+# valRanges: matrix with 2 rows and ncols length equal to the number of scoring rules with 
+#            first row being the low end of the score range and second being the high end.
+makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR"), valRanges=NULL) {
   type = match.arg(type)
   
   # meanScoresDF contains the following variables that we actually care about:
@@ -30,6 +32,16 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR")) {
     meanScoresDF = meanScoresDF[meanScoresDF$Model == "Prevalence",]
     meanScoresDF[scoreVars] = (tab1[scoreVars] - tab2[scoreVars])/tab2[scoreVars] * 100
     digits = rep(1, 9)
+    
+    if(type == "PvSR")
+      relMods = c("prevalence", "smooth risk")
+    else if(type == "PvR")
+      relMods = c("prevalence", "risk")
+    else if(type == "RvSR")
+      relMods = c("risk", "smooth risk")
+    captionRoot1 = "Percentage inrease in "
+    captionRoot2 = paste0(" of the ", relMods[1], " aggregation model relative to the ", 
+                          relMods[2], " aggregation model.")
   } 
   
   require(kableExtra)
@@ -62,8 +74,8 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR")) {
     
     #  p. 17: 3 headers with nice hlines
     # dt <- mtcars[1:5, 1:6]
-    # kbl(dt, booktabs = T) %>%
-    #   kable_styling(latex_options = "striped") %>%
+    # kbl(dt, booktabs = T, format="latex") %>%
+    #   kable_styling(latex_options = "basic") %>%
     #   add_header_above(c(" ", "Group 1" = 2, "Group 2" = 2, "Group 3" = 2)) %>%
     #   add_header_above(c(" ", "Group 4" = 4, "Group 5" = 2)) %>%
     #   add_header_above(c(" ", "Group 6" = 6), bold = T, italic = T)
@@ -78,30 +90,76 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR")) {
     #   column_spec(1, bold=T)
     
     tempTab = matrix(as.numeric(format(thisTab, digits=rep(1, 9))), nrow=6)
-    valRange = range(tempTab)
+    if(!is.null(valRanges)) {
+      valRange = valRanges[,i]
+    } else {
+      valRange = range(tempTab)
+    }
     tempTab = data.frame(tempTab)
-    tempTab <- lapply(tempTab, function(x) {
-      cell_spec(x, color = "white", bold = T, format="latex", 
-                background = spec_color(x, end = 0.9, option = "A", scale_from=valRange))
-    })
+    if(thisScore %in% c("RMSE", "CRPS", 
+                        "IntervalScore80", "IntervalScore90", "IntervalScore95", 
+                        "Coverage80", "Coverage90", "Coverage95", 
+                        "Width80", "Width90", "Width95", "Time")) {
+      # lower is better
+      customCols = centerColorScale(256, valRange=c(0,1), center=.46, colScale=makeBlueGreenYellowSequentialColors, rev=TRUE)
+      tempTab <- lapply(tempTab, function(x) {
+        cell_spec(x, color = "white", bold = T, format="latex", 
+                  background = my_spec_color(x, end = 0.9, option = "D", scale_from=valRange, customScale=customCols))
+      })
+      
+    } else if(thisScore %in% c("")) {
+      # higher is better (there are no scores like this)
+    } else {
+      # "Bias", "Coverage80", "Coverage90", "Coverage95"
+      # closer a particular value is better
+      
+      if(type %in% c("PvSR", "RvSR", "PvR")) {
+        # skip these tables, they're useless: what does pct increase cvg even mean??
+        next
+      }
+      
+      # we are making a table of the absolute score, coloring by distance from best value
+      if(thisScore == "Bias") {
+        closeVal = 0
+      } else if(thisScores == "Coverage80") {
+        closeVal = 80
+      } else if(thisScores == "Coverage90") {
+        closeVal = 90
+      } else if(thisScores == "Coverage95") {
+        closeVal = 95
+      }
+      valRange=valRange-closeVal
+      customCols = centerColorScale(256, colScale=makeBlueGoldDivergingColors, 
+                                    valRange=valRange, center=0)
+      
+      tempTab <- lapply(tempTab, function(x) {
+        cell_spec(x, color = "black", bold = T, format="latex", 
+                  background = my_spec_color(x-closeVal, scale_from=valRange, customScale=customCols))
+      })
+    }
+    # tempTab <- lapply(tempTab, function(x) {
+    #   cell_spec(x, color = "white", bold = T, format="latex", 
+    #             background = spec_color(x, end = 0.9, option = "A", scale_from=valRange))
+    # })
     
     # add in buffer columns with small width
     buffCol = list(rep("", 6))
-    tempTab = c(list(rep("$r_{mbox{clust}}$", 6), rep(c("1/3", "1", "3"), each=2), 
-                     paste(rep("$beta", 6), rep(c("1$", "2$", "3$"), each=2), sep=""), as.character(rep(c(0, -4), 3))), 
+    tempTab = c(list(c("\\multirow{6}{*}{$r_{\\tiny \\mbox{clust}}$}", rep(" ", 5)), c("\\multirow{2}{*}{$1/3$}", "", "\\multirow{2}{*}{$1$}", "", "\\multirow{2}{*}{$3$}", ""), 
+                     rep(c("\\multirow{2}{*}{$\\beta$}", " "), 3), as.character(rep(c(0, -4), 3))), 
                 tempTab[1:3], buffCol, tempTab[4:6], buffCol, tempTab[7:9])
     
     rhoVals = c("$1/16$"=1, "$1/4$"=1, "$1/2$"=1)
     kbl(data.frame(tempTab), booktabs = T, escape = F, align = "c", format="latex", 
-        linesep=c("", "\\addlinespace"), digits=2, caption="test", col.names=rep("a", 15), 
-        toprule=F) %>% 
-      column_spec(column=c(8, 12), width="0em") %>%  
-      collapse_rows(columns = 2, target=2, headers_to_remove=2, latex_hline = "none", valign = "middle") %>%
+        linesep=c("", "\\addlinespace"), digits=2, caption=paste0(captionRoot1, thisScore, captionRoot2), 
+        col.names=NULL, bottomrule=FALSE) %>% 
+      column_spec(column=c(8, 12), width="0em") %>%
+      column_spec(column=2, border_right=TRUE) %>%
       add_header_above(c(" "=4, rep(c(rhoVals, " "=1), 2), rhoVals), escape=F) %>%
-      add_header_above(c(" "=4, "$rho$" = 3, " "=1, "$rho$" = 3, " "=1, "$rho$" = 3), escape=F, line=F) %>%
+      add_header_above(c(" "=4, "$\\\\rho$" = 3, " "=1, "$\\\\rho$" = 3, " "=1, "$\\\\rho$" = 3), escape=F, line=F) %>%
       add_header_above(c(" "=4, "$1/5$" = 3, " "=1, "$1$" = 3, " "=1, "$5$" = 3), escape=F) %>%
-      add_header_above(c(" "=4, "$r_{EAs}$" = 11), escape=F, line=F) %>%
-      kable_styling(latex_options="basic", full_width = F)
+      add_header_above(c(" "=4, "$r_{\\\\tiny \\\\mbox{EAs}}$" = 11), escape=F, line=F) %>% 
+      kable_styling(latex_options="basic", full_width = F) # %>%
+    # collapse_rows(columns = 2, latex_hline = "linespace", valign = "middle") # this doesn't work. It's a problem with kableExtra
     
   }
 }
@@ -153,6 +211,28 @@ getFullMeanScoresDF = function(iRange=1:54, maxJ=100, coarse=TRUE, areaLevel=c("
   }
   
   allDat
+}
+
+# same as kableExtra::spec_color, expect 'customScale' argument can be a custom 
+# vector of hex colors of length 256
+my_spec_color = function(x, alpha = 1, begin = 0, end = 1, direction = 1, option = "D", 
+          na_color = "#BBBBBB", scale_from = NULL, customScale=NULL) 
+{
+  if (is.null(scale_from)) {
+    x <- round(rescale(x, c(1, 256)))
+  }
+  else {
+    x <- round(rescale(x, to = c(1, 256), from = scale_from))
+  }
+  if(is.null(customScale)) {
+    color_code <- viridisLite::viridis(256, alpha, begin, end, 
+                                       direction, option)[x]
+  } else {
+    color_code <- customScale[x]
+  }
+  
+  color_code[is.na(color_code)] <- na_color
+  return(color_code)
 }
 
 

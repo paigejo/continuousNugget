@@ -2512,6 +2512,41 @@ makeGreenBlueDivergingColors = function(n, valRange=NULL, center=NULL, rev=FALSE
   }
 }
 
+makeBlueGoldDivergingColors = function(n, valRange=NULL, center=NULL, rev=FALSE, ggplot=FALSE, p1=1) {
+  # library("colorspace")
+  # pal <-choose_palette()
+  # if(!ggplot)
+  #   sequential_hcl(n, h1=128, h2=250, c1=117, cmax=74, c2=107, l1=71, l2=55, p1=2, p2=2)
+  # else
+  #   scale_colour_continuous_sequential(h1=128, h2=250, c1=117, cmax=74, c2=107, l1=71, l2=55, p1=2, p2=2, n_interp=n)
+  
+  if(is.null(valRange) && is.null(center)) {
+    if(!ggplot)
+      diverging_hcl(n, h1=265, h2=74, c1=80, l1=66, l2=94, p1=p1, rev=rev)
+    else
+      scale_colour_continuous_diverging(h1=265, h2=74, c1=80, l1=66, l2=94, p1=p1, rev=rev, n_interp=n)
+  }
+  else {
+    # in this case we want white to be at the center of valRange if center is NULL
+    if(!ggplot) {
+      propUp = (valRange[2] - center) / diff(valRange)
+      propDown = 1 - propUp
+      totalColors = ceiling(2 * max(propUp, propDown) * n)
+      tempColors = makeBlueGoldDivergingColors(totalColors, rev=rev, p1=p1)
+      totalMissingColors = totalColors - n
+      
+      if(propUp >= propDown)
+        tempColors[-(1:totalMissingColors)]
+      else
+        tempColors[1:n]
+    } else {
+      if(is.null(center))
+        center = min(valRange) + abs(diff(valRange))/2
+      scale_colour_continuous_diverging(h1=265, h2=74, c1=80, l1=66, l2=94, p1=p1, rev=rev, n_interp=n, mid=center)
+    }
+  }
+}
+
 makePurpleYellowSequentialColors = function(n, rev=FALSE, ggplot=FALSE) {
   # library("colorspace")
   # pal <-choose_palette()
@@ -2558,8 +2593,8 @@ makeRedGrayBlueDivergingColors = function(n, valRange=NULL, center=NULL, rev=FAL
   if(is.null(valRange) && is.null(center)) {
     if(!ggplot)
       diverging_hcl(n, h1=10, h2=-115, c1=90, l1=40, l2=90, p1=0.9, rev=rev)
-    if(!ggplot)
-      scale_colour_continuous_diverging(n.interp, h1=10, h2=-115, c1=90, l1=40, l2=90, p1=0.9, rev=rev)
+    else
+      scale_colour_continuous_diverging(n_interp=n, h1=10, h2=-115, c1=90, l1=40, l2=90, p1=0.9, rev=rev)
     # diverging_hcl(n, h1=10, h2=-115, c1=90, l1=40, l2=100, p1=0.9, p2=0.6)
   }
   else {
@@ -2571,7 +2606,7 @@ makeRedGrayBlueDivergingColors = function(n, valRange=NULL, center=NULL, rev=FAL
       tempColors = makeRedGrayBlueDivergingColors(totalColors, rev=rev)
       totalMissingColors = totalColors - n
       
-      if(propUp >= propDown)
+      if(propUp >= propDown && totalMissingColors > 0)
         tempColors[-(1:totalMissingColors)]
       else
         tempColors[1:n]
@@ -2593,14 +2628,14 @@ makeBlueSequentialColors = function(n, ggplot=FALSE) {
     scale_colour_continuous_sequential(h1=245, c1=50, cmax=75, l1=20, l2=98, p1=0.8, rev=TRUE, n_interp=n)
 }
 
-makeGreenSequentialColors = function(n, ggplot=FALSE) {
+makeGreenSequentialColors = function(n, ggplot=FALSE, rev=FALSE) {
   # library("colorspace")
   # pal <-choose_palette()
   # sequential_hcl(n, h1=260, c1=80, l1=30, l2=90, p1=1.5, rev=TRUE)
   if(!ggplot)
-    sequential_hcl(n, h1=128, c1=100, l1=72, l2=95, p1=1.0, rev=TRUE)
+    sequential_hcl(n, h1=128, c1=100, l1=72, l2=95, p1=1.0, rev=rev)
   else
-    scale_colour_continuous_sequential(h1=128, c1=100, l1=72, l2=95, p1=1.0, rev=TRUE, n_interp=n)
+    scale_colour_continuous_sequential(h1=128, c1=100, l1=72, l2=95, p1=1.0, rev=rev, n_interp=n)
 }
 
 makeYellowSequentialColors = function(n, ggplot=FALSE) {
@@ -2613,13 +2648,13 @@ makeYellowSequentialColors = function(n, ggplot=FALSE) {
     scale_colour_continuous_sequential(h1=86, c1=100, l1=70, l2=95, p1=1.2, rev=TRUE, n_interp=n)
 }
 
-makeBlueGreenYellowSequentialColors = function(n, ggplot=FALSE) {
+makeBlueGreenYellowSequentialColors = function(n, ggplot=FALSE, rev=FALSE) {
   # library("colorspace")
   # pal <-choose_palette()
   if(!ggplot)
-    sequential_hcl(n, h1=300, h2=75, c1=40, c2=95, l1=15, l2=90, p1=1.0, p2=1.1)
+    sequential_hcl(n, h1=300, h2=75, c1=40, c2=95, l1=15, l2=90, p1=1.0, p2=1.1, rev=rev)
   else
-    scale_colour_continuous_sequential(h1=300, h2=75, c1=40, c2=95, l1=15, l2=90, p1=1.0, p2=1.1, n_interp=n)
+    scale_colour_continuous_sequential(h1=300, h2=75, c1=40, c2=95, l1=15, l2=90, p1=1.0, p2=1.1, n_interp=n, rev=rev)
 }
 
 makeRedYellowBlueColors = function(n, ggplot=FALSE) {
@@ -2699,8 +2734,60 @@ makeRedGreenDivergingColors = function(n, ggplot=FALSE) {
     scale_colour_continuous_sequential(h1=265, h2=101, c1=100, l1=50, l2=92, p1=0.6, p2=1.5, n_interp=n)
 }
 
+# NOTE: this returns only hex colors
+makePurpleGreenDivergingColors = function(n, rev=FALSE) {
+  require(inlmisc)
+  if(!rev) {
+    as.character(inlmisc::GetColors(n, scheme = "PRGn"))
+  } else {
+    rev(as.character(inlmisc::GetColors(n, scheme = "PRGn")))
+  }
+}
+
+combineTwoScales = function(n, scale1, scale2, args1, args2) {
+  if(n %% 2 == 0) {
+    n1 = n2 = n/2
+  } else {
+    n1 = ceiling(n/2)
+    n2 = floor(n/2)
+  }
+  
+  c(do.call(scale1, c(args1, list(n=n1))), 
+    do.call(scale2, c(args2, list(n=n2))))
+}
+
+makeDivergingScale = function(n, scale, ...) {
+  do.call("combineTwoScales", list(n=n, scale1=scale, scale2=scale, args1=list(...), args2=list(...)))
+}
+
+# centers a color scale at its midpoint. Returns vector of the centered color scale
+# colScale a function taking 'n' as input and return a color scale centered in the middle
+# ...: other arguments to colScale, such as 'rev'
+centerColorScale = function(n, vals=NULL, valRange=NULL, center, colScale, scaleFun=function(x) {x}, 
+                            ...) {
+  
+  if(is.null(valRange)) {
+    nas = !is.finite(scaleFun(vals))
+    valRange = range(vals[!nas])
+  }
+  
+  valRange = scaleFun(valRange)
+  center = scaleFun(center)
+  
+  propUp = (valRange[2] - center) / diff(valRange)
+  propDown = 1 - propUp
+  totalColors = ceiling(2 * max(propUp, propDown) * n)
+  tempColors = do.call(colScale, c(list(totalColors), list(...)))
+  totalMissingColors = totalColors - n
+  
+  if(propUp >= propDown && totalMissingColors > 0)
+    tempColors[-(1:totalMissingColors)]
+  else
+    tempColors[1:n]
+}
+
 # given continuous color scale and range, chooses colors based on a set of values
-getColorsFromScale = function(vals, valRange=NULL, cols, scaleFun=function(x) {x}, 
+getColorsFromScale = function(vals, valRange=NULL, center=NULL, cols, scaleFun=function(x) {x}, 
                               forceValuesInRange=FALSE) {
   
   if(is.null(valRange)) {
@@ -2717,6 +2804,25 @@ getColorsFromScale = function(vals, valRange=NULL, cols, scaleFun=function(x) {x
   vals = scaleFun(vals)
   vals = vals - valRange[1]
   vals = vals/(valRange[2] - valRange[1])
+  
+  if(!is.null(center)) {
+    center = scaleFun(center)
+    n = length(cols)
+    
+    propUp = (valRange[2] - center) / diff(valRange)
+    propDown = 1 - propUp
+    totalColors = ceiling(2 * max(propUp, propDown) * n)
+    tempColors = cols
+    totalMissingColors = totalColors - n
+    
+    if(propUp >= propDown)
+      tempColors[-(1:totalMissingColors)]
+    else
+      tempColors[1:n]
+    
+    cols = tempColors
+  }
+  
   col = cols[round(vals*(length(cols)-1))+1]
   
   col
