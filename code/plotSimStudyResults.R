@@ -13,26 +13,29 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
                 "Coverage80", "Coverage90", "Coverage95", 
                 "Width80", "Width90", "Width95", "Time")
   
-  # we want to calculate the percent increase of each score value for the 
-  # proposed model versus the comparison model. Start by subsetting scores 
-  # by relevant model types, then calculate percent increase in scores
-  if(type == "PvSR") {
+  if(type %in% c("PvSR", "RvSR", "PvR")) {
+    # we want to calculate the percent increase of each score value for the 
+    # proposed model versus the comparison model. Start by subsetting scores 
+    # by relevant model types, then calculate percent increase in scores
+    
     tab1PvSR = meanScoresDF[meanScoresDF$Model == "Prevalence",]
     tab2PvSR = meanScoresDF[meanScoresDF$Model == "SmoothRisk",]
-    tab1 = tab1PvSR
-    tab2 = tab2PvSR
-  } else if(type == "RvSR") {
     tab1RvSR = meanScoresDF[meanScoresDF$Model == "Risk",]
     tab2RvSR = meanScoresDF[meanScoresDF$Model == "SmoothRisk",]
-    tab1 = tab1RvSR
-    tab2 = tab2RvSR
-  } else if(type == "PvR") {
     tab1PvR = meanScoresDF[meanScoresDF$Model == "Prevalence",]
     tab2PvR = meanScoresDF[meanScoresDF$Model == "Risk",]
-    tab1 = tab1PvR
-    tab2 = tab2PvR
-  }
-  if(type %in% c("PvSR", "RvSR", "PvR")) {
+    
+    if(type == "PvSR") {
+      tab1 = tab1PvSR
+      tab2 = tab2PvSR
+    } else if(type == "RvSR") {
+      tab1 = tab1RvSR
+      tab2 = tab2RvSR
+    } else if(type == "PvR") {
+      tab1 = tab1PvR
+      tab2 = tab2PvR
+    }
+    
     tab1$Model = NULL
     tab2$Model = NULL
     meanScoresDF = meanScoresDF[meanScoresDF$Model == "Prevalence",]
