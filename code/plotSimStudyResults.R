@@ -296,9 +296,9 @@ my_spec_color = function(x, alpha = 1, begin = 0, end = 1, direction = 1, option
 #        display the numbers with
 formatEngineering = function(df, scale=-Inf, digits=1) {
   if(scale == -Inf) {
-    scale = floor(min(lapply(df, log10)))
+    scale = floor(min(sapply(df, function(x) {log10(abs(x))})))
   } else if(scale == Inf) {
-    scale = floor(max(lapply(df, log10)))
+    scale = floor(max(sapply(df, function(x) {log10(abs(x))})))
   }
   
   fac = 10^scale
