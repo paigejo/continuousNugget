@@ -331,7 +331,7 @@ getFullMeanScoresDF = function(iRange=1:54, maxJ=100, coarse=TRUE, areaLevel=c("
   
   allDat = c()
   for(i in iRange) {
-    if(i == 43) {
+    if(i == 15) {
       browser()
     }
     # get population arguments
