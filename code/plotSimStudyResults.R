@@ -331,9 +331,7 @@ getFullMeanScoresDF = function(iRange=1:54, maxJ=100, coarse=TRUE, areaLevel=c("
   
   allDat = c()
   for(i in iRange) {
-    if(i == 15) {
-      browser()
-    }
+    
     # get population arguments
     out = load("savedOutput/simStudyResults/spde_prevRiskSimStudyCommandArgs.RData")
     theseArgs = spde_prevRiskSimStudyCommandArgs[[i]]
@@ -354,6 +352,10 @@ getFullMeanScoresDF = function(iRange=1:54, maxJ=100, coarse=TRUE, areaLevel=c("
       allDat = rbind(allDat, data.frame(c(popPar, list(Model="Prevalence"), as.list(subareaScoresZprevAvg))))
       allDat = rbind(allDat, c(popPar, Model="Risk", subareaScoresZriskAvg))
       allDat = rbind(allDat, c(popPar, Model="SmoothRisk", subareaScoresZsmoothRiskAvg))
+      
+      if(!is.finite(subareaScoresZprevAvg$Coverage80)) {
+        browser()
+      }
     } else if(areaLevel == "area" && response == "p") {
       allDat = rbind(allDat, data.frame(c(popPar, list(Model="Prevalence"), as.list(areaScoresPprevAvg))))
       allDat = rbind(allDat, c(popPar, Model="Risk", areaScoresPriskAvg))
