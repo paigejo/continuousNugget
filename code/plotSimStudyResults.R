@@ -353,7 +353,7 @@ getFullMeanScoresDF = function(iRange=1:54, maxJ=100, coarse=TRUE, areaLevel=c("
       allDat = rbind(allDat, c(popPar, Model="Risk", subareaScoresZriskAvg))
       allDat = rbind(allDat, c(popPar, Model="SmoothRisk", subareaScoresZsmoothRiskAvg))
       
-      if(!is.finite(subareaScoresZprevAvg$Coverage80)) {
+      if(!is.finite(subareaScoresZprevAvg[names(subareaScoresZprevAvg) == "Coverage80"])) {
         browser()
       }
     } else if(areaLevel == "area" && response == "p") {
