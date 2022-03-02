@@ -4,8 +4,10 @@
 # for information about kableExtra
 # valRanges: matrix with 2 rows and ncols length equal to the number of scoring rules with 
 #            first row being the low end of the score range and second being the high end.
-makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", "SR"), valRanges=NULL) {
+makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", "SR"), 
+                          valRanges=NULL, response=c("prevalence", "burden")) {
   type = match.arg(type)
+  response = match.arg(response)
   
   # meanScoresDF contains the following variables that we actually care about:
   scoreVars = c("RMSE", "Bias", "CRPS", 
@@ -55,7 +57,7 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
       relMods = c("risk", "smooth risk")
     captionRoot1 = "Mean percent increase in "
     captionRoot2 = paste0(" of the ", relMods[1], " aggregation model relative to the ", 
-                          relMods[2], " aggregation model.")
+                          relMods[2], " aggregation model, where the response is ", response, ".")
   } else if(type %in% c("P", "R", "SR")) {
     if(is.null(valRanges)) {
       valRanges = apply(meanScoresDF[scoreVars], 2, range)
@@ -74,7 +76,7 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
     }
     
     captionRoot1 = "Mean "
-    captionRoot2 = paste0(" of the ", thisMod, " aggregation model.")
+    captionRoot2 = paste0(" of the ", thisMod, " aggregation model, where the response is ", response, ".")
   }
   
   require(kableExtra)
