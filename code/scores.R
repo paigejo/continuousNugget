@@ -819,11 +819,25 @@ coverage = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     rejectLower = rep(0, length(truth))
     rejectUpper = rep(0, length(truth))
     if(length(lowerEdgeInds) != 0) {
-      probRejectLower = sapply(lowerEdgeInds, function(i) {((1 - significance) / 2 - mean(estMat[i,] < lower[i])) / mean(estMat[i,] == lower[i])})
+      probRejectLower = sapply(lowerEdgeInds, function(i) {
+        if(mean(estMat[i,] == upper[i]) != 0) {
+          ((1 - significance) / 2 - mean(estMat[i,] > lower[i])) / mean(estMat[i,] == lower[i])
+        } else {
+          warning("lower end of CI not equal to any samples from estMat. Setting reject probability to 0.5")
+          0.5
+        }
+        })
       rejectLower[lowerEdgeInds] = probRejectLower
     }
     if(length(upperEdgeInds) != 0) {
-      probRejectUpper = sapply(upperEdgeInds, function(i) {((1 - significance) / 2 - mean(estMat[i,] > upper[i])) / mean(estMat[i,] == upper[i])})
+      probRejectUpper = sapply(upperEdgeInds, function(i) {
+        if(mean(estMat[i,] == upper[i]) != 0) {
+          ((1 - significance) / 2 - mean(estMat[i,] > upper[i])) / mean(estMat[i,] == upper[i])
+        } else {
+          warning("upper end of CI not equal to any samples from estMat. Setting reject probability to 0.5")
+          0.5
+        }
+      })
       rejectUpper[upperEdgeInds] = probRejectUpper
     }
     
@@ -1093,11 +1107,27 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     rejectLower = rep(0, length(truth))
     rejectUpper = rep(0, length(truth))
     if(length(lowerEdgeInds) != 0) {
-      probRejectLower = sapply(lowerEdgeInds, function(i) {((1 - significance) / 2 - mean(estMat[i,] < lower[i])) / mean(estMat[i,] == lower[i])})
+      probRejectLower = sapply(lowerEdgeInds, function(i) {
+        if(mean(estMat[i,] == lower[i]) != 0) {
+          ((1 - significance) / 2 - mean(estMat[i,] < lower[i])) / mean(estMat[i,] == lower[i])
+        } else {
+          warning("lower end of CI not equal to any samples from estMat. Setting reject probability to 0.5")
+          0.5
+        }
+        })
       rejectLower[lowerEdgeInds] = probRejectLower
     }
     if(length(upperEdgeInds) != 0) {
-      probRejectUpper = sapply(upperEdgeInds, function(i) {((1 - significance) / 2 - mean(estMat[i,] > upper[i])) / mean(estMat[i,] == upper[i])})
+      probRejectUpper = sapply(upperEdgeInds, function(i) {
+        if(mean(estMat[i,] == upper[i]) != 0) {
+          ((1 - significance) / 2 - mean(estMat[i,] > upper[i])) / mean(estMat[i,] == upper[i])
+        } else {
+          warning("upper end of CI not equal to any samples from estMat. Setting reject probability to 0.5")
+          0.5
+        }
+        })
+      }
+        
       rejectUpper[upperEdgeInds] = probRejectUpper
     }
     
