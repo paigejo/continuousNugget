@@ -1114,7 +1114,7 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
           warning("lower end of CI not equal to any samples from estMat. Setting reject probability to 0.5")
           0.5
         }
-        })
+      })
       rejectLower[lowerEdgeInds] = probRejectLower
     }
     if(length(upperEdgeInds) != 0) {
@@ -1125,9 +1125,7 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
           warning("upper end of CI not equal to any samples from estMat. Setting reject probability to 0.5")
           0.5
         }
-        })
-      }
-        
+      })
       rejectUpper[upperEdgeInds] = probRejectUpper
     }
     
