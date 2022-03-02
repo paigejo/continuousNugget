@@ -370,6 +370,33 @@ getFullMeanScoresDF = function(iRange=1:54, maxJ=100, coarse=TRUE, areaLevel=c("
   allDat
 }
 
+getScoresRedoInds = function(iRange=1:54, maxJ=100, coarse=TRUE) {
+  coarseText = ifelse(coarse, "Coarse", "")
+  
+  allDat = c()
+  for(i in iRange) {
+    
+    # get population arguments
+    out = load("savedOutput/simStudyResults/spde_prevRiskSimStudyCommandArgs.RData")
+    theseArgs = spde_prevRiskSimStudyCommandArgs[[i]]
+    beta0 = theseArgs$beta0
+    rho = theseArgs$rho
+    nEAsFac = theseArgs$nEAsFac
+    nClustFac = theseArgs$nClustFac
+    popPar = list(beta=beta0, rho=rho, nEAsFac=nEAsFac, nClustFac=nClustFac)
+    
+    thisFile = paste0("savedOutput/simStudyResults/simScoresAll_i", i, "maxJ", maxJ, coarseText, ".RData")
+    out = load(thisFile)
+    
+    if(!is.finite(subareaScoresZprevAvg[names(subareaScoresZprevAvg) == "Coverage80"]) ||
+       !is.finite(areaScoresZprevAvg[names(areaScoresZprevAvg) == "Coverage80"])) {
+      allDat = c(allDat, i)
+    }
+  }
+  
+  allDat
+}
+
 # same as kableExtra::spec_color, expect 'customScale' argument can be a custom 
 # vector of hex colors of length 256
 my_spec_color = function(x, alpha = 1, begin = 0, end = 1, direction = 1, option = "D", 
