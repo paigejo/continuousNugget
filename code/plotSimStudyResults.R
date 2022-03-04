@@ -156,13 +156,25 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
       # correct formatting is trickier here. Must make sure same for all models, 
       # but can be different for difference scores
       if(thisScore == "RMSE") {
-        formattedTab = data.frame(signif(thisTab, 1))
+        if(response == "prevalence") {
+          formattedTab = data.frame(signif(thisTab, 1))
+        } else {
+          formattedTab = data.frame(round(thisTab, 0))
+        }
+        
         scale = 0
       } else if(thisScore == "Bias") {
-        out = formatEngineering(as.data.frame(round(thisTab, digits=5)), 
-                                scale=-4, digits=1)
-        formattedTab = out$scalars
-        scale = -4
+        if(response == "prevalence") {
+          out = formatEngineering(as.data.frame(round(thisTab, digits=5)), 
+                                  scale=-4, digits=1)
+          formattedTab = out$scalars
+          scale = -4
+        } else {
+          out = formatEngineering(as.data.frame(round(thisTab, digits=5)), 
+                                  scale=0, digits=0)
+          formattedTab = out$scalars
+          scale = 0
+        }
       } else if(thisScore == "CRPS") {
         out = formatEngineering(as.data.frame(round(thisTab, digits=3)), 
                                 scale=-2, digits=2)
@@ -228,13 +240,13 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
     if(thisScore %in% c("RMSE", "CRPS", 
                         "IntervalScore80", "IntervalScore90", "IntervalScore95", 
                         "Width80", "Width90", "Width95", "Time")) {
+      # lower is better
       
       if((type %in% c("PvSR", "RvSR", "PvR")) && (thisScore == "RMSE")) {
         # all the central predictions are the same, so pct diff is 0 alwaus
         next
       }
       
-      # lower is better
       customCols = centerColorScale(256, valRange=c(0,1), center=0.46,
                                     colScale=makeBlueGreenYellowSequentialColors,
                                     rev=TRUE)
@@ -304,7 +316,7 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
     print(kbl(data.frame(tempTab), booktabs = T, escape = F, align = "c", format="latex", 
         linesep=c("", "\\addlinespace"), digits=2, 
         caption=paste0(captionRoot1, scoreText, captionRoot2, colorCaption, scaleCaption), 
-        col.names=NULL, bottomrule=FALSE, label=paste0(type, "_", thisScore)) %>% 
+        col.names=NULL, bottomrule=FALSE, label=paste0(type, "_", thisScore, "_", response)) %>% 
       column_spec(column=c(8, 12), width="0em") %>%
       column_spec(column=2, border_right=TRUE) %>%
       add_header_above(c(" "=4, rep(c(rhoVals, " "=1), 2), rhoVals), escape=F) %>%
@@ -457,6 +469,49 @@ formatEngineering = function(df, scale=-Inf, digits=1) {
   scale = list(latex=paste0("$10^{", scale, "}$"), scale=scale)
   
   list(result=fullPart, scalars=firstPart, scale=scale)
+}
+
+getMeanEAsPerArea = function(level=c("subarea", "area")) {
+  level = match.arg(level)
+  
+  # generate the 3 easpa, 1 for each value of nEAsFac
+  eapsaNormal = makeDefaultEASPA()
+  
+  easpaList = list()
+  nEAsFacs = c(1/5, 1, 5)
+  for(i in 1:length(nEAsFacs)) {
+    nEAsFac = nEAsFacs[i]
+    easpa = eapsaNormal
+    
+    # scale easpa and poppsub using nEAsFac
+    easpa[,c("EAUrb", "EARur", "EATotal", 
+             "HHUrb", "HHRur", "HHTotal", 
+             "popUrb", "popRur", "popTotal")] = 
+      round(nEAsFac * easpa[,c("EAUrb", "EARur", "EATotal", 
+                               "HHUrb", "HHRur", "HHTotal", 
+                               "popUrb", "popRur", "popTotal")])
+    easpa$EATotal = easpa$EAUrb + easpa$EARur
+    easpa$HHTotal = easpa$HHUrb + easpa$HHRur
+    easpa$popTotal = easpa$popUrb + easpa$popRur
+    
+    easpaList = c(easpaList, list(easpa))
+  }
+  
+  # for each easpa in easpaList, calculate average number of EAs per subarea if need be
+  meanEAs = c()
+  areaNames = c()
+  if(level == "subarea") {
+    for(i in 1:length(nEAsFacs)) {
+      out = meanEAsPerCon2(easpa = easpaList[[i]])
+      areaNames = c(areaNames, as.character(out$subarea))
+      meanEAs = c(meanEAs, out$meanTotalEAs)
+    }
+  } else {
+    areaNames = sapply(easpaList, function(x) {as.character(x$area)})
+    meanEAs = sapply(easpaList, function(x) {x$EAsTotal})
+  }
+  
+  data.frame(areaName=areaNames, meanEAs=meanEAs)
 }
 
 

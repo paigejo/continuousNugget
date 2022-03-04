@@ -1,29 +1,57 @@
 # scrip for getting all NMR results for the application
 
 getMortResults = function(seed=123, logisticApproximation=FALSE, nPostSamples=5000) {
+  time1 = proc.time()[3]
   set.seed(seed)
   
-  # first for the risk model
-  timeSPDE = system.time(resultsSPDE <- fitSPDEKenyaDat(dat=mort, dataType="mort", 
-                                                        significanceCI=.8, 
-                                                        nPostSamples=nPostSamples, verbose=TRUE, seed=NULL, 
-                                                        urbanEffect=TRUE, clusterEffect=TRUE, 
-                                                        leaveOutRegionName=NULL, doValidation=FALSE))[3]
+  easpa = makeDefaultEASPA()
   
-  # now aggregate
-  timeAllAgg = system.time(agg <- modLCPB(uDraws=resultsSPDE$uDraws, resultsSPDE$sigmaEpsilonDraws, 
-                                          includeUrban=TRUE, clusterLevel=FALSE, pixelLevel=TRUE, constituencyLevel=TRUE, countyLevel=TRUE, 
-                                          regionLevel=TRUE, nationalLevel=TRUE, doModifiedPixelLevel=FALSE, 
-                                          onlyDoModifiedPixelLevel=FALSE, 
-                                          doLCPb=TRUE, doLCpb=TRUE, doLcpb=TRUE, # urbanEffectDraws=resultsSPDE$fixedEffectDraws[2,], 
-                                          logisticApproximation=logisticApproximation))[3]
+  poppsub = poppsubKenya
   
-  # save results
-  logisticText = ifelse(!logisticApproximation, "NoLogisticApprox", "")
-  save(resultsSPDE, timeSPDE, timeAllAgg, file=paste0("savedOutput/application/mortResultsRisk", logisticText, ".RData"))
-  save(agg, timeSPDE, timeAllAgg, file=paste0("savedOutput/application/mortResultsAgg", logisticText, ".RData"))
+  popMat = popGrid
+  popMatAdjusted = popGridAdjusted
   
-  invisible(NULL)
+  # Fit the risk model:
+  time2 = proc.time()[3]
+  riskOut = fitSPDEKenyaDat(dat=mort, nPostSamples=nPostSamples, popMat=popMat)
+  
+  # remove large parts of the INLA model we don't need
+  riskOut$mod$all.hyper = NULL
+  riskOut$mod$.args = NULL
+  
+  logitDraws = riskOut$uDraws # uDraws includes fixed effects and is on logit scale
+  sigmaEpsilonDraws = riskOut$sigmaEpsilonDraws
+  time3 = proc.time()[3]
+  
+  # run the models
+  out = simPopCustom(logitRiskDraws=logitDraws, sigmaEpsilonDraws=sigmaEpsilonDraws, 
+                     easpa=easpa, popMat=popMat, 
+                     targetPopMat=popMatAdjusted, poppsub=poppsub, 
+                     stratifyByUrban=TRUE, subareaLevel=TRUE, gridLevel=FALSE, 
+                     doFineScaleRisk=TRUE, doSmoothRisk=TRUE, 
+                     doGriddedRisk=FALSE, doSmoothRiskLogisticApprox=logisticApproximation, 
+                     min1PerSubarea=TRUE)
+  
+  subareaPop = out$subareaPop$aggregationResults
+  areaPop = out$areaPop$aggregationResults
+  allTimings = out$allTimings
+  processedTimings = out$processedTimings
+  aggregationTimings=list(allTimings=allTimings, processedTimings=processedTimings)
+  time4 = proc.time()[3]
+  
+  # get timings
+  rawTimes = c(time1, time2, time3, time4)
+  totalTimes = diff(rawTimes)
+  totalTimes = c(totalTimes, sum(totalTimes))
+  names(totalTimes) = c("setup", "SPDEmodel", "aggregationModel", "totalTime")
+  
+  # save file
+  save(riskOut, subareaPop, areaPop, aggregationTimings, rawTimes, totalTimes, file=paste0("savedOutput/application/finalMort.RData"))
+  
+  list(riskOut=riskOut, subareaPopAggRes=subareaPop, 
+       areaPopAggRes=areaPop, 
+       aggregationTimings=aggregationTimings, 
+       rawTimes=rawTimes, totalTimes=totalTimes)
 }
 
 # Make plots for the neonatal mortality application
@@ -70,6 +98,7 @@ makeMortPlots = function(logisticApproximation=FALSE) {
   rangeRelativePrevalenceSDProvince = c()
   
   # make the color scales
+  browser()
   areaLevels = c("pixel", "constituency", "county", "province")
   for(i in 1:length(areaLevels)) {
     thisLevel = areaLevels[i]

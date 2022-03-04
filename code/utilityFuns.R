@@ -5088,8 +5088,7 @@ meanHHPerCon = function(numToPrint=0) {
 }
 
 # get average number of EAs per constituency
-meanEAsPerCon2 = function(numToPrint=0) {
-  easpa = makeDefaultEASPA()
+meanEAsPerCon2 = function(numToPrint=0, easpa = makeDefaultEASPA()) {
   # area: the name or id of the area
   # EAUrb: the number of EAs in the urban part of the area
   # EARur: the number of EAs in the rural part of the area
