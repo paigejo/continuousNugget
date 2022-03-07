@@ -2485,7 +2485,8 @@ setThresholds = function() {
 plotMapDat = function(plotVar=NULL, varCounties=NULL, zlim=NULL, project=FALSE, cols=tim.colors(), 
                       legend.mar=7, new=FALSE, plotArgs=NULL, main=NULL, xlim=NULL, xlab=NULL, scaleFun = function(x) {x}, scaleFunInverse = function(x) {x}, 
                       ylim=NULL, ylab=NULL, n.ticks=5, min.n=5, ticks=NULL, tickLabels=NULL, asp=1, legend.width=1.2, mapDat = NULL, addColorBar=TRUE, 
-                      legendArgs=list(), leaveRoomForLegend=TRUE, kenyaLatRange=c(-4.6, 5), kenyaLonRange=c(33.5, 42.0), forceColorsInRange=FALSE, ...) {
+                      legendArgs=list(), leaveRoomForLegend=TRUE, kenyaLatRange=c(-4.6, 5), kenyaLonRange=c(33.5, 42.0), forceColorsInRange=FALSE, 
+                      crosshatchNADensity=10, ...) {
   # load necessary data
   if(is.null(mapDat)) {
     if(length(plotVar) == 47) {
@@ -2503,10 +2504,32 @@ plotMapDat = function(plotVar=NULL, varCounties=NULL, zlim=NULL, project=FALSE, 
   if(is.null(varCounties)) {
     if(length(mapDat) == 8) {
       varCounties = sort(as.character(poppr$Region))
+      
+      if(!is.null(mapDat@data$NAME_1)) {
+        regionNames = mapDat@data$NAME_1
+      } else if(!is.null(mapDat@data$name_1)) {
+        regionNames = as.character(mapDat@data$name_1)
+      } else {
+        stop("mapDat has unrecognized region names")
+      }
     } else if(length(mapDat) == 300) {
-      varCounties = sort(as.character(mapDat@data$CONSTITUEN))
+      varCounties = sort(as.character(mapDat@data$NAME_2))
+      
+      if(!is.null(mapDat@data$NAME_2)) {
+        regionNames = as.character(mapDat@data$NAME_2)
+      } else {
+        stop("mapDat has unrecognized region names")
+      }
     } else {
       varCounties=sort(as.character(unique(mort$admin1)))
+      
+      if(!is.null(mapDat@data$NAME_1)) {
+        regionNames = mapDat@data$NAME_1
+      } else if(!is.null(mapDat@data$name_1)) {
+        regionNames = as.character(mapDat@data$name_1)
+      } else {
+        stop("mapDat has unrecognized region names")
+      }
     }
   }
   
@@ -2519,17 +2542,6 @@ plotMapDat = function(plotVar=NULL, varCounties=NULL, zlim=NULL, project=FALSE, 
     if(forceColorsInRange) {
       plotVar[plotVar > zlim[2]] = zlim[2]
       plotVar[plotVar < zlim[1]] = zlim[1]
-    }
-    
-    # get region names from map data
-    if(!is.null(mapDat@data$NAME_1)) {
-      regionNames = mapDat@data$NAME_1
-    } else if(!is.null(mapDat@data$name_1)) {
-      regionNames = as.character(mapDat@data$name_1)
-    } else if(!is.null(mapDat@data$CONSTITUEN)) {
-      regionNames = as.character(mapDat@data$CONSTITUEN)
-    } else {
-      stop("mapDat has unrecognized region names")
     }
     
     # make sure county names are consistent for mapDat == adm1
@@ -2613,14 +2625,20 @@ plotMapDat = function(plotVar=NULL, varCounties=NULL, zlim=NULL, project=FALSE, 
       vals = vals-zlim[1]
       vals = vals/(zlim[2] - zlim[1])
       col = cols[round(vals[3]*(length(cols)-1))+1]
+      if(is.na(vals[3])) {
+        thisDensity = crosshatchNADensity
+      } else {
+        thisDensity = NULL
+      }
       
       if(!project)
-        sapply(1:length(countyPolys), function(x) {do.call("polygon", c(list(countyPolys[[x]]@coords, col=col), list(...)))})
+        sapply(1:length(countyPolys), function(x) {do.call("polygon", c(list(countyPolys[[x]]@coords, col=col, density=thisDensity), list(...)))})
       else
-        sapply(1:length(countyPolys), function(x) {do.call("polygon", c(list(projKenya(countyPolys[[x]]@coords), col=col), list(...)))})
+        sapply(1:length(countyPolys), function(x) {do.call("polygon", c(list(projKenya(countyPolys[[x]]@coords), col=col, density=thisDensity), list(...)))})
     }
     
   }
+  
   sapply(1:length(polys), plotCounty)
   
   if(!is.null(plotVar) && addColorBar) {
