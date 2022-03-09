@@ -133,14 +133,14 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.8) {
       prevalenceCIWidthPixellcpb = apply(pixelPop$pSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
       countCIWidthPixellcpb = apply(pixelPop$ZSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
       prevalenceCIWidthPixellcpb[nPerPixel <= 1000*1] = NA
-      countCIWidthPixellcpb[nPerPixel <= 1000*1 | countCIWidthPixel < 1] = NA
+      countCIWidthPixellcpb[nPerPixel <= 1000*1 | is.na(countCIWidthPixel)] = NA
       rangePrevalenceCIWidthPixellcpb = range(prevalenceCIWidthPixellcpb, na.rm=TRUE)
       rangeCountCIWidthPixellcpb = range(countCIWidthPixellcpb, na.rm=TRUE)
       
       prevalenceSDPixellcpb = apply(pixelPop$pSmoothRisk, 1, sd, na.rm=TRUE)
       countSDPixellcpb = apply(pixelPop$ZSmoothRisk, 1, sd, na.rm=TRUE)
       prevalenceSDPixellcpb[nPerPixel <= 1000*1] = NA
-      countSDPixellcpb[nPerPixel <= 1000*1 | countSDPixel < 1] = NA
+      countSDPixellcpb[nPerPixel <= 1000*1 | is.na(countSDPixel)] = NA
       rangePrevalenceSDPixellcpb = range(prevalenceSDPixellcpb, na.rm=TRUE)
       rangeCountSDPixellcpb = range(countSDPixellcpb, na.rm=TRUE)
       
@@ -148,14 +148,14 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.8) {
       prevalenceCIWidthPixelLCpb = apply(pixelPop$pFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
       countCIWidthPixelLCpb = apply(pixelPop$ZFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
       prevalenceCIWidthPixelLCpb[nPerPixel <= 1000*1] = NA
-      countCIWidthPixelLCpb[nPerPixel <= 1000*1 | countCIWidthPixel < 1] = NA
+      countCIWidthPixelLCpb[nPerPixel <= 1000*1 | is.na(countCIWidthPixel)] = NA
       rangePrevalenceCIWidthPixelLCpb = range(prevalenceCIWidthPixelLCpb, na.rm=TRUE)
       rangeCountCIWidthPixelLCpb = range(countCIWidthPixelLCpb, na.rm=TRUE)
       
       prevalenceSDPixelLCpb = apply(pixelPop$pFineScaleRisk, 1, sd, na.rm=TRUE)
       countSDPixelLCpb = apply(pixelPop$ZFineScaleRisk, 1, sd, na.rm=TRUE)
       prevalenceSDPixelLCpb[nPerPixel <= 1000*1] = NA
-      countSDPixelLCpb[nPerPixel <= 1000*1 | countSDPixel < 1] = NA
+      countSDPixelLCpb[nPerPixel <= 1000*1 | is.na(countSDPixel)] = NA
       rangePrevalenceSDPixelLCpb = range(prevalenceSDPixelLCpb, na.rm=TRUE)
       rangeCountSDPixelLCpb = range(countSDPixelLCpb, na.rm=TRUE)
     } else if(thisLevel == "constituency") {
