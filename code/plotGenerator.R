@@ -76,7 +76,7 @@ makeAllPlots = function(dataType=c("ed", "mort"), resultFilenames, modelClasses,
   invisible(NULL)
 }
 
-plotDataVisualizations = function(dataType=c("ed", "mort"), dat=NULL, 
+plotDataVisualizations = function(dataType=c("mort", "ed"), dat=NULL, 
                                   varName="SEP", plotNameRoot="Education", resultNameRoot="Ed", meanCols=makeRedBlueDivergingColors(64), 
                                   sdCols=makeBlueYellowSequentialColors(64), popCols=makeBlueSequentialColors(64), 
                                   ncols=29, relativeCols=makeRedGreenDivergingColors(ncols), urbCols=makeGreenBlueSequentialColors(ncols), 
@@ -86,7 +86,7 @@ plotDataVisualizations = function(dataType=c("ed", "mort"), dat=NULL,
   
   dataType = match.arg(dataType)
   if(dataType == "mort") {
-    out = load("../U5MR/kenyaData.RData")
+    # out = load("../U5MR/kenyaData.RData")
     dat = mort
   }
   else {
@@ -94,9 +94,9 @@ plotDataVisualizations = function(dataType=c("ed", "mort"), dat=NULL,
     dat = ed
   }
   
-  out = load("../U5MR/adminMapData.RData")
   kenyaMap = adm0
   countyMap = adm1
+  conMap = adm2
   
   print("generating data visualizations...")
   
@@ -128,13 +128,13 @@ plotDataVisualizations = function(dataType=c("ed", "mort"), dat=NULL,
   plotMapDat(mapDat=adm1, lwd=.5)
   dev.off()
   
-  shrunkLogit = function(x, shrink=.08) {
-    x = (x - .5) * (1 - 2 * shrink) + .5
+  shrunkLogit = function(x, shrink=.15) {
+    x = (x - .5) * (1 - shrink) + .5
     logit(x)
   }
-  shrunkExpit = function(x, shrink=.08) {
+  shrunkExpit = function(x, shrink=.15) {
     x = expit(x)
-    x = (x - 0.5) / (1 - 2 * shrink) + .5
+    x = (x - 0.5) / (1 - shrink) + .5
     x
   }
   
@@ -158,6 +158,23 @@ plotDataVisualizations = function(dataType=c("ed", "mort"), dat=NULL,
   # par( oma=c(0,0,0,2))
   image.plot(zlim=shrunkLogit(varRange), nlevel=length(cols), legend.only=TRUE, horizontal=FALSE,
              col=meanCols, add = TRUE, axis.args=list(at=ticks, labels=labels))
+  dev.off()
+  
+  pdf(file=paste0("figures/application/mort.pdf"), width=5, height=5)
+  par(oma=c( 0,0,0,0), mar=c(5.1, 4.1, 3.1, 6))
+  cols = makeBlueGreenYellowSequentialColors(64, rev=TRUE)
+  prevs = mort$y/mort$n
+  # varRange = range(prevs, na.rm=TRUE)
+  # par( oma=c( 0,0,0,5)) # save some room for the legend
+  plotWithColor(mort$lon, mort$lat, prevs, colScale=cols, #scaleFun=shrunkLogit, 
+                #scaleFunInverse=shrunkExpit, forceColorsInRange=TRUE, 
+                pch=19, cex=.1, ordering="increasing", 
+                xlab="Longitude", ylab="Latitude", asp=1)
+  
+  plotMapDat(mapDat=adm1, lwd=.5, col=rgb(1, 1, 1, .5))
+  plotMapDat(mapDat=adm2, lwd=.2, border=rgb(.5, .5, .5, .5))
+  # world(add=TRUE)
+  # par( oma=c(0,0,0,2))
   dev.off()
 }
 
@@ -2871,7 +2888,8 @@ plotWithColor = function(x, y, z, zlim=NULL, colScale=tim.colors(),
   # }
   
   # get colors of points
-  cols = getColorsFromScale(z, zlim, colScale, scaleFun, forceColorsInRange)
+  cols = getColorsFromScale(z, zlim, cols=colScale, scaleFun=scaleFun, 
+                            forceValuesInRange=forceColorsInRange)
   
   # generate new plot if necessary
   # browser()
@@ -2902,12 +2920,22 @@ plotWithColor = function(x, y, z, zlim=NULL, colScale=tim.colors(),
   if(addColorBar) {
     # add legend
     # par( oma=c(0,0,0,2))
-    if(is.null(ticks))
-      ticks = scaleFun(pretty(zlim, n=n.ticks, min.n=min.n))
-    else
-      ticks = scaleFun(ticks)
     if(is.null(tickLabels))
-      tickLabels = scaleFunInverse(ticks)
+      setTickLabels = TRUE
+    
+    if(is.null(ticks)) {
+      if(setTickLabels)
+        tickLabels = pretty(zlim, n=n.ticks, min.n=min.n)
+      ticks = scaleFun(tickLabels)
+    }
+    else {
+      if(setTickLabels)
+        tickLabels = ticks
+      ticks = scaleFun(ticks)
+    }
+    if(setTickLabels)
+      tickLabels = tickLabels[is.finite(ticks)]
+    ticks = ticks[is.finite(ticks)]
     
     # par( oma=c( 0,0,0,3))
     
