@@ -5813,3 +5813,15 @@ shrinkpdf<-function(pdf,maxsize=5,suffix="_small",verbose=T){
   file.remove(list.files(td,full=T))  
   if(verbose) print("Finished!!")  
 }
+
+# finds the S3 method for an object.
+# examples:
+# findMethod(print, Sys.time())
+## [1] "print.POSIXct"
+findMethod <- function(generic, ...) {
+  ch <- deparse(substitute(generic))
+  f <- X <- function(x, ...) UseMethod("X")
+  for(m in methods(ch)) assign(sub(ch, "X", m, fixed = TRUE), "body<-"(f, value = m))
+  X(...)
+}
+

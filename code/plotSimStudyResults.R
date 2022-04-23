@@ -323,7 +323,7 @@ makeFancyTableFinal = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", 
     print(kbl(data.frame(tempTab), booktabs = T, escape = F, align = "c", format="latex", 
               linesep=c("", "\\addlinespace"), digits=2, 
               caption=paste0(captionRoot1, scoreText, captionRoot2, colorCaption, scaleCaption), 
-              col.names=NULL, bottomrule=FALSE, toprule=FALSE, label=paste0(type, "_", thisScore, "_", response)) %>% 
+              col.names=NULL, bottomrule=FALSE, label=paste0(type, "_", thisScore, "_", response)) %>% 
             column_spec(column=c(6, 10), width="0em") %>%
             column_spec(column=2, border_right=TRUE) %>%
             myadd_header_above(c("$r_{\\\\tiny \\\\mbox{clust}}$"=1, "\\\\diagbox[width=.3in, height=.3in, innerleftsep=.04in, innerrightsep=-.02in]{$\\\\beta$}{$\\\\varphi$}"=1, 
@@ -855,6 +855,7 @@ getMeanEAsPerArea = function(level=c("subarea", "area")) {
   data.frame(areaName=areaNames, meanEAs=meanEAs)
 }
 
+# same as kableExtra:::add_header_above, but changes single column multicolumns to regular columns
 myadd_header_above = function (kable_input, header = NULL, bold = FALSE, italic = FALSE, 
                                monospace = FALSE, underline = FALSE, strikeout = FALSE, 
                                align = "c", color = NULL, background = NULL, font_size = NULL, 
