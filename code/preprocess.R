@@ -50,8 +50,15 @@ if(!file.exists(popMatFilename)) {
 out = load(popMatFilename)
 out
 
+# compress maps for easy plotting
+require(rgeos)
+adm1compressed = gSimplify(adm1, tol=.01, topologyPreserve = TRUE)
+adm2compressed = gSimplify(adm2, tol=.01, topologyPreserve = TRUE)
+adm1compressed = SpatialPolygonsDataFrame(adm1compressed, adm1@data, match.ID=FALSE)
+adm2compressed = SpatialPolygonsDataFrame(adm2compressed, adm2@data, match.ID=FALSE)
+
 # save it
-save(adm1, adm2, kenyaPoly, "savedOoutput/global/kenyaMapData.RData")
+save(adm1, adm2, adm1compressed, adm2compressed, kenyaPoly, file="savedOutput/global/kenyaMapData.RData")
 
 # download 2014 Kenya population density and associated TIF file
 tempDirectory = "~/git/continuousNugget/data/popData"

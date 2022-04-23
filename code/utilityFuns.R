@@ -5118,16 +5118,17 @@ meanEAsPerCon2 = function(numToPrint=0, easpa = makeDefaultEASPA()) {
   # popRur: the number of people in the rural part of the area
   # popTotal: the number of people in the the area
   
+  thisPoppaKenya = poppaKenya[order(poppaKenya$area),]
   
   countyI = match(poppsubKenya$area, easpa$area)
   easInUrbanStratum = easpa$EAUrb[countyI]
   easInRuralStratum = easpa$EARur[countyI]
-  popInUrbanStratum = poppaKenya$popUrb[countyI]
-  popInRuralStratum = poppaKenya$popRur[countyI]
+  popInUrbanStratum = thisPoppaKenya$popUrb[countyI]
+  popInRuralStratum = thisPoppaKenya$popRur[countyI]
   
   out = aggregate(poppsubKenya$popUrb, by=list(County=poppsubKenya$area), FUN=sum)
-  sortI = sort(poppaKenya$area, index.return=TRUE)$ix
-  cbind(out, poppaKenya[sortI,])
+  sortI = sort(thisPoppaKenya$area, index.return=TRUE)$ix
+  cbind(out, thisPoppaKenya[sortI,])
   
   popFractionUrb = poppsubKenya$popUrb / popInUrbanStratum
   popFractionRur = poppsubKenya$popRur / popInRuralStratum
@@ -5139,7 +5140,7 @@ meanEAsPerCon2 = function(numToPrint=0, easpa = makeDefaultEASPA()) {
   out = cbind(poppsubKenya, meanUrbanEAs=meanUrbanEAs, meanRuralEAs=meanRuralEAs, meanTotalEAs=meanTotalEAs)
   
   if(numToPrint > 0) {
-    # print numToPrint constituencis with the smallest number of EAs
+    # print numToPrint constituencies with the smallest number of EAs
     sortI = sort(meanUrbanEAs, index.return=TRUE)$ix
     print(out[sortI[1:numToPrint],])
     
@@ -5783,4 +5784,32 @@ getJobIndices = function(i=1, j=1:100, maxJ=100, rev=FALSE) {
   }
 }
 
-
+shrinkpdf<-function(pdf,maxsize=5,suffix="_small",verbose=T){  
+  require(multicore)  
+  wd=getwd()  
+  td=paste(tempdir(),"/pdf",sep="")  
+  if(!file.exists(td)) dir.create(td)  
+  if(verbose) print("Performing initial compression")  
+  system(paste("ps2pdf ",pdf," ",td,"/test.pdf",sep=""))  
+  setwd(td)  
+  system(paste("pdftk ",td,"/test.pdf burst",sep=""))  
+  files=list.files(pattern="pg_")  
+  sizes=sapply(files,function(x) file.info(x)$size)*0.000001 #get sizes of individual pages  
+  toobig=sizes>=maxsize  
+  if(verbose)  print(paste("Resizing ",sum(toobig)," pages:  (",paste(files[toobig],collapse=","),")",sep=""))  
+  
+  mclapply(files[toobig],function(i){  
+    system(paste("gs -dBATCH -dTextAlphaBits=4 -dNOPAUSE -r300 -q -sDEVICE=png16m -sOutputFile=",i,".png ",i,sep=""))  
+    system(paste("convert -quality 100 -density 300 ",i,".png ",strsplit(i,".",fixed=T)[[1]][1],".pdf ",sep=""))  
+    if(verbose) print(paste("Finished page ",i))  
+    return()  
+  })  
+  if(verbose) print("Compiling the final pdf")  
+  file.remove("test.pdf")  
+  file.remove(list.files(pattern="png"))  
+  setwd(wd)  
+  browser()
+  system(paste('gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile="',strsplit(pdf,".",fixed=T)[[1]][1],suffix,'.pdf" ',td,"/*.pdf",sep=""))  
+  file.remove(list.files(td,full=T))  
+  if(verbose) print("Finished!!")  
+}
