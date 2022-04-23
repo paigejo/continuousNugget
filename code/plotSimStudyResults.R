@@ -7,9 +7,10 @@
 # valRanges: matrix with 2 rows and ncols length equal to the number of scoring rules with 
 #            first row being the low end of the score range and second being the high end.
 makeFancyTableFinal = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", "SR"), 
-                          valRanges=NULL, response=c("prevalence", "burden")) {
+                          valRanges=NULL, response=c("prevalence", "burden"), areaLevel=c("Admin2", "Admin1")) {
   type = match.arg(type)
   response = match.arg(response)
+  areaLevel = match.arg(areaLevel)
   
   # meanScoresDF contains the following variables that we actually care about:
   scoreVars = c("RMSE", "Bias", "CRPS", 
@@ -59,7 +60,7 @@ makeFancyTableFinal = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", 
       relMods = c("risk", "smooth risk")
     captionRoot1 = "Mean percent increase in "
     captionRoot2 = paste0(" of the ", relMods[1], " aggregation model relative to the ", 
-                          relMods[2], " aggregation model, where the response is ", response, ".")
+                          relMods[2], " aggregation model, where the response is ", areaLevel, " ", response, ".")
   } else if(type %in% c("P", "R", "SR")) {
     if(is.null(valRanges)) {
       valRanges = apply(meanScoresDF[scoreVars], 2, range)
@@ -245,7 +246,7 @@ makeFancyTableFinal = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", 
       # lower is better
       
       if((type %in% c("PvSR", "RvSR", "PvR")) && (thisScore == "RMSE")) {
-        # all the central predictions are the same, so pct diff is 0 alwaus
+        # all the central predictions are the same, so pct diff is 0 always
         next
       }
       
@@ -310,22 +311,26 @@ makeFancyTableFinal = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", 
     
     # add in buffer columns with small width
     buffCol = list(rep("", 6))
-    tempTab = c(list(c("\\multirow{6}{*}{$r_{\\tiny \\mbox{clust}}$}", rep(" ", 5)), c("\\multirow{2}{*}{$3$}", "", "\\multirow{2}{*}{$1$}", "", "\\multirow{2}{*}{$1/3$}", ""), 
-                     rep(c("\\multirow{2}{*}{$\\beta$}", " "), 3), as.character(rep(c(0, -4), 3))), 
+    tempTab = c(list(# c("\\multirow{6}{*}{$r_{\\tiny \\mbox{clust}}$}", rep(" ", 5)), 
+                     c("\\multirow{2}{*}{$3$}", "", "\\multirow{2}{*}{$1$}", "", "\\multirow{2}{*}{$1/3$}", ""), 
+                     # rep(c("\\multirow{2}{*}{$\\beta$}", " "), 3), 
+                     as.character(rep(c(0, -4), 3))), 
                 tempTab[1:3], buffCol, tempTab[4:6], buffCol, tempTab[7:9])
     
+    # print final table ----
+    # custom align: "c@{\\phantom{a}}c|ccc@{\\phantom{a}}p{0em}ccc@{\\phantom{a}}p{0em}ccc"
     rhoVals = c("$1/16$"=1, "$1/4$"=1, "$1/2$"=1)
     print(kbl(data.frame(tempTab), booktabs = T, escape = F, align = "c", format="latex", 
               linesep=c("", "\\addlinespace"), digits=2, 
               caption=paste0(captionRoot1, scoreText, captionRoot2, colorCaption, scaleCaption), 
-              col.names=NULL, bottomrule=FALSE, label=paste0(type, "_", thisScore, "_", response)) %>% 
-            column_spec(column=c(8, 12), width="0em") %>%
+              col.names=NULL, bottomrule=FALSE, toprule=FALSE, label=paste0(type, "_", thisScore, "_", response)) %>% 
+            column_spec(column=c(6, 10), width="0em") %>%
             column_spec(column=2, border_right=TRUE) %>%
-            add_header_above(c(" "=4, rep(c(rhoVals, " "=1), 2), rhoVals), escape=F) %>%
-            add_header_above(c(" "=4, "$\\\\rho$" = 3, " "=1, "$\\\\rho$" = 3, " "=1, "$\\\\rho$" = 3), escape=F, line=F) %>%
-            add_header_above(c(" "=4, "$1/5$" = 3, " "=1, "$1$" = 3, " "=1, "$5$" = 3), escape=F) %>%
-            add_header_above(c(" "=4, "$r_{\\\\tiny \\\\mbox{EAs}}$" = 11), escape=F, line=F) %>% 
-            kable_styling(latex_options="basic", full_width = F)) # %>%
+            myadd_header_above(c("$r_{\\\\tiny \\\\mbox{clust}}$"=1, "\\\\diagbox[width=.3in, height=.3in, innerleftsep=.04in, innerrightsep=-.02in]{$\\\\beta$}{$\\\\varphi$}"=1, 
+                                 rep(c(rhoVals, " "=1), 2), rhoVals), escape=F, line=F) %>%
+            myadd_header_above(c(" "=1, "$r_{\\\\tiny \\\\mbox{EAs}}$"=1, 
+                               "$1/5$" = 3, " "=1, "$1$" = 3, " "=1, "$5$" = 3), escape=F, line=F) %>%
+            kable_styling(latex_options="scale_down", full_width = F)) # %>%
     # collapse_rows(columns = 2, latex_hline = "linespace", valign = "middle") # this doesn't work. It's a problem with kableExtra
     
     browser() # pause before continuing for easy copy-pasting :D
@@ -647,6 +652,7 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
                      rep(c("\\multirow{2}{*}{$\\beta$}", " "), 3), as.character(rep(c(0, -4), 3))), 
                 tempTab[1:3], buffCol, tempTab[4:6], buffCol, tempTab[7:9])
     
+    # print final table ----
     rhoVals = c("$1/16$"=1, "$1/4$"=1, "$1/2$"=1)
     print(kbl(data.frame(tempTab), booktabs = T, escape = F, align = "c", format="latex", 
         linesep=c("", "\\addlinespace"), digits=2, 
@@ -849,7 +855,180 @@ getMeanEAsPerArea = function(level=c("subarea", "area")) {
   data.frame(areaName=areaNames, meanEAs=meanEAs)
 }
 
+myadd_header_above = function (kable_input, header = NULL, bold = FALSE, italic = FALSE, 
+                               monospace = FALSE, underline = FALSE, strikeout = FALSE, 
+                               align = "c", color = NULL, background = NULL, font_size = NULL, 
+                               angle = NULL, escape = TRUE, line = TRUE, line_sep = 3, 
+                               extra_css = NULL, include_empty = FALSE, border_left = FALSE, 
+                               border_right = FALSE) 
+{
+  if (is.null(header)) 
+    return(kable_input)
+  kable_format <- attr(kable_input, "format")
+  if (!kable_format %in% c("html", "latex")) {
+    warning("Please specify format in kable. kableExtra can customize either ", 
+            "HTML or LaTeX outputs. See https://haozhu233.github.io/kableExtra/ ", 
+            "for details.")
+    return(kable_input)
+  }
+  if ((length(align) != 1L) & (length(align) != length(header))) {
+    warning("Length of align vector supplied to add_header_above must either be 1 ", 
+            "or the same length as the header supplied. The length of the align ", 
+            sprintf("vector supplied is %i and the header length is %i.", 
+                    length(align), length(header)), "Using default of centering each element of row.")
+    align <- "c"
+  }
+  if (is.null(header)) 
+    return(kable_input)
+  if (is.data.frame(header)) {
+    if (ncol(header) == 2 & is.character(header[[1]]) & 
+        is.numeric(header[[2]])) {
+      header <- data.frame(header = header[[1]], colspan = header[[2]], 
+                           stringsAsFactors = FALSE)
+    }
+    else {
+      stop("If header input is provided as a data frame instead of a named", 
+           "vector it must consist of only two columns: ", 
+           "The first should be a character vector with ", 
+           "header names and the second should be a numeric vector with ", 
+           "the number of columns the header should span.")
+    }
+  }
+  else {
+    header <- kableExtra:::standardize_header_input(header)
+  }
+  if (kable_format == "html") {
+    return(kableExtra:::htmlTable_add_header_above(kable_input, header, 
+                                      bold, italic, monospace, underline, strikeout, align, 
+                                      color, background, font_size, angle, escape, line, 
+                                      line_sep, extra_css, include_empty))
+  }
+  if (kable_format == "latex") {
+    return(mypdfTable_add_header_above(kable_input, header, 
+                                     bold, italic, monospace, underline, strikeout, align, 
+                                     color, background, font_size, angle, escape, line, 
+                                     line_sep, border_left, border_right))
+  }
+}
 
+mypdfTable_add_header_above = function (kable_input, header, bold, italic, monospace, underline, 
+                                      strikeout, align, color, background, font_size, angle, escape, 
+                                      line, line_sep, border_left, border_right) 
+{
+  table_info <- magic_mirror(kable_input)
+  if (is.data.frame(header)) {
+    if (ncol(header) == 2 & is.character(header[[1]]) & 
+        is.numeric(header[[2]])) {
+      header <- data.frame(header = header[[1]], colspan = header[[2]], 
+                           stringsAsFactors = FALSE)
+    }
+    else {
+      stop("If header input is provided as a data frame instead of a named vector ", 
+           "it must consist of only two columns: ", "The first should be a character vector with ", 
+           "header names and the second should be a numeric vector with ", 
+           "the number of columns the header should span.")
+    }
+  }
+  else {
+    header <- kableExtra:::standardize_header_input(header)
+  }
+  if (escape) {
+    header$header <- kableExtra:::input_escape(header$header, align)
+  }
+  align <- vapply(align, match.arg, "a", choices = c("l", 
+                                                     "c", "r"))
+  hline_type <- switch(table_info$booktabs + 1, "\\\\hline", 
+                       "\\\\toprule")
+  new_header_split <- mypdfTable_new_header_generator(header, 
+                                                    table_info$booktabs, bold, italic, monospace, underline, 
+                                                    strikeout, align, color, background, font_size, angle, 
+                                                    line_sep, border_left, border_right)
+  if (line) {
+    new_header <- paste0(new_header_split[1], "\n", new_header_split[2])
+  }
+  else {
+    new_header <- new_header_split[1]
+  }
+  out <- stringr:::str_replace(kableExtra:::solve_enc(kable_input), hline_type, paste0(hline_type, 
+                                                                "\n", new_header))
+  out <- structure(out, format = "latex", class = "knitr_kable")
+  if (is.null(table_info$new_header_row)) {
+    table_info$new_header_row <- new_header_split[1]
+    table_info$header_df <- list(header)
+  }
+  else {
+    table_info$new_header_row <- c(table_info$new_header_row, 
+                                   new_header_split[1])
+    table_info$header_df[[length(table_info$header_df) + 
+                            1]] <- header
+  }
+  attr(out, "kable_meta") <- table_info
+  return(out)
+}
+
+mypdfTable_new_header_generator = function (header_df, booktabs = FALSE, bold, italic, monospace, 
+                                          underline, strikeout, align, color, background, font_size, 
+                                          angle, line_sep, border_left, border_right) 
+{
+  n <- nrow(header_df)
+  bold <- kableExtra:::ez_rep(bold, n)
+  italic <- kableExtra:::ez_rep(italic, n)
+  monospace <- kableExtra:::ez_rep(monospace, n)
+  underline <- kableExtra:::ez_rep(underline, n)
+  strikeout <- kableExtra:::ez_rep(strikeout, n)
+  align <- kableExtra:::ez_rep(align, n)
+  color <- kableExtra:::ez_rep(color, n)
+  background <- kableExtra:::ez_rep(background, n)
+  font_size <- kableExtra:::ez_rep(font_size, n)
+  angle <- kableExtra:::ez_rep(angle, n)
+  if (!booktabs & n != 1) {
+    align[1:(n - 1)] <- paste0(align[1:(n - 1)], "|")
+  }
+  if (border_left) {
+    align[1] <- paste0("|", align[1])
+  }
+  if (border_right) {
+    align[n] <- paste0(align[n], "|")
+  }
+  header <- header_df$header
+  colspan <- header_df$colspan
+  header <- ifelse(bold, paste0("\\\\textbf\\{", header, "\\}"), 
+                   header)
+  header <- ifelse(italic, paste0("\\\\em\\{", header, "\\}"), 
+                   header)
+  header <- ifelse(monospace, paste0("\\\\ttfamily\\{", header, 
+                                     "\\}"), header)
+  header <- ifelse(underline, paste0("\\\\underline\\{", header, 
+                                     "\\}"), header)
+  header <- ifelse(strikeout, paste0("\\\\sout\\{", header, 
+                                     "\\}"), header)
+  if (!is.null(color)) {
+    color <- kableExtra:::latex_color(color)
+    header <- paste0("\\\\textcolor", color, "\\{", header, 
+                     "\\}")
+  }
+  if (!is.null(background)) {
+    background <- kableExtra:::latex_color(background)
+    header <- paste0("\\\\cellcolor", background, "\\{", 
+                     header, "\\}")
+  }
+  if (!is.null(font_size)) {
+    header <- paste0("\\\\bgroup\\\\fontsize\\{", font_size, 
+                     "\\}\\{", as.numeric(font_size) + 2, "\\}\\\\selectfont ", 
+                     header, "\\\\egroup\\{\\}")
+  }
+  if (!is.null(angle)) {
+    header <- paste0("\\\\rotatebox\\{", angle, "\\}\\{", 
+                     header, "\\}")
+  }
+  header_items <- paste0("\\\\multicolumn\\{", colspan, "\\}\\{", 
+                         align, "\\}\\{", header, "\\}")
+  header_items[colspan == 1] = header[colspan == 1]
+  header_text <- paste(paste(header_items, collapse = " & "), 
+                       "\\\\\\\\")
+  cline <- kableExtra:::cline_gen(header_df, booktabs, line_sep)
+  return(c(header_text, cline))
+}
 
 
 
