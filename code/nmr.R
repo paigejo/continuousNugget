@@ -1,6 +1,6 @@
-# scrip for getting all NMR results for the application
-
-getMortResults = function(seed=123, logisticApproximation=FALSE, nPostSamples=1000) {
+# script for getting all NMR results for the application
+# 25GB
+getMortResults = function(seed=123, useCoarseGrid=FALSE, logisticApproximation=FALSE, nPostSamples=1000) {
   time1 = proc.time()[3]
   set.seed(seed)
   
@@ -8,8 +8,13 @@ getMortResults = function(seed=123, logisticApproximation=FALSE, nPostSamples=10
   
   poppsub = poppsubKenya
   
-  popMat = popGrid
-  popMatAdjusted = popGridAdjusted
+  if(useCoarseGrid) {
+    popMat = popGridCoarse
+    popMatAdjusted = popGridCoarseAdjusted
+  } else {
+    popMat = popGrid
+    popMatAdjusted = popGridAdjusted
+  }
   
   # Fit the risk model:
   time2 = proc.time()[3]
@@ -47,7 +52,8 @@ getMortResults = function(seed=123, logisticApproximation=FALSE, nPostSamples=10
   names(totalTimes) = c("setup", "SPDEmodel", "aggregationModel", "totalTime")
   
   # save file
-  save(riskOut, pixelPop, subareaPop, areaPop, aggregationTimings, rawTimes, totalTimes, file=paste0("savedOutput/application/finalMort.RData"))
+  fileName = paste0("savedOutput/application/finalMort", ifelse(useCoarseGrid, "Coarse", ""), ".RData")
+  save(riskOut, pixelPop, subareaPop, areaPop, aggregationTimings, rawTimes, totalTimes, file=fileName)
   
   list(riskOut=riskOut, subareaPopAggRes=subareaPop, 
        areaPopAggRes=areaPop, 
@@ -310,8 +316,8 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
   # regionMap = readShapePoly("data/mapData/kenya_region_shapefile/kenya_region_shapefile.shp", delete_null_obj=TRUE, force_ring=TRUE, repair=TRUE)
   # regionMap = readOGR("data/mapData/kenya_region_shapefile/kenya_region_shapefile.shp")
   kenyaMap = adm0
-  countyMap = adm1
-  constituencyMap = adm2
+  countyMap = adm1compressed
+  constituencyMap = adm2compressed
   
   # make color scales
   meanCols=makeRedBlueDivergingColors(64, rev = TRUE)
@@ -1515,7 +1521,7 @@ makeMortGridResolutionPlots = function() {
                   ylab="Latitude", main=paste0("uDraws resolution ", resolutions[i], " km"), 
                   cex=cexs[i], pch=19, zlim=zlim, xlim=xlim, ylim=ylim, 
                   ordering="decreasing")
-    plotMapDat(mapDat=adm2, new=FALSE)
+    plotMapDat(mapDat=adm2compressed, new=FALSE)
     points(mort$lon, mort$lat, cex=.5)
     dev.off()
   }

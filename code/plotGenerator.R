@@ -95,84 +95,41 @@ plotDataVisualizations = function(dataType=c("mort", "ed"), dat=NULL,
   }
   
   kenyaMap = adm0
-  countyMap = adm1
-  conMap = adm2
+  countyMap = adm1compressed
+  conMap = adm2compressed
   
   print("generating data visualizations...")
-  
-  # plot the actual data
-  png(file=paste0("Figures/", resultNameRoot, "/clustersUrban", plotNameRoot, ".png"), width=800, height=800)
-  par(oma=c( 0,0,0,0), mar=c(5.5, 6.1, 3.5, 6))
-  urban = dat$urban
-  plot(dat$lon[!urban], dat$lat[!urban], pch=19, col="green", main=paste0("Urban vs. rural clusters"), xlim=kenyaLonRange, 
-       ylim=kenyaLatRange, xlab="Longitude", ylab="Latitude", cex=.2, asp=1, cex.axis=2, cex.lab=2, tck=-.03, mgp=c(4, 2, 0), cex.main=2)
-  points(dat$lon[urban], dat$lat[urban], pch=19, col="blue", cex=.2)
-  # world(add=TRUE)
-  plotMapDat(mapDat=adm1, lwd=.5)
-  dev.off()
   
   # plot a map of urbanicity if requested (this can take ~10 minutes)
   if(plotUrbanMap) {
     # inside this if statement since it takes around ten minutes to run
-    makeUrbanMap(kmres=1, savePlot=TRUE, lonLim=kenyaLonRange, latLim=kenyaLatRange, main="")
+    makeUrbanMap(kmres=5, savePlot=TRUE, lonLim=kenyaLonRange, latLim=kenyaLatRange, main="")
+    makeDensityMap(kmres=1)
   }
   browser()
-  png(file=paste0("Figures/", resultNameRoot, "/empirical", plotNameRoot, ".png"), width=800, height=800)
-  par(oma=c( 0,0,0,0), mar=c(5.5, 6.1, 3.5, 6))
-  # plot(cbind(dat$lon, dat$lat), type="n", ylim=kenyaLatRange, xlim=kenyaLonRange, 
-  #      xlab="Longitude", ylab="Latitude", main=paste0("Empirical ", varName), asp=1)
-  plot(cbind(dat$lon, dat$lat), type="n", ylim=kenyaLatRange, xlim=kenyaLonRange, 
-       xlab="Longitude", ylab="Latitude", main="", asp=1, cex.axis=2, cex.lab=2, tck=-.03, mgp=c(4, 2, 0))
-  quilt.plot(dat$lon, dat$lat, dat$y / dat$n, nx=100, ny=100, col=meanCols, add=TRUE, axis.args=list(cex.axis=2, tck=-.7, hadj=-.1))
-  # world(add=TRUE)
-  plotMapDat(mapDat=adm1, lwd=.5)
-  dev.off()
   
-  shrunkLogit = function(x, shrink=.15) {
-    x = (x - .5) * (1 - shrink) + .5
-    logit(x)
-  }
-  shrunkExpit = function(x, shrink=.15) {
-    x = expit(x)
-    x = (x - 0.5) / (1 - shrink) + .5
-    x
-  }
-  
-  png(file=paste0("Figures/", resultNameRoot, "/empirical", plotNameRoot, "ModLogit.png"), width=500, height=500)
-  par(oma=c( 0,0,0,2), mar=c(5.1, 4.1, 4.1, 6))
-  # ticks = pretty(seq(0, max(dat$y / dat$n), l=10), n=10)
-  # ticks = logit(ticks[-c(1, 11)])
-  ticks = seq(0, 1, l=11)
-  labels = as.character(ticks)
-  labels[seq(2, 10, by=2)] = ""
-  ticks = shrunkLogit(ticks)
-  
-  varRange = shrunkExpit(range(ticks))
-  # par( oma=c( 0,0,0,5)) # save some room for the legend
-  plot(cbind(dat$lon, dat$lat), type="n", main="", ylim=kenyaLatRange, 
-       xlim=kenyaLonRange, xlab="Longitude", ylab="Latitude", asp=1)
-  quilt.plot(cbind(dat$lon, dat$lat), shrunkLogit(dat$y / dat$n), col=meanCols, 
-             nx=100, ny=100, add.legend=FALSE, add=TRUE, zlim=shrunkLogit(varRange))
-  plotMapDat(mapDat=adm1, lwd=.5)
-  # world(add=TRUE)
-  # par( oma=c(0,0,0,2))
-  image.plot(zlim=shrunkLogit(varRange), nlevel=length(cols), legend.only=TRUE, horizontal=FALSE,
-             col=meanCols, add = TRUE, axis.args=list(at=ticks, labels=labels))
-  dev.off()
+  thisKenyaLatRange = c(-4.6, 4.8) # -5, 5.5
+  thisKenyaLonRange = c(34.2, 41.5) #33.5, 42.0
   
   pdf(file=paste0("figures/application/mort.pdf"), width=5, height=5)
-  par(oma=c( 0,0,0,0), mar=c(5.1, 4.1, 3.1, 6))
+  # par(oma=c( 0,0,0,0), mar=c(5.1, 4.1, 3.1, 6))
+  par(mar=c(3, 3.0, 0, 3.1), oma=c(0, 0, 0, 0.9), mgp=c(1.9,.7,0))
   cols = makeBlueGreenYellowSequentialColors(64, rev=TRUE)
   prevs = mort$y/mort$n
   # varRange = range(prevs, na.rm=TRUE)
   # par( oma=c( 0,0,0,5)) # save some room for the legend
+  plot(mort$lon, mort$lat, type="n", xlim=thisKenyaLonRange, ylim=thisKenyaLatRange, 
+       xlab="Longitude", ylab="Latitude", asp=1)
+  
+  plotMapDat(mapDat=adm2compressed, lwd=.2, border=rgb(.5, .5, .5, .5))
   plotWithColor(mort$lon, mort$lat, prevs, colScale=cols, #scaleFun=shrunkLogit, 
                 #scaleFunInverse=shrunkExpit, forceColorsInRange=TRUE, 
-                pch=19, cex=.1, ordering="increasing", 
-                xlab="Longitude", ylab="Latitude", asp=1)
+                pch=21, cex=.4, ordering="none", new=FALSE, 
+                legendArgs=list(axis.args=list(cex.axis=1, tck=-.7, hadj=.1), legend.cex=2, smallplot=c(.9,.93,.2,.9)), 
+                xlab="Longitude", ylab="Latitude", asp=1, colorName="bg",
+                col=rgb(0, 0, 0, .2))
+  plotMapDat(mapDat=adm1compressed, lwd=.5, col=rgb(1, 1, 1, .5))
   
-  plotMapDat(mapDat=adm1, lwd=.5, col=rgb(1, 1, 1, .5))
-  plotMapDat(mapDat=adm2, lwd=.2, border=rgb(.5, .5, .5, .5))
   # world(add=TRUE)
   # par( oma=c(0,0,0,2))
   dev.off()
@@ -184,18 +141,23 @@ makeUrbanMap = function(popGrid=NULL, kmres=1, savePlot=FALSE, fileName=ifelse(w
   # get prediction locations from population grid
   if(is.null(popGrid)) {
     if(kmres == 5)
-      load("../U5MR/popGrid.RData")
-    else
-      popGrid = makeInterpPopGrid(kmres)
+      load("savedOutput/global/popGrid.RData")
+    else {
+      load("savedOutput/global/pop.rda")
+      popGrid = makePopIntegrationTab(kmRes=kmres, pop=pop, domainPoly=kenyaPoly, 
+                                           eastLim=eastLim, northLim=northLim, 
+                                           mapProjection=projKenya, poppa=poppaKenya, 
+                                           poppsub=poppsubKenya, stratifyByUrban=TRUE, 
+                                           areaMapDat=adm1, subareaMapDat=adm2)
+    }
+      
   }
   
-  out = load("../U5MR/adminMapData.RData")
-  countyMap = adm1
+  out = load("savedOutput/global/adminMapData.RData")
+  countyMap = adm1compressed
   
   # determine which points in Kenya are urban
-  threshes = setThresholds()
-  popThreshes = sapply(1:nrow(popGrid), function(i) {threshes$threshes[threshes$counties == popGrid$admin1[i]]})
-  urban = popGrid$popOrig > popThreshes
+  urban = popGrid$urban
   
   if(savePlot) {
     png(file=fileName, width=width, height=height)
@@ -206,13 +168,78 @@ makeUrbanMap = function(popGrid=NULL, kmres=1, savePlot=FALSE, fileName=ifelse(w
   # quilt.plot(popGrid$lon, popGrid$lat, urban, col=c("green", "blue"), nx=850, ny=1050, add.legend = FALSE, 
   #            xlab="Longitude", ylab="Latitude", main=TeX("Urbanicity"), xlim=lonLim, ylim=latLim, asp=1)
   if(whiteRural)
-    quilt.plot(popGrid$lon, popGrid$lat, urban, col=c(rgb(0, 0, 0, 0), "blue"), nx=850, ny=1050, add.legend = FALSE, add=TRUE)
+    quilt.plot(popGrid$lon, popGrid$lat, urban, col=c(rgb(0, 0, 0, 0), "blue"), nx=850, ny=1050, add.legend = FALSE, add=TRUE, FUN=max)
   else {
     quilt.plot(popGrid$lon, popGrid$lat, urban, col=c("green", "blue"), nx=850, ny=1050, add.legend = FALSE, add=TRUE)
     legend("bottomleft", c("urban", "rural"), col=c("blue", "green"), pch=19)
   }
   # world(add=TRUE)
-  plotMapDat(mapDat=adm1, lwd=.5)
+  plotMapDat(mapDat=adm1compressed, lwd=.5)
+  if(savePlot) {
+    dev.off()
+  }
+  browser()
+}
+
+makeDensityMap = function(popGrid=NULL, kmres=1, savePlot=TRUE, fileName="figures/application/densityMap.pdf", 
+                          nx=850, ny=1050, width=800, height=800, kenyaLatRange=c(-4.6, 5), kenyaLonRange=c(33.5, 42.0), 
+                          lonLim=kenyaLonRange, latLim=kenyaLatRange, main="", delta=NULL, mean.neighbor=NULL) {
+  # get prediction locations from population grid
+  if(is.null(popGrid)) {
+    if(kmres == 5)
+      load("savedOutput/global/popGrid.RData")
+    else {
+      load("savedOutput/global/pop.rda")
+      if(kmres == 1 && is.null(delta) && is.null(mean.neighbor)) {
+        delta=0.2
+        mean.neighbor=30000
+        # delta=.9
+        # mean.neighbor=100000
+      }
+      popGrid = makePopIntegrationTab(kmRes=kmres, pop=pop, domainPoly=kenyaPoly, 
+                                      eastLim=eastLim, northLim=northLim, 
+                                      mapProjection=SUMMER:::projKenya, poppa=poppaKenya, 
+                                      poppsub=poppsubKenya, stratifyByUrban=TRUE, 
+                                      areaMapDat=adm1, subareaMapDat=adm2, delta=delta, mean.neighbor=mean.neighbor)
+    }
+    
+  }
+  
+  out = load("savedOutput/global/adminMapData.RData")
+  countyMap = adm1compressed
+  conMap = adm2compressed
+  
+  # determine which points in Kenya are urban
+  urban = popGrid$urban
+  thisKenyaLatRange = c(-4.6, 4.8) # -5, 5.5
+  thisKenyaLonRange = c(34.2, 41.5) #33.5, 42.0
+  popCols = makeBlueSequentialColors(64)
+  
+  if(savePlot) {
+    # png(file=fileName, width=width, height=height)
+    pdf(file=fileName, width=5, height=5)
+    # par(oma=c( 0,0,0,3), mar=c(5.5, 6.1, 3.5, 6))
+    par(mar=c(3, 3.0, 0, 3.1), oma=c(0, 0, 0, 0.9), mgp=c(1.9,.7,0))
+  }
+  plot(popGrid$lon, popGrid$lat, xlab="Longitude", ylab="Latitude", main=main, 
+       xlim=thisKenyaLonRange, ylim=thisKenyaLatRange, asp=1, type="n")
+  # quilt.plot(popGrid$lon, popGrid$lat, urban, col=c("green", "blue"), nx=850, ny=1050, add.legend = FALSE, 
+  #            xlab="Longitude", ylab="Latitude", main=TeX("Urbanicity"), xlim=lonLim, ylim=latLim, asp=1)
+  
+  tempPopGrid = popGrid[popGrid$pop > 10,]
+  popTicks = getLogScaleTicks(tempPopGrid$pop, nint=5)
+  popTickLabels = as.character(popTicks)
+  quilt.plot(tempPopGrid$lon, tempPopGrid$lat, log(tempPopGrid$pop), nx=450, ny=550, add.legend = FALSE, add=TRUE, col=popCols)
+  image.plot(zlim=range(log(tempPopGrid$pop)), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
+             col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=.1), 
+             legend.mar = 0, legend.cex=2, legend.width=3,  smallplot=c(.898,.928,.2,.9))
+  
+  # image.plot(zlim=range(logit(meanRange)), nlevel=length(meanCols), legend.only=TRUE, horizontal=FALSE,
+  #            col=meanCols, add = TRUE, axis.args=list(at=logit(meanTicks), labels=meanTickLabels, cex.axis=2, tck=-.7, hadj=-.1), 
+  #            legend.mar = 0, legend.cex=2, legend.width=3, smallplot= c(.97,1,.1,.9))
+  
+  plotMapDat(mapDat=adm1compressed, lwd=.5)
+  plotMapDat(mapDat=adm2compressed, lwd=.2, border=rgb(.5, .5, .5, .5))
   if(savePlot) {
     dev.off()
   }
@@ -265,7 +292,7 @@ plotModelPredictions = function(dat, resultFilenames, modelClasses, modelVariati
   regionMap = readShapePoly("../U5MR/mapData/kenya_region_shapefile/kenya_region_shapefile.shp", delete_null_obj=TRUE, force_ring=TRUE, repair=TRUE)
   out = load("../U5MR/adminMapData.RData")
   kenyaMap = adm0
-  countyMap = adm1
+  countyMap = adm1compressed
   
   ##### central estimates and credible interval widths
   
@@ -2131,7 +2158,7 @@ plotSingleModelPredictions = function(dat=NULL, results, modelName="", targetPop
   regionMap = readShapePoly("../U5MR/mapData/kenya_region_shapefile/kenya_region_shapefile.shp", delete_null_obj=TRUE, force_ring=TRUE, repair=TRUE)
   out = load("../U5MR/adminMapData.RData")
   kenyaMap = adm0
-  countyMap = adm1
+  countyMap = adm1compressed
   
   ##### central estimates and credible interval widths
   
@@ -2255,11 +2282,11 @@ makeRankPlots = function(postSampleMat, admin=c("admin1","admin2"), highestLowes
   admin = match.arg(admin)
   
   if(admin == "admin1") {
-    map_shp = adm1
+    map_shp = adm1compressed
     admin_name_dt = as.data.table(sort(map_shp$NAME_1))
     admin_name_dt$toPlot <- sort(map_shp$NAME_1)
   } else if (admin == "admin2") {
-    map_shp = adm2
+    map_shp = adm2compressed
     sortI = sort(map_shp$CONSTITUEN, index.return=TRUE)$ix
     admin_name_dt = as.data.table(sort(map_shp$CONSTITUEN))
     admin_name_dt$toPlot <- paste0(map_shp$CONSTITUEN[sortI], ", ", map_shp$COUNTY_NAM[sortI])

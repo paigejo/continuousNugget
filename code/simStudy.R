@@ -2412,6 +2412,10 @@ processSimStudyResultsij = function(i, j, coarse=TRUE) {
   subareaScoresZprev = getScores(truth=thisPop$subareaPop$aggregationResults$ZFineScalePrevalence[,j], 
                                  est=subareaEstsZ, estMat=subareaPopZ$ZFineScalePrevalence, 
                              significance=c(.8, .9, .95), doFuzzyReject=TRUE)
+  subareaScoresPprev = getScores(truth=thisPop$subareaPop$aggregationResults$pUrbanFineScalePrevalence[,j]/
+                                   thisPop$subareaPop$aggregationResults$pRuralFineScalePrevalence[,j], 
+                                 estMat=subareaPopP$pUrbanFineScalePrevalence/subareaPopP$pRuralFineScalePrevalence, 
+                                 significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   
   areaScoresPprev = getScores(truth=thisPop$areaPop$aggregationResults$pFineScalePrevalence[,j], 
                               est=areaEstsP, estMat=areaPopP$pFineScalePrevalence, 

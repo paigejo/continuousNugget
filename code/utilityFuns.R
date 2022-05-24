@@ -2186,30 +2186,30 @@ loadKenyaData = function(getOverSampledData=TRUE, nTestPerCounty=10, saveResults
 ##### project from lat/lon to UTM northing/easting in kilometers.  Use epsg=21097
 # either pass lon/east and lat/north, or a matrix with 2 columns: first being lon/east, second being lat/north
 # inverse: if FALSE, projects from lon/lat to easting/northing.  Else from easting/northing to lon/lat
-projKenya = function(lon, lat=NULL, inverse=FALSE) {
-  if(is.null(lat)) {
-    lat = lon[,2]
-    lon = lon[,1]
-  }
-  
-  if(!inverse) {
-    # from lon/lat coords to easting/northing
-    # rgdal:::showEPSG("+proj=longlat")
-    lonLatCoords = SpatialPoints(cbind(lon, lat), proj4string=CRS("+proj=longlat"))
-    coordsUTM = spTransform(lonLatCoords, CRS("+init=epsg:21097 +units=km"))
-    out = attr(coordsUTM, "coords")
-  }
-  else {
-    # from easting/northing coords to lon/lat
-    east = lon
-    north = lat
-    coordsUTM = SpatialPoints(cbind(east, north), proj4string=CRS("+init=epsg:21097 +units=km"))
-    lonLatCoords = spTransform(coordsUTM, CRS("+proj=longlat"))
-    out = attr(lonLatCoords, "coords")
-  }
-  
-  out
-}
+# projKenya = function(lon, lat=NULL, inverse=FALSE) {
+#   if(is.null(lat)) {
+#     lat = lon[,2]
+#     lon = lon[,1]
+#   }
+#   
+#   if(!inverse) {
+#     # from lon/lat coords to easting/northing
+#     # rgdal:::showEPSG("+proj=longlat")
+#     lonLatCoords = SpatialPoints(cbind(lon, lat), proj4string=CRS("+proj=longlat"))
+#     coordsUTM = spTransform(lonLatCoords, CRS("+init=epsg:21097 +units=km"))
+#     out = attr(coordsUTM, "coords")
+#   }
+#   else {
+#     # from easting/northing coords to lon/lat
+#     east = lon
+#     north = lat
+#     coordsUTM = SpatialPoints(cbind(east, north), proj4string=CRS("+init=epsg:21097 +units=km"))
+#     lonLatCoords = spTransform(coordsUTM, CRS("+proj=longlat"))
+#     out = attr(lonLatCoords, "coords")
+#   }
+#   
+#   out
+# }
 
 # generate a grid with a fixed spatial resolution.
 # either set km per cell (res), number of grid cells on longest axis (nc), 
@@ -5764,6 +5764,13 @@ getLogitScaleTicks = function(x, nint=3, add.5=FALSE) {
 # x: numbers on positive real scale
 getLogScaleTicks = function(x, nint=5) {
   axisTicks(range(log10(x)), log=TRUE, nint=nint)
+}
+
+getCustomScaleTicks = function(usr, scaleFun=sqrt, nint=5, log=FALSE) {
+  # axisTicks(range(scaleFun(x)), log=log, nint=nint)
+  axp <- unlist(.axisPars(range(scaleFun(usr)), log = log, nintLog = nint), 
+                  use.names = FALSE)
+  .Call(C_R_CreateAtVector, axp, usr, nint, log)
 }
 
 approxSDPctIncrease = function(currSDPctIncrease, facVarPctIncrease=2) {

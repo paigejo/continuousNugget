@@ -68,13 +68,13 @@ makeFancyTableFinal = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", 
     }
     
     if(type == "P") {
-      thisMod = "prevalence"
+      thisMod = "empirical"
       meanScoresDF = meanScoresDF[meanScoresDF$Model == "Prevalence",]
     } else if(type == "R") {
-      thisMod = "risk"
+      thisMod = "latent"
       meanScoresDF = meanScoresDF[meanScoresDF$Model == "Risk",]
     } else if(type == "SR") {
-      thisMod = "smooth risk"
+      thisMod = "smooth latent"
       meanScoresDF = meanScoresDF[meanScoresDF$Model == "SmoothRisk",]
     }
     
@@ -318,12 +318,12 @@ makeFancyTableFinal = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", 
                 tempTab[1:3], buffCol, tempTab[4:6], buffCol, tempTab[7:9])
     
     # print final table ----
-    # custom align: "c@{\\phantom{a}}c|ccc@{\\phantom{a}}p{0em}ccc@{\\phantom{a}}p{0em}ccc"
+    # custom align: "c@{\\phantom{\tiny a}}c|ccc@{\\phantom{a}}p{0em}ccc@{\\phantom{a}}p{0em}ccc"
     rhoVals = c("$1/16$"=1, "$1/4$"=1, "$1/2$"=1)
     print(kbl(data.frame(tempTab), booktabs = T, escape = F, align = "c", format="latex", 
               linesep=c("", "\\addlinespace"), digits=2, 
               caption=paste0(captionRoot1, scoreText, captionRoot2, colorCaption, scaleCaption), 
-              col.names=NULL, bottomrule=FALSE, label=paste0(type, "_", thisScore, "_", response)) %>% 
+              col.names=NULL, bottomrule=FALSE, label=paste0(type, "_", thisScore, "_", areaLevel, "_", response)) %>% 
             column_spec(column=c(6, 10), width="0em") %>%
             column_spec(column=2, border_right=TRUE) %>%
             myadd_header_above(c("$r_{\\\\tiny \\\\mbox{clust}}$"=1, "\\\\diagbox[width=.3in, height=.3in, innerleftsep=.04in, innerrightsep=-.02in]{$\\\\beta$}{$\\\\varphi$}"=1, 
@@ -679,7 +679,7 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
 # cvg80, cvg90, cvg95, 
 # width80, width90, with95, time
 getFullMeanScoresDF = function(iRange=1:54, maxJ=100, coarse=TRUE, areaLevel=c("subarea", "area"), 
-                               response=c("p", "Z")) {
+                               response=c("p", "Z", "relPrev")) {
   areaLevel = match.arg(areaLevel)
   response = match.arg(response)
   coarseText = ifelse(coarse, "Coarse", "")
