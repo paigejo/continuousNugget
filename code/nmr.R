@@ -73,6 +73,12 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   coarseText = ifelse(!coarse, "", "Coarse")
   out = load(paste0("savedOutput/application/finalMort", coarseText, logisticText, ".RData"))
   
+  if(coarse) {
+    popMat = popGridCoarse
+  } else {
+    popMat = popGrid
+  }
+  
   # calculate the range of predictions and CI widths
   rangePrevalencePredPixel = c()
   rangePrevalencePredConstituency = c()
@@ -350,7 +356,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   par(mfrow=c(2,3), oma=c(5,5,5,5), mar=c(3.1, 5.1, 1.1, 7.1))
   
   # pixel level
-  quilt.plot(popGrid$lon, popGrid$lat, pixelMean, FUN=function(x){logit(mean(x, na.rm=TRUE))}, 
+  quilt.plot(popMat$lon, popMat$lat, pixelMean, FUN=function(x){logit(mean(x, na.rm=TRUE))}, 
              zlim=logit(meanRange), nx=160, ny=160, main="", cex.main=3, col=meanCols, 
              add.legend=FALSE, cex.axis=2, xlab="", ylab="Latitude", 
              xlim=kenyaLonRange, ylim=c(-5.5, 5.8), asp=1, cex.lab=3)
@@ -389,7 +395,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   # pixel level
   
-  quilt.plot(popGrid$lon, popGrid$lat, prevalenceCIWidthPixellcpb, FUN=function(x){logit(mean(x, na.rm=TRUE))}, 
+  quilt.plot(popMat$lon, popMat$lat, prevalenceCIWidthPixellcpb, FUN=function(x){logit(mean(x, na.rm=TRUE))}, 
              nx=160, ny=160, main="", cex.main=3, col=sdCols, 
              add.legend=FALSE, cex.axis=2, xlab="", ylab="Latitude", 
              xlim=kenyaLonRange, ylim=c(-5.5, 5.8), asp=1, cex.lab=3)
@@ -460,7 +466,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   par(mfrow=c(2,3), oma=c(5,5,5,5), mar=c(3.1, 5.1, 1.1, 7.1))
   
   # pixel level
-  quilt.plot(popGrid$lon, popGrid$lat, pixelMean, FUN=function(x){log(mean(x, na.rm=TRUE))}, 
+  quilt.plot(popMat$lon, popMat$lat, pixelMean, FUN=function(x){log(mean(x, na.rm=TRUE))}, 
              zlim=log(meanRangePixel), nx=160, ny=160, main="", cex.main=3, col=meanCols, 
              add.legend=FALSE, cex.axis=2, xlab="", ylab="Latitude", 
              xlim=kenyaLonRange, ylim=c(-5.5, 5.8), asp=1, cex.lab=3)
@@ -503,7 +509,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   # pixel level
   
-  quilt.plot(popGrid$lon, popGrid$lat, countCIWidthPixellcpb, FUN=function(x){log(mean(x, na.rm=TRUE))}, 
+  quilt.plot(popMat$lon, popMat$lat, countCIWidthPixellcpb, FUN=function(x){log(mean(x, na.rm=TRUE))}, 
              nx=160, ny=160, main="", cex.main=3, col=sdCols, 
              add.legend=FALSE, cex.axis=2, xlab="", ylab="Latitude", 
              xlim=kenyaLonRange, ylim=c(-5.5, 5.8), asp=1, cex.lab=3)
@@ -674,7 +680,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   par(mfrow=c(2,2), oma=c( 0,0,4,7), mar=c(6.1, 8.5, 1.1, 3.5))
   
   # pixel level
-  quilt.plot(popGrid$lon, popGrid$lat, pixelWidth, FUN=function(x){log(mean(x, na.rm=TRUE))}, 
+  quilt.plot(popMat$lon, popMat$lat, pixelWidth, FUN=function(x){log(mean(x, na.rm=TRUE))}, 
              zlim=log(widthRangePixel), nx=160, ny=160, main="", cex.main=3, col=sdCols, 
              add.legend=FALSE, cex.axis=2, xlab="", ylab="Latitude", 
              xlim=kenyaLonRange, ylim=c(-5.5, 5.8), asp=1, cex.lab=3)
@@ -742,7 +748,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   par(mfrow=c(2,2), oma=c( 0,0,4,7), mar=c(6.1, 8.5, 1.1, 3.5))
   
   # pixel level
-  quilt.plot(popGrid$lon, popGrid$lat, pixelMean, FUN=function(x){log(mean(x, na.rm=TRUE))}, 
+  quilt.plot(popMat$lon, popMat$lat, pixelMean, FUN=function(x){log(mean(x, na.rm=TRUE))}, 
              zlim=log(meanRangePixel), nx=160, ny=160, main="", cex.main=3, col=meanCols, 
              add.legend=FALSE, cex.axis=2, xlab="", ylab="Latitude", 
              xlim=kenyaLonRange, ylim=c(-5.5, 5.8), asp=1, cex.lab=3)
@@ -812,7 +818,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   par(mfrow=c(2,2), oma=c( 0,0,4,7), mar=c(6.1, 8.5, 1.1, 3.5))
   
   # pixel level
-  quilt.plot(popGrid$lon, popGrid$lat, pixelWidth, FUN=function(x){log(mean(x, na.rm=TRUE))}, 
+  quilt.plot(popMat$lon, popMat$lat, pixelWidth, FUN=function(x){log(mean(x, na.rm=TRUE))}, 
              zlim=log(widthRangePixel), nx=160, ny=160, main="", cex.main=3, col=sdCols, 
              add.legend=FALSE, cex.axis=2, xlab="", ylab="Latitude", 
              xlim=kenyaLonRange, ylim=c(-5.5, 5.8), asp=1, cex.lab=3)
