@@ -62,12 +62,16 @@ getMortResults = function(seed=123, useCoarseGrid=FALSE, logisticApproximation=F
 }
 
 # Make plots for the neonatal mortality application
-makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
+makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   alpha = 1 - signif
   
   # first load the model predictions
+  if(logisticApproximation) {
+    stop("logisticApproximation not currently used")
+  }
   logisticText = ifelse(!logisticApproximation, "", "logisticApprox")
-  out = load(paste0("savedOutput/application/finalMort", logisticText, ".RData"))
+  coarseText = ifelse(!coarse, "", "Coarse")
+  out = load(paste0("savedOutput/application/finalMort", coarseText, logisticText, ".RData"))
   
   # calculate the range of predictions and CI widths
   rangePrevalencePredPixel = c()
@@ -342,7 +346,7 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
   #                     rangePrevalenceCIWidthCounty))
   
   # browser()
-  png(paste0(figDirectory, "application/prevalenceMeanCIWidth", logisticText, ".png"), width=1500, height=1000)
+  png(paste0(figDirectory, "application/prevalenceMeanCIWidth", logisticText, coarseText, ".png"), width=1500, height=1000)
   par(mfrow=c(2,3), oma=c(5,5,5,5), mar=c(3.1, 5.1, 1.1, 7.1))
   
   # pixel level
@@ -452,7 +456,7 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
   meanRangeConstituency = range(constituencyMean)
   meanRangeCounty = range(countyMean)
   
-  png(paste0(figDirectory, "application/burdenMeanCIWidth", logisticText, ".png"), width=1500, height=1000)
+  png(paste0(figDirectory, "application/burdenMeanCIWidth", logisticText, coarseText, ".png"), width=1500, height=1000)
   par(mfrow=c(2,3), oma=c(5,5,5,5), mar=c(3.1, 5.1, 1.1, 7.1))
   
   # pixel level
@@ -570,7 +574,7 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
   urbDivergingCols = makeGreenBlueDivergingColors(64, center=1, valRange=meanRange)
   urbDivergingCols = centerColorScale(64, valRange=meanRange, center=1, colScale=makeGreenBlueDivergingColors, scaleFun=log)
   
-  png(paste0(figDirectory, "application/relativePrevMeanCIWidth", logisticText, ".png"), width=1000, height=1000)
+  png(paste0(figDirectory, "application/relativePrevMeanCIWidth", logisticText, coarseText, ".png"), width=1000, height=1000)
   par(mfrow=c(2,2), oma=c(3,5,3,3), mar=c(3.1, 5.1, 1.1, 5.1))
   
   # constituency level
@@ -666,7 +670,7 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
                        rangePrevalenceCIWidthCounty))
   widthRangePixel = rangePrevalenceCIWidthPixel
   
-  png(paste0(figDirectory, "application/prevalenceCIWidth", logisticText, ".png"), width=1000, height=1000)
+  png(paste0(figDirectory, "application/prevalenceCIWidth", logisticText, coarseText, ".png"), width=1000, height=1000)
   par(mfrow=c(2,2), oma=c( 0,0,4,7), mar=c(6.1, 8.5, 1.1, 3.5))
   
   # pixel level
@@ -734,7 +738,7 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
   meanRangeCounty = rangeCountPredCounty
   # meanRangeProvince = rangeCountPredProvince
   
-  png(paste0(figDirectory, "application/countMean", logisticText, ".png"), width=1000, height=1000)
+  png(paste0(figDirectory, "application/countMean", logisticText, coarseText, ".png"), width=1000, height=1000)
   par(mfrow=c(2,2), oma=c( 0,0,4,7), mar=c(6.1, 8.5, 1.1, 3.5))
   
   # pixel level
@@ -804,7 +808,7 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
   widthRangeCounty = rangeCountCIWidthCounty
   # widthRangeProvince = rangeCountCIWidthProvince
   
-  png(paste0(figDirectory, "application/countWidth", logisticText, ".png"), width=1000, height=1000)
+  png(paste0(figDirectory, "application/countWidth", logisticText, coarseText, ".png"), width=1000, height=1000)
   par(mfrow=c(2,2), oma=c( 0,0,4,7), mar=c(6.1, 8.5, 1.1, 3.5))
   
   # pixel level
@@ -874,7 +878,7 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
                       rangeRelativePrevalencePredCounty))
   urbDivergingCols = makeGreenBlueDivergingColors(64, center=1, valRange=meanRange)
   
-  png(paste0(figDirectory, "application/relativePrevalence", logisticText, ".png"), width=1000, height=1000)
+  png(paste0(figDirectory, "application/relativePrevalence", logisticText, coarseText, ".png"), width=1000, height=1000)
   par(mfrow=c(2,2), oma=c( 0,4,4,7), mar=c(6.1, 6.5, 1.1, 2.5))
   
   # constituency level
@@ -970,7 +974,7 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
   ## prevalence uncertainty
   
   # absolute prevalence uncertainty
-  pdf(paste0(figDirectory, "application/prevalenceWidthBoxplot", logisticText, ".pdf"), width=6, height=6)
+  pdf(paste0(figDirectory, "application/prevalenceWidthBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   pixels = length(prevalenceCIWidthPixel)
@@ -1002,7 +1006,7 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
   dev.off()
   
   # relative prevalence uncertainty
-  pdf(paste0(figDirectory, "application/prevalenceRelWidthBoxplot", logisticText, ".pdf"), width=6, height=6)
+  pdf(paste0(figDirectory, "application/prevalenceRelWidthBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   pixels = length(prevalenceCIWidthPixel)
@@ -1048,7 +1052,7 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
   dev.off()
   browser()
   # relative prevalence uncertainty
-  pdf(paste0(figDirectory, "application/prevalenceRelSDBoxplot", logisticText, ".pdf"), width=6, height=6)
+  pdf(paste0(figDirectory, "application/prevalenceRelSDBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   pixels = length(prevalenceSDPixel)
@@ -1096,7 +1100,7 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
   ## count uncertainty
   
   # absolute count uncertainty
-  pdf(paste0(figDirectory, "application/countWidthBoxplot", logisticText, ".pdf"), width=6, height=6)
+  pdf(paste0(figDirectory, "application/countWidthBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   pixels = length(countCIWidthPixel)
@@ -1128,7 +1132,7 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
   dev.off()
   
   # relative count uncertainty
-  pdf(paste0(figDirectory, "application/countRelWidthBoxplot", logisticText, ".pdf"), width=6, height=6)
+  pdf(paste0(figDirectory, "application/countRelWidthBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   pixels = length(countCIWidthPixel)
@@ -1173,7 +1177,7 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
   
   dev.off()
   
-  pdf(paste0(figDirectory, "application/countRelSDBoxplot", logisticText, ".pdf"), width=6, height=6)
+  pdf(paste0(figDirectory, "application/countRelSDBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   pixels = length(countSDPixel)
@@ -1221,7 +1225,7 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
   ## relative prevalence uncertainty
   
   # absolute relative prevalence uncertainty
-  pdf(paste0(figDirectory, "application/relativePrevalenceWidthBoxplot", logisticText, ".pdf"), width=6, height=6)
+  pdf(paste0(figDirectory, "application/relativePrevalenceWidthBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   constituencies = length(relativePrevalenceCIWidthConstituency)
@@ -1275,7 +1279,7 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
   dev.off()
   
   # absolute relative prevalence uncertainty
-  pdf(paste0(figDirectory, "application/relativePrevalenceWidthBoxplotSD", logisticText, ".pdf"), width=6, height=6)
+  pdf(paste0(figDirectory, "application/relativePrevalenceWidthBoxplotSD", logisticText, coarseText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   onstituencies = length(relativePrevalenceSDConstituency)
