@@ -1023,7 +1023,6 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   # boxplot(width~modelName, data=pixelDat, ylab="", xlab="", 
   #         main="Pixel", col="skyblue")
   # abline(h=0, lty=2)
-  mtext(side = 2, "Percent increase", line = 3, cex=1)
   
   constituencies = length(prevalenceCIWidthConstituency)
   constituencyDat = data.frame(modelName=c(rep("Smooth Risk", constituencies), rep("Risk", constituencies), rep("Prevalence", constituencies)), 
@@ -1032,6 +1031,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
                                 100*(prevalenceCIWidthConstituency-prevalenceCIWidthConstituencylcpb)/prevalenceCIWidthConstituencylcpb))
   boxplot(width~modelName, data=constituencyDat, ylab="", xlab="", main="Constituency", col="skyblue")
   abline(h=0, lty=2)
+  mtext(side = 2, "Percent increase", line = 3, cex=1)
   
   counties = length(prevalenceCIWidthCounty)
   countyDat = data.frame(modelName=c(rep("Smooth Risk", counties), rep("Risk", counties), rep("Prevalence", counties)), 
@@ -1041,7 +1041,6 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   boxplot(width~modelName, data=countyDat, ylab="Percent Increase", xlab="", main="County", col="skyblue")
   abline(h=0, lty=2)
   mtext(side = 1, "Model", line = 3, cex=1)
-  mtext(side = 2, "Percent increase", line = 3, cex=1)
   
   # provinces = length(prevalenceCIWidthProvince)
   # provinceDat = data.frame(modelName=c(rep("Smooth Risk", provinces), rep("Risk", provinces), rep("Prevalence", provinces)), 
@@ -1069,7 +1068,6 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   # boxplot(width~modelName, data=pixelDat, ylab="", xlab="", 
   #         main="Pixel", col="skyblue")
   # abline(h=0, lty=2)
-  mtext(side = 2, "Percent increase", line = 3, cex=1)
   
   constituencies = length(prevalenceSDConstituency)
   constituencyDat = data.frame(modelName=c(rep("Smooth Risk", constituencies), rep("Risk", constituencies), rep("Prevalence", constituencies)), 
@@ -1078,6 +1076,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
                                        100*(prevalenceSDConstituency-prevalenceSDConstituencylcpb)/prevalenceSDConstituencylcpb))
   boxplot(width~modelName, data=constituencyDat, ylab="", xlab="", main="Constituency", col="skyblue")
   abline(h=0, lty=2)
+  mtext(side = 2, "Percent increase", line = 3, cex=1)
   
   counties = length(prevalenceSDCounty)
   countyDat = data.frame(modelName=c(rep("Smooth Risk", counties), rep("Risk", counties), rep("Prevalence", counties)), 
@@ -1087,7 +1086,6 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   boxplot(width~modelName, data=countyDat, ylab="Percent Increase", xlab="", main="County", col="skyblue")
   abline(h=0, lty=2)
   mtext(side = 1, "Model", line = 3, cex=1)
-  mtext(side = 2, "Percent increase", line = 3, cex=1)
   
   # provinces = length(prevalenceSDProvince)
   # provinceDat = data.frame(modelName=c(rep("Smooth Risk", provinces), rep("Risk", provinces), rep("Prevalence", provinces)), 
@@ -1113,18 +1111,17 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   # pixelDat = data.frame(modelName=c(rep("Smooth Risk", pixels), rep("Risk", pixels), rep("Prevalence", pixels)), 
   #                       width=c(countCIWidthPixellcpb, countCIWidthPixelLCPb, countCIWidthPixel))
   # boxplot(width~modelName, data=pixelDat, ylab="", xlab="Model", main="Pixel", col="skyblue", log="y")
-  mtext(side = 2, "95% CI width", line = 3, cex=1)
   
   constituencies = length(countCIWidthConstituency)
   constituencyDat = data.frame(modelName=c(rep("Smooth Risk", constituencies), rep("Risk", constituencies), rep("Prevalence", constituencies)), 
                                width=c(countCIWidthConstituencylcpb, countCIWidthConstituencyLCPb, countCIWidthConstituency))
   boxplot(width~modelName, data=constituencyDat, ylab="95% CI Width", xlab="Model", main="Constituency", col="skyblue", log="y")
+  mtext(side = 2, "95% CI width", line = 3, cex=1)
   
   counties = length(countCIWidthCounty)
   countyDat = data.frame(modelName=c(rep("Smooth Risk", counties), rep("Risk", counties), rep("Prevalence", counties)), 
                          width=c(countCIWidthCountylcpb, countCIWidthCountyLCPb, countCIWidthCounty))
   boxplot(width~modelName, data=countyDat, ylab="95% CI Width", xlab="Model", main="County", col="skyblue", log="y")
-  mtext(side = 2, "95% CI width", line = 3, cex=1)
   mtext(side = 1, "Model", line = 3, cex=1)
   
   # provinces = length(countCIWidthProvince)
@@ -1149,7 +1146,6 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   # boxplot(width~modelName, data=pixelDat, ylab="", xlab="", 
   #         main="Pixel", col="skyblue")
   # abline(h=0, lty=2)
-  mtext(side = 2, "Percent increase", line = 3, cex=1)
   
   constituencies = length(countCIWidthConstituency)
   constituencyDat = data.frame(modelName=c(rep("Smooth Risk", constituencies), rep("Risk", constituencies), rep("Prevalence", constituencies)), 
@@ -1158,6 +1154,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
                                        100*(countCIWidthConstituency-countCIWidthConstituencylcpb)/countCIWidthConstituencylcpb))
   boxplot(width~modelName, data=constituencyDat, ylab="", xlab="", main="Constituency", col="skyblue")
   abline(h=0, lty=2)
+  mtext(side = 2, "Percent increase", line = 3, cex=1)
   
   counties = length(countCIWidthCounty)
   countyDat = data.frame(modelName=c(rep("Smooth Risk", counties), rep("Risk", counties), rep("Prevalence", counties)), 
@@ -1167,7 +1164,6 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   boxplot(width~modelName, data=countyDat, ylab="Percent Increase", xlab="", main="County", col="skyblue")
   abline(h=0, lty=2)
   mtext(side = 1, "Model", line = 3, cex=1)
-  mtext(side = 2, "Percent increase", line = 3, cex=1)
   
   # provinces = length(countCIWidthProvince)
   # provinceDat = data.frame(modelName=c(rep("Smooth Risk", provinces), rep("Risk", provinces), rep("Prevalence", provinces)), 
