@@ -1012,17 +1012,17 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   dev.off()
   
   # relative prevalence uncertainty
-  pdf(paste0(figDirectory, "application/prevalenceRelWidthBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
-  par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
+  pdf(paste0(figDirectory, "application/prevalenceRelWidthBoxplot", logisticText, coarseText, ".pdf"), width=8, height=5)
+  par(mfrow=c(1,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
-  pixels = length(prevalenceCIWidthPixel)
-  pixelDat = data.frame(modelName=c(rep("Smooth Risk", pixels), rep("Risk", pixels), rep("Prevalence", pixels)), 
-                        width=c(100*(prevalenceCIWidthPixellcpb-prevalenceCIWidthPixellcpb)/prevalenceCIWidthPixellcpb, 
-                                100*(prevalenceCIWidthPixelLCPb-prevalenceCIWidthPixellcpb)/prevalenceCIWidthPixellcpb, 
-                                100*(prevalenceCIWidthPixel-prevalenceCIWidthPixellcpb)/prevalenceCIWidthPixellcpb))
-  boxplot(width~modelName, data=pixelDat, ylab="", xlab="", 
-          main="Pixel", col="skyblue")
-  abline(h=0, lty=2)
+  # pixels = length(prevalenceCIWidthPixel)
+  # pixelDat = data.frame(modelName=c(rep("Smooth Risk", pixels), rep("Risk", pixels), rep("Prevalence", pixels)), 
+  #                       width=c(100*(prevalenceCIWidthPixellcpb-prevalenceCIWidthPixellcpb)/prevalenceCIWidthPixellcpb, 
+  #                               100*(prevalenceCIWidthPixelLCPb-prevalenceCIWidthPixellcpb)/prevalenceCIWidthPixellcpb, 
+  #                               100*(prevalenceCIWidthPixel-prevalenceCIWidthPixellcpb)/prevalenceCIWidthPixellcpb))
+  # boxplot(width~modelName, data=pixelDat, ylab="", xlab="", 
+  #         main="Pixel", col="skyblue")
+  # abline(h=0, lty=2)
   mtext(side = 2, "Percent increase", line = 3, cex=1)
   
   constituencies = length(prevalenceCIWidthConstituency)
@@ -1058,17 +1058,17 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   dev.off()
   browser()
   # relative prevalence uncertainty
-  pdf(paste0(figDirectory, "application/prevalenceRelSDBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
-  par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
+  pdf(paste0(figDirectory, "application/prevalenceRelSDBoxplot", logisticText, coarseText, ".pdf"), width=8, height=5)
+  par(mfrow=c(1,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
-  pixels = length(prevalenceSDPixel)
-  pixelDat = data.frame(modelName=c(rep("Smooth Risk", pixels), rep("Risk", pixels), rep("Prevalence", pixels)), 
-                        width=c(100*(prevalenceSDPixellcpb-prevalenceSDPixellcpb)/prevalenceSDPixellcpb, 
-                                100*(prevalenceSDPixelLCPb-prevalenceSDPixellcpb)/prevalenceSDPixellcpb, 
-                                100*(prevalenceSDPixel-prevalenceSDPixellcpb)/prevalenceSDPixellcpb))
-  boxplot(width~modelName, data=pixelDat, ylab="", xlab="", 
-          main="Pixel", col="skyblue")
-  abline(h=0, lty=2)
+  # pixels = length(prevalenceSDPixel)
+  # pixelDat = data.frame(modelName=c(rep("Smooth Risk", pixels), rep("Risk", pixels), rep("Prevalence", pixels)), 
+  #                       width=c(100*(prevalenceSDPixellcpb-prevalenceSDPixellcpb)/prevalenceSDPixellcpb, 
+  #                               100*(prevalenceSDPixelLCPb-prevalenceSDPixellcpb)/prevalenceSDPixellcpb, 
+  #                               100*(prevalenceSDPixel-prevalenceSDPixellcpb)/prevalenceSDPixellcpb))
+  # boxplot(width~modelName, data=pixelDat, ylab="", xlab="", 
+  #         main="Pixel", col="skyblue")
+  # abline(h=0, lty=2)
   mtext(side = 2, "Percent increase", line = 3, cex=1)
   
   constituencies = length(prevalenceSDConstituency)
@@ -1106,13 +1106,13 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   ## count uncertainty
   
   # absolute count uncertainty
-  pdf(paste0(figDirectory, "application/countWidthBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
-  par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
+  pdf(paste0(figDirectory, "application/countWidthBoxplot", logisticText, coarseText, ".pdf"), width=8, height=5)
+  par(mfrow=c(1,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
-  pixels = length(countCIWidthPixel)
-  pixelDat = data.frame(modelName=c(rep("Smooth Risk", pixels), rep("Risk", pixels), rep("Prevalence", pixels)), 
-                        width=c(countCIWidthPixellcpb, countCIWidthPixelLCPb, countCIWidthPixel))
-  boxplot(width~modelName, data=pixelDat, ylab="", xlab="Model", main="Pixel", col="skyblue", log="y")
+  # pixels = length(countCIWidthPixel)
+  # pixelDat = data.frame(modelName=c(rep("Smooth Risk", pixels), rep("Risk", pixels), rep("Prevalence", pixels)), 
+  #                       width=c(countCIWidthPixellcpb, countCIWidthPixelLCPb, countCIWidthPixel))
+  # boxplot(width~modelName, data=pixelDat, ylab="", xlab="Model", main="Pixel", col="skyblue", log="y")
   mtext(side = 2, "95% CI width", line = 3, cex=1)
   
   constituencies = length(countCIWidthConstituency)
@@ -1138,17 +1138,17 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   dev.off()
   
   # relative count uncertainty
-  pdf(paste0(figDirectory, "application/countRelWidthBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
-  par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
+  pdf(paste0(figDirectory, "application/countRelWidthBoxplot", logisticText, coarseText, ".pdf"), width=8, height=5)
+  par(mfrow=c(1,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
-  pixels = length(countCIWidthPixel)
-  pixelDat = data.frame(modelName=c(rep("Smooth Risk", pixels), rep("Risk", pixels), rep("Prevalence", pixels)), 
-                        width=c(100*(countCIWidthPixellcpb-countCIWidthPixellcpb)/countCIWidthPixellcpb, 
-                                100*(countCIWidthPixelLCPb-countCIWidthPixellcpb)/countCIWidthPixellcpb, 
-                                100*(countCIWidthPixel-countCIWidthPixellcpb)/countCIWidthPixellcpb))
-  boxplot(width~modelName, data=pixelDat, ylab="", xlab="", 
-          main="Pixel", col="skyblue")
-  abline(h=0, lty=2)
+  # pixels = length(countCIWidthPixel)
+  # pixelDat = data.frame(modelName=c(rep("Smooth Risk", pixels), rep("Risk", pixels), rep("Prevalence", pixels)), 
+  #                       width=c(100*(countCIWidthPixellcpb-countCIWidthPixellcpb)/countCIWidthPixellcpb, 
+  #                               100*(countCIWidthPixelLCPb-countCIWidthPixellcpb)/countCIWidthPixellcpb, 
+  #                               100*(countCIWidthPixel-countCIWidthPixellcpb)/countCIWidthPixellcpb))
+  # boxplot(width~modelName, data=pixelDat, ylab="", xlab="", 
+  #         main="Pixel", col="skyblue")
+  # abline(h=0, lty=2)
   mtext(side = 2, "Percent increase", line = 3, cex=1)
   
   constituencies = length(countCIWidthConstituency)
@@ -1337,6 +1337,9 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   mtext(side = 3, "Relative Prevalence", line = 0.5, cex=1, outer=TRUE)
   
   dev.off()
+  
+  print("finished with plots")
+  browser()
 }
 
 # for now, just gets the results for Nairobi
