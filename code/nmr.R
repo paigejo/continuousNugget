@@ -557,7 +557,7 @@ makeMortPlots = function(logisticApproximation=FALSE, signif=.95) {
   
   # same plot but for relative prevalence. Don't include pixel level because 
   # pixel is either urban or rural, not both
-  
+  browser()
   constituencyMean = rowMeans(subareaPop$pUrbanFineScalePrevalence/subareaPop$pRuralFineScalePrevalence)
   countyMean = rowMeans(areaPop$pUrbanFineScalePrevalence/areaPop$pRuralFineScalePrevalence)
   # provinceMean = rowMeans(agg$aggregatedResultsLCPb$regionMatrices$p)
