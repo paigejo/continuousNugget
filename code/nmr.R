@@ -182,7 +182,9 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
       rangeCountPredConstituency = range(c(rangeCountPredConstituency, 
                                            rowMeans(subareaPop$ZFineScaleRisk)), na.rm=TRUE)
       relativePrevalencePredConstituency = rowMeans(subareaPop$pUrbanFineScalePrevalence/subareaPop$pRuralFineScalePrevalence, na.rm=TRUE)
+      undefinedRelativePrevalenceConstituencies = undefinedRelativePrevalenceConstituencies | !is.finite(relativePrevalencePredConstituency)
       relativePrevalencePredConstituency[undefinedRelativePrevalenceConstituencies] = NA
+      
       rangeRelativePrevalencePredConstituency = range(relativePrevalencePredConstituency[is.finite(relativePrevalencePredConstituency)], na.rm=TRUE)
       
       prevalenceCIWidthConstituency = apply(subareaPop$pFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
