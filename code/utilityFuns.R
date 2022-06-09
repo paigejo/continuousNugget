@@ -4,8 +4,15 @@ logit <- function(x) {
   log(x/(1-x))
 }
 
-expit <- function(x) {
+expit2 <- function(x) {
   res = exp(x)/(1+exp(x))
+  res[x > 100] = 1
+  res[x < -100] = 0
+  res
+}
+
+expit <- function(x) {
+  res = 1/(1+exp(-x))
   res[x > 100] = 1
   res[x < -100] = 0
   res

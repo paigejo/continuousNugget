@@ -1540,6 +1540,156 @@ makeMortGridResolutionPlots = function() {
   invisible(NULL)
 }
 
+# for each area (Admin1 and Admin2), check if estimated variance of pemp(A) 
+# matches empirical estimate
+testVarRatios = function(logisticApproximation=FALSE, coarse=TRUE) {
+  # first load the model predictions
+  if(logisticApproximation) {
+    stop("logisticApproximation not currently used")
+  }
+  logisticText = ifelse(!logisticApproximation, "", "logisticApprox")
+  coarseText = ifelse(!coarse, "", "Coarse")
+  out = load(paste0("savedOutput/application/finalMort", coarseText, logisticText, ".RData"))
+  
+  # get the population integration grid and check that it is consistent with pop totals
+  if(coarse) {
+    popMat = popGridCoarse
+    targetPopMat = popGridCoarseAdjusted
+  } else {
+    popMat = popGrid
+    targetPopMat = popGridAdjusted
+  }
+  # make sure the population integration grids match the population frame
+  easpa = makeDefaultEASPA()
+  poppsub = poppsubKenya
+  out = checkPopFrameAndIntWeights(popMat=popMat, targetPopMat=targetPopMat, 
+                                   easpa=easpa, poppsub=poppsub, 
+                                   stopOnFrameMismatch=stopOnFrameMismatch, 
+                                   tol=tol)
+  popMat = out$popMat
+  targetPopMat = out$targetPopMat
+  
+  # Start with Admin1 areas ----
+  Murb = easpa$EAUrb
+  Mrur = easpa$EARur
+  Nurb = easpa$popUrb
+  Nurb = easpa$popRur
+  
+  estimatedVarRSLAdmin1 = numeric(nrow(poppaKenya))
+  estimatedVarPempAdmin1 = numeric(nrow(poppaKenya))
+  sampleVarRSLAdmin1 = numeric(nrow(poppaKenya))
+  sampleVarPempAdmin1 = numeric(nrow(poppaKenya))
+  
+  estimatedVarBSLAdmin1 = numeric(nrow(poppaKenya))
+  estimatedVarBempAdmin1 = numeric(nrow(poppaKenya))
+  sampleVarBSLAdmin1 = numeric(nrow(poppaKenya))
+  sampleVarBempAdmin1 = numeric(nrow(poppaKenya))
+  for(i in 1:nrow(poppaKenya)) {
+    thisArea = easpa$area
+    thisAreaInds = targetPopMat$area == thisArea
+    
+    q = targetPopMat[thisAreaInds,]$pop
+    urbVec = targetPopMat[thisAreaInds,]$urban
+    
+    out = varPrevEmpStrat(Murb=Murb, Mrur=Mrur, Nurb=Nurb, Nrur=Nrur, 
+                          q=q, urbVec=urbVec, 
+                          smoothRiskDraws=pixelPop$pSmoothRisk[thisAreaInds,], 
+                          returnVarRSL=TRUE)
+    estimatedVarRSLAdmin1[i] = out$riskSL
+    estimatedVarPrevEmpAdmin1[i] = out$prevEmp
+    
+    out = varBurdEmpStrat(Murb=Murb[i], Mrur=Mrur[i], Nurb=Nurb[i], Nrur=Nrur[i], 
+                          q=q, urbVec=urbVec, 
+                          smoothRiskDraws=pixelPop$pSmoothRisk[thisAreaInds,], 
+                          returnVarBSL=TRUE)
+    estimatedVarBSLAdmin1[i] = out$burdSL
+    estimatedVarBEmpAdmin1[i] = out$burdEmp
+    
+    # TODO include relative prevalence
+    
+    # calculate sample variances
+    sampleVarRSLAdmin1[i] = var(areaPop$pSmoothRisk[i,])
+    sampleVarPrevEmpAdmin1[i] = var(areaPop$p[i,])
+    
+    sampleVarBSLAdmin1[i] = var(areaPop$ZSmoothRisk[i,])
+    sampleVarBurdEmpAdmin1[i] = var(areaPop$Z[i,])
+    
+    # TODO include relative prevalence
+  }
+  
+  # Do the same with Admin2 areas ----
+  meanEAspsub = meanEAsPerCon()
+  Murb = meanEAspsub$meanUrbanEAs
+  Mrur = meanEAspsub$meanRuralEAs
+  Nurb = meanEAspsub$popUrb
+  Nurb = meanEAspsub$popRur
+  
+  estimatedVarRSLAdmin2 = numeric(nrow(poppsubKenya))
+  estimatedVarPempAdmin2 = numeric(nrow(poppsubKenya))
+  sampleVarRSLAdmin2 = numeric(nrow(poppsubKenya))
+  sampleVarPempAdmin2 = numeric(nrow(poppsubKenya))
+  
+  estimatedVarBSLAdmin2 = numeric(nrow(poppsubKenya))
+  estimatedVarBempAdmin2 = numeric(nrow(poppsubKenya))
+  sampleVarBSLAdmin2 = numeric(nrow(poppsubKenya))
+  sampleVarBempAdmin2 = numeric(nrow(poppsubKenya))
+  for(i in 1:nrow(poppsubKenya)) {
+    thisSubrea = poppsubKenya$subarea
+    thisSubareaInds = targetPopMat$subarea == thisSubrea
+    
+    q = targetPopMat[thisSubareaInds,]$pop
+    urbVec = targetPopMat[thisSubareaInds,]$urban
+    
+    out = varPrevEmpStrat(Murb=Murb[i], Mrur=Mrur[i], Nurb=Nurb[i], Nrur=Nrur[i], 
+                          q=q, urbVec=urbVec, 
+                          smoothRiskDraws=pixelPop$pSmoothRisk[thisSubareaInds,], 
+                          returnVarRSL=TRUE)
+    estimatedVarRSLAdmin2[i] = out$riskSL
+    estimatedVarPrevEmpAdmin2[i] = out$prevEmp
+    
+    out = varBurdEmpStrat(Murb=Murb[i], Mrur=Mrur[i], Nurb=Nurb[i], Nrur=Nrur[i], 
+                          q=q, urbVec=urbVec, 
+                          smoothRiskDraws=pixelPop$pSmoothRisk[thisSubareaInds,], 
+                          returnVarBSL=TRUE)
+    estimatedVarBSLAdmin2[i] = out$burdSL
+    estimatedVarBEmpAdmin2[i] = out$burdEmp
+    
+    # TODO include relative prevalence
+    
+    # calculate sample variances
+    sampleVarRSLAdmin2[i] = var(subareaPop$pSmoothRisk[i,])
+    sampleVarPrevEmpAdmin2[i] = var(subareaPop$p[i,])
+    
+    sampleVarBSLAdmin2[i] = var(subareaPop$ZSmoothRisk[i,])
+    sampleVarBurdEmpAdmin2[i] = var(subareaPop$Z[i,])
+    
+    # TODO include relative prevalence
+  }
+  
+  # print comparisons ----
+  print("Admin1 comparisons: ")
+  print(paste0("mean((sampleVarRSLAdmin1 - estimatedVarRSLAdmin1)^2): ", mean((sampleVarRSLAdmin1 - estimatedVarRSLAdmin1)^2)))
+  print(paste0("mean((sampleVarPrevEmpAdmin1 - estimatedVarPrevEmpAdmin1)^2): ", mean((sampleVarPrevEmpAdmin1 - estimatedVarPrevEmpAdmin1)^2)))
+  print(paste0("mean((sampleVarPRatioAdmin1 - estimatedVarPRatioEmpAdmin1)^2): ", mean((sampleVarPrevEmpAdmin1/sampleVarRSLAdmin1 - 
+                                                                                          estimatedVarPrevEmpAdmin1/estimatedVarRSLAdmin1)^2)))
+  print(paste0("mean((sampleVarBSLAdmin1 - estimatedVarBSLAdmin1)^2): ", mean((sampleVarBSLAdmin1 - estimatedVarBSLAdmin1)^2)))
+  print(paste0("mean((sampleVarBurdEmpAdmin1 - estimatedVarBurdEmpAdmin1)^2): ", mean((sampleVarBurdEmpAdmin1 - estimatedVarBurdEmpAdmin1)^2)))
+  print(paste0("mean((sampleVarBRatioAdmin1 - estimatedVarBRatioEmpAdmin1)^2): ", mean((sampleVarBurdEmpAdmin1/sampleVarBSLAdmin1 - 
+                                                                                          estimatedVarBurdEmpAdmin1/estimatedVarBSLAdmin1)^2)))
+  
+  print("Admin2 comparisons: ")
+  print(paste0("mean((sampleVarRSLAdmin2 - estimatedVarRSLAdmin2)^2): ", mean((sampleVarRSLAdmin2 - estimatedVarRSLAdmin2)^2)))
+  print(paste0("mean((sampleVarPrevEmpAdmin2 - estimatedVarPrevEmpAdmin2)^2): ", mean((sampleVarPrevEmpAdmin2 - estimatedVarPrevEmpAdmin2)^2)))
+  print(paste0("mean((sampleVarPRatioAdmin2 - estimatedVarPRatioEmpAdmin2)^2): ", mean((sampleVarPrevEmpAdmin2/sampleVarRSLAdmin2 - 
+                                                                                          estimatedVarPrevEmpAdmin2/estimatedVarRSLAdmin2)^2)))
+  print(paste0("mean((sampleVarBSLAdmin2 - estimatedVarBSLAdmin2)^2): ", mean((sampleVarBSLAdmin2 - estimatedVarBSLAdmin2)^2)))
+  print(paste0("mean((sampleVarBurdEmpAdmin2 - estimatedVarBurdEmpAdmin2)^2): ", mean((sampleVarBurdEmpAdmin2 - estimatedVarBurdEmpAdmin2)^2)))
+  print(paste0("mean((sampleVarBRatioAdmin2 - estimatedVarBRatioEmpAdmin2)^2): ", mean((sampleVarBurdEmpAdmin2/sampleVarBSLAdmin2 - 
+                                                                                          estimatedVarBurdEmpAdmin2/estimatedVarBSLAdmin2)^2)))
+  
+  # plot comparisons
+  browser()
+}
 
 
 
