@@ -181,6 +181,8 @@ varPrevEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
   Qrur = sum(qRur)
   
   # get stratum and areal smooth risks
+  smoothRiskDrawsUrb = smoothRiskDraws[urbVec,]
+  smoothRiskDrawsRur = smoothRiskDraws[!urbVec,]
   smoothRiskDrawsUrbAreal = t(smoothRiskDrawsUrb) %*% qUrb
   smoothRiskDrawsRurAreal = t(smoothRiskDrawsRur) %*% qRur
   smoothRiskDrawsAreal = smoothRiskDrawsUrbAreal * Qurb + smoothRiskDrawsRurAreal * Qrur
