@@ -1573,7 +1573,7 @@ testVarRatios = function(logisticApproximation=FALSE, coarse=TRUE) {
   Murb = easpa$EAUrb
   Mrur = easpa$EARur
   Nurb = easpa$popUrb
-  Nurb = easpa$popRur
+  Nrur = easpa$popRur
   
   estimatedVarRSLAdmin1 = numeric(nrow(poppaKenya))
   estimatedVarPempAdmin1 = numeric(nrow(poppaKenya))
@@ -1591,7 +1591,7 @@ testVarRatios = function(logisticApproximation=FALSE, coarse=TRUE) {
     q = targetPopMat[thisAreaInds,]$pop
     urbVec = targetPopMat[thisAreaInds,]$urban
     
-    out = varPrevEmpStrat(Murb=Murb, Mrur=Mrur, Nurb=Nurb, Nrur=Nrur, 
+    out = varPrevEmpStrat(Murb=Murb[i], Mrur=Mrur[i], Nurb=Nurb[i], Nrur=Nrur[i], 
                           q=q, urbVec=urbVec, 
                           smoothRiskDraws=pixelPop$pSmoothRisk[thisAreaInds,], 
                           returnVarRSL=TRUE)

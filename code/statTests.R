@@ -204,7 +204,7 @@ varPrevEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
   
   # estimate variances and covariances of the "N" terms
   varBinProp = Qurb * (1 - Qurb) / N
-  covBinPropsUrbRur = -varBinProp
+  covBinPropUrbRur = -varBinProp
   
   # calculate var(E[pemp(A) | Mvec, Nvec, u])
   varEterm = ERslUrb * varBinProp + 
