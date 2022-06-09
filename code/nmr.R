@@ -1585,7 +1585,7 @@ testVarRatios = function(logisticApproximation=FALSE, coarse=TRUE) {
   sampleVarBSLAdmin1 = numeric(nrow(poppaKenya))
   sampleVarBempAdmin1 = numeric(nrow(poppaKenya))
   for(i in 1:nrow(poppaKenya)) {
-    thisArea = easpa$area
+    thisArea = easpa$area[i]
     thisAreaInds = targetPopMat$area == thisArea
     
     q = targetPopMat[thisAreaInds,]$pop
@@ -1595,24 +1595,24 @@ testVarRatios = function(logisticApproximation=FALSE, coarse=TRUE) {
                           q=q, urbVec=urbVec, 
                           smoothRiskDraws=pixelPop$pSmoothRisk[thisAreaInds,], 
                           returnVarRSL=TRUE)
-    estimatedVarRSLAdmin1[i] = out$riskSL
-    estimatedVarPrevEmpAdmin1[i] = out$prevEmp
+    estimatedVarRSLAdmin1[i] = out[2]
+    estimatedVarPrevEmpAdmin1[i] = out[1]
     
     out = varBurdEmpStrat(Murb=Murb[i], Mrur=Mrur[i], Nurb=Nurb[i], Nrur=Nrur[i], 
                           q=q, urbVec=urbVec, 
                           smoothRiskDraws=pixelPop$pSmoothRisk[thisAreaInds,], 
                           returnVarBSL=TRUE)
-    estimatedVarBSLAdmin1[i] = out$burdSL
-    estimatedVarBEmpAdmin1[i] = out$burdEmp
+    estimatedVarBSLAdmin1[i] = out[2]
+    estimatedVarBEmpAdmin1[i] = out[1]
     
     # TODO include relative prevalence
     
     # calculate sample variances
     sampleVarRSLAdmin1[i] = var(areaPop$pSmoothRisk[i,])
-    sampleVarPrevEmpAdmin1[i] = var(areaPop$p[i,])
+    sampleVarPrevEmpAdmin1[i] = var(areaPop$pFineScalePrevalence[i,])
     
     sampleVarBSLAdmin1[i] = var(areaPop$ZSmoothRisk[i,])
-    sampleVarBurdEmpAdmin1[i] = var(areaPop$Z[i,])
+    sampleVarBurdEmpAdmin1[i] = var(areaPop$ZFineScalePrevalence[i,])
     
     # TODO include relative prevalence
   }
@@ -1644,24 +1644,24 @@ testVarRatios = function(logisticApproximation=FALSE, coarse=TRUE) {
                           q=q, urbVec=urbVec, 
                           smoothRiskDraws=pixelPop$pSmoothRisk[thisSubareaInds,], 
                           returnVarRSL=TRUE)
-    estimatedVarRSLAdmin2[i] = out$riskSL
-    estimatedVarPrevEmpAdmin2[i] = out$prevEmp
+    estimatedVarRSLAdmin2[i] = out[2]
+    estimatedVarPrevEmpAdmin2[i] = out[1]
     
     out = varBurdEmpStrat(Murb=Murb[i], Mrur=Mrur[i], Nurb=Nurb[i], Nrur=Nrur[i], 
                           q=q, urbVec=urbVec, 
                           smoothRiskDraws=pixelPop$pSmoothRisk[thisSubareaInds,], 
                           returnVarBSL=TRUE)
-    estimatedVarBSLAdmin2[i] = out$burdSL
-    estimatedVarBEmpAdmin2[i] = out$burdEmp
+    estimatedVarBSLAdmin2[i] = out[2]
+    estimatedVarBEmpAdmin2[i] = out[1]
     
     # TODO include relative prevalence
     
     # calculate sample variances
     sampleVarRSLAdmin2[i] = var(subareaPop$pSmoothRisk[i,])
-    sampleVarPrevEmpAdmin2[i] = var(subareaPop$p[i,])
+    sampleVarPrevEmpAdmin2[i] = var(subareaPop$pFineScalePrevalence[i,])
     
     sampleVarBSLAdmin2[i] = var(subareaPop$ZSmoothRisk[i,])
-    sampleVarBurdEmpAdmin2[i] = var(subareaPop$Z[i,])
+    sampleVarBurdEmpAdmin2[i] = var(subareaPop$ZFineScalePrevalence[i,])
     
     # TODO include relative prevalence
   }
