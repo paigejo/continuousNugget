@@ -1565,7 +1565,7 @@ testVarRatios = function(logisticApproximation=FALSE, coarse=TRUE) {
   out = checkPopFrameAndIntWeights(popMat=popMat, targetPopMat=targetPopMat, 
                                    easpa=easpa, poppsub=poppsub, 
                                    stopOnFrameMismatch=stopOnFrameMismatch, 
-                                   tol=tol)
+                                   tol=1e-3)
   popMat = out$popMat
   targetPopMat = out$targetPopMat
   
