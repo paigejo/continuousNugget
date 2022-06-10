@@ -1674,13 +1674,13 @@ testVarRatios = function(logisticApproximation=FALSE, coarse=TRUE) {
   # print comparisons ----
   print("Admin1 comparisons: ")
   print(paste0("mean((sampleVarRSLAdmin1 - estimatedVarRSLAdmin1)^2): ", mean((sampleVarRSLAdmin1 - estimatedVarRSLAdmin1)^2)))
-  print(paste0("mean((sampleVarPrevEmpAdmin1 - estimatedVarPrevEmpAdmin1)^2): ", mean((sampleVarPrevEmpAdmin1 - estimatedVarPrevEmpAdmin1)^2)))
-  print(paste0("mean((sampleVarPRatioAdmin1 - estimatedVarPRatioEmpAdmin1)^2): ", mean((sampleVarPrevEmpAdmin1/sampleVarRSLAdmin1 - 
-                                                                                          estimatedVarPrevEmpAdmin1/estimatedVarRSLAdmin1)^2)))
+  print(paste0("mean((sampleVarPempAdmin1 - estimatedVarPempAdmin1)^2): ", mean((sampleVarPempAdmin1 - estimatedVarPempAdmin1)^2)))
+  print(paste0("mean((sampleVarPRatioAdmin1 - estimatedVarPRatioEmpAdmin1)^2): ", mean((sampleVarPempAdmin1/sampleVarRSLAdmin1 - 
+                                                                                          estimatedVarPempAdmin1/estimatedVarRSLAdmin1)^2)))
   print(paste0("mean((sampleVarBSLAdmin1 - estimatedVarBSLAdmin1)^2): ", mean((sampleVarBSLAdmin1 - estimatedVarBSLAdmin1)^2)))
-  print(paste0("mean((sampleVarBurdEmpAdmin1 - estimatedVarBurdEmpAdmin1)^2): ", mean((sampleVarBurdEmpAdmin1 - estimatedVarBurdEmpAdmin1)^2)))
-  print(paste0("mean((sampleVarBRatioAdmin1 - estimatedVarBRatioEmpAdmin1)^2): ", mean((sampleVarBurdEmpAdmin1/sampleVarBSLAdmin1 - 
-                                                                                          estimatedVarBurdEmpAdmin1/estimatedVarBSLAdmin1)^2)))
+  print(paste0("mean((sampleVarBempAdmin1 - estimatedVarBempAdmin1)^2): ", mean((sampleVarBempAdmin1 - estimatedVarBempAdmin1)^2)))
+  print(paste0("mean((sampleVarBRatioAdmin1 - estimatedVarBRatioEmpAdmin1)^2): ", mean((sampleVarBempAdmin1/sampleVarBSLAdmin1 - 
+                                                                                          estimatedVarBempAdmin1/estimatedVarBSLAdmin1)^2)))
   
   print("Admin2 comparisons: ")
   print(paste0("mean((sampleVarRSLAdmin2 - estimatedVarRSLAdmin2)^2): ", mean((sampleVarRSLAdmin2 - estimatedVarRSLAdmin2)^2)))

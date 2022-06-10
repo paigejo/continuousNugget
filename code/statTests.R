@@ -264,6 +264,9 @@ varPrevEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
     # estimate variances and covariances of the "N" terms
     varBinProp = 0
     covBinPropUrbRur = 0
+    
+    # set to 1 to avoid numerical problems dividing by 0
+    Mrur = 1
   } else if(nRuralPixels != 0) {
     # estimate moments of urban and rural smooth risk
     varUrb = 0
@@ -281,6 +284,9 @@ varPrevEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
     # estimate variances and covariances of the "N" terms
     varBinProp = 0
     covBinPropUrbRur = 0
+    
+    # set to 1 to avoid numerical problems dividing by 0
+    Murb = 1
   }
   
   # calculate var(E[pemp(A) | Mvec, Nvec, u])
@@ -410,6 +416,9 @@ varBurdEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
     # estimate variances and covariances of the "N" terms
     varBin = 0
     covBinUrbRur = 0
+    
+    # set to 1 to avoid numerical problems dividing by 0
+    Mrur = 1
   } else if(nRuralPixels != 0) {
     varUrb = 0
     varRur = var(smoothRiskDrawsRurAreal)
@@ -426,6 +435,9 @@ varBurdEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
     # estimate variances and covariances of the "N" terms
     varBin = 0
     covBinUrbRur = 0
+    
+    # set to 1 to avoid numerical problems dividing by 0
+    Murb = 1
   }
   
   # calculate var(E[bemp(A) | Mvec, Nvec, u])
