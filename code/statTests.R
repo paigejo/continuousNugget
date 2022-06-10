@@ -153,7 +153,7 @@ varRiskSLStrat = function(smoothRiskDraws, q=NULL) {
 }
 
 varPrevEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nurb=37*Murb, Nrur=37*Mrur, 
-                           q=NULL, smoothRiskDraws=NULL, urbVec=c(TRUE, FALSE), returnVarRSL=TRUE) {
+                           q=NULL, smoothRiskDraws=NULL, smoothRiskSqDraws=NULL, urbVec=c(TRUE, FALSE), returnVarRSL=TRUE) {
   N = Nurb + Nrur
   M = Murb + Mrur
   
@@ -165,6 +165,15 @@ varPrevEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
     # integrate out the cluster effect in the risk
     smoothRiskDraws = matrix(SUMMER::logitNormMean(cbind(c(as.matrix(etaSDraws)), rep(sigmaEps, length(etaSDraws))), 
                                                    logisticApprox=FALSE), nrow=nrow(etaSDraws))
+  }
+  
+  if(is.null(smoothRiskSqDraws)) {
+    if(is.null(etaSDraws) || is.null(sigmaEps)) {
+      stop("must either provide etaSDraws and sigmaEps or smoothRiskSqDraws")
+    }
+    
+    # integrate out the cluster effect in the squared risk
+    smoothRiskSqDraws = matrix(logitNormSqMean(cbind(c(as.matrix(etaSDraws)), rep(sigmaEps, length(etaSDraws)))), nrow=nrow(etaSDraws))
   }
   
   if(is.null(q)) {
@@ -190,8 +199,8 @@ varPrevEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
   smoothRiskDrawsAreal = smoothRiskDrawsUrbAreal * Qurb + smoothRiskDrawsRurAreal * Qrur
   
   # do the same for squared smooth risks
-  smoothRisk2DrawsUrbAreal = t(smoothRiskDrawsUrb^2) %*% qUrb
-  smoothRisk2DrawsRurAreal = t(smoothRiskDrawsRur^2) %*% qRur
+  smoothRisk2DrawsUrbAreal = t(smoothRiskSqDraws) %*% qUrb
+  smoothRisk2DrawsRurAreal = t(smoothRiskSqDraws) %*% qRur
   
   # estimate moments of urban and rural smooth risk
   varUrb = var(smoothRiskDrawsUrbAreal)
