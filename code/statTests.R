@@ -199,8 +199,8 @@ varPrevEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
   smoothRiskDrawsAreal = smoothRiskDrawsUrbAreal * Qurb + smoothRiskDrawsRurAreal * Qrur
   
   # do the same for squared smooth risks
-  smoothRisk2DrawsUrbAreal = t(smoothRiskSqDraws) %*% qUrb
-  smoothRisk2DrawsRurAreal = t(smoothRiskSqDraws) %*% qRur
+  smoothRisk2DrawsUrbAreal = t(smoothRiskSqDraws[urbVec,]) %*% qUrb
+  smoothRisk2DrawsRurAreal = t(smoothRiskSqDraws[!urbVec,]) %*% qRur
   
   # estimate moments of urban and rural smooth risk
   varUrb = var(smoothRiskDrawsUrbAreal)
