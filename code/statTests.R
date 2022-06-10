@@ -292,7 +292,7 @@ varBurdEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
   # estimate moments of urban and rural smooth risk
   varUrb = var(smoothRiskDrawsUrbAreal)
   varRur = var(smoothRiskDrawsRurAreal)
-  varBurdenA = var(varUrb * Nurb + varRur * Nrur)
+  varBurdenA = var(smoothRiskDrawsUrbAreal * Nurb + smoothRiskDrawsRurAreal * Nrur)
   covUrbRur = cov(smoothRiskDrawsUrbAreal, smoothRiskDrawsRurAreal)
   ERslUrb = mean(smoothRiskDrawsUrbAreal)
   ERslRur = mean(smoothRiskDrawsRurAreal)
@@ -303,13 +303,12 @@ varBurdEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
   ERsl2Rur = mean(smoothRisk2DrawsRurAreal)
   
   # estimate variances and covariances of the "N" terms
-  varBinProp = Qurb * (1 - Qurb) / N
-  covBinPropUrbRur = -varBinProp
+  varBin = Qurb * (1 - Qurb) * N
+  covBinUrbRur = -varBin
   
   # calculate var(E[bemp(A) | Mvec, Nvec, u])
-  varEterm = ERslUrb * varBinProp + 
-    ERslRur * varBinProp + 
-    ERslUrbRur * covBinPropUrbRur + varBurdenA
+  varEterm = ERslUrb * varBin + ERslRur * varBin + 
+    ERslUrbRur * covBinUrbRur + varBurdenA
   
   # calculate E[var(bemp(A) | Mvec, Nvec, u)]
   EvarTerm = Nurb * (ERslUrb - ERsl2Urb) + Nrur * (ERslRur - ERsl2Rur) + 

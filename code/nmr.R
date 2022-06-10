@@ -1615,7 +1615,6 @@ testVarRatios = function(logisticApproximation=FALSE, coarse=TRUE) {
     # calculate sample variances
     sampleVarRSLAdmin1[i] = var(areaPop$pSmoothRisk[i,])
     sampleVarPempAdmin1[i] = var(areaPop$pFineScalePrevalence[i,])
-    sampleVarPempAdmin12[i] = mean((areaPop$pFineScalePrevalence[i,] - mean(areaPop$pSmoothRisk[i,]))^2)
     
     sampleVarBSLAdmin1[i] = var(areaPop$ZSmoothRisk[i,])
     sampleVarBempAdmin1[i] = var(areaPop$ZFineScalePrevalence[i,])
