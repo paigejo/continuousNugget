@@ -372,12 +372,12 @@ varBurdEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
   # do the same for squared smooth risks
   smoothRiskSqDrawsUrb = matrix(smoothRiskSqDraws[urbVec,], nrow=nUrbanPixels)
   smoothRiskSqDrawsRur = matrix(smoothRiskSqDraws[!urbVec,], nrow=nRuralPixels)
-  if(nRuralPixels != 0) {
+  if(nUrbanPixels != 0) {
     smoothRisk2DrawsUrbAreal = t(smoothRiskSqDrawsUrb) %*% qUrb
   } else {
     smoothRisk2DrawsUrbAreal = numeric(0)
   }
-  if(nUrbanPixels != 0) {
+  if(nRuralPixels != 0) {
     smoothRisk2DrawsRurAreal = t(smoothRiskSqDrawsRur) %*% qRur
   } else {
     smoothRisk2DrawsRurAreal = numeric(0)
