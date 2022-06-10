@@ -1684,13 +1684,13 @@ testVarRatios = function(logisticApproximation=FALSE, coarse=TRUE) {
   
   print("Admin2 comparisons: ")
   print(paste0("mean((sampleVarRSLAdmin2 - estimatedVarRSLAdmin2)^2): ", mean((sampleVarRSLAdmin2 - estimatedVarRSLAdmin2)^2)))
-  print(paste0("mean((sampleVarPrevEmpAdmin2 - estimatedVarPrevEmpAdmin2)^2): ", mean((sampleVarPrevEmpAdmin2 - estimatedVarPrevEmpAdmin2)^2)))
-  print(paste0("mean((sampleVarPRatioAdmin2 - estimatedVarPRatioEmpAdmin2)^2): ", mean((sampleVarPrevEmpAdmin2/sampleVarRSLAdmin2 - 
-                                                                                          estimatedVarPrevEmpAdmin2/estimatedVarRSLAdmin2)^2)))
+  print(paste0("mean((sampleVarPempAdmin2 - estimatedVarPempAdmin2)^2): ", mean((sampleVarPempAdmin2 - estimatedVarPempAdmin2)^2)))
+  print(paste0("mean((sampleVarPRatioAdmin2 - estimatedVarPRatioEmpAdmin2)^2): ", mean((sampleVarPempAdmin2/sampleVarRSLAdmin2 - 
+                                                                                          estimatedVarPempAdmin2/estimatedVarRSLAdmin2)^2)))
   print(paste0("mean((sampleVarBSLAdmin2 - estimatedVarBSLAdmin2)^2): ", mean((sampleVarBSLAdmin2 - estimatedVarBSLAdmin2)^2)))
-  print(paste0("mean((sampleVarBurdEmpAdmin2 - estimatedVarBurdEmpAdmin2)^2): ", mean((sampleVarBurdEmpAdmin2 - estimatedVarBurdEmpAdmin2)^2)))
-  print(paste0("mean((sampleVarBRatioAdmin2 - estimatedVarBRatioEmpAdmin2)^2): ", mean((sampleVarBurdEmpAdmin2/sampleVarBSLAdmin2 - 
-                                                                                          estimatedVarBurdEmpAdmin2/estimatedVarBSLAdmin2)^2)))
+  print(paste0("mean((sampleVarBempAdmin2 - estimatedVarBempAdmin2)^2): ", mean((sampleVarBempAdmin2 - estimatedVarBempAdmin2)^2)))
+  print(paste0("mean((sampleVarBRatioAdmin2 - estimatedVarBRatioEmpAdmin2)^2): ", mean((sampleVarBempAdmin2/sampleVarBSLAdmin2 - 
+                                                                                          estimatedVarBempAdmin2/estimatedVarBSLAdmin2)^2)))
   
   # plot comparisons
   browser()
