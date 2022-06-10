@@ -209,6 +209,8 @@ varPrevEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
   covUrbRur = cov(smoothRiskDrawsUrbAreal, smoothRiskDrawsRurAreal)
   ERslUrb = mean(smoothRiskDrawsUrbAreal)
   ERslRur = mean(smoothRiskDrawsRurAreal)
+  ERslUrb2 = mean(smoothRiskDrawsUrbAreal^2)
+  ERslRur2 = mean(smoothRiskDrawsRurAreal^2)
   ERslUrbRur = mean(smoothRiskDrawsUrbAreal * smoothRiskDrawsRurAreal)
   ERsl2Urb = mean(smoothRisk2DrawsUrbAreal)
   ERsl2Rur = mean(smoothRisk2DrawsRurAreal)
@@ -223,7 +225,8 @@ varPrevEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
     ERslUrbRur * covBinPropUrbRur + varA
   
   # calculate E[var(pemp(A) | Mvec, Nvec, u)]
-  EvarTerm = Qurb * (ERslUrb - ERsl2Urb) + Qrur * (ERslRur - ERsl2Rur)
+  EvarTerm = Qurb/N * (ERslUrb - ERsl2Urb) + Qrur/N * (ERslRur - ERsl2Rur) + 
+    Qurb^2/Murb * (ERsl2Urb - ERslUrb2) + Qrur^2/Mrur * (ERsl2Rur - ERslRur2)
   
   if(!returnVarRSL) {
     varEterm + EvarTerm
@@ -247,6 +250,15 @@ varBurdEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
                                                    logisticApprox=FALSE), nrow=nrow(etaSDraws))
   }
   
+  if(is.null(smoothRiskSqDraws)) {
+    if(is.null(etaSDraws) || is.null(sigmaEps)) {
+      stop("must either provide etaSDraws and sigmaEps or smoothRiskSqDraws")
+    }
+    
+    # integrate out the cluster effect in the squared risk
+    smoothRiskSqDraws = matrix(logitNormSqMean(cbind(c(as.matrix(etaSDraws)), rep(sigmaEps, length(etaSDraws)))), nrow=nrow(etaSDraws))
+  }
+  
   if(is.null(q)) {
     q = rep(1, length(urbVec))
     q[urbVec] = Nurb / sum(q[urbVec])
@@ -259,38 +271,45 @@ varBurdEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
   qRur = q[!urbVec]
   Qurb = sum(qUrb)
   Qrur = sum(qRur)
+  qUrb = qUrb * (1/sum(qUrb))
+  qRur = qRur * (1/sum(qRur))
   
   # get stratum and areal smooth risks
+  smoothRiskDrawsUrb = smoothRiskDraws[urbVec,]
+  smoothRiskDrawsRur = smoothRiskDraws[!urbVec,]
   smoothRiskDrawsUrbAreal = t(smoothRiskDrawsUrb) %*% qUrb
   smoothRiskDrawsRurAreal = t(smoothRiskDrawsRur) %*% qRur
-  smoothBurdenDrawsAreal = smoothRiskDrawsUrbAreal * Nurb + smoothRiskDrawsRurAreal * Nrur
+  smoothRiskDrawsAreal = smoothRiskDrawsUrbAreal * Qurb + smoothRiskDrawsRurAreal * Qrur
   
   # do the same for squared smooth risks
-  smoothRisk2DrawsUrbAreal = t(smoothRiskDrawsUrb^2) %*% qUrb
-  smoothRisk2DrawsRurAreal = t(smoothRiskDrawsRur^2) %*% qRur
+  smoothRisk2DrawsUrbAreal = t(smoothRiskSqDraws[urbVec,]) %*% qUrb
+  smoothRisk2DrawsRurAreal = t(smoothRiskSqDraws[!urbVec,]) %*% qRur
   
   # estimate moments of urban and rural smooth risk
   varUrb = var(smoothRiskDrawsUrbAreal)
   varRur = var(smoothRiskDrawsRurAreal)
-  varBurdenA = var(smoothBurdenDrawsAreal)
+  varA = var(smoothRiskDrawsAreal)
   covUrbRur = cov(smoothRiskDrawsUrbAreal, smoothRiskDrawsRurAreal)
   ERslUrb = mean(smoothRiskDrawsUrbAreal)
   ERslRur = mean(smoothRiskDrawsRurAreal)
+  ERslUrb2 = mean(smoothRiskDrawsUrbAreal^2)
+  ERslRur2 = mean(smoothRiskDrawsRurAreal^2)
   ERslUrbRur = mean(smoothRiskDrawsUrbAreal * smoothRiskDrawsRurAreal)
   ERsl2Urb = mean(smoothRisk2DrawsUrbAreal)
   ERsl2Rur = mean(smoothRisk2DrawsRurAreal)
   
   # estimate variances and covariances of the "N" terms
-  varBin = Qurb * (1 - Qurb) * N
-  covBinUrbRur = -varBin
+  varBinProp = Qurb * (1 - Qurb) / N
+  covBinPropUrbRur = -varBinProp
   
-  # calculate var(E[pemp(A) | Mvec, Nvec, u])
-  varEterm = ERslUrb * varBin + 
-    ERslRur * varBin + 
-    ERslUrbRur * covBinUrbRur + varBurdenA
+  # calculate var(E[bemp(A) | Mvec, Nvec, u])
+  varEterm = ERslUrb * varBinProp + 
+    ERslRur * varBinProp + 
+    ERslUrbRur * covBinPropUrbRur + varA
   
-  # calculate E[var(pemp(A) | Mvec, Nvec, u)]
-  EvarTerm = Nurb * (ERslUrb - ERsl2Urb) + Nrur * (ERslRur - ERsl2Rur)
+  # calculate E[var(bemp(A) | Mvec, Nvec, u)]
+  EvarTerm = Nurb * (ERslUrb - ERsl2Urb) + Nrur * (ERslRur - ERsl2Rur) + 
+    Nurb^2/Murb * (ERsl2Urb - ERslUrb2) + Nrur^2/Mrur * (ERsl2Rur - ERslRur2)
   
   if(!returnVarBSL) {
     varEterm + EvarTerm

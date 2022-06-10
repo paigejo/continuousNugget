@@ -1597,14 +1597,14 @@ testVarRatios = function(logisticApproximation=FALSE, coarse=TRUE) {
     urbVec = targetPopMat[thisAreaInds,]$urban
     
     out = varPrevEmpStrat(Murb=Murb[i], Mrur=Mrur[i], Nurb=Nurb[i], Nrur=Nrur[i], 
-                          q=q, urbVec=urbVec, smoothRiskSqDraws=smoothRiskSqDraws, 
+                          q=q, urbVec=urbVec, smoothRiskSqDraws=smoothRiskSqDraws[thisAreaInds,], 
                           smoothRiskDraws=pixelPop$pSmoothRisk[thisAreaInds,], 
                           returnVarRSL=TRUE)
     estimatedVarRSLAdmin1[i] = out[2]
     estimatedVarPempAdmin1[i] = out[1]
     
     out = varBurdEmpStrat(Murb=Murb[i], Mrur=Mrur[i], Nurb=Nurb[i], Nrur=Nrur[i], 
-                          q=q, urbVec=urbVec, smoothRiskSqDraws=smoothRiskSqDraws, 
+                          q=q, urbVec=urbVec, smoothRiskSqDraws=smoothRiskSqDraws[thisAreaInds,], 
                           smoothRiskDraws=pixelPop$pSmoothRisk[thisAreaInds,], 
                           returnVarBSL=TRUE)
     estimatedVarBSLAdmin1[i] = out[2]
