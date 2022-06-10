@@ -1551,6 +1551,9 @@ testVarRatios = function(logisticApproximation=FALSE, coarse=TRUE) {
   coarseText = ifelse(!coarse, "", "Coarse")
   out = load(paste0("savedOutput/application/finalMort", coarseText, logisticText, ".RData"))
   
+  # calculate r_sl^(2) since we'll need it
+  smoothRiskSqDraws = matrix(logitNormSqMean(cbind(c(as.matrix(etaSDraws)), rep(sigmaEps, length(etaSDraws)))), nrow=nrow(etaSDraws))
+  
   # get the population integration grid and check that it is consistent with pop totals
   if(coarse) {
     popMat = popGridCoarse
@@ -1592,14 +1595,14 @@ testVarRatios = function(logisticApproximation=FALSE, coarse=TRUE) {
     urbVec = targetPopMat[thisAreaInds,]$urban
     
     out = varPrevEmpStrat(Murb=Murb[i], Mrur=Mrur[i], Nurb=Nurb[i], Nrur=Nrur[i], 
-                          q=q, urbVec=urbVec, 
+                          q=q, urbVec=urbVec, smoothRiskSqDraws=smoothRiskSqDraws, 
                           smoothRiskDraws=pixelPop$pSmoothRisk[thisAreaInds,], 
                           returnVarRSL=TRUE)
     estimatedVarRSLAdmin1[i] = out[2]
     estimatedVarPempAdmin1[i] = out[1]
     
     out = varBurdEmpStrat(Murb=Murb[i], Mrur=Mrur[i], Nurb=Nurb[i], Nrur=Nrur[i], 
-                          q=q, urbVec=urbVec, 
+                          q=q, urbVec=urbVec, smoothRiskSqDraws=smoothRiskSqDraws, 
                           smoothRiskDraws=pixelPop$pSmoothRisk[thisAreaInds,], 
                           returnVarBSL=TRUE)
     estimatedVarBSLAdmin1[i] = out[2]
