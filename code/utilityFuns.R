@@ -5839,3 +5839,26 @@ findMethod <- function(generic, ...) {
   X(...)
 }
 
+# integrate out Gaussian noise from the square of a logit normal
+logitNormSqMean = function(muSigmaMat, ...) 
+{
+  if (length(muSigmaMat) > 2) {
+    apply(muSigmaMat, 1, logitNormSqMean, ...)
+  }
+  else {
+    mu = muSigmaMat[1]
+    sigma = muSigmaMat[2]
+    if (sigma == 0) 
+      SUMMER::expit(mu)^2
+    else {
+      if (any(is.na(c(mu, sigma)))) 
+        NA
+      else {
+        fExp <- function(x) exp(stats::plogis(x, log.p = TRUE) * 2 + 
+                                  stats::dnorm(x, mean = mu, sd = sigma, log = TRUE))
+        stats::integrate(fExp, mu - 10 * sigma, mu + 
+                           10 * sigma, abs.tol = 0, ...)$value
+      }
+    }
+  }
+}
