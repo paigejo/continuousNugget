@@ -1552,7 +1552,7 @@ testVarRatios = function(logisticApproximation=FALSE, coarse=TRUE) {
   out = load(paste0("savedOutput/application/finalMort", coarseText, logisticText, ".RData"))
   
   # calculate r_sl^(2) since we'll need it
-  smoothRiskSqDraws = matrix(logitNormSqMean(cbind(c(as.matrix(etaSDraws)), rep(sigmaEps, length(etaSDraws)))), nrow=nrow(etaSDraws))
+  smoothRiskSqDraws = matrix(logitNormSqMean(cbind(c(as.matrix(logitDraws)), rep(sigmaEps, length(logitDraws)))), nrow=nrow(logitDraws))
   
   # get the population integration grid and check that it is consistent with pop totals
   if(coarse) {
