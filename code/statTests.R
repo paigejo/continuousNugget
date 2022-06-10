@@ -192,32 +192,86 @@ varPrevEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
   qRur = qRur * (1/sum(qRur))
   
   # get stratum and areal smooth risks
-  smoothRiskDrawsUrb = smoothRiskDraws[urbVec,]
-  smoothRiskDrawsRur = smoothRiskDraws[!urbVec,]
+  nUrbanPixels = sum(urbVec)
+  nRuralPixels = sum(!urbVec)
+  smoothRiskDrawsUrb = matrix(smoothRiskDraws[urbVec,], nrow=nUrbanPixels)
+  smoothRiskDrawsRur = matrix(smoothRiskDraws[!urbVec,], nrow=nRuralPixels)
   smoothRiskDrawsUrbAreal = t(smoothRiskDrawsUrb) %*% qUrb
   smoothRiskDrawsRurAreal = t(smoothRiskDrawsRur) %*% qRur
-  smoothRiskDrawsAreal = smoothRiskDrawsUrbAreal * Qurb + smoothRiskDrawsRurAreal * Qrur
+  if(nRuralPixels == 0) {
+    smoothRiskDrawsAreal = smoothRiskDrawsUrbAreal
+  } else if(nUrbanPixels == 0) {
+    smoothRiskDrawsAreal = smoothRiskDrawsRurAreal
+  } else {
+    smoothRiskDrawsAreal = smoothRiskDrawsUrbAreal * Qurb + smoothRiskDrawsRurAreal * Qrur
+  }
   
   # do the same for squared smooth risks
-  smoothRisk2DrawsUrbAreal = t(smoothRiskSqDraws[urbVec,]) %*% qUrb
-  smoothRisk2DrawsRurAreal = t(smoothRiskSqDraws[!urbVec,]) %*% qRur
+  smoothRiskSqDrawsUrb = matrix(smoothRiskSqDraws[urbVec,], nrow=nUrbanPixels)
+  smoothRiskSqDrawsRur = matrix(smoothRiskSqDraws[!urbVec,], nrow=nRuralPixels)
+  if(nRuralPixels != 0) {
+    smoothRisk2DrawsUrbAreal = t(smoothRiskSqDrawsUrb) %*% qUrb
+  } else {
+    smoothRisk2DrawsUrbAreal = numeric(0)
+  }
+  if(nUrbanPixels != 0) {
+    smoothRisk2DrawsRurAreal = t(smoothRiskSqDrawsRur) %*% qRur
+  } else {
+    smoothRisk2DrawsRurAreal = numeric(0)
+  }
   
-  # estimate moments of urban and rural smooth risk
-  varUrb = var(smoothRiskDrawsUrbAreal)
-  varRur = var(smoothRiskDrawsRurAreal)
-  varA = var(smoothRiskDrawsAreal)
-  covUrbRur = cov(smoothRiskDrawsUrbAreal, smoothRiskDrawsRurAreal)
-  ERslUrb = mean(smoothRiskDrawsUrbAreal)
-  ERslRur = mean(smoothRiskDrawsRurAreal)
-  ERslUrb2 = mean(smoothRiskDrawsUrbAreal^2)
-  ERslRur2 = mean(smoothRiskDrawsRurAreal^2)
-  ERslUrbRur = mean(smoothRiskDrawsUrbAreal * smoothRiskDrawsRurAreal)
-  ERsl2Urb = mean(smoothRisk2DrawsUrbAreal)
-  ERsl2Rur = mean(smoothRisk2DrawsRurAreal)
-  
-  # estimate variances and covariances of the "N" terms
-  varBinProp = Qurb * (1 - Qurb) / N
-  covBinPropUrbRur = -varBinProp
+  if((nUrbanPixels != 0) && (nRuralPixels != 0)) {
+    # estimate moments of urban and rural smooth risk
+    varUrb = var(smoothRiskDrawsUrbAreal)
+    varRur = var(smoothRiskDrawsRurAreal)
+    varA = var(smoothRiskDrawsAreal)
+    covUrbRur = cov(smoothRiskDrawsUrbAreal, smoothRiskDrawsRurAreal)
+    ERslUrb = mean(smoothRiskDrawsUrbAreal)
+    ERslRur = mean(smoothRiskDrawsRurAreal)
+    ERslUrb2 = mean(smoothRiskDrawsUrbAreal^2)
+    ERslRur2 = mean(smoothRiskDrawsRurAreal^2)
+    ERslUrbRur = mean(smoothRiskDrawsUrbAreal * smoothRiskDrawsRurAreal)
+    ERsl2Urb = mean(smoothRisk2DrawsUrbAreal)
+    ERsl2Rur = mean(smoothRisk2DrawsRurAreal)
+    
+    # estimate variances and covariances of the "N" terms
+    varBinProp = Qurb * (1 - Qurb) / N
+    covBinPropUrbRur = -varBinProp
+  } else if(nUrbanPixels != 0) {
+    # estimate moments of urban and rural smooth risk
+    varUrb = var(smoothRiskDrawsUrbAreal)
+    varRur = 0
+    varA = var(smoothRiskDrawsAreal)
+    covUrbRur = 0
+    ERslUrb = mean(smoothRiskDrawsUrbAreal)
+    ERslRur = 0
+    ERslUrb2 = mean(smoothRiskDrawsUrbAreal^2)
+    ERslRur2 = 0
+    ERslUrbRur = 0
+    ERsl2Urb = mean(smoothRisk2DrawsUrbAreal)
+    ERsl2Rur = 0
+    
+    # estimate variances and covariances of the "N" terms
+    varBinProp = 0
+    covBinPropUrbRur = 0
+  } else if(nRuralPixels != 0) {
+    # estimate moments of urban and rural smooth risk
+    varUrb = 0
+    varRur = var(smoothRiskDrawsRurAreal)
+    varA = var(smoothRiskDrawsAreal)
+    covUrbRur = 0
+    ERslUrb = 0
+    ERslRur = mean(smoothRiskDrawsRurAreal)
+    ERslUrb2 = 0
+    ERslRur2 = mean(smoothRiskDrawsRurAreal^2)
+    ERslUrbRur = 0
+    ERsl2Urb = 0
+    ERsl2Rur = mean(smoothRisk2DrawsRurAreal)
+    
+    # estimate variances and covariances of the "N" terms
+    varBinProp = 0
+    covBinPropUrbRur = 0
+  }
   
   # calculate var(E[pemp(A) | Mvec, Nvec, u])
   varEterm = ERslUrb * varBinProp + 
@@ -281,30 +335,78 @@ varBurdEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
   smoothRiskDrawsRur = matrix(smoothRiskDraws[!urbVec,], nrow=nRuralPixels)
   smoothRiskDrawsUrbAreal = t(smoothRiskDrawsUrb) %*% qUrb
   smoothRiskDrawsRurAreal = t(smoothRiskDrawsRur) %*% qRur
-  smoothRiskDrawsAreal = smoothRiskDrawsUrbAreal * Qurb + smoothRiskDrawsRurAreal * Qrur
+  if(nRuralPixels == 0) {
+    smoothRiskDrawsAreal = smoothRiskDrawsUrbAreal
+  } else if(nUrbanPixels == 0) {
+    smoothRiskDrawsAreal = smoothRiskDrawsRurAreal
+  } else {
+    smoothRiskDrawsAreal = smoothRiskDrawsUrbAreal * Qurb + smoothRiskDrawsRurAreal * Qrur
+  }
   
   # do the same for squared smooth risks
   smoothRiskSqDrawsUrb = matrix(smoothRiskSqDraws[urbVec,], nrow=nUrbanPixels)
   smoothRiskSqDrawsRur = matrix(smoothRiskSqDraws[!urbVec,], nrow=nRuralPixels)
-  smoothRisk2DrawsUrbAreal = t(smoothRiskSqDrawsUrb) %*% qUrb
-  smoothRisk2DrawsRurAreal = t(smoothRiskSqDrawsRur) %*% qRur
+  if(nRuralPixels != 0) {
+    smoothRisk2DrawsUrbAreal = t(smoothRiskSqDrawsUrb) %*% qUrb
+  } else {
+    smoothRisk2DrawsUrbAreal = numeric(0)
+  }
+  if(nUrbanPixels != 0) {
+    smoothRisk2DrawsRurAreal = t(smoothRiskSqDrawsRur) %*% qRur
+  } else {
+    smoothRisk2DrawsRurAreal = numeric(0)
+  }
   
-  # estimate moments of urban and rural smooth risk
-  varUrb = var(smoothRiskDrawsUrbAreal)
-  varRur = var(smoothRiskDrawsRurAreal)
-  varBurdenA = var(smoothRiskDrawsUrbAreal * Nurb + smoothRiskDrawsRurAreal * Nrur)
-  covUrbRur = cov(smoothRiskDrawsUrbAreal, smoothRiskDrawsRurAreal)
-  ERslUrb = mean(smoothRiskDrawsUrbAreal)
-  ERslRur = mean(smoothRiskDrawsRurAreal)
-  ERslUrb2 = mean(smoothRiskDrawsUrbAreal^2)
-  ERslRur2 = mean(smoothRiskDrawsRurAreal^2)
-  ERslUrbRur = mean(smoothRiskDrawsUrbAreal * smoothRiskDrawsRurAreal)
-  ERsl2Urb = mean(smoothRisk2DrawsUrbAreal)
-  ERsl2Rur = mean(smoothRisk2DrawsRurAreal)
-  
-  # estimate variances and covariances of the "N" terms
-  varBin = Qurb * (1 - Qurb) * N
-  covBinUrbRur = -varBin
+  if((nUrbanPixels != 0) && (nRuralPixels != 0)) {
+    # estimate moments of urban and rural smooth risk
+    varUrb = var(smoothRiskDrawsUrbAreal)
+    varRur = var(smoothRiskDrawsRurAreal)
+    varBurdenA = var(smoothRiskDrawsUrbAreal * Nurb + smoothRiskDrawsRurAreal * Nrur)
+    covUrbRur = cov(smoothRiskDrawsUrbAreal, smoothRiskDrawsRurAreal)
+    ERslUrb = mean(smoothRiskDrawsUrbAreal)
+    ERslRur = mean(smoothRiskDrawsRurAreal)
+    ERslUrb2 = mean(smoothRiskDrawsUrbAreal^2)
+    ERslRur2 = mean(smoothRiskDrawsRurAreal^2)
+    ERslUrbRur = mean(smoothRiskDrawsUrbAreal * smoothRiskDrawsRurAreal)
+    ERsl2Urb = mean(smoothRisk2DrawsUrbAreal)
+    ERsl2Rur = mean(smoothRisk2DrawsRurAreal)
+    
+    # estimate variances and covariances of the "N" terms
+    varBin = Qurb * (1 - Qurb) * N
+    covBinUrbRur = -varBin
+  } else if(nUrbanPixels != 0) {
+    varUrb = var(smoothRiskDrawsUrbAreal)
+    varRur = 0
+    varBurdenA = var(smoothRiskDrawsUrbAreal * Nurb)
+    covUrbRur = 0
+    ERslUrb = mean(smoothRiskDrawsUrbAreal)
+    ERslRur = 0
+    ERslUrb2 = mean(smoothRiskDrawsUrbAreal^2)
+    ERslRur2 = 0
+    ERslUrbRur = 0
+    ERsl2Urb = mean(smoothRisk2DrawsUrbAreal)
+    ERsl2Rur = 0
+    
+    # estimate variances and covariances of the "N" terms
+    varBin = 0
+    covBinUrbRur = 0
+  } else if(nRuralPixels != 0) {
+    varUrb = 0
+    varRur = var(smoothRiskDrawsRurAreal)
+    varBurdenA = var(smoothRiskDrawsRurAreal * Nrur)
+    covUrbRur = 0
+    ERslUrb = 0
+    ERslRur = mean(smoothRiskDrawsRurAreal)
+    ERslUrb2 = 0
+    ERslRur2 = mean(smoothRiskDrawsRurAreal^2)
+    ERslUrbRur = 0
+    ERsl2Urb = 0
+    ERsl2Rur = mean(smoothRisk2DrawsRurAreal)
+    
+    # estimate variances and covariances of the "N" terms
+    varBin = 0
+    covBinUrbRur = 0
+  }
   
   # calculate var(E[bemp(A) | Mvec, Nvec, u])
   varEterm = ERslUrb * varBin + ERslRur * varBin + 
