@@ -1639,21 +1639,21 @@ testVarRatios = function(logisticApproximation=FALSE, coarse=TRUE) {
   sampleVarBSLAdmin2 = numeric(nrow(poppsubKenya))
   sampleVarBempAdmin2 = numeric(nrow(poppsubKenya))
   for(i in 1:nrow(poppsubKenya)) {
-    thisSubrea = poppsubKenya$subarea
+    thisSubrea = poppsubKenya$subarea[i]
     thisSubareaInds = targetPopMat$subarea == thisSubrea
     
     q = targetPopMat[thisSubareaInds,]$pop
     urbVec = targetPopMat[thisSubareaInds,]$urban
     
     out = varPrevEmpStrat(Murb=Murb[i], Mrur=Mrur[i], Nurb=Nurb[i], Nrur=Nrur[i], 
-                          q=q, urbVec=urbVec, 
+                          q=q, urbVec=urbVec, smoothRiskSqDraws=smoothRiskSqDraws[thisSubareaInds,], 
                           smoothRiskDraws=pixelPop$pSmoothRisk[thisSubareaInds,], 
                           returnVarRSL=TRUE)
     estimatedVarRSLAdmin2[i] = out[2]
     estimatedVarPempAdmin2[i] = out[1]
     
     out = varBurdEmpStrat(Murb=Murb[i], Mrur=Mrur[i], Nurb=Nurb[i], Nrur=Nrur[i], 
-                          q=q, urbVec=urbVec, 
+                          q=q, urbVec=urbVec, smoothRiskSqDraws=smoothRiskSqDraws[thisSubareaInds,], 
                           smoothRiskDraws=pixelPop$pSmoothRisk[thisSubareaInds,], 
                           returnVarBSL=TRUE)
     estimatedVarBSLAdmin2[i] = out[2]

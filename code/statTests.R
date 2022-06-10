@@ -154,6 +154,16 @@ varRiskSLStrat = function(smoothRiskDraws, q=NULL) {
 
 varPrevEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nurb=37*Murb, Nrur=37*Mrur, 
                            q=NULL, smoothRiskDraws=NULL, smoothRiskSqDraws=NULL, urbVec=c(TRUE, FALSE), returnVarRSL=TRUE) {
+  if(!is.null(etaSDraws) && (!is.matrix(etaSDraws))) {
+    etaSDraws = matrix(etaSDraws, nrow=1)
+  }
+  if(!is.null(smoothRiskDraws) && (!is.matrix(smoothRiskDraws))) {
+    smoothRiskDraws = matrix(smoothRiskDraws, nrow=1)
+  }
+  if(!is.null(smoothRiskSqDraws) && (!is.matrix(smoothRiskSqDraws))) {
+    smoothRiskSqDraws = matrix(smoothRiskSqDraws, nrow=1)
+  }
+  
   N = Nurb + Nrur
   M = Murb + Mrur
   
@@ -291,6 +301,16 @@ varPrevEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
 
 varBurdEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nurb=37*Murb, Nrur=37*Mrur, 
                            q=NULL, smoothRiskDraws=NULL, smoothRiskSqDraws=NULL, urbVec=c(TRUE, FALSE), returnVarBSL=TRUE) {
+  if(!is.null(etaSDraws) && (!is.matrix(etaSDraws))) {
+    etaSDraws = matrix(etaSDraws, nrow=1)
+  }
+  if(!is.null(smoothRiskDraws) && (!is.matrix(smoothRiskDraws))) {
+    smoothRiskDraws = matrix(smoothRiskDraws, nrow=1)
+  }
+  if(!is.null(smoothRiskSqDraws) && (!is.matrix(smoothRiskSqDraws))) {
+    smoothRiskSqDraws = matrix(smoothRiskSqDraws, nrow=1)
+  }
+  
   N = Nurb + Nrur
   M = Murb + Mrur
   
