@@ -275,15 +275,19 @@ varBurdEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
   qRur = qRur * (1/sum(qRur))
   
   # get stratum and areal smooth risks
-  smoothRiskDrawsUrb = smoothRiskDraws[urbVec,]
-  smoothRiskDrawsRur = smoothRiskDraws[!urbVec,]
+  nUrbanPixels = sum(urbVec)
+  nRuralPixels = sum(!urbVec)
+  smoothRiskDrawsUrb = matrix(smoothRiskDraws[urbVec,], nrow=nUrbanPixels)
+  smoothRiskDrawsRur = matrix(smoothRiskDraws[!urbVec,], nrow=nRuralPixels)
   smoothRiskDrawsUrbAreal = t(smoothRiskDrawsUrb) %*% qUrb
   smoothRiskDrawsRurAreal = t(smoothRiskDrawsRur) %*% qRur
   smoothRiskDrawsAreal = smoothRiskDrawsUrbAreal * Qurb + smoothRiskDrawsRurAreal * Qrur
   
   # do the same for squared smooth risks
-  smoothRisk2DrawsUrbAreal = t(smoothRiskSqDraws[urbVec,]) %*% qUrb
-  smoothRisk2DrawsRurAreal = t(smoothRiskSqDraws[!urbVec,]) %*% qRur
+  smoothRiskSqDrawsUrb = matrix(smoothRiskSqDraws[urbVec,], nrow=nUrbanPixels)
+  smoothRiskSqDrawsRur = matrix(smoothRiskSqDraws[!urbVec,], nrow=nRuralPixels)
+  smoothRisk2DrawsUrbAreal = t(smoothRiskSqDrawsUrb) %*% qUrb
+  smoothRisk2DrawsRurAreal = t(smoothRiskSqDrawsRur) %*% qRur
   
   # estimate moments of urban and rural smooth risk
   varUrb = var(smoothRiskDrawsUrbAreal)
