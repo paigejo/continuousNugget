@@ -1552,6 +1552,8 @@ testVarRatios = function(logisticApproximation=FALSE, coarse=TRUE) {
   out = load(paste0("savedOutput/application/finalMort", coarseText, logisticText, ".RData"))
   
   # calculate r_sl^(2) since we'll need it
+  varNames = row.names(riskOut$parameterSummaryTable)
+  sigmaEps = riskOut$parameterSummaryTable[varNames == "errorSD",1]
   smoothRiskSqDraws = matrix(logitNormSqMean(cbind(c(as.matrix(logitDraws)), rep(sigmaEps, length(logitDraws)))), nrow=nrow(logitDraws))
   
   # get the population integration grid and check that it is consistent with pop totals
