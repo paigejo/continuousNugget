@@ -236,7 +236,7 @@ varPrevEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
 }
 
 varBurdEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nurb=37*Murb, Nrur=37*Mrur, 
-                           q=NULL, smoothRiskDraws=NULL, urbVec=c(TRUE, FALSE), returnVarBSL=TRUE) {
+                           q=NULL, smoothRiskDraws=NULL, smoothRiskSqDraws=NULL, urbVec=c(TRUE, FALSE), returnVarBSL=TRUE) {
   N = Nurb + Nrur
   M = Murb + Mrur
   
