@@ -182,7 +182,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
       rangeCountSDPixelLCPb = range(countSDPixelLCPb, na.rm=TRUE)
     }  else if(thisLevel == "constrat") {
       urbanConstituencies = poppcon$County == "Nairobi" | poppcon$County == "Mombasa"
-      undefinedRelativePrevalenceConstituencies = (poppcon$popUrb == 0) | (poppcon$popRur == 0)
+      undefinedPrevalenceConStrats = c(poppcon$popUrb == 0, poppcon$popRur == 0)
       rangePrevalencePredConStrat = range(c(rangePrevalencePredConStrat, 
                                             rowMeans(subareaPop$pUrbanFineScaleRisk, na.rm=TRUE), 
                                             rowMeans(subareaPop$pRuralFineScaleRisk, na.rm=TRUE)), na.rm=TRUE)
@@ -192,51 +192,51 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
       
       prevalenceCIWidthConStrat = c(apply(subareaPop$pUrbanFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
                                     apply(subareaPop$pRuralFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-      prevalenceCIWidthConStrat = prevalenceCIWidthConStrat[is.finite(prevalenceCIWidthConStrat)]
+      prevalenceCIWidthConStrat = prevalenceCIWidthConStrat[undefinedPrevalenceConStrats]
       countCIWidthConStrat = c(apply(subareaPop$ZUrbanFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
                                apply(subareaPop$ZRuralFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-      countCIWidthConStrat = countCIWidthConStrat[is.finite(countCIWidthConStrat)]
+      countCIWidthConStrat = countCIWidthConStrat[undefinedPrevalenceConStrats]
       rangePrevalenceCIWidthConStrat = range(prevalenceCIWidthConStrat)
       rangeCountCIWidthConStrat = range(countCIWidthConStrat)
       
       prevalenceSDConStrat = c(apply(subareaPop$pUrbanFineScalePrevalence, 1, sd, na.rm=TRUE), 
                                apply(subareaPop$pRuralFineScalePrevalence, 1, sd, na.rm=TRUE))
-      prevalenceSDConStrat = prevalenceSDConStrat[is.finite(prevalenceSDConStrat)]
+      prevalenceSDConStrat = prevalenceSDConStrat[undefinedPrevalenceConStrats]
       countSDConStrat = c(apply(subareaPop$ZUrbanFineScalePrevalence, 1, sd, na.rm=TRUE), 
                           apply(subareaPop$ZRuralFineScalePrevalence, 1, sd, na.rm=TRUE))
-      countSDConStrat = countSDConStrat[is.finite(countSDConStrat)]
+      countSDConStrat = countSDConStrat[undefinedPrevalenceConStrats]
       rangePrevalenceSDConStrat = range(prevalenceSDConStrat)
       rangeCountSDConStrat = range(countSDConStrat)
       
       # get credible interval widths for the lcpb model
       prevalenceCIWidthConStratlcpb = c(apply(subareaPop$pUrbanSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
                                         apply(subareaPop$pRuralSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-      prevalenceCIWidthConStratlcpb = prevalenceCIWidthConStratlcpb[is.finite(prevalenceCIWidthConStratlcpb)]
+      prevalenceCIWidthConStratlcpb = prevalenceCIWidthConStratlcpb[undefinedPrevalenceConStrats]
       countCIWidthConStratlcpb = c(apply(subareaPop$ZUrbanSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
                                    apply(subareaPop$ZRuralSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-      countCIWidthConStratlcpb = countCIWidthConStratlcpb[is.finite(countCIWidthConStratlcpb)]
+      countCIWidthConStratlcpb = countCIWidthConStratlcpb[undefinedPrevalenceConStrats]
       
       prevalenceSDConStratlcpb = c(apply(subareaPop$pUrbanSmoothRisk, 1, sd, na.rm=TRUE), 
                                    apply(subareaPop$pRuralSmoothRisk, 1, sd, na.rm=TRUE))
-      prevalenceSDConStratlcpb = prevalenceSDConStratlcpb[is.finite(prevalenceSDConStratlcpb)]
+      prevalenceSDConStratlcpb = prevalenceSDConStratlcpb[undefinedPrevalenceConStrats]
       countSDConStratlcpb = c(apply(subareaPop$ZUrbanSmoothRisk, 1, sd, na.rm=TRUE), 
                               apply(subareaPop$ZRuralSmoothRisk, 1, sd, na.rm=TRUE))
-      countSDConStratlcpb = countSDConStratlcpb[is.finite(countSDConStratlcpb)]
+      countSDConStratlcpb = countSDConStratlcpb[undefinedPrevalenceConStrats]
       
       # do the same for the LCPb model
       prevalenceCIWidthConStratLCPb = c(apply(subareaPop$pUrbanFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
                                         apply(subareaPop$pRuralFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-      prevalenceCIWidthConStratLCPb = prevalenceCIWidthConStratLCPb[is.finite(prevalenceCIWidthConStratLCPb)]
+      prevalenceCIWidthConStratLCPb = prevalenceCIWidthConStratLCPb[undefinedPrevalenceConStrats]
       countCIWidthConStratLCPb = c(apply(subareaPop$ZUrbanFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
                                    apply(subareaPop$ZRuralFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-      countCIWidthConStratLCPb = countCIWidthConStratLCPb[is.finite(countCIWidthConStratLCPb)]
+      countCIWidthConStratLCPb = countCIWidthConStratLCPb[undefinedPrevalenceConStrats]
       
       prevalenceSDConStratLCPb = c(apply(subareaPop$pUrbanFineScaleRisk, 1, sd, na.rm=TRUE), 
                                    apply(subareaPop$pRuralFineScaleRisk, 1, sd, na.rm=TRUE))
-      prevalenceSDConStratLCPb = prevalenceSDConStratLCPb[is.finite(prevalenceSDConStratLCPb)]
+      prevalenceSDConStratLCPb = prevalenceSDConStratLCPb[undefinedPrevalenceConStrats]
       countSDConStratLCPb = c(apply(subareaPop$ZUrbanFineScaleRisk, 1, sd, na.rm=TRUE), 
                               apply(subareaPop$ZRuralFineScaleRisk, 1, sd, na.rm=TRUE))
-      countSDConStratLCPb = countSDConStratLCPb[is.finite(countSDConStratLCPb)]
+      countSDConStratLCPb = countSDConStratLCPb[undefinedPrevalenceConStrats]
     } else if(thisLevel == "constituency") {
       urbanConstituencies = poppcon$County == "Nairobi" | poppcon$County == "Mombasa"
       undefinedRelativePrevalenceConstituencies = (poppcon$popUrb == 0) | (poppcon$popRur == 0)
