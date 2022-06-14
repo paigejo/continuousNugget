@@ -153,7 +153,8 @@ varRiskSLStrat = function(smoothRiskDraws, q=NULL) {
 }
 
 varPrevEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nurb=37*Murb, Nrur=37*Mrur, 
-                           q=NULL, smoothRiskDraws=NULL, smoothRiskSqDraws=NULL, urbVec=c(TRUE, FALSE), returnVarRSL=TRUE) {
+                           q=NULL, smoothRiskDraws=NULL, smoothRiskSqDraws=NULL, urbVec=c(TRUE, FALSE), 
+                           Mprop=NULL, returnVarRSL=TRUE) {
   if(!is.null(etaSDraws) && (!is.matrix(etaSDraws))) {
     etaSDraws = matrix(etaSDraws, nrow=1)
   }
@@ -297,6 +298,15 @@ varPrevEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
   # calculate E[var(pemp(A) | Mvec, Nvec, u)]
   EvarTerm = Qurb/N * (ERslUrb - ERsl2Urb) + Qrur/N * (ERslRur - ERsl2Rur) + 
     Qurb^2/Murb * (ERsl2Urb - ERslUrb2) + Qrur^2/Mrur * (ERsl2Rur - ERslRur2)
+  
+  if(!is.null(Mprop)) {
+    # Mprop is the probability of an EA being in this area
+    MurbProb = Mprop * Murb / M
+    MrurProb = Mprop * Mrur / M
+    expectInversePosBinom()
+    EvarTerm2 = Qurb/N * (ERslUrb - ERsl2Urb) + Qrur/N * (ERslRur - ERsl2Rur) + 
+      Qurb^2/Murb * (ERsl2Urb - ERslUrb2) + Qrur^2/Mrur * (ERsl2Rur - ERslRur2)
+  }
   
   if(!returnVarRSL) {
     varEterm + EvarTerm
@@ -453,6 +463,12 @@ varBurdEmpStrat = function(etaSDraws=NULL, sigmaEps=NULL, Murb=160, Mrur=160, Nu
   } else {
     c(burdEmp=varEterm + EvarTerm, burdSL=varBurdenA)
   }
+}
+
+expectInversePosBinom = function(n, p) {
+  probNonzero = 1 - dbinom(0, n, p)
+  norm = 1/probNonzero
+  norm * sum(dbinom(1:n, n, p) * (1/(1:n)))
 }
 
 testVarPrevEmpStrat = function(etaSDraws=NULL, sigmaEps=sqrt(0.4403118), Murb=100.71360, Mrur=163.35209, Nurb=4353.257, Nrur=10943.831, 

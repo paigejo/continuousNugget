@@ -79,7 +79,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
     popMat = popGrid
   }
   
-  # calculate the range of predictions and CI widths
+  # calculate the range of predictions and CI widths ----
   rangePrevalencePredPixel = c()
   rangePrevalencePredConstituency = c()
   rangePrevalencePredCounty = c()
@@ -321,7 +321,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
     }
   }
   
-  ##### make plots
+  # make plots ----
   
   # load shape files for plotting
   # require(maptools)
@@ -341,7 +341,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
     diff(quantile(x, prob=c(alpha/2, 1-alpha/2), na.rm=TRUE))
   }
   
-  ## 3 x 2 plot of predictions (prevalence mean and CI width)
+  ## 3 x 2 plot of predictions (prevalence mean and CI width) ----
   
   # plot mean
   pixelMean = rowMeans(pixelPop$pSmoothRisk)
@@ -454,7 +454,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   dev.off()
   
   browser()
-  # same plot but for burden
+  ## same plot but for burden ----
   pixelMean = rowMeans(pixelPop$ZSmoothRisk)
   constituencyMean = rowMeans(subareaPop$ZFineScaleRisk)
   countyMean = rowMeans(areaPop$ZFineScaleRisk)
@@ -567,8 +567,8 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   dev.off()
   
-  # same plot but for relative prevalence. Don't include pixel level because 
-  # pixel is either urban or rural, not both
+  ## same plot but for relative prevalence ----
+  # Don't include pixel level because pixel is either urban or rural, not both
   browser()
   constituencyMean = rowMeans(subareaPop$pUrbanFineScalePrevalence/subareaPop$pRuralFineScalePrevalence)
   countyMean = rowMeans(areaPop$pUrbanFineScalePrevalence/areaPop$pRuralFineScalePrevalence)
@@ -651,7 +651,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   dev.off()
   
-  # table ----
+  # parameter table ----
   riskOut$interceptSummary
   riskOut$fixedEffectSummary
   riskOut$parameterSummaryTable
@@ -669,7 +669,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   # old plots ----
   
-  # plot credible interval widths
+  ## plot prevalence credible interval widths ----
   pixelWidth = prevalenceCIWidthPixel
   constituencyWidth = apply(subareaPop$pFineScalePrevalence, 1, getWidth)
   countyWidth = apply(areaPop$pFineScalePrevalence, 1, getWidth)
@@ -734,7 +734,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   dev.off()
   
-  ## 2 x 2 plot of predictions (counts)
+  ## 2 x 2 plot of burden predictions ----
   
   # plot means
   pixelMean = rowMeans(pixelPop$ZFineScaleRisk)
@@ -806,7 +806,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   dev.off()
   
-  # plot credible interval means
+  ## plot credible interval widths burden ----
   pixelWidth = countCIWidthPixel
   constituencyWidth = apply(subareaPop$ZFineScalePrevalence, 1, getWidth)
   countyWidth = apply(areaPop$ZFineScalePrevalence, 1, getWidth)
@@ -876,7 +876,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   dev.off()
   
-  ## 2 x 3 plot of predictions (relative prevalence)
+  ## 2 x 3 plot of predictions (relative prevalence) ----
   
   # plot mean
   constituencyMean = relativePrevalencePredConstituency
@@ -976,10 +976,10 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   dev.off()
   
-  ##### Box plots of credible interval widths and relative widths to the stratified model
+  ## Boxplots of relative CI widths to the stratified model ----
   # modelNames: S, SC, SCP (stratified, cluster, population)
   
-  ## prevalence uncertainty
+  ### prevalence (with abs width) ----
   
   # absolute prevalence uncertainty
   pdf(paste0(figDirectory, "application/prevalenceWidthBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
@@ -1013,7 +1013,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   mtext(side = 3, "Prevalence 95% CI Width", line = 0.5, cex=1, outer=TRUE)
   dev.off()
   
-  # relative prevalence uncertainty
+  ### prevalence ----
   pdf(paste0(figDirectory, "application/prevalenceRelWidthBoxplot", logisticText, coarseText, ".pdf"), width=8, height=5)
   par(mfrow=c(1,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
@@ -1058,7 +1058,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   dev.off()
   browser()
-  # relative prevalence uncertainty
+  ### prevalence (SD) ----
   pdf(paste0(figDirectory, "application/prevalenceRelSDBoxplot", logisticText, coarseText, ".pdf"), width=8, height=5)
   par(mfrow=c(1,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
@@ -1103,9 +1103,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   dev.off()
   
-  ## count uncertainty
-  
-  # absolute count uncertainty
+  ### burden (abs scale) ----
   pdf(paste0(figDirectory, "application/countWidthBoxplot", logisticText, coarseText, ".pdf"), width=8, height=5)
   par(mfrow=c(1,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
@@ -1136,7 +1134,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   mtext(side = 3, "Total Deaths 95% CI Width", line = 0.5, cex=1, outer=TRUE)
   dev.off()
   
-  # relative count uncertainty
+  ### burden ----
   pdf(paste0(figDirectory, "application/countRelWidthBoxplot", logisticText, coarseText, ".pdf"), width=8, height=5)
   par(mfrow=c(1,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
@@ -1181,6 +1179,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   dev.off()
   
+  ### Burden (SD) ----
   pdf(paste0(figDirectory, "application/countRelSDBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
@@ -1226,9 +1225,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   dev.off()
   
-  ## relative prevalence uncertainty
-  
-  # absolute relative prevalence uncertainty
+  ### Relative prevalence uncertainty (abs scale) ----
   pdf(paste0(figDirectory, "application/relativePrevalenceWidthBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
@@ -1282,7 +1279,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   dev.off()
   
-  # absolute relative prevalence uncertainty
+  # relative prevalence (SD)
   pdf(paste0(figDirectory, "application/relativePrevalenceWidthBoxplotSD", logisticText, coarseText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
@@ -1627,7 +1624,7 @@ testVarRatios = function(logisticApproximation=FALSE, coarse=TRUE) {
   Murb = meanEAspsub$meanUrbanEAs
   Mrur = meanEAspsub$meanRuralEAs
   Nurb = meanEAspsub$popUrb
-  Nurb = meanEAspsub$popRur
+  Nrur = meanEAspsub$popRur
   
   estimatedVarRSLAdmin2 = numeric(nrow(poppsubKenya))
   estimatedVarPempAdmin2 = numeric(nrow(poppsubKenya))
