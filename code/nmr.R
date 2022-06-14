@@ -192,51 +192,51 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
       
       prevalenceCIWidthConStrat = c(apply(subareaPop$pUrbanFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
                                     apply(subareaPop$pRuralFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-      prevalenceCIWidthConStrat = prevalenceCIWidthConStrat[undefinedPrevalenceConStrats]
+      prevalenceCIWidthConStrat = prevalenceCIWidthConStrat[!undefinedPrevalenceConStrats]
       countCIWidthConStrat = c(apply(subareaPop$ZUrbanFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
                                apply(subareaPop$ZRuralFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-      countCIWidthConStrat = countCIWidthConStrat[undefinedPrevalenceConStrats]
+      countCIWidthConStrat = countCIWidthConStrat[!undefinedPrevalenceConStrats]
       rangePrevalenceCIWidthConStrat = range(prevalenceCIWidthConStrat)
       rangeCountCIWidthConStrat = range(countCIWidthConStrat)
       
       prevalenceSDConStrat = c(apply(subareaPop$pUrbanFineScalePrevalence, 1, sd, na.rm=TRUE), 
                                apply(subareaPop$pRuralFineScalePrevalence, 1, sd, na.rm=TRUE))
-      prevalenceSDConStrat = prevalenceSDConStrat[undefinedPrevalenceConStrats]
+      prevalenceSDConStrat = prevalenceSDConStrat[!undefinedPrevalenceConStrats]
       countSDConStrat = c(apply(subareaPop$ZUrbanFineScalePrevalence, 1, sd, na.rm=TRUE), 
                           apply(subareaPop$ZRuralFineScalePrevalence, 1, sd, na.rm=TRUE))
-      countSDConStrat = countSDConStrat[undefinedPrevalenceConStrats]
+      countSDConStrat = countSDConStrat[!undefinedPrevalenceConStrats]
       rangePrevalenceSDConStrat = range(prevalenceSDConStrat)
       rangeCountSDConStrat = range(countSDConStrat)
       
       # get credible interval widths for the lcpb model
       prevalenceCIWidthConStratlcpb = c(apply(subareaPop$pUrbanSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
                                         apply(subareaPop$pRuralSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-      prevalenceCIWidthConStratlcpb = prevalenceCIWidthConStratlcpb[undefinedPrevalenceConStrats]
+      prevalenceCIWidthConStratlcpb = prevalenceCIWidthConStratlcpb[!undefinedPrevalenceConStrats]
       countCIWidthConStratlcpb = c(apply(subareaPop$ZUrbanSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
                                    apply(subareaPop$ZRuralSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-      countCIWidthConStratlcpb = countCIWidthConStratlcpb[undefinedPrevalenceConStrats]
+      countCIWidthConStratlcpb = countCIWidthConStratlcpb[!undefinedPrevalenceConStrats]
       
       prevalenceSDConStratlcpb = c(apply(subareaPop$pUrbanSmoothRisk, 1, sd, na.rm=TRUE), 
                                    apply(subareaPop$pRuralSmoothRisk, 1, sd, na.rm=TRUE))
-      prevalenceSDConStratlcpb = prevalenceSDConStratlcpb[undefinedPrevalenceConStrats]
+      prevalenceSDConStratlcpb = prevalenceSDConStratlcpb[!undefinedPrevalenceConStrats]
       countSDConStratlcpb = c(apply(subareaPop$ZUrbanSmoothRisk, 1, sd, na.rm=TRUE), 
                               apply(subareaPop$ZRuralSmoothRisk, 1, sd, na.rm=TRUE))
-      countSDConStratlcpb = countSDConStratlcpb[undefinedPrevalenceConStrats]
+      countSDConStratlcpb = countSDConStratlcpb[!undefinedPrevalenceConStrats]
       
       # do the same for the LCPb model
       prevalenceCIWidthConStratLCPb = c(apply(subareaPop$pUrbanFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
                                         apply(subareaPop$pRuralFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-      prevalenceCIWidthConStratLCPb = prevalenceCIWidthConStratLCPb[undefinedPrevalenceConStrats]
+      prevalenceCIWidthConStratLCPb = prevalenceCIWidthConStratLCPb[!undefinedPrevalenceConStrats]
       countCIWidthConStratLCPb = c(apply(subareaPop$ZUrbanFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
                                    apply(subareaPop$ZRuralFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-      countCIWidthConStratLCPb = countCIWidthConStratLCPb[undefinedPrevalenceConStrats]
+      countCIWidthConStratLCPb = countCIWidthConStratLCPb[!undefinedPrevalenceConStrats]
       
       prevalenceSDConStratLCPb = c(apply(subareaPop$pUrbanFineScaleRisk, 1, sd, na.rm=TRUE), 
                                    apply(subareaPop$pRuralFineScaleRisk, 1, sd, na.rm=TRUE))
-      prevalenceSDConStratLCPb = prevalenceSDConStratLCPb[undefinedPrevalenceConStrats]
+      prevalenceSDConStratLCPb = prevalenceSDConStratLCPb[!undefinedPrevalenceConStrats]
       countSDConStratLCPb = c(apply(subareaPop$ZUrbanFineScaleRisk, 1, sd, na.rm=TRUE), 
                               apply(subareaPop$ZRuralFineScaleRisk, 1, sd, na.rm=TRUE))
-      countSDConStratLCPb = countSDConStratLCPb[undefinedPrevalenceConStrats]
+      countSDConStratLCPb = countSDConStratLCPb[!undefinedPrevalenceConStrats]
     } else if(thisLevel == "constituency") {
       urbanConstituencies = poppcon$County == "Nairobi" | poppcon$County == "Mombasa"
       undefinedRelativePrevalenceConstituencies = (poppcon$popUrb == 0) | (poppcon$popRur == 0)
@@ -1348,7 +1348,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   abline(h=0, lty=2)
   
   conStrats = length(countSDConStratlcpb)
-  conStratDatRel = data.frame(modelName=c(rep("Smooth latent", constituencies), rep("latent", constituencies), rep("Empirical", constituencies)), 
+  conStratDatRel = data.frame(modelName=c(rep("Smooth latent", conStrats), rep("latent", conStrats), rep("Empirical", conStrats)), 
                                   width=c(100*(countSDConStratlcpb-countSDConStratlcpb)/countSDConStratlcpb, 
                                           100*(countSDConStratLCPb-countSDConStratlcpb)/countSDConStratlcpb, 
                                           100*(countSDConStrat-countSDConStratlcpb)/countSDConStratlcpb))
