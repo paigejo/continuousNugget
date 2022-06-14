@@ -216,11 +216,11 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
                                    apply(subareaPop$ZRuralSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
       countCIWidthConStratlcpb = countCIWidthConStratlcpb[is.finite(countCIWidthConStratlcpb)]
       
-      prevalenceSDConStratlcpb = c(apply(subareaPop$pSmoothRisk, 1, sd, na.rm=TRUE), 
-                                   apply(subareaPop$pSmoothRisk, 1, sd, na.rm=TRUE))
+      prevalenceSDConStratlcpb = c(apply(subareaPop$pUrbanSmoothRisk, 1, sd, na.rm=TRUE), 
+                                   apply(subareaPop$pRuralSmoothRisk, 1, sd, na.rm=TRUE))
       prevalenceSDConStratlcpb = prevalenceSDConStratlcpb[is.finite(prevalenceSDConStratlcpb)]
-      countSDConStratlcpb = c(apply(subareaPop$ZSmoothRisk, 1, sd, na.rm=TRUE), 
-                              apply(subareaPop$ZSmoothRisk, 1, sd, na.rm=TRUE))
+      countSDConStratlcpb = c(apply(subareaPop$ZUrbanSmoothRisk, 1, sd, na.rm=TRUE), 
+                              apply(subareaPop$ZRuralSmoothRisk, 1, sd, na.rm=TRUE))
       countSDConStratlcpb = countSDConStratlcpb[is.finite(countSDConStratlcpb)]
       
       # do the same for the LCPb model
@@ -231,11 +231,11 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
                                    apply(subareaPop$ZRuralFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
       countCIWidthConStratLCPb = countCIWidthConStratLCPb[is.finite(countCIWidthConStratLCPb)]
       
-      prevalenceSDConStratLCPb = c(apply(subareaPop$pFineScaleRisk, 1, sd, na.rm=TRUE), 
-                                   apply(subareaPop$pFineScaleRisk, 1, sd, na.rm=TRUE))
+      prevalenceSDConStratLCPb = c(apply(subareaPop$pUrbanFineScaleRisk, 1, sd, na.rm=TRUE), 
+                                   apply(subareaPop$pRuralFineScaleRisk, 1, sd, na.rm=TRUE))
       prevalenceSDConStratLCPb = prevalenceSDConStratLCPb[is.finite(prevalenceSDConStratLCPb)]
-      countSDConStratLCPb = c(apply(subareaPop$ZFineScaleRisk, 1, sd, na.rm=TRUE), 
-                              apply(subareaPop$ZFineScaleRisk, 1, sd, na.rm=TRUE))
+      countSDConStratLCPb = c(apply(subareaPop$ZUrbanFineScaleRisk, 1, sd, na.rm=TRUE), 
+                              apply(subareaPop$ZRuralFineScaleRisk, 1, sd, na.rm=TRUE))
       countSDConStratLCPb = countSDConStratLCPb[is.finite(countSDConStratLCPb)]
     } else if(thisLevel == "constituency") {
       urbanConstituencies = poppcon$County == "Nairobi" | poppcon$County == "Mombasa"
@@ -1325,34 +1325,49 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   mtext(side = 1, "Model", line = 3, cex=1)
   
   ### Burden (SD, no pixel, con strat) ----
-  pdf(paste0(figDirectory, "application/countRelSDBoxplotConStrat", logisticText, coarseText, ".pdf"), width=6, height=6)
-  par(mfrow=c(3,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
+  pdf(paste0(figDirectory, "application/countRelSDBoxplotConStrat", logisticText, coarseText, ".pdf"), width=9, height=6)
+  par(mfrow=c(2,3), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
-  constituencies = length(countSDConstituency)
-  constituencyDat = data.frame(modelName=c(rep("Smooth Latent", constituencies), rep("Latent", constituencies), rep("Empirical", constituencies)), 
-                               width=c(countSDConstituencylcpb, countSDConstituencyLCPb, countSDConstituency))
-  boxplot(width~modelName, data=constituencyDat, ylab="", xlab="", main="Constituency", col="skyblue")
+  conStrats = length(countSDConStratlcpb)
+  conStratDat = data.frame(modelName=c(rep("Smooth latent", conStrats), rep("Latent", conStrats), rep("Empirical", conStrats)), 
+                               width=c(countSDConStratlcpb, countSDConStratLCPb, countSDConStrat))
+  boxplot(width~modelName, data=conStratDat, ylab="", xlab="", main="Constituency x stratum", col="skyblue")
   abline(h=0, lty=2)
   mtext(side = 2, "SD", line = 3, cex=1)
   
+  constituencies = length(countSDConstituency)
+  constituencyDat = data.frame(modelName=c(rep("Smooth latent", constituencies), rep("Latent", constituencies), rep("Empirical", constituencies)), 
+                               width=c(countSDConstituencylcpb, countSDConstituencyLCPb, countSDConstituency))
+  boxplot(width~modelName, data=constituencyDat, ylab="", xlab="", main="Constituency", col="skyblue")
+  abline(h=0, lty=2)
+  
   counties = length(countSDCounty)
-  countyDat = data.frame(modelName=c(rep("Smooth Latent", counties), rep("Latent", counties), rep("Empirical", counties)), 
+  countyDat = data.frame(modelName=c(rep("Smooth latent", counties), rep("Latent", counties), rep("Empirical", counties)), 
                          width=c(countSDCountylcpb, countSDCountyLCPb, countSDCounty))
   boxplot(width~modelName, data=countyDat, ylab="Percent Increase", xlab="", main="County", col="skyblue")
   abline(h=0, lty=2)
   
+  conStrats = length(countSDConStratlcpb)
+  conStratDatRel = data.frame(modelName=c(rep("Smooth latent", constituencies), rep("latent", constituencies), rep("Empirical", constituencies)), 
+                                  width=c(100*(countSDConStratlcpb-countSDConStratlcpb)/countSDConStratlcpb, 
+                                          100*(countSDConStratLCPb-countSDConStratlcpb)/countSDConStratlcpb, 
+                                          100*(countSDConStrat-countSDConStratlcpb)/countSDConStratlcpb))
+  boxplot(width~modelName, data=conStratDatRel, ylab="", xlab="", main="Constituency x stratum", col="skyblue")
+  abline(h=0, lty=2)
+  mtext(side = 1, "Model", line = 3, cex=1)
+  mtext(side = 2, "Percent increase", line = 3, cex=1)
+  
   constituencies = length(countSDConstituency)
-  constituencyDatRel = data.frame(modelName=c(rep("Smooth Risk", constituencies), rep("Risk", constituencies), rep("Prevalence", constituencies)), 
+  constituencyDatRel = data.frame(modelName=c(rep("Smooth latent", constituencies), rep("Latent", constituencies), rep("Empirical", constituencies)), 
                                   width=c(100*(countSDConstituencylcpb-countSDConstituencylcpb)/countSDConstituencylcpb, 
                                           100*(countSDConstituencyLCPb-countSDConstituencylcpb)/countSDConstituencylcpb, 
                                           100*(countSDConstituency-countSDConstituencylcpb)/countSDConstituencylcpb))
   boxplot(width~modelName, data=constituencyDatRel, ylab="", xlab="", main="Constituency", col="skyblue")
   abline(h=0, lty=2)
   mtext(side = 1, "Model", line = 3, cex=1)
-  mtext(side = 2, "Percent increase", line = 3, cex=1)
   
   counties = length(countSDCounty)
-  countyDatRel = data.frame(modelName=c(rep("Smooth Risk", counties), rep("Risk", counties), rep("Prevalence", counties)), 
+  countyDatRel = data.frame(modelName=c(rep("Smooth latent", counties), rep("Latent", counties), rep("Empirical", counties)), 
                             width=c(100*(countSDCountylcpb-countSDCountylcpb)/countSDCountylcpb, 
                                     100*(countSDCountyLCPb-countSDCountylcpb)/countSDCountylcpb, 
                                     100*(countSDCounty-countSDCountylcpb)/countSDCountylcpb))
