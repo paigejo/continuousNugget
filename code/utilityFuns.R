@@ -2497,15 +2497,16 @@ plotMapDat = function(plotVar=NULL, varCounties=NULL, zlim=NULL, project=FALSE, 
   # load necessary data
   if(is.null(mapDat)) {
     if(length(plotVar) == 47) {
-      mapDat = adm1
+      mapDat = adm1compressed
     } else if(length(plotVar) == 300) {
-      mapDat = adm2
+      mapDat = adm2compressed
     } else if(length(plotVar) == 8) {
       # shape file found at: https://jlinden.carto.com/tables/kenya_region_shapefile/public
       require(maptools)
       mapDat = readShapePoly("../U5MR/mapData/kenya_region_shapefile/kenya_region_shapefile.shp", delete_null_obj=TRUE, force_ring=TRUE, repair=TRUE)
     } else {
       mapDat = adm0
+      warning("mapDat not tested for adm0")
     }
   }
   if(is.null(varCounties)) {

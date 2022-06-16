@@ -231,16 +231,16 @@ generateSimDataSetsLCPB2 = function(nsim=100, rho=(1/3)^2, sigmaEpsilon=sqrt(1/2
                            eaDat$pFineScaleRisk), probs=.975, na.rm=TRUE))
     quilt.plot(eaDat$east, eaDat$north, eaDat$pFineScalePrevalence, main="Population Prevalences (LCPB)", 
                xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-    plotMapDat(project=TRUE)
+    plotMapDat(project=TRUE, mapDat=adm1compressed)
     quilt.plot(obsCoords, obsCounts/obsNs, main="Sample Prevalences (LCPB)", 
                xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-    plotMapDat(project=TRUE)
+    plotMapDat(project=TRUE, mapDat=adm1compressed)
     quilt.plot(eaDat$east, eaDat$north, eaDat$pFineScaleRisk, main="Population Risks (Fine Scale Risk)", 
                xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-    plotMapDat(project=TRUE)
+    plotMapDat(project=TRUE, mapDat=adm1compressed)
     quilt.plot(obsCoords, clustDat$pFineScaleRisk, main="Sample Risks (Fine Scale Risk)", 
                xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
-    plotMapDat(project=TRUE)
+    plotMapDat(project=TRUE, mapDat=adm1compressed)
     # quilt.plot(eaDat$east, eaDat$north, eaDat$pLCpb, main="Population Risks (LCpb)", 
     #            xlab="Easting", ylab="Northing", xlim=eastLim, ylim=northLim, zlim=zlim)
     # plotMapDat(project=TRUE)
