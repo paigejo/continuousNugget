@@ -51,8 +51,8 @@ getSPDE_LCPBCommandArgs = function(gamma=c(-1, 0), rho=(1/3)^2, sigmaEpsilon=sqr
 }
 
 # make the command arguments file for compareModelsSimulationStudy
-getSPDE_prevRiskSimStudyCommandArgs = function(sigmaEpsilon=sqrt(.25), gamma=-1, effRange=250, 
-                                           rho=sigmaEpsilon^2*c(1/4, 1, 4), beta0=c(-4, 0), 
+getSPDE_prevRiskSimStudyCommandArgs = function(sigmaEpsilon=sqrt(.45), gamma=-1, effRange=400, 
+                                           rho=sigmaEpsilon^2*c(1/3, 1, 3), beta0=c(-4, 0), 
                                            nEAsFac=c(1/5, 1, 5), nClustFac=c(1/3, 1, 3)) {
   
   spde_prevRiskSimStudyCommandArgs = list()

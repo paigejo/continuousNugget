@@ -714,22 +714,6 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   dev.off()
   
-  # parameter table ----
-  riskOut$interceptSummary
-  riskOut$fixedEffectSummary
-  riskOut$parameterSummaryTable
-  
-  tab = riskOut$fixedEffectSummary[,c(1, 2, 4, 3, 5)]
-  riskOut$parameterSummaryTable = data.frame(riskOut$parameterSummaryTable)
-  names(tab) = names(riskOut$parameterSummaryTable)
-  tab = rbind(tab, riskOut$parameterSummaryTable)
-  row.names(tab)[1:2] = c("Intercept", "Urban Effect")
-  
-  xtable(tab, 
-         caption=paste0("Summary statistics for risk model parameters when ", 
-                        "fit to NMR data from the 2014 KDHS for 2010-2014."), 
-         label="tab:riskModTable", digits=3)
-  
   # old plots ----
   
   ## plot prevalence credible interval widths ----
@@ -1166,6 +1150,71 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   dev.off()
   
+  ### prevalence (SD, con strat) ----
+  pdf(paste0(figDirectory, "application/prevalenceRelSDBoxplotConStrat", logisticText, coarseText, ".pdf"), width=9, height=6)
+  par(mfrow=c(2,3), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
+  
+  conStrats = length(prevalenceSDConStratlcpb)
+  conStratDat = data.frame(modelName=c(rep("Smooth latent", conStrats), rep("Latent", conStrats), rep("Empirical", conStrats)), 
+                           width=c(prevalenceSDConStratlcpb, prevalenceSDConStratLCPb, prevalenceSDConStrat))
+  boxplot(width~modelName, data=conStratDat, ylab="", xlab="", main="Constituency x stratum", col="skyblue")
+  abline(h=0, lty=2)
+  mtext(side = 2, "Prevalence SD", line = 3, cex=1)
+  
+  constituencies = length(prevalenceSDConstituency)
+  constituencyDat = data.frame(modelName=c(rep("Smooth latent", constituencies), rep("Latent", constituencies), rep("Empirical", constituencies)), 
+                               width=c(prevalenceSDConstituencylcpb, prevalenceSDConstituencyLCPb, prevalenceSDConstituency))
+  boxplot(width~modelName, data=constituencyDat, ylab="", xlab="", main="Constituency", col="skyblue")
+  abline(h=0, lty=2)
+  
+  counties = length(prevalenceSDCounty)
+  countyDat = data.frame(modelName=c(rep("Smooth latent", counties), rep("Latent", counties), rep("Empirical", counties)), 
+                         width=c(prevalenceSDCountylcpb, prevalenceSDCountyLCPb, prevalenceSDCounty))
+  boxplot(width~modelName, data=countyDat, ylab="Percent Increase", xlab="", main="County", col="skyblue")
+  abline(h=0, lty=2)
+  
+  conStrats = length(prevalenceSDConStratlcpb)
+  conStratDatRel = data.frame(modelName=c(rep("Smooth latent", conStrats), rep("latent", conStrats), rep("Empirical", conStrats)), 
+                              width=c(100*(prevalenceSDConStratlcpb-prevalenceSDConStratlcpb)/prevalenceSDConStratlcpb, 
+                                      100*(prevalenceSDConStratLCPb-prevalenceSDConStratlcpb)/prevalenceSDConStratlcpb, 
+                                      100*(prevalenceSDConStrat-prevalenceSDConStratlcpb)/prevalenceSDConStratlcpb))
+  boxplot(width~modelName, data=conStratDatRel, ylab="", xlab="", main="Constituency x stratum", col="skyblue")
+  abline(h=0, lty=2)
+  mtext(side = 1, "Model", line = 3, cex=1)
+  mtext(side = 2, "Percent increase SD", line = 3, cex=1)
+  
+  constituencies = length(prevalenceSDConstituency)
+  constituencyDatRel = data.frame(modelName=c(rep("Smooth latent", constituencies), rep("Latent", constituencies), rep("Empirical", constituencies)), 
+                                  width=c(100*(prevalenceSDConstituencylcpb-prevalenceSDConstituencylcpb)/prevalenceSDConstituencylcpb, 
+                                          100*(prevalenceSDConstituencyLCPb-prevalenceSDConstituencylcpb)/prevalenceSDConstituencylcpb, 
+                                          100*(prevalenceSDConstituency-prevalenceSDConstituencylcpb)/prevalenceSDConstituencylcpb))
+  boxplot(width~modelName, data=constituencyDatRel, ylab="", xlab="", main="Constituency", col="skyblue")
+  abline(h=0, lty=2)
+  mtext(side = 1, "Model", line = 3, cex=1)
+  
+  counties = length(prevalenceSDCounty)
+  countyDatRel = data.frame(modelName=c(rep("Smooth latent", counties), rep("Latent", counties), rep("Empirical", counties)), 
+                            width=c(100*(prevalenceSDCountylcpb-prevalenceSDCountylcpb)/prevalenceSDCountylcpb, 
+                                    100*(prevalenceSDCountyLCPb-prevalenceSDCountylcpb)/prevalenceSDCountylcpb, 
+                                    100*(prevalenceSDCounty-prevalenceSDCountylcpb)/prevalenceSDCountylcpb))
+  boxplot(width~modelName, data=countyDatRel, ylab="", xlab="", main="County", col="skyblue")
+  abline(h=0, lty=2)
+  mtext(side = 1, "Model", line = 3, cex=1)
+  
+  # provinces = length(countSDProvince)
+  # provinceDat = data.frame(modelName=c(rep("Smooth Risk", provinces), rep("Risk", provinces), rep("Prevalence", provinces)), 
+  #                          width=c(100*(countSDProvincelcpb-countSDProvincelcpb)/countSDProvincelcpb, 
+  #                                  100*(countSDProvinceLCPb-countSDProvincelcpb)/countSDProvincelcpb, 
+  #                                  100*(countSDProvince-countSDProvincelcpb)/countSDProvincelcpb))
+  # boxplot(width~modelName, data=provinceDat, ylab="", xlab="", main="Province", col="skyblue")
+  # abline(h=0, lty=2)
+  # mtext(side = 1, "Model", line = 3, cex=1)
+  
+  # add title in the left margin
+  # mtext(side = 3, "Total Deaths Relative SD", line = 0.5, cex=1, outer=TRUE)
+  
+  dev.off()
+  
   ### burden (abs scale) ----
   pdf(paste0(figDirectory, "application/countWidthBoxplot", logisticText, coarseText, ".pdf"), width=8, height=5)
   par(mfrow=c(1,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
@@ -1333,7 +1382,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
                                width=c(countSDConStratlcpb, countSDConStratLCPb, countSDConStrat))
   boxplot(width~modelName, data=conStratDat, ylab="", xlab="", main="Constituency x stratum", col="skyblue")
   abline(h=0, lty=2)
-  mtext(side = 2, "SD", line = 3, cex=1)
+  mtext(side = 2, "Burden SD", line = 3, cex=1)
   
   constituencies = length(countSDConstituency)
   constituencyDat = data.frame(modelName=c(rep("Smooth latent", constituencies), rep("Latent", constituencies), rep("Empirical", constituencies)), 
@@ -1355,7 +1404,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   boxplot(width~modelName, data=conStratDatRel, ylab="", xlab="", main="Constituency x stratum", col="skyblue")
   abline(h=0, lty=2)
   mtext(side = 1, "Model", line = 3, cex=1)
-  mtext(side = 2, "Percent increase", line = 3, cex=1)
+  mtext(side = 2, "Percent increase SD", line = 3, cex=1)
   
   constituencies = length(countSDConstituency)
   constituencyDatRel = data.frame(modelName=c(rep("Smooth latent", constituencies), rep("Latent", constituencies), rep("Empirical", constituencies)), 
@@ -1389,7 +1438,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   dev.off()
   
-  ### Relative prevalence uncertainty (abs scale) ----
+  ### Relative prevalence CI width (abs scale) ----
   pdf(paste0(figDirectory, "application/relativePrevalenceWidthBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
@@ -1443,7 +1492,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   dev.off()
   
-  # relative prevalence (SD)
+  ### relative prevalence (SD) ----
   pdf(paste0(figDirectory, "application/relativePrevalenceWidthBoxplotSD", logisticText, coarseText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
@@ -1496,6 +1545,251 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   mtext(side = 3, "Relative Prevalence", line = 0.5, cex=1, outer=TRUE)
   
   dev.off()
+  
+  ## N EAs vs % Increase SD ----
+  
+  # Calculate number of EAs per area
+  easpa = makeDefaultEASPA()
+  meanEAspSub = meanEAsPerCon()
+  meanEAsConStrat = c(meanEAspSub$meanUrbanEAs, meanEAspSub$meanRuralEAs)[!undefinedPrevalenceConStrats]
+  meanEAsConstituency = c(meanEAspSub$meanTotalEAs)
+  meanEAsCounty = easpa$EATotal
+  meanEAs = c(meanEAsConStrat, meanEAsConstituency, meanEAsCounty)
+  
+  # precompute plotting values
+  cols = c("blue", "purple", "red") # for conStrat, constituency, county
+  pchs = c(16, 15, 17)
+  cexs=c(.35, .5, .9)
+  allCols = c(rep(cols[1], length(meanEAsConStrat)), rep(cols[2], length(meanEAsConstituency)), rep(cols[3], length(meanEAsCounty)))
+  allPchs = c(rep(pchs[1], length(meanEAsConStrat)), rep(pchs[2], length(meanEAsConstituency)), rep(pchs[3], length(meanEAsCounty)))
+  
+  ### prevalence ----
+  pdf(paste0(figDirectory, "application/prevalencePctIncreaseSDvsEAs", logisticText, coarseText, ".pdf"), width=5, height=5)
+  
+  conStratDat = 100*(prevalenceCIWidthConStrat-prevalenceCIWidthConStratlcpb)/prevalenceCIWidthConStratlcpb
+  constituencyDat = 100*(prevalenceCIWidthConstituency-prevalenceCIWidthConstituencylcpb)/prevalenceCIWidthConstituencylcpb
+  countyDat = 100*(prevalenceCIWidthCounty-prevalenceCIWidthCountylcpb)/prevalenceCIWidthCountylcpb
+  allDat = c(conStratDat, constituencyDat, countyDat)
+  minVal = min(allDat[allDat > 0])*.95
+  # conStratDat[conStratDat < 0] = minVal
+  # constituencyDat[constituencyDat < 0] = minVal
+  # countyDat[countyDat < 0] = minVal
+  xRange = range(meanEAs)
+  yRange = c(minVal, max(allDat))
+  plot(meanEAsConStrat[conStratDat>0], conStratDat[conStratDat>0], col=cols[1], pch=pchs[1], main="Prevalence SD vs. number EAs", 
+       xlab="Mean number EAs", ylab="Percent increase SD", log="xy", xlim=xRange, ylim=yRange, cex=cexs[1])
+  # points(meanEAsConStrat[conStratDat<=0], rep(minVal, sum(conStratDat<=0)), col=cols[1], pch=pchs[1], cex=cexs[1])
+  points(meanEAsConstituency[constituencyDat>0], constituencyDat[constituencyDat>0], col=cols[2], pch=pchs[2], cex=cexs[2])
+  # points(meanEAsConstituency[constituencyDat<=0], rep(minVal, sum(constituencyDat<=0)), col=cols[2], pch=pchs[2], cex=cexs[2])
+  points(meanEAsCounty[countyDat>0], countyDat[countyDat>0], col=cols[3], pch=pchs[3], cex=cexs[3])
+  # points(meanEAsCounty[countyDat<=0], rep(minVal, sum(countyDat<=0)), col=cols[3], pch=pchs[3], cex=cexs[3])
+  
+  legend("bottomleft", c("Constituency x stratum", "Constituency", "County"), 
+         pch=pchs, col=cols, cex=.7)
+  
+  dev.off()
+  
+  ### burden ----
+  pdf(paste0(figDirectory, "application/countPctIncreaseSDvsEAs", logisticText, coarseText, ".pdf"), width=5, height=5)
+  
+  conStratDat = 100*(countCIWidthConStrat-countCIWidthConStratlcpb)/countCIWidthConStratlcpb
+  constituencyDat = 100*(countCIWidthConstituency-countCIWidthConstituencylcpb)/countCIWidthConstituencylcpb
+  countyDat = 100*(countCIWidthCounty-countCIWidthCountylcpb)/countCIWidthCountylcpb
+  allDat = c(conStratDat, constituencyDat, countyDat)
+  minVal = min(allDat[allDat > 0])*.95
+  # conStratDat[conStratDat < 0] = minVal
+  # constituencyDat[constituencyDat < 0] = minVal
+  # countyDat[countyDat < 0] = minVal
+  xRange = range(meanEAs)
+  yRange = c(minVal, max(allDat))
+  plot(meanEAsConStrat[conStratDat>0], conStratDat[conStratDat>0], col=cols[1], pch=pchs[1], main="Burden SD vs. number EAs", 
+       xlab="Mean number EAs", ylab="Percent increase SD", log="xy", xlim=xRange, ylim=yRange, cex=cexs[1])
+  # points(meanEAsConStrat[conStratDat<=0], rep(minVal, sum(conStratDat<=0)), col=cols[1], pch=pchs[1], cex=cexs[1])
+  points(meanEAsConstituency[constituencyDat>0], constituencyDat[constituencyDat>0], col=cols[2], pch=pchs[2], cex=cexs[2])
+  # points(meanEAsConstituency[constituencyDat<=0], rep(minVal, sum(constituencyDat<=0)), col=cols[2], pch=pchs[2], cex=cexs[2])
+  points(meanEAsCounty[countyDat>0], countyDat[countyDat>0], col=cols[3], pch=pchs[3], cex=cexs[3])
+  # points(meanEAsCounty[countyDat<=0], rep(minVal, sum(countyDat<=0)), col=cols[3], pch=pchs[3], cex=cexs[3])
+  
+  legend("bottomleft", c("Constituency x stratum", "Constituency", "County"), 
+         pch=pchs, col=cols, cex=.7)
+  
+  dev.off()
+  
+  ### relative prevalence ----
+  pdf(paste0(figDirectory, "application/relativePrevalencePctIncreaseSDvsEAs", logisticText, coarseText, ".pdf"), width=5, height=5)
+  
+  constituencyDat = 100*(relativePrevalenceCIWidthConstituency-relativePrevalenceCIWidthConstituencylcpb)/relativePrevalenceCIWidthConstituencylcpb
+  countyDat = 100*(relativePrevalenceCIWidthCounty-relativePrevalenceCIWidthCountylcpb)/relativePrevalenceCIWidthCountylcpb
+  allDat = c(constituencyDat, countyDat)
+  minVal = min(allDat)
+  # conStratDat[conStratDat < 0] = minVal
+  # constituencyDat[constituencyDat < 0] = minVal
+  # countyDat[countyDat < 0] = minVal
+  xRange = range(meanEAs)
+  yRange = range(allDat, na.rm=TRUE)
+  plot(meanEAsConstituency, constituencyDat, col=cols[2], pch=pchs[2], main="Relative prevalence SD vs. number EAs", 
+       xlab="Mean number EAs", ylab="Percent increase SD", log="xy", xlim=xRange, ylim=yRange, cex=cexs[2])
+  points(meanEAsCounty, countyDat, col=cols[3], pch=pchs[3], cex=cexs[3])
+  
+  legend("bottomleft", c("Constituency", "County"), 
+         pch=pchs[-1], col=cols[-1], cex=.7, bg="white")
+  
+  dev.off()
+  
+  ### All ----
+  pdf(paste0(figDirectory, "application/allPctIncreaseSDvsEAs", logisticText, coarseText, ".pdf"), width=9, height=4)
+  options(scipen=5)
+  par(mfrow=c(1, 3), mar=c(4, 2.5, 3, 1), oma=c(0, 2, 0, 0))
+  
+  # set common y range
+  conStratDat = 100*(prevalenceCIWidthConStrat-prevalenceCIWidthConStratlcpb)/prevalenceCIWidthConStratlcpb
+  constituencyDat = 100*(prevalenceCIWidthConstituency-prevalenceCIWidthConstituencylcpb)/prevalenceCIWidthConstituencylcpb
+  countyDat = 100*(prevalenceCIWidthCounty-prevalenceCIWidthCountylcpb)/prevalenceCIWidthCountylcpb
+  allDat = c(conStratDat, constituencyDat, countyDat)
+  minVal = min(allDat[allDat > 0])*.95
+  yRange = c(minVal, max(allDat))
+  
+  conStratDat = 100*(countCIWidthConStrat-countCIWidthConStratlcpb)/countCIWidthConStratlcpb
+  constituencyDat = 100*(countCIWidthConstituency-countCIWidthConstituencylcpb)/countCIWidthConstituencylcpb
+  countyDat = 100*(countCIWidthCounty-countCIWidthCountylcpb)/countCIWidthCountylcpb
+  allDat = c(conStratDat, constituencyDat, countyDat)
+  minVal = min(allDat[allDat > 0])*.95
+  yRange = range(c(yRange, minVal, max(allDat)))
+  
+  constituencyDat = 100*(relativePrevalenceCIWidthConstituency-relativePrevalenceCIWidthConstituencylcpb)/relativePrevalenceCIWidthConstituencylcpb
+  countyDat = 100*(relativePrevalenceCIWidthCounty-relativePrevalenceCIWidthCountylcpb)/relativePrevalenceCIWidthCountylcpb
+  allDat = c(constituencyDat, countyDat)
+  yRange = range(c(yRange, range(allDat, na.rm=TRUE)))
+  
+  # prevalence
+  conStratDat = 100*(prevalenceCIWidthConStrat-prevalenceCIWidthConStratlcpb)/prevalenceCIWidthConStratlcpb
+  constituencyDat = 100*(prevalenceCIWidthConstituency-prevalenceCIWidthConstituencylcpb)/prevalenceCIWidthConstituencylcpb
+  countyDat = 100*(prevalenceCIWidthCounty-prevalenceCIWidthCountylcpb)/prevalenceCIWidthCountylcpb
+  allDat = c(conStratDat, constituencyDat, countyDat)
+  minVal = min(allDat[allDat > 0])*.95
+  # conStratDat[conStratDat < 0] = minVal
+  # constituencyDat[constituencyDat < 0] = minVal
+  # countyDat[countyDat < 0] = minVal
+  xRange = range(meanEAs)
+  # yRange = c(minVal, max(allDat))
+  plot(meanEAsConStrat[conStratDat>0], conStratDat[conStratDat>0], col=cols[1], pch=pchs[1], main="Prevalence", 
+       xlab="", ylab="", log="xy", xlim=xRange, ylim=yRange, cex=cexs[1])
+  abline(v=300, lty=2)
+  # points(meanEAsConStrat[conStratDat<=0], rep(minVal, sum(conStratDat<=0)), col=cols[1], pch=pchs[1], cex=cexs[1])
+  points(meanEAsConstituency[constituencyDat>0], constituencyDat[constituencyDat>0], col=cols[2], pch=pchs[2], cex=cexs[2])
+  # points(meanEAsConstituency[constituencyDat<=0], rep(minVal, sum(constituencyDat<=0)), col=cols[2], pch=pchs[2], cex=cexs[2])
+  points(meanEAsCounty[countyDat>0], countyDat[countyDat>0], col=cols[3], pch=pchs[3], cex=cexs[3])
+  # points(meanEAsCounty[countyDat<=0], rep(minVal, sum(countyDat<=0)), col=cols[3], pch=pchs[3], cex=cexs[3])
+  mtext("Percent increase SD", side=2, line=3, cex=cexs[3])
+  # legend("bottomleft", c("Constituency x stratum", "Constituency", "County"), 
+  #        pch=pchs, col=cols, cex=.7)
+  
+  # burden
+  conStratDat = 100*(countCIWidthConStrat-countCIWidthConStratlcpb)/countCIWidthConStratlcpb
+  constituencyDat = 100*(countCIWidthConstituency-countCIWidthConstituencylcpb)/countCIWidthConstituencylcpb
+  countyDat = 100*(countCIWidthCounty-countCIWidthCountylcpb)/countCIWidthCountylcpb
+  allDat = c(conStratDat, constituencyDat, countyDat)
+  minVal = min(allDat[allDat > 0])*.95
+  # conStratDat[conStratDat < 0] = minVal
+  # constituencyDat[constituencyDat < 0] = minVal
+  # countyDat[countyDat < 0] = minVal
+  xRange = range(meanEAs)
+  # yRange = c(minVal, max(allDat))
+  plot(meanEAsConStrat[conStratDat>0], conStratDat[conStratDat>0], col=cols[1], pch=pchs[1], main="Burden", 
+       xlab="", ylab="", log="xy", xlim=xRange, ylim=yRange, cex=cexs[1])
+  abline(v=300, lty=2)
+  # points(meanEAsConStrat[conStratDat<=0], rep(minVal, sum(conStratDat<=0)), col=cols[1], pch=pchs[1], cex=cexs[1])
+  points(meanEAsConstituency[constituencyDat>0], constituencyDat[constituencyDat>0], col=cols[2], pch=pchs[2], cex=cexs[2])
+  # points(meanEAsConstituency[constituencyDat<=0], rep(minVal, sum(constituencyDat<=0)), col=cols[2], pch=pchs[2], cex=cexs[2])
+  points(meanEAsCounty[countyDat>0], countyDat[countyDat>0], col=cols[3], pch=pchs[3], cex=cexs[3])
+  # points(meanEAsCounty[countyDat<=0], rep(minVal, sum(countyDat<=0)), col=cols[3], pch=pchs[3], cex=cexs[3])
+  
+  legend("top", c("Constituency x stratum", "Constituency", "County"), 
+         pch=pchs, col=cols, cex=.85, bg="white")
+  mtext("Mean number EAs", side=1, line=3, cex=cexs[3])
+  
+  # relative prevalence
+  constituencyDat = 100*(relativePrevalenceCIWidthConstituency-relativePrevalenceCIWidthConstituencylcpb)/relativePrevalenceCIWidthConstituencylcpb
+  countyDat = 100*(relativePrevalenceCIWidthCounty-relativePrevalenceCIWidthCountylcpb)/relativePrevalenceCIWidthCountylcpb
+  allDat = c(constituencyDat, countyDat)
+  minVal = min(allDat)
+  # conStratDat[conStratDat < 0] = minVal
+  # constituencyDat[constituencyDat < 0] = minVal
+  # countyDat[countyDat < 0] = minVal
+  xRange = range(meanEAs)
+  # yRange = range(allDat, na.rm=TRUE)
+  plot(meanEAsConstituency, constituencyDat, col=cols[2], pch=pchs[2], main="Relative prevalence", 
+       xlab="", ylab="", log="xy", xlim=xRange, ylim=yRange, cex=cexs[2])
+  abline(v=3000, lty=2)
+  points(meanEAsCounty, countyDat, col=cols[3], pch=pchs[3], cex=cexs[3])
+  
+  # legend("bottomleft", c("Constituency", "County"), 
+  #        pch=pchs[-1], col=cols[-1], cex=.7)
+  
+  dev.off()
+  
+  # tables ----
+  
+  # parameter table
+  riskOut$interceptSummary
+  riskOut$fixedEffectSummary
+  riskOut$parameterSummaryTable
+  
+  tab = riskOut$fixedEffectSummary[,c(1, 2, 4, 3, 5)]
+  riskOut$parameterSummaryTable = data.frame(riskOut$parameterSummaryTable)
+  names(tab) = names(riskOut$parameterSummaryTable)
+  tab = rbind(tab, riskOut$parameterSummaryTable)
+  row.names(tab)[1:2] = c("Intercept", "Urban Effect")
+  
+  xtable(tab, 
+         caption=paste0("Summary statistics for risk model parameters when ", 
+                        "fit to NMR data from the 2014 KDHS for 2010-2014."), 
+         label="tab:riskModTable", digits=3)
+  
+  # table of mean pct increase SD for each type of area
+  # 3 sets columns: prev, burd, relPrev
+  # 3 rows: constituency x stratum, constituency, county
+  conStratDat = 100*(prevalenceCIWidthConStrat-prevalenceCIWidthConStratlcpb)/prevalenceCIWidthConStratlcpb
+  constituencyDat = 100*(prevalenceCIWidthConstituency-prevalenceCIWidthConstituencylcpb)/prevalenceCIWidthConstituencylcpb
+  countyDat = 100*(prevalenceCIWidthCounty-prevalenceCIWidthCountylcpb)/prevalenceCIWidthCountylcpb
+  prevConStrat = mean(conStratDat)
+  prevCon = mean(constituencyDat)
+  prevCounty = mean(countyDat)
+  prevMeans = c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty)
+  
+  conStratDat = 100*(countCIWidthConStrat-countCIWidthConStratlcpb)/countCIWidthConStratlcpb
+  constituencyDat = 100*(countCIWidthConstituency-countCIWidthConstituencylcpb)/countCIWidthConstituencylcpb
+  countyDat = 100*(countCIWidthCounty-countCIWidthCountylcpb)/countCIWidthCountylcpb
+  burdConStrat = mean(conStratDat)
+  burdCon = mean(constituencyDat)
+  burdCounty = mean(countyDat)
+  burdMeans = c("conStrat"=burdConStrat, "constituency"=burdCon, "county"=burdCounty)
+  
+  constituencyDat = 100*(relativePrevalenceCIWidthConstituency-relativePrevalenceCIWidthConstituencylcpb)/relativePrevalenceCIWidthConstituencylcpb
+  countyDat = 100*(relativePrevalenceCIWidthCounty-relativePrevalenceCIWidthCountylcpb)/relativePrevalenceCIWidthCountylcpb
+  relPrevCon = mean(constituencyDat, na.rm=TRUE)
+  relPrevCounty = mean(countyDat, na.rm=TRUE)
+  relPrevMeans = c("conStrat"=NA, "constituency"=relPrevCon, "county"=relPrevCounty)
+  
+  tab = cbind(prevMeans, burdMeans, relPrevMeans)
+  colnames(tab) = c("Prevalence", "Burden", "Relative prevalence")
+  row.names(tab) = c("Constituency x stratum", "Constituency", "County")
+  tab = round(tab, 0)
+  
+  print(xtable(tab, digits=0))
+  
+  # \begin{table}[ht]
+  # \centering
+  # \begin{tabular}{rrrr}
+  # \hline
+  # & Prevalence & Burden & Relative prevalence \\ 
+  # \hline
+  # Constituency x stratum & 31 & 45 &  \\ 
+  # Constituency & 9 & 13 & 133 \\ 
+  # County & 2 & 2 & 20 \\ 
+  # \hline
+  # \end{tabular}
+  # \end{table}
   
   print("finished with plots")
   browser()
@@ -1580,6 +1874,10 @@ getMortGridResolutionResults = function() {
   save(popGrids, popGridsAdjusted, aggResultsN, file="savedOutput/application/gridResolutionTestNairobi.RData")
   
   invisible(NULL)
+}
+
+logScaleAverage = function(x, y, maxPctDiff=20) {
+  
 }
 
 makeMortGridResolutionPlots = function() {

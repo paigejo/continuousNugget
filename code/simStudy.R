@@ -2348,10 +2348,18 @@ runSimStudyij = function(i, j, seed=123, doSmoothRiskLogisticApprox=FALSE, coars
   names(totalTimes) = c("setup", "SPDEmodel", "aggregationModel", "totalTime")
   
   # subset results we care about (save burden to scratch directory)
-  subareaPopP = subareaPop[c("pFineScalePrevalence", "pFineScaleRisk", "pSmoothRisk")]
-  areaPopP = areaPop[c("pFineScalePrevalence", "pFineScaleRisk", "pSmoothRisk")]
-  subareaPopZ = subareaPop[c("ZFineScalePrevalence", "ZFineScaleRisk", "ZSmoothRisk")]
-  areaPopZ = areaPop[c("ZFineScalePrevalence", "ZFineScaleRisk", "ZSmoothRisk")]
+  subareaPopP = subareaPop[c("pFineScalePrevalence", "pFineScaleRisk", "pSmoothRisk", 
+                             "pUrbanFineScalePrevalence", "pUrbanFineScaleRisk", "pUrbanSmoothRisk", 
+                             "pRuralFineScalePrevalence", "pRuralFineScaleRisk", "pRuralSmoothRisk")]
+  areaPopP = areaPop[c("pFineScalePrevalence", "pFineScaleRisk", "pSmoothRisk", 
+                       "pUrbanFineScalePrevalence", "pUrbanFineScaleRisk", "pUrbanSmoothRisk", 
+                       "pRuralFineScalePrevalence", "pRuralFineScaleRisk", "pRuralSmoothRisk")]
+  subareaPopZ = subareaPop[c("ZFineScalePrevalence", "ZFineScaleRisk", "ZSmoothRisk", 
+                             "ZUrbanFineScalePrevalence", "ZUrbanFineScaleRisk", "ZUrbanSmoothRisk", 
+                             "ZRuralFineScalePrevalence", "ZRuralFineScaleRisk", "ZRuralSmoothRisk")]
+  areaPopZ = areaPop[c("ZFineScalePrevalence", "ZFineScaleRisk", "ZSmoothRisk", 
+                       "ZUrbanFineScalePrevalence", "ZUrbanFineScaleRisk", "ZUrbanSmoothRisk", 
+                       "ZRuralFineScalePrevalence", "ZRuralFineScaleRisk", "ZRuralSmoothRisk")]
   
   # save files
   coarseText = ifelse(coarse, "Coarse", "")
