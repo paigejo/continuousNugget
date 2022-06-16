@@ -71,10 +71,10 @@ makeGridResTable = function() {
     lowConstituencyRisk = lapply(residsConstituencyRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
     lowConstituencyPrevalence = lapply(residsConstituencyPrevalence, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
     lowConstituencyGriddedRisk = lapply(residsConstituencyGriddedRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
-    highConstituencySmoothRisk = lapply(residsConstituencySmoothRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9))})})
-    highConstituencyRisk = lapply(residsConstituencyRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9))})})
-    highConstituencyPrevalence = lapply(residsConstituencyPrevalence, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9))})})
-    highConstituencyGriddedRisk = lapply(residsConstituencyGriddedRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9))})})
+    highConstituencySmoothRisk = lapply(residsConstituencySmoothRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9, .75))})})
+    highConstituencyRisk = lapply(residsConstituencyRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9, .75))})})
+    highConstituencyPrevalence = lapply(residsConstituencyPrevalence, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9, .75))})})
+    highConstituencyGriddedRisk = lapply(residsConstituencyGriddedRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9, .75))})})
     
     # CIWidthSmoothRisk = highConstituencySmoothRisk - lowConstituencySmoothRisk
     # CIWidthRisk = highConstituencyRisk - lowConstituencyRisk
@@ -83,22 +83,22 @@ makeGridResTable = function() {
     CIWidthSmoothRisk = lapply(residsConstituencySmoothRisk, 
                                function(mat) {
                                  apply(mat, 1, function(x) {
-                                   quantile(x, probs=c(.975, .95, .9)) - quantile(x, probs=c(.025, .05, .1))})
+                                   quantile(x, probs=c(.975, .95, .9, .75)) - quantile(x, probs=c(.025, .05, .1))})
                                })
     CIWidthRisk = lapply(residsConstituencyRisk, 
                          function(mat) {
                            apply(mat, 1, function(x) {
-                             quantile(x, probs=c(.975, .95, .9)) - quantile(x, probs=c(.025, .05, .1))})
+                             quantile(x, probs=c(.975, .95, .9, .75)) - quantile(x, probs=c(.025, .05, .1))})
                          })
     CIWidthPrevalence = lapply(residsConstituencyPrevalence, 
                                function(mat) {
                                  apply(mat, 1, function(x) {
-                                   quantile(x, probs=c(.975, .95, .9)) - quantile(x, probs=c(.025, .05, .1))})
+                                   quantile(x, probs=c(.975, .95, .9, .75)) - quantile(x, probs=c(.025, .05, .1))})
                                })
     CIWidthGriddedRisk = lapply(residsConstituencyGriddedRisk, 
                                 function(mat) {
                                   apply(mat, 1, function(x) {
-                                    quantile(x, probs=c(.975, .95, .9)) - quantile(x, probs=c(.025, .05, .1))})
+                                    quantile(x, probs=c(.975, .95, .9, .75)) - quantile(x, probs=c(.025, .05, .1))})
                                 })
     allCIWidthsSmoothRisk = c(allCIWidthsSmoothRisk, list(CIWidthSmoothRisk))
     allCIWidthsRisk = c(allCIWidthsRisk, list(CIWidthRisk))
@@ -118,22 +118,22 @@ makeGridResTable = function() {
     inCISmoothRisk = lapply(residsConstituencySmoothRisk, 
                             function(mat) {
                               apply(mat, 1, function(x) {
-                                (0 <= quantile(x, probs=c(.975, .95, .9))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
+                                (0 <= quantile(x, probs=c(.975, .95, .9, .75))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
                             })
     inCIRisk = lapply(residsConstituencyRisk, 
                       function(mat) {
                         apply(mat, 1, function(x) {
-                          (0 <= quantile(x, probs=c(.975, .95, .9))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
+                          (0 <= quantile(x, probs=c(.975, .95, .9, .75))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
                       })
     inCIPrevalence = lapply(residsConstituencyPrevalence, 
                             function(mat) {
                               apply(mat, 1, function(x) {
-                                (0 <= quantile(x, probs=c(.975, .95, .9))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
+                                (0 <= quantile(x, probs=c(.975, .95, .9, .75))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
                             })
     inCIGriddedRisk = lapply(residsConstituencyGriddedRisk, 
                              function(mat) {
                                apply(mat, 1, function(x) {
-                                 (0 <= quantile(x, probs=c(.975, .95, .9))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
+                                 (0 <= quantile(x, probs=c(.975, .95, .9, .75))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
                              })
     
     # coverageSmoothRisk = colMeans(inCISmoothRisk)
@@ -159,6 +159,10 @@ makeGridResTable = function() {
   allPredsGriddedRiskMat = do.call("rbind", allPredsGriddedRisk)
   
   ## CI widths
+  allCIWidthsSmoothRisk50 = lapply(allCIWidthsSmoothRisk, function(listOfResolutions) {
+    sapply(listOfResolutions, function(x) {x[4,]})
+  })
+  allCIWidthsSmoothRisk50 = do.call("rbind", allCIWidthsSmoothRisk50)
   allCIWidthsSmoothRisk80 = lapply(allCIWidthsSmoothRisk, function(listOfResolutions) {
     sapply(listOfResolutions, function(x) {x[3,]})
   })
@@ -172,6 +176,10 @@ makeGridResTable = function() {
   })
   allCIWidthsSmoothRisk95 = do.call("rbind", allCIWidthsSmoothRisk95)
   
+  allCIWidthsRisk50 = lapply(allCIWidthsRisk, function(listOfResolutions) {
+    sapply(listOfResolutions, function(x) {x[4,]})
+  })
+  allCIWidthsRisk50 = do.call("rbind", allCIWidthsRisk50)
   allCIWidthsRisk80 = lapply(allCIWidthsRisk, function(listOfResolutions) {
     sapply(listOfResolutions, function(x) {x[3,]})
   })
@@ -185,6 +193,10 @@ makeGridResTable = function() {
   })
   allCIWidthsRisk95 = do.call("rbind", allCIWidthsRisk95)
   
+  allCIWidthsPrevalence50 = lapply(allCIWidthsPrevalence, function(listOfResolutions) {
+    sapply(listOfResolutions, function(x) {x[4,]})
+  })
+  allCIWidthsPrevalence50 = do.call("rbind", allCIWidthsPrevalence50)
   allCIWidthsPrevalence80 = lapply(allCIWidthsPrevalence, function(listOfResolutions) {
     sapply(listOfResolutions, function(x) {x[3,]})
   })
@@ -198,6 +210,10 @@ makeGridResTable = function() {
   })
   allCIWidthsPrevalence95 = do.call("rbind", allCIWidthsPrevalence95)
   
+  allCIWidthsGriddedRisk50 = lapply(allCIWidthsGriddedRisk, function(listOfResolutions) {
+    sapply(listOfResolutions, function(x) {x[4,]})
+  })
+  allCIWidthsGriddedRisk50 = do.call("rbind", allCIWidthsGriddedRisk50)
   allCIWidthsGriddedRisk80 = lapply(allCIWidthsGriddedRisk, function(listOfResolutions) {
     sapply(listOfResolutions, function(x) {x[3,]})
   })
@@ -211,36 +227,49 @@ makeGridResTable = function() {
   })
   allCIWidthsGriddedRisk95 = do.call("rbind", allCIWidthsGriddedRisk95)
   
+  meanCIWidthsPrevalence50 = colMeans(allCIWidthsPrevalence50)
+  meanCIWidthsRisk50 = colMeans(allCIWidthsRisk50)
+  meanCIWidthsSmoothRisk50 = colMeans(allCIWidthsSmoothRisk50)
+  meanCIWidthsGriddedRisk50 = colMeans(allCIWidthsGriddedRisk50)
+  
   meanCIWidthsPrevalence95 = colMeans(allCIWidthsPrevalence95)
   meanCIWidthsRisk95 = colMeans(allCIWidthsRisk95)
   meanCIWidthsSmoothRisk95 = colMeans(allCIWidthsSmoothRisk95)
   meanCIWidthsGriddedRisk95 = colMeans(allCIWidthsGriddedRisk95)
   
   ## coverages
+  allCoveragesSmoothRisk50 = sapply(allCoveragesSmoothRisk, function(x) {x[4,]})
   allCoveragesSmoothRisk80 = sapply(allCoveragesSmoothRisk, function(x) {x[3,]})
   allCoveragesSmoothRisk90 = sapply(allCoveragesSmoothRisk, function(x) {x[2,]})
   allCoveragesSmoothRisk95 = sapply(allCoveragesSmoothRisk, function(x) {x[1,]})
+  meanCoveragesSmoothRisk50 = rowMeans(allCoveragesSmoothRisk50)
   meanCoveragesSmoothRisk80 = rowMeans(allCoveragesSmoothRisk80)
   meanCoveragesSmoothRisk90 = rowMeans(allCoveragesSmoothRisk90)
   meanCoveragesSmoothRisk95 = rowMeans(allCoveragesSmoothRisk95)
   
+  allCoveragesRisk50 = sapply(allCoveragesRisk, function(x) {x[4,]})
   allCoveragesRisk80 = sapply(allCoveragesRisk, function(x) {x[3,]})
   allCoveragesRisk90 = sapply(allCoveragesRisk, function(x) {x[2,]})
   allCoveragesRisk95 = sapply(allCoveragesRisk, function(x) {x[1,]})
+  meanCoveragesRisk50 = rowMeans(allCoveragesRisk50)
   meanCoveragesRisk80 = rowMeans(allCoveragesRisk80)
   meanCoveragesRisk90 = rowMeans(allCoveragesRisk90)
   meanCoveragesRisk95 = rowMeans(allCoveragesRisk95)
   
+  allCoveragesPrevalence50 = sapply(allCoveragesPrevalence, function(x) {x[4,]})
   allCoveragesPrevalence80 = sapply(allCoveragesPrevalence, function(x) {x[3,]})
   allCoveragesPrevalence90 = sapply(allCoveragesPrevalence, function(x) {x[2,]})
   allCoveragesPrevalence95 = sapply(allCoveragesPrevalence, function(x) {x[1,]})
+  meanCoveragesPrevalence50 = rowMeans(allCoveragesPrevalence50)
   meanCoveragesPrevalence80 = rowMeans(allCoveragesPrevalence80)
   meanCoveragesPrevalence90 = rowMeans(allCoveragesPrevalence90)
   meanCoveragesPrevalence95 = rowMeans(allCoveragesPrevalence95)
   
+  allCoveragesGriddedRisk50 = sapply(allCoveragesGriddedRisk, function(x) {x[4,]})
   allCoveragesGriddedRisk80 = sapply(allCoveragesGriddedRisk, function(x) {x[3,]})
   allCoveragesGriddedRisk90 = sapply(allCoveragesGriddedRisk, function(x) {x[2,]})
   allCoveragesGriddedRisk95 = sapply(allCoveragesGriddedRisk, function(x) {x[1,]})
+  meanCoveragesGriddedRisk50 = rowMeans(allCoveragesGriddedRisk50)
   meanCoveragesGriddedRisk80 = rowMeans(allCoveragesGriddedRisk80)
   meanCoveragesGriddedRisk90 = rowMeans(allCoveragesGriddedRisk90)
   meanCoveragesGriddedRisk95 = rowMeans(allCoveragesGriddedRisk95)
@@ -255,6 +284,20 @@ makeGridResTable = function() {
               round(100* meanCoveragesRisk95, 0), 
               round(100* meanCoveragesSmoothRisk95, 0), 
               round(100* meanCoveragesGriddedRisk95, 0))
+  row.names(tab) = rep(c("Empirical", "Latent", "Smooth latent", "Gridded"), 2)
+  colnames(tab) = c("200m", "1km", "5km", "25km")
+  
+  xtable(tab, digits=1)
+  
+  # 50% CIs and coverages
+  tab = rbind(round(1000*meanCIWidthsPrevalence50, 1), 
+              round(1000*meanCIWidthsRisk50, 1), 
+              round(1000*meanCIWidthsSmoothRisk50, 1), 
+              round(1000*meanCIWidthsGriddedRisk50, 1), 
+              round(100* meanCoveragesPrevalence50, 0), 
+              round(100* meanCoveragesRisk50, 0), 
+              round(100* meanCoveragesSmoothRisk50, 0), 
+              round(100* meanCoveragesGriddedRisk50, 0))
   row.names(tab) = rep(c("Empirical", "Latent", "Smooth latent", "Gridded"), 2)
   colnames(tab) = c("200m", "1km", "5km", "25km")
   
