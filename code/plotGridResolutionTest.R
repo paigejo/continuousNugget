@@ -67,10 +67,10 @@ makeGridResTable = function() {
     allPredsPrevalence = c(allPredsPrevalence, list(predsPrevalence))
     allPredsGriddedRisk = c(allPredsGriddedRisk, list(predsGriddedRisk))
     
-    lowConstituencySmoothRisk = lapply(residsConstituencySmoothRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
-    lowConstituencyRisk = lapply(residsConstituencyRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
-    lowConstituencyPrevalence = lapply(residsConstituencyPrevalence, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
-    lowConstituencyGriddedRisk = lapply(residsConstituencyGriddedRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
+    lowConstituencySmoothRisk = lapply(residsConstituencySmoothRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1, .25))})})
+    lowConstituencyRisk = lapply(residsConstituencyRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1, .25))})})
+    lowConstituencyPrevalence = lapply(residsConstituencyPrevalence, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1, .25))})})
+    lowConstituencyGriddedRisk = lapply(residsConstituencyGriddedRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1, .25))})})
     highConstituencySmoothRisk = lapply(residsConstituencySmoothRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9, .75))})})
     highConstituencyRisk = lapply(residsConstituencyRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9, .75))})})
     highConstituencyPrevalence = lapply(residsConstituencyPrevalence, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9, .75))})})
@@ -83,22 +83,22 @@ makeGridResTable = function() {
     CIWidthSmoothRisk = lapply(residsConstituencySmoothRisk, 
                                function(mat) {
                                  apply(mat, 1, function(x) {
-                                   quantile(x, probs=c(.975, .95, .9, .75)) - quantile(x, probs=c(.025, .05, .1))})
+                                   quantile(x, probs=c(.975, .95, .9, .75)) - quantile(x, probs=c(.025, .05, .1, .25))})
                                })
     CIWidthRisk = lapply(residsConstituencyRisk, 
                          function(mat) {
                            apply(mat, 1, function(x) {
-                             quantile(x, probs=c(.975, .95, .9, .75)) - quantile(x, probs=c(.025, .05, .1))})
+                             quantile(x, probs=c(.975, .95, .9, .75)) - quantile(x, probs=c(.025, .05, .1, .25))})
                          })
     CIWidthPrevalence = lapply(residsConstituencyPrevalence, 
                                function(mat) {
                                  apply(mat, 1, function(x) {
-                                   quantile(x, probs=c(.975, .95, .9, .75)) - quantile(x, probs=c(.025, .05, .1))})
+                                   quantile(x, probs=c(.975, .95, .9, .75)) - quantile(x, probs=c(.025, .05, .1, .25))})
                                })
     CIWidthGriddedRisk = lapply(residsConstituencyGriddedRisk, 
                                 function(mat) {
                                   apply(mat, 1, function(x) {
-                                    quantile(x, probs=c(.975, .95, .9, .75)) - quantile(x, probs=c(.025, .05, .1))})
+                                    quantile(x, probs=c(.975, .95, .9, .75)) - quantile(x, probs=c(.025, .05, .1, .25))})
                                 })
     allCIWidthsSmoothRisk = c(allCIWidthsSmoothRisk, list(CIWidthSmoothRisk))
     allCIWidthsRisk = c(allCIWidthsRisk, list(CIWidthRisk))
@@ -118,22 +118,22 @@ makeGridResTable = function() {
     inCISmoothRisk = lapply(residsConstituencySmoothRisk, 
                             function(mat) {
                               apply(mat, 1, function(x) {
-                                (0 <= quantile(x, probs=c(.975, .95, .9, .75))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
+                                (0 <= quantile(x, probs=c(.975, .95, .9, .75))) & (0 >= quantile(x, probs=c(.025, .05, .1, .25)))})
                             })
     inCIRisk = lapply(residsConstituencyRisk, 
                       function(mat) {
                         apply(mat, 1, function(x) {
-                          (0 <= quantile(x, probs=c(.975, .95, .9, .75))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
+                          (0 <= quantile(x, probs=c(.975, .95, .9, .75))) & (0 >= quantile(x, probs=c(.025, .05, .1, .25)))})
                       })
     inCIPrevalence = lapply(residsConstituencyPrevalence, 
                             function(mat) {
                               apply(mat, 1, function(x) {
-                                (0 <= quantile(x, probs=c(.975, .95, .9, .75))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
+                                (0 <= quantile(x, probs=c(.975, .95, .9, .75))) & (0 >= quantile(x, probs=c(.025, .05, .1, .25)))})
                             })
     inCIGriddedRisk = lapply(residsConstituencyGriddedRisk, 
                              function(mat) {
                                apply(mat, 1, function(x) {
-                                 (0 <= quantile(x, probs=c(.975, .95, .9, .75))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
+                                 (0 <= quantile(x, probs=c(.975, .95, .9, .75))) & (0 >= quantile(x, probs=c(.025, .05, .1, .25)))})
                              })
     
     # coverageSmoothRisk = colMeans(inCISmoothRisk)
