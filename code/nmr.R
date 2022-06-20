@@ -422,7 +422,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   
   # pixel level
   quilt.plot(popMat$lon, popMat$lat, pixelMean, FUN=function(x){logit(mean(x, na.rm=TRUE))}, 
-             zlim=logit(meanRange), nx=160, ny=160, main="", cex.main=3, col=meanCols, 
+             zlim=logit(meanRange), nx=155, ny=160, main="", cex.main=3, col=meanCols, 
              add.legend=FALSE, cex.axis=2, xlab="", ylab="Latitude", 
              xlim=kenyaLonRange, ylim=c(-5.5, 5.8), asp=1, cex.lab=3)
   plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
@@ -461,7 +461,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   # pixel level
   
   quilt.plot(popMat$lon, popMat$lat, prevalenceCIWidthPixellcpb, FUN=function(x){logit(mean(x, na.rm=TRUE))}, 
-             nx=160, ny=160, main="", cex.main=3, col=sdCols, 
+             nx=155, ny=160, main="", cex.main=3, col=sdCols, 
              add.legend=FALSE, cex.axis=2, xlab="", ylab="Latitude", 
              xlim=kenyaLonRange, ylim=c(-5.5, 5.8), asp=1, cex.lab=3)
   plotMapDat(mapDat=countyMap, lwd=.5, border=rgb(.4,.4,.4))
