@@ -636,13 +636,15 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
       naRows = apply(estMat, 1, function(x) {all(is.na(x))})
     }
     notNA = !naRows
-    out = getScores(truth[notNA], est[notNA], var[notNA], lower[notNA], upper[notNA], 
-                    estMat[notNA,], significance, distances, breaks, doFuzzyReject, 
-                    getAverage, anyNAisNA)
-    if(returnNAs) {
-      return(c(out, list(naRows=naRows)))
-    } else {
-      return(out)
+    if(sum(naRows) > 0) {
+      out = getScores(truth[notNA], est[notNA], var[notNA], lower[notNA], upper[notNA], 
+                      estMat[notNA,], significance, distances, breaks, doFuzzyReject, 
+                      getAverage, anyNAisNA)
+      if(returnNAs) {
+        return(c(out, list(naRows=naRows)))
+      } else {
+        return(out)
+      }
     }
   }
   
