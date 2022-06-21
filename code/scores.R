@@ -1056,7 +1056,7 @@ crps <- function(truth, est=NULL, my.var=NULL, estMat=NULL, getAverage=TRUE, na.
     }
     
     if(!is.null(estMat))
-      estMat = t(apply(estMat, 1, sort))
+      estMat = t(apply(estMat, 1, sortWithNAs))
     res = sapply(1:length(truth), crpsRow)
   }
   
@@ -1457,7 +1457,12 @@ aggregateScoresByDistanceBasic = function(singleScores, breaks=30, distanceVar="
   out
 }
 
-
+# sort a vector containing NAs, which are placed at the end
+sortWithNAs = function(x, ...) {
+  numNAs = sum(is.na(x))
+  out = sort(x, ...)
+  c(out, rep(NA, numNAs))
+}
 
 
 
