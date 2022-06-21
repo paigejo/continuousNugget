@@ -2423,7 +2423,7 @@ processSimStudyResultsij = function(i, j, coarse=TRUE) {
   subareaScoresPrelprev = getScores(truth=thisPop$subareaPop$aggregationResults$pUrbanFineScalePrevalence[,j]/
                                    thisPop$subareaPop$aggregationResults$pRuralFineScalePrevalence[,j], 
                                  estMat=subareaPopP$pUrbanFineScalePrevalence/subareaPopP$pRuralFineScalePrevalence, 
-                                 significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE)
+                                 significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE)
   
   areaScoresPprev = getScores(truth=thisPop$areaPop$aggregationResults$pFineScalePrevalence[,j], 
                               est=areaEstsP, estMat=areaPopP$pFineScalePrevalence, 
@@ -2433,7 +2433,7 @@ processSimStudyResultsij = function(i, j, coarse=TRUE) {
                              significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   areaScoresPrelprev = getScores(truth=thisPop$areaPop$aggregationResults$pUrbanFineScalePrevalence[,j]/thisPop$areaPop$aggregationResults$pRuralFineScalePrevalence[,j], 
                               estMat=areaPopP$pUrbanFineScalePrevalence/areaPopP$pRuralFineScalePrevalence, 
-                              significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE)
+                              significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE)
   
   # fine scale risk scores
   subareaScoresPrisk = getScores(truth=thisPop$subareaPop$aggregationResults$pFineScalePrevalence[,j], 
@@ -2444,7 +2444,7 @@ processSimStudyResultsij = function(i, j, coarse=TRUE) {
                                  significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   subareaScoresPrelrisk = getScores(truth=thisPop$subareaPop$aggregationResults$pUrbanFineScalePrevalence[,j]/thisPop$subareaPop$aggregationResults$pRuralFineScalePrevalence[,j], 
                                  estMat=subareaPopP$pUrbanFineScaleRisk/subareaPopP$pRuralFineScaleRisk, 
-                                 significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE)
+                                 significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE)
   
   areaScoresPrisk = getScores(truth=thisPop$areaPop$aggregationResults$pFineScalePrevalence[,j], 
                               est=areaEstsP, estMat=areaPopP$pFineScaleRisk, 
@@ -2454,7 +2454,7 @@ processSimStudyResultsij = function(i, j, coarse=TRUE) {
                               significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   areaScoresPrelrisk = getScores(truth=thisPop$areaPop$aggregationResults$pUrbanFineScalePrevalence[,j]/thisPop$areaPop$aggregationResults$pRuralFineScalePrevalence[,j], 
                               estMat=areaPopP$pUrbanFineScaleRisk/areaPopP$pRuralFineScaleRisk, 
-                              significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE)
+                              significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE)
   
   # smooth risk scores
   subareaScoresPsmoothRisk = getScores(truth=thisPop$subareaPop$aggregationResults$pFineScalePrevalence[,j], 
@@ -2465,7 +2465,7 @@ processSimStudyResultsij = function(i, j, coarse=TRUE) {
                                  significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   subareaScoresPrelsmoothRisk = getScores(truth=thisPop$subareaPop$aggregationResults$pUrbanFineScalePrevalence[,j]/thisPop$subareaPop$aggregationResults$pRuralFineScalePrevalence[,j], 
                                        estMat=subareaPopP$pUrbanSmoothRisk/subareaPopP$pRuralSmoothRisk, 
-                                       significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE)
+                                       significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE)
   
   areaScoresPsmoothRisk = getScores(truth=thisPop$areaPop$aggregationResults$pFineScalePrevalence[,j], 
                                     est=areaEstsP, estMat=areaPopP$pSmoothRisk, 
@@ -2475,7 +2475,7 @@ processSimStudyResultsij = function(i, j, coarse=TRUE) {
                               significance=c(.8, .9, .95), doFuzzyReject=TRUE)
   areaScoresPrelsmoothRisk = getScores(truth=thisPop$areaPop$aggregationResults$pUrbanFineScalePrevalence[,j]/thisPop$areaPop$aggregationResults$pRuralFineScalePrevalence[,j], 
                                     estMat=areaPopP$pUrbanSmoothRisk/areaPopP$pRuralSmoothRisk, 
-                                    significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE)
+                                    significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE)
   
   # add computation times to the scores
   subareaScoresPprev = cbind(subareaScoresPprev, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[1])/60)
