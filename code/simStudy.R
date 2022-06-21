@@ -2730,7 +2730,7 @@ printSimStudyTablei = function(i=1, maxJ=100, coarse=TRUE) {
   displayZ = c("s", rep("f", 3), rep("f", 3), rep("d", 3), rep("f", 4))
   digitsZ = c(0, rep(1, 2), 2, rep(1, 3), rep(0, 3), rep(1, 3), 1)
   displayPrel = c("s", rep("f", 3), rep("f", 3), rep("d", 3), rep("f", 4))
-  digitsPrel = c(0, rep(1, 2), 2, rep(1, 3), rep(0, 3), rep(1, 3), 1)
+  digitsPrel = c(0, rep(2, 2), 2, rep(2, 3), rep(0, 3), rep(3, 3), 1)
   print(xtable(subareaPScores, display=displayP, digits=digitsP), math.style.exponents=TRUE)
   print(xtable(subareaZScores, display=displayZ, digits=digitsZ), math.style.exponents=TRUE)
   print(xtable(subareaPrelScores, display=displayPrel, digits=digitsPrel), math.style.exponents=TRUE)
