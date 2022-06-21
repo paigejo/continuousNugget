@@ -648,6 +648,20 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
     }
   }
   
+  if(any(is.na(truth))) {
+    naRows = is.na(truth)
+    notNA = !naRows
+    
+    out = getScores(truth[notNA], est[notNA], var[notNA], lower[notNA], upper[notNA], 
+                    estMat[notNA,], significance, distances, breaks, doFuzzyReject, 
+                    getAverage, anyNAisNA, na.rm)
+    if(returnNAs) {
+      return(c(out, list(naRows=naRows)))
+    } else {
+      return(out)
+    }
+  }
+  
   # if distances is included, must also break down scoring rules by distance bins
   if(!is.null(distances)) {
     # construct the distance bins with which to group the data and compute scores within
