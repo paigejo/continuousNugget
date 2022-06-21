@@ -633,7 +633,7 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
     var[!is.finite(var)] = NA
     lower[!is.finite(lower)] = NA
     upper[!is.finite(upper)] = NA
-    estMat[!is.finite(estMat)] = NA
+    estMat[!is.finite(estMat),] = NA
   }
   
   # if rows of estMat are NA, set score for rows to NA
