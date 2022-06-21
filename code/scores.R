@@ -646,7 +646,7 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
       naRows = rep(FALSE, nrow(estMat))
     }
     notNA = !naRows
-    if(sum(naRows) > 0 && !na.rm) {
+    if(sum(naRows) > 0) {
       out = getScores(truth[notNA], est[notNA], var[notNA], lower[notNA], upper[notNA], 
                       estMat[notNA,], significance, distances, breaks, doFuzzyReject, 
                       getAverage, anyNAisNA, na.rm)
