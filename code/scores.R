@@ -638,10 +638,12 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
   
   # if rows of estMat are NA, set score for rows to NA
   if(!is.null(estMat)) {
-    if(anyNAisNA) {
+    if(anyNAisNA && !na.rm) {
       naRows = apply(estMat, 1, function(x) {any(is.na(x))})
-    } else {
+    } else if(!anyNAisNA) {
       naRows = apply(estMat, 1, function(x) {all(is.na(x))})
+    } else {
+      naRows = rep(FALSE, nrow(estMat))
     }
     notNA = !naRows
     if(sum(naRows) > 0 && !na.rm) {
