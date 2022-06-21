@@ -626,7 +626,7 @@
 # NOTE: Discrete, count level credible intervals are estimated based on the input estMat along with coverage and CRPS
 getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=NULL, significance=.8, 
                      distances=NULL, breaks=30, doFuzzyReject=TRUE, getAverage=TRUE, anyNAisNA=TRUE, 
-                     returnNAs=FALSE) {
+                     returnNAs=FALSE, na.rm=FALSE) {
   
   # if rows of estMat are NA, set score for rows to NA
   if(!is.null(estMat)) {
@@ -636,10 +636,10 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
       naRows = apply(estMat, 1, function(x) {all(is.na(x))})
     }
     notNA = !naRows
-    if(sum(naRows) > 0) {
+    if(sum(naRows) > 0 && !na.rm) {
       out = getScores(truth[notNA], est[notNA], var[notNA], lower[notNA], upper[notNA], 
                       estMat[notNA,], significance, distances, breaks, doFuzzyReject, 
-                      getAverage, anyNAisNA)
+                      getAverage, anyNAisNA, na.rm)
       if(returnNAs) {
         return(c(out, list(naRows=naRows)))
       } else {
@@ -668,7 +668,7 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
       if(!is.null(estMat))
         newEstMat = matrix(estMat[thisDatI,], ncol=ncol(estMat))
       getScores(truth[thisDatI], est[thisDatI], var[thisDatI], lower[thisDatI], upper[thisDatI], 
-                newEstMat, significance, doFuzzyReject=doFuzzyReject)
+                newEstMat, significance, doFuzzyReject=doFuzzyReject, anyNAisNA=anyNAisNA, na.rm=na.rm)
     }
     
     # calculate scores for each bin individually
@@ -686,11 +686,11 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
   # compute central estimates if estMat is not null
   if(!is.null(estMat)) {
     if(is.null(est))
-      est = rowMeans(estMat)
+      est = rowMeans(estMat, na.rm=na.rm)
   }
   
   # first calculate bias, variance, and MSE
-  out = mse(truth, est, getAverage=getAverage)
+  out = mse(truth, est, getAverage=getAverage, na.rm=na.rm)
   thisMSE = out$MSE
   thisBias = out$bias
   thisVar = out$var
@@ -699,7 +699,7 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
   intScore = intervalScore(truth, est, var, lower, upper, estMat=estMat, 
                            significance=significance, returnIntervalWidth=TRUE, 
                            returnCoverage=TRUE, 
-                           doFuzzyReject=doFuzzyReject, getAverage=getAverage)
+                           doFuzzyReject=doFuzzyReject, getAverage=getAverage, na.rm=na.rm)
   if(getAverage) {
     thisIntScore = intScore[grepl("intScore", names(intScore))]
     thisCoverage = intScore[grepl("coverage", names(intScore))]
@@ -711,7 +711,7 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
   }
   
   # calculate CRPS
-  thisCRPS = crps(truth, est, var, estMat=estMat, getAverage=getAverage)
+  thisCRPS = crps(truth, est, var, estMat=estMat, getAverage=getAverage, na.rm=na.rm)
   
   # collect the results in a data frame
   results = matrix(c(thisBias, thisVar, thisMSE, sqrt(thisMSE), thisCRPS, thisIntScore, thisCoverage, 
@@ -731,18 +731,18 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
 }
 
 # calculate bias, variance, and MSE
-mse <- function(truth, est, weights=NULL, getAverage=TRUE){
+mse <- function(truth, est, weights=NULL, getAverage=TRUE, na.rm=TRUE){
   if(!is.null(weights))
-    weights = weights / sum(weights, na.rm=TRUE)
+    weights = weights / sum(weights, na.rm=na.rm)
   
   res = est - truth
   
   if(!is.null(weights)) {
-    thisVar = (res - sum(res*weights, na.rm=TRUE))^2
+    thisVar = (res - sum(res*weights, na.rm=na.rm))^2
     if(getAverage) {
-      MSE = sum(res^2 * weights, na.rm=TRUE)
-      bias=sum(res * weights, na.rm=TRUE)
-      thisVar = sum(thisVar * weights, na.rm=TRUE)
+      MSE = sum(res^2 * weights, na.rm=na.rm)
+      bias=sum(res * weights, na.rm=na.rm)
+      thisVar = sum(thisVar * weights, na.rm=na.rm)
     } else {
       MSE = res^2
       bias = res
@@ -751,11 +751,11 @@ mse <- function(truth, est, weights=NULL, getAverage=TRUE){
     out = list(MSE=MSE, bias=bias, var=thisVar)
   }
   else {
-    thisVar = (res - mean(res, na.rm=TRUE))^2
+    thisVar = (res - mean(res, na.rm=na.rm))^2
     if(getAverage) {
-      MSE = mean(res^2, na.rm=TRUE)
-      bias=mean(res, na.rm=TRUE)
-      thisVar = mean(thisVar, na.rm=TRUE)
+      MSE = mean(res^2, na.rm=na.rm)
+      bias=mean(res, na.rm=na.rm)
+      thisVar = mean(thisVar, na.rm=na.rm)
     } else {
       MSE = res^2
       bias=res
@@ -909,7 +909,7 @@ coverage = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
 # estMat: if available, use these probability draws in the integration. Use this argument 
 #         when a gaussian approximation to the (possibly transformed) posterior is unreasonable
 # getAverage: if FALSE, returns score for individual observations. Otherwise for all observations
-crps <- function(truth, est=NULL, my.var=NULL, estMat=NULL, getAverage=TRUE){
+crps <- function(truth, est=NULL, my.var=NULL, estMat=NULL, getAverage=TRUE, na.rm=FALSE){
   if(!is.null(est) && !is.null(my.var) && is.null(estMat)) {
     sig = sqrt(my.var)
     x0 <- (truth - est) / sig
@@ -1018,13 +1018,13 @@ crps <- function(truth, est=NULL, my.var=NULL, estMat=NULL, getAverage=TRUE){
       firstGreater = match(TRUE, sorted >= thisTruth)
       vals = (1:length(sorted))/length(sorted)
       if(is.na(firstGreater))
-        return(sum((vals)^2 * deltas, na.rm=TRUE))
+        return(sum((vals)^2 * deltas, na.rm=na.rm))
       else if(firstGreater == 1)
-        return(deltas[1] + sum((1-vals[1:(length(sorted)-1)])^2 * deltas[2:length(deltas)], na.rm=TRUE))
+        return(deltas[1] + sum((1-vals[1:(length(sorted)-1)])^2 * deltas[2:length(deltas)], na.rm=na.rm))
       else {
-        left = sum(vals[1:(firstGreater-1)]^2 * deltas[1:(firstGreater-1)], na.rm=TRUE)
-        mid = sum((1 - vals[firstGreater-1])^2 * deltas[firstGreater], na.rm=TRUE)
-        right = ifelse(firstGreater == length(vals), 0, sum((1 - vals[firstGreater:(length(vals)-1)])^2 * deltas[(firstGreater+1):length(deltas)], na.rm=TRUE))
+        left = sum(vals[1:(firstGreater-1)]^2 * deltas[1:(firstGreater-1)], na.rm=na.rm)
+        mid = sum((1 - vals[firstGreater-1])^2 * deltas[firstGreater], na.rm=na.rm)
+        right = ifelse(firstGreater == length(vals), 0, sum((1 - vals[firstGreater:(length(vals)-1)])^2 * deltas[(firstGreater+1):length(deltas)], na.rm=na.rm))
         return(left+mid+right)
       }
       
@@ -1039,7 +1039,7 @@ crps <- function(truth, est=NULL, my.var=NULL, estMat=NULL, getAverage=TRUE){
   }
   
   if(getAverage)
-    mean(res, na.rm=TRUE)
+    mean(res, na.rm=na.rm)
   else
     res
 }
@@ -1062,13 +1062,14 @@ crps <- function(truth, est=NULL, my.var=NULL, estMat=NULL, getAverage=TRUE){
 # https://www.tandfonline.com/doi/pdf/10.1198/016214506000001437?casa_token=0vXXqMZ3M2IAAAAA:BYmw_z2zaASEcAvFrNDf6PQ157vq6FAQuDuI9depRZp44RJ_M8zbY47CN_KGXHMXP9CHJL02bTDT
 intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, 
                          estMat=NULL, significance=.8, returnIntervalWidth=FALSE, 
-                         returnCoverage=FALSE, doFuzzyReject=TRUE, getAverage=TRUE, ns=NULL){
+                         returnCoverage=FALSE, doFuzzyReject=TRUE, getAverage=TRUE, ns=NULL, 
+                         na.rm=FALSE){
   
   # if more than 1 significance level, return results for each
   if(length(significance) > 1) {
     res = lapply(significance, intervalScore, truth=truth, est=est, var=var, lower=lower, upper=upper, 
                  estMat=estMat, returnIntervalWidth=returnIntervalWidth, returnCoverage=returnCoverage, 
-                 doFuzzyReject=doFuzzyReject, getAverage=getAverage, ns=ns)
+                 doFuzzyReject=doFuzzyReject, getAverage=getAverage, ns=ns, na.rm=na.rm)
     if(getAverage) {
       return(unlist(res))
     } else {
@@ -1092,7 +1093,7 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
       # Instead, use the user supplied to probability matrix estMat
       
       # take the quantiles of the probability draws
-      CIs = apply(estMat, 1, function(ps) {quantile(ps, probs=c((1 - significance) / 2, 1 - (1 - significance) / 2))})
+      CIs = apply(estMat, 1, function(ps) {quantile(ps, probs=c((1 - significance) / 2, 1 - (1 - significance) / 2), na.rm=na.rm)})
       lower = CIs[1,]
       upper = CIs[2,]
     }
@@ -1130,7 +1131,7 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     if(length(lowerEdgeInds) != 0) {
       probRejectLower = sapply(lowerEdgeInds, function(i) {
         if(mean(estMat[i,] == lower[i]) != 0) {
-          ((1 - significance) / 2 - mean(estMat[i,] < lower[i])) / mean(estMat[i,] == lower[i])
+          ((1 - significance) / 2 - mean(estMat[i,] < lower[i], na.rm=na.rm)) / mean(estMat[i,] == lower[i], na.rm=na.rm)
         } else {
           warning("lower end of CI not equal to any samples from estMat. Setting reject probability to 0.5")
           0.5
@@ -1141,7 +1142,7 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     if(length(upperEdgeInds) != 0) {
       probRejectUpper = sapply(upperEdgeInds, function(i) {
         if(mean(estMat[i,] == upper[i]) != 0) {
-          ((1 - significance) / 2 - mean(estMat[i,] > upper[i])) / mean(estMat[i,] == upper[i])
+          ((1 - significance) / 2 - mean(estMat[i,] > upper[i], na.rm=na.rm)) / mean(estMat[i,] == upper[i], na.rm=na.rm)
         } else {
           warning("upper end of CI not equal to any samples from estMat. Setting reject probability to 0.5")
           0.5
@@ -1152,7 +1153,7 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     
     # determine minimum differences between probabilities
     if(is.null(ns))
-      deltas = apply(estMat, 1, function(x) {min(diff(sort(unique(x))))})
+      deltas = apply(estMat, 1, function(x) {min(diff(sort(unique(x))), na.rm=na.rm)})
     else
       deltas = 1 / ns
     
@@ -1182,20 +1183,20 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     2/alpha * (truth - upper) * as.numeric(!lessThanUpper)
   
   if(getAverage)
-    allResults = c(intScore=mean(theseScores, na.rm=TRUE))
+    allResults = c(intScore=mean(theseScores, na.rm=na.rm))
   else
     allResults = c(intScore=theseScores)
   
   if(returnCoverage) {
     if(getAverage)
-      allResults = c(allResults, coverage=mean(cvg, na.rm=TRUE))
+      allResults = c(allResults, coverage=mean(cvg, na.rm=na.rm))
     else
       allResults = cbind(allResults, coverage=cvg)
   }
   
   if(returnIntervalWidth) {
     if(getAverage)
-      allResults = c(allResults, width=mean(width, na.rm=TRUE))
+      allResults = c(allResults, width=mean(width, na.rm=na.rm))
     else
       allResults = cbind(allResults, width=width)
   }
