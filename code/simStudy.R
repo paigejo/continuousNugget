@@ -2545,18 +2545,24 @@ combineProcessedResults = function(is=1:54, maxJ=100, initialProcess=TRUE, combi
       
       subareaScoresPprevAll = c()
       subareaScoresZprevAll = c()
+      subareaScoresPrelprevAll = c()
       areaScoresPprevAll = c()
       areaScoresZprevAll = c()
+      areaScoresPrelprevAll = c()
       
       subareaScoresPriskAll = c()
+      subareaScoresPrelriskAll = c()
       subareaScoresZriskAll = c()
       areaScoresPriskAll = c()
       areaScoresZriskAll = c()
+      areaScoresPrelriskAll = c()
       
       subareaScoresPsmoothRiskAll = c()
       subareaScoresZsmoothRiskAll = c()
+      subareaScoresPrelsmoothRiskAll = c()
       areaScoresPsmoothRiskAll = c()
       areaScoresZsmoothRiskAll = c()
+      areaScoresPrelsmoothRiskAll = c()
       
       aggregationTimingsDetailedAll = c()
       aggregationTimingsProcessedAll = c()
@@ -2571,18 +2577,24 @@ combineProcessedResults = function(is=1:54, maxJ=100, initialProcess=TRUE, combi
         
         subareaScoresPprevAll = rbind(subareaScoresPprevAll, subareaScoresPprev)
         subareaScoresZprevAll = rbind(subareaScoresZprevAll, subareaScoresZprev)
+        subareaScoresPrelprevAll = rbind(subareaScoresPrelprevAll, subareaScoresPrelprev)
         areaScoresPprevAll = rbind(areaScoresPprevAll, areaScoresPprev)
         areaScoresZprevAll = rbind(areaScoresZprevAll, areaScoresZprev)
+        areaScoresPrelprevAll = rbind(areaScoresPrelprevAll, areaScoresPrelprev)
         
         subareaScoresPriskAll = rbind(subareaScoresPriskAll, subareaScoresPrisk)
         subareaScoresZriskAll = rbind(subareaScoresZriskAll, subareaScoresZrisk)
+        subareaScoresPrelriskAll = rbind(subareaScoresPrelriskAll, subareaScoresPrelrisk)
         areaScoresPriskAll = rbind(areaScoresPriskAll, areaScoresPrisk)
         areaScoresZriskAll = rbind(areaScoresZriskAll, areaScoresZrisk)
+        areaScoresPrelriskAll = rbind(areaScoresPrelriskAll, areaScoresPrelrisk)
         
         subareaScoresPsmoothRiskAll = rbind(subareaScoresPsmoothRiskAll, subareaScoresPsmoothRisk)
         subareaScoresZsmoothRiskAll = rbind(subareaScoresZsmoothRiskAll, subareaScoresZsmoothRisk)
+        subareaScoresPrelsmoothRiskAll = rbind(subareaScoresPrelsmoothRiskAll, subareaScoresPrelsmoothRisk)
         areaScoresPsmoothRiskAll = rbind(areaScoresPsmoothRiskAll, areaScoresPsmoothRisk)
         areaScoresZsmoothRiskAll = rbind(areaScoresZsmoothRiskAll, areaScoresZsmoothRisk)
+        areaScoresPrelsmoothRiskAll = rbind(areaScoresPrelsmoothRiskAll, areaScoresPrelsmoothRisk)
         
         aggregationTimingsDetailedAll = rbind(aggregationTimingsDetailedAll, aggregationTimings$allTimings[,1])
         aggregationTimingsProcessedAll = rbind(aggregationTimingsProcessedAll, aggregationTimings$processedTimings)
@@ -2593,31 +2605,43 @@ combineProcessedResults = function(is=1:54, maxJ=100, initialProcess=TRUE, combi
       # calculate average scores
       subareaScoresPprevAvg = colMeans(as.matrix(subareaScoresPprevAll))
       subareaScoresZprevAvg = colMeans(as.matrix(subareaScoresZprevAll))
+      subareaScoresPrelprevAvg = colMeans(as.matrix(subareaScoresPrelprevAll), na.rm=TRUE)
       areaScoresPprevAvg = colMeans(as.matrix(areaScoresPprevAll))
       areaScoresZprevAvg = colMeans(as.matrix(areaScoresZprevAll))
+      areaScoresPrelprevAvg = colMeans(as.matrix(areaScoresPrelprevAll), na.rm=TRUE)
       
       subareaScoresPriskAvg = colMeans(as.matrix(subareaScoresPriskAll))
       subareaScoresZriskAvg = colMeans(as.matrix(subareaScoresZriskAll))
+      subareaScoresPrelriskAvg = colMeans(as.matrix(subareaScoresPrelriskAll), na.rm=TRUE)
       areaScoresPriskAvg = colMeans(as.matrix(areaScoresPriskAll))
       areaScoresZriskAvg = colMeans(as.matrix(areaScoresZriskAll))
+      areaScoresPrelriskAvg = colMeans(as.matrix(areaScoresPrelriskAll), na.rm=TRUE)
       
       subareaScoresPsmoothRiskAvg = colMeans(as.matrix(subareaScoresPsmoothRiskAll))
       subareaScoresZsmoothRiskAvg = colMeans(as.matrix(subareaScoresZsmoothRiskAll))
+      subareaScoresPrelsmoothRiskAvg = colMeans(as.matrix(subareaScoresPrelsmoothRiskAll), na.rm=TRUE)
       areaScoresPsmoothRiskAvg = colMeans(as.matrix(areaScoresPsmoothRiskAll))
       areaScoresZsmoothRiskAvg = colMeans(as.matrix(areaScoresZsmoothRiskAll))
+      areaScoresPrelsmoothRiskAvg = colMeans(as.matrix(areaScoresPrelsmoothRiskAll), na.rm=TRUE)
       
       # calculate average timing of individual parts of the code
       aggregationTimingsDetailedAvg = colMeans(aggregationTimingsDetailedAll)
       aggregationTimingsProcessedAvg = colMeans(aggregationTimingsProcessedAll)
       totalTimesAvg = colMeans(totalTimesAll)
       
-      save(subareaScoresPprevAll, subareaScoresZprevAll, areaScoresPprevAll, areaScoresZprevAll, 
-           subareaScoresPriskAll, subareaScoresZriskAll, areaScoresPriskAll, areaScoresZriskAll, 
-           subareaScoresPsmoothRiskAll, subareaScoresZsmoothRiskAll, areaScoresPsmoothRiskAll, areaScoresZsmoothRiskAll, 
+      save(subareaScoresPprevAll, subareaScoresZprevAll, subareaScoresPrelprevAll, 
+           areaScoresPprevAll, areaScoresZprevAll, areaScoresPrelprevAll, 
+           subareaScoresPriskAll, subareaScoresZriskAll, subareaScoresPrelriskAll, 
+           areaScoresPriskAll, areaScoresZriskAll, areaScoresPrelriskAll, 
+           subareaScoresPsmoothRiskAll, subareaScoresZsmoothRiskAll, subareaScoresPrelsmoothRiskAll, 
+           areaScoresPsmoothRiskAll, areaScoresZsmoothRiskAll, areaScoresPrelsmoothRiskAll, 
            aggregationTimingsDetailedAll, aggregationTimingsProcessedAll, totalTimesAll, 
-           subareaScoresPprevAvg, subareaScoresZprevAvg, areaScoresPprevAvg, areaScoresZprevAvg, 
-           subareaScoresPriskAvg, subareaScoresZriskAvg, areaScoresPriskAvg, areaScoresZriskAvg, 
-           subareaScoresPsmoothRiskAvg, subareaScoresZsmoothRiskAvg, areaScoresPsmoothRiskAvg, areaScoresZsmoothRiskAvg, 
+           subareaScoresPprevAvg, subareaScoresZprevAvg, subareaScoresPrelprevAvg, 
+           areaScoresPprevAvg, areaScoresZprevAvg, areaScoresPrelprevAvg, 
+           subareaScoresPriskAvg, subareaScoresZriskAvg, subareaScoresPrelriskAvg, 
+           areaScoresPriskAvg, areaScoresZriskAvg, areaScoresPrelriskAvg, 
+           subareaScoresPsmoothRiskAvg, subareaScoresZsmoothRiskAvg, subareaScoresPrelsmoothRiskAvg, 
+           areaScoresPsmoothRiskAvg, areaScoresZsmoothRiskAvg, areaScoresPrelsmoothRiskAvg, 
            aggregationTimingsDetailedAvg, aggregationTimingsProcessedAvg, totalTimesAvg, 
            file=paste0("savedOutput/simStudyResults/simScoresAll_i", i, "maxJ", maxJ, coarseText, ".RData"))
     }
@@ -2649,6 +2673,11 @@ printSimStudyTablei = function(i=1, maxJ=100, coarse=TRUE) {
                          subareaScoresZsmoothRiskAvg)
   row.names(subareaZScores) = c("Prevalence", "Risk", "SmoothRisk")
   
+  subareaPrelScores = rbind(subareaScoresPrelprevAvg, 
+                         subareaScoresPrelriskAvg, 
+                         subareaScoresPrelsmoothRiskAvg)
+  row.names(subareaPrelScores) = c("Prevalence", "Risk", "SmoothRisk")
+  
   areaPScores = rbind(areaScoresPprevAvg, 
                          areaScoresPriskAvg, 
                          areaScoresPsmoothRiskAvg)
@@ -2658,6 +2687,11 @@ printSimStudyTablei = function(i=1, maxJ=100, coarse=TRUE) {
                          areaScoresZriskAvg, 
                          areaScoresZsmoothRiskAvg)
   row.names(areaZScores) = c("Prevalence", "Risk", "SmoothRisk")
+  
+  areaPrelScores = rbind(areaScoresPrelprevAvg, 
+                      areaScoresPrelriskAvg, 
+                      areaScoresPrelsmoothRiskAvg)
+  row.names(areaPrelScores) = c("Prevalence", "Risk", "SmoothRisk")
   
   # multiply coverages by 100 to be in percent units, remove variance and MSE
   coverageCols = grep("Coverage", colnames(subareaPScores))
@@ -2674,6 +2708,10 @@ printSimStudyTablei = function(i=1, maxJ=100, coarse=TRUE) {
   subareaZScores = subareaZScores[,-varCols]
   subareaZScores = subareaZScores[,-mseCols]
   
+  subareaPrelScores[,coverageCols] = 100 * subareaPrelScores[,coverageCols]
+  subareaPrelScores = subareaPrelScores[,-varCols]
+  subareaPrelScores = subareaPrelScores[,-mseCols]
+  
   areaPScores[,coverageCols] = 100 * areaPScores[,coverageCols]
   areaPScores = areaPScores[,-varCols]
   areaPScores = areaPScores[,-mseCols]
@@ -2682,16 +2720,24 @@ printSimStudyTablei = function(i=1, maxJ=100, coarse=TRUE) {
   areaZScores = areaZScores[,-varCols]
   areaZScores = areaZScores[,-mseCols]
   
+  areaPrelScores[,coverageCols] = 100 * areaPrelScores[,coverageCols]
+  areaPrelScores = areaPrelScores[,-varCols]
+  areaPrelScores = areaPrelScores[,-mseCols]
+  
   # print tables
   displayP = c("s", rep("e", 3), rep("e", 3), rep("d", 3), rep("f", 4))
   digitsP = c(0, rep(-2, 3), rep(2, 3), rep(0, 3), rep(3, 3), 1)
   displayZ = c("s", rep("f", 3), rep("f", 3), rep("d", 3), rep("f", 4))
   digitsZ = c(0, rep(1, 2), 2, rep(1, 3), rep(0, 3), rep(1, 3), 1)
+  displayPrel = c("s", rep("f", 3), rep("f", 3), rep("d", 3), rep("f", 4))
+  digitsPrel = c(0, rep(1, 2), 2, rep(1, 3), rep(0, 3), rep(1, 3), 1)
   print(xtable(subareaPScores, display=displayP, digits=digitsP), math.style.exponents=TRUE)
   print(xtable(subareaZScores, display=displayZ, digits=digitsZ), math.style.exponents=TRUE)
+  print(xtable(subareaPrelScores, display=displayPrel, digits=digitsPrel), math.style.exponents=TRUE)
   
   print(xtable(areaPScores, display=displayP, digits=digitsP), math.style.exponents=TRUE)
   print(xtable(areaZScores, display=displayZ, digits=digitsZ), math.style.exponents=TRUE)
+  print(xtable(areaPrelScores, display=displayPrel, digits=digitsPrel), math.style.exponents=TRUE)
 }
 
 generateJobList = function(workDir="savedOutput/simStudyResults/tempFiles/", iRange=1:54, jRange=1:100, extensiveCheck=FALSE, extensiveNACheck=FALSE) {
