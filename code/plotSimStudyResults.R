@@ -260,7 +260,7 @@ makeFancyTableFinal = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", 
         scaleFun = log
       }
       
-      colorCaption = " Yellow-green values are better, while indigo values are worse."
+      colorCaption = " Yellow-green values are better, while indigo values are worse. Results most representative of the application are outlined in red."
       
       tempTab <- lapply(1:length(tempTab), function(j) {
         cell_spec(formattedTab[[j]], color = "white", bold = T, format="latex", 

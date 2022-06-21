@@ -1,2 +1,2 @@
 #!/bin/bash
-sbatch --array=1-5400 runSimStudy.sbatch
+sbatch --array=1-5399 runSimStudy.sbatch
