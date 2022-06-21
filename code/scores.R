@@ -625,7 +625,26 @@
 # breaks: the number of equal spaced bins to break the scores into as a function of distance
 # NOTE: Discrete, count level credible intervals are estimated based on the input estMat along with coverage and CRPS
 getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=NULL, significance=.8, 
-                     distances=NULL, breaks=30, doFuzzyReject=TRUE, getAverage=TRUE) {
+                     distances=NULL, breaks=30, doFuzzyReject=TRUE, getAverage=TRUE, anyNAisNA=TRUE, 
+                     returnNAs=FALSE) {
+  
+  # if rows of estMat are NA, set score for rows to NA
+  if(!is.null(estMat)) {
+    if(anyNAisNA) {
+      naRows = apply(estMat, 1, function(x) {any(is.na(x))})
+    } else {
+      naRows = apply(estMat, 1, function(x) {all(is.na(x))})
+    }
+    notNA = !naRows
+    out = getScores(truth[notNA], est[notNA], var[notNA], lower[notNA], upper[notNA], 
+                    estMat[notNA,], significance, distances, breaks, doFuzzyReject, 
+                    getAverage, anyNAisNA)
+    if(returnNAs) {
+      return(c(out, list(naRows=naRows)))
+    } else {
+      return(out)
+    }
+  }
   
   # if distances is included, must also break down scoring rules by distance bins
   if(!is.null(distances)) {
