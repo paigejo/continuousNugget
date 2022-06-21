@@ -629,11 +629,21 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
                      returnNAs=FALSE, na.rm=FALSE, setInfToNA=FALSE) {
   
   if(setInfToNA) {
-    est[!is.finite(est)] = NA
-    var[!is.finite(var)] = NA
-    lower[!is.finite(lower)] = NA
-    upper[!is.finite(upper)] = NA
-    estMat[!is.finite(estMat)] = NA
+    if(!is.null(est)) {
+      est[!is.finite(est)] = NA
+    }
+    if(!is.null(var)) {
+      var[!is.finite(var)] = NA
+    }
+    if(!is.null(lower)) {
+      lower[!is.finite(lower)] = NA
+    }
+    if(!is.null(upper)) {
+      upper[!is.finite(upper)] = NA
+    }
+    if(!is.null(estMat)) {
+      estMat[!is.finite(estMat)] = NA
+    }
   }
   
   # if rows of estMat are NA, set score for rows to NA
