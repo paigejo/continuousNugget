@@ -662,7 +662,7 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
     
     out = getScores(truth[notNA], est[notNA], var[notNA], lower[notNA], upper[notNA], 
                     estMat[notNA,], significance, distances, breaks, doFuzzyReject, 
-                    getAverage, anyNAisNA=anyNAisNA, na.rm=na.rm, inf.rm=inf.rm)
+                    getAverage, anyNAisNA=anyNAisNA, na.rm=na.rm, setInfToNA=setInfToNA)
     if(returnNAs) {
       return(c(out, list(naRows=naRows)))
     } else {
