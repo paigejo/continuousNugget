@@ -1034,6 +1034,10 @@ crps <- function(truth, est=NULL, my.var=NULL, estMat=NULL, getAverage=TRUE, na.
       # thisCdf = ecdf(estMat[rowI,])
       sorted = estMat[rowI,] # already sorted
       
+      if(na.rm) {
+        sorted = sorted[!is.na(sorted)]
+      }
+      
       # since we are using the empirical distribution, there is a closed form for the integral
       allPoints = sort(c(sorted, thisTruth))
       deltas = diff(allPoints)
