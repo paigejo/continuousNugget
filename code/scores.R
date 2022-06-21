@@ -814,7 +814,7 @@ coverage = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     }
   }
   
-  if(any(lower > upper)) {
+  if(any(lower > upper, na.rm=na.rm)) {
     warning("lower > upper, reordering")
     tmp = lower
     wrongOrder = lower > upper
@@ -842,7 +842,7 @@ coverage = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     if(length(lowerEdgeInds) != 0) {
       probRejectLower = sapply(lowerEdgeInds, function(i) {
         if(mean(estMat[i,] == upper[i]) != 0) {
-          ((1 - significance) / 2 - mean(estMat[i,] > lower[i])) / mean(estMat[i,] == lower[i])
+          ((1 - significance) / 2 - mean(estMat[i,] > lower[i], na.rm=na.rm)) / mean(estMat[i,] == lower[i], na.rm=na.rm)
         } else {
           warning("lower end of CI not equal to any samples from estMat. Setting reject probability to 0.5")
           0.5
@@ -853,7 +853,7 @@ coverage = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     if(length(upperEdgeInds) != 0) {
       probRejectUpper = sapply(upperEdgeInds, function(i) {
         if(mean(estMat[i,] == upper[i]) != 0) {
-          ((1 - significance) / 2 - mean(estMat[i,] > upper[i])) / mean(estMat[i,] == upper[i])
+          ((1 - significance) / 2 - mean(estMat[i,] > upper[i], na.rm=na.rm)) / mean(estMat[i,] == upper[i], na.rm=na.rm)
         } else {
           warning("upper end of CI not equal to any samples from estMat. Setting reject probability to 0.5")
           0.5
@@ -864,7 +864,7 @@ coverage = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     
     # determine minimum differences between probabilities
     if(is.null(ns))
-      deltas = apply(estMat, 1, function(x) {min(diff(sort(unique(x))))})
+      deltas = apply(estMat, 1, function(x) {min(diff(sort(unique(x))), na.rm=na.rm)})
     else
       deltas = 1 / ns
     
@@ -882,13 +882,13 @@ coverage = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
   }
   
   if(getAverage)
-    allResults = c(coverage=mean(res, na.rm=TRUE))
+    allResults = c(coverage=mean(res, na.rm=na.rm))
   else
     allResults = c(coverage=res)
   
   if(returnIntervalWidth) {
     if(getAverage)
-      allResults = c(allResults, width=mean(width, na.rm=TRUE))
+      allResults = c(allResults, width=mean(width, na.rm=na.rm))
     else
       allResults = cbind(allResults, width=width)
   }
