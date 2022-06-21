@@ -629,6 +629,7 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
                      returnNAs=FALSE, na.rm=FALSE, setInfToNA=FALSE) {
   
   if(setInfToNA) {
+    truth[!is.finite(truth)] = NA
     if(!is.null(est)) {
       est[!is.finite(est)] = NA
     }
