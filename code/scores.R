@@ -1099,7 +1099,7 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     }
   }
   
-  if(any(lower > upper)) {
+  if(any(lower > upper, na.rm=na.rm)) {
     warning("lower > upper, reordering")
     tmp = lower
     wrongOrder = lower > upper
