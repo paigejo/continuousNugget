@@ -1210,7 +1210,7 @@ intervalScore = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL,
     
     # determine minimum differences between probabilities
     if(is.null(ns))
-      deltas = apply(estMat, 1, function(x) {min(diff(sort(unique(x))), na.rm=na.rm)})
+      deltas = apply(estMat, 1, function(x) {min(c(0, diff(sort(unique(x)))), na.rm=na.rm)})
     else
       deltas = 1 / ns
     
