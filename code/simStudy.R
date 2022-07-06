@@ -2418,18 +2418,13 @@ processSimStudyResultsij = function(i, j, coarse=TRUE) {
   areaEstsZ = rowMeans(areaPopZ$ZSmoothRisk)
   
   # fine scale prevalence scores
-  subareaUrbanScoresPprev = getScores(truth=thisPop$subareaPop$aggregationResults$pUrbanFineScalePrevalence[,j], 
-                                 est=subareaUrbanEstsP, estMat=subareaPopP$pUrbanFineScalePrevalence, 
-                                 significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE, throwOutAllNAs=TRUE)
-  subareaUrbanScoresZprev = getScores(truth=thisPop$subareaPop$aggregationResults$ZUrbanFineScalePrevalence[,j], 
-                                 est=subareaUrbanEstsZ, estMat=subareaPopZ$ZUrbanFineScalePrevalence, 
-                                 significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE, throwOutAllNAs=TRUE)
-  
-  subareaRuralScoresPprev = getScores(truth=thisPop$subareaPop$aggregationResults$pRuralFineScalePrevalence[,j], 
-                                      est=subareaRuralEstsP, estMat=subareaPopP$pRuralFineScalePrevalence, 
+  subareaStratScoresPprev = getScores(truth=c(thisPop$subareaPop$aggregationResults$pUrbanFineScalePrevalence[,j], 
+                                              thisPop$subareaPop$aggregationResults$pRuralFineScalePrevalence[,j]), 
+                                      est=c(subareaUrbanEstsP, subareaRuralEstsP), estMat=rbind(subareaPopP$pUrbanFineScalePrevalence, subareaPopP$pRuralFineScalePrevalence), 
                                       significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE, throwOutAllNAs=TRUE)
-  subareaRuralScoresZprev = getScores(truth=thisPop$subareaPop$aggregationResults$ZRuralFineScalePrevalence[,j], 
-                                      est=subareaRuralEstsZ, estMat=subareaPopZ$ZRuralFineScalePrevalence, 
+  subareaStratScoresZprev = getScores(truth=c(thisPop$subareaPop$aggregationResults$ZUrbanFineScalePrevalence[,j], 
+                                              thisPop$subareaPop$aggregationResults$ZRuralFineScalePrevalence[,j]), 
+                                      est=c(subareaUrbanEstsZ, subareaRuralEstsZ), estMat=rbind(subareaPopZ$ZUrbanFineScalePrevalence, subareaPopZ$ZRuralFineScalePrevalence), 
                                       significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE, throwOutAllNAs=TRUE)
   
   subareaScoresPprev = getScores(truth=thisPop$subareaPop$aggregationResults$pFineScalePrevalence[,j], 
@@ -2455,19 +2450,14 @@ processSimStudyResultsij = function(i, j, coarse=TRUE) {
                               significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE)
   
   # fine scale risk scores
-  subareaUrbanScoresPrisk = getScores(truth=thisPop$subareaPop$aggregationResults$pUrbanFineScalePrevalence[,j], 
-                                      est=subareaUrbanEstsP, estMat=subareaPopP$pUrbanFineScaleRisk, 
-                                      significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE, throwOutAllNAs=TRUE)
-  subareaUrbanScoresZrisk = getScores(truth=thisPop$subareaPop$aggregationResults$ZUrbanFineScalePrevalence[,j], 
-                                      est=subareaUrbanEstsZ, estMat=subareaPopZ$ZUrbanFineScaleRisk, 
-                                      significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE, throwOutAllNAs=TRUE)
-  
-  subareaRuralScoresPrisk = getScores(truth=thisPop$subareaPop$aggregationResults$pRuralFineScalePrevalence[,j], 
-                                      est=subareaRuralEstsP, estMat=subareaPopP$pRuralFineScaleRisk, 
-                                      significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE, throwOutAllNAs=TRUE)
-  subareaRuralScoresZrisk = getScores(truth=thisPop$subareaPop$aggregationResults$ZRuralFineScalePrevalence[,j], 
-                                      est=subareaRuralEstsZ, estMat=subareaPopZ$ZRuralFineScaleRisk, 
-                                      significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE, throwOutAllNAs=TRUE)
+  subareaStratScoresPrisk = getScores(truth=c(thisPop$subareaPop$aggregationResults$pUrbanFineScalePrevalence[,j], 
+                                                    thisPop$subareaPop$aggregationResults$pRuralFineScalePrevalence[,j]), 
+                                            est=c(subareaUrbanEstsP, subareaRuralEstsP), estMat=rbind(subareaPopP$pUrbanFineScaleRisk, subareaPopP$pRuralFineScaleRisk), 
+                                            significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE, throwOutAllNAs=TRUE)
+  subareaStratScoresZrisk = getScores(truth=c(thisPop$subareaPop$aggregationResults$ZUrbanFineScalePrevalence[,j], 
+                                                    thisPop$subareaPop$aggregationResults$ZRuralFineScalePrevalence[,j]), 
+                                            est=c(subareaUrbanEstsZ, subareaRuralEstsZ), estMat=rbind(subareaPopZ$ZUrbanFineScaleRisk, subareaPopZ$ZRuralFineScaleRisk), 
+                                            significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE, throwOutAllNAs=TRUE)
   
   subareaScoresPrisk = getScores(truth=thisPop$subareaPop$aggregationResults$pFineScalePrevalence[,j], 
                                  est=subareaEstsP, estMat=subareaPopP$pFineScaleRisk, 
@@ -2490,19 +2480,14 @@ processSimStudyResultsij = function(i, j, coarse=TRUE) {
                               significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE)
   
   # smooth risk scores
-  subareaUrbanScoresPsmoothRisk = getScores(truth=thisPop$subareaPop$aggregationResults$pUrbanFineScalePrevalence[,j], 
-                                      est=subareaUrbanEstsP, estMat=subareaPopP$pUrbanSmoothRisk, 
+  subareaStratScoresPsmoothRisk = getScores(truth=c(thisPop$subareaPop$aggregationResults$pUrbanFineScalePrevalence[,j], 
+                                                    thisPop$subareaPop$aggregationResults$pRuralFineScalePrevalence[,j]), 
+                                      est=c(subareaUrbanEstsP, subareaRuralEstsP), estMat=rbind(subareaPopP$pUrbanSmoothRisk, subareaPopP$pRuralSmoothRisk), 
                                       significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE, throwOutAllNAs=TRUE)
-  subareaUrbanScoresZsmoothRisk = getScores(truth=thisPop$subareaPop$aggregationResults$ZUrbanFineScalePrevalence[,j], 
-                                      est=subareaUrbanEstsZ, estMat=subareaPopZ$ZUrbanSmoothRisk, 
-                                      significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE, throwOutAllNAs=TRUE)
-  
-  subareaRuralScoresPsmoothRisk = getScores(truth=thisPop$subareaPop$aggregationResults$pRuralFineScalePrevalence[,j], 
-                                      est=subareaRuralEstsP, estMat=subareaPopP$pRuralSmoothRisk, 
-                                      significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE, throwOutAllNAs=TRUE)
-  subareaRuralScoresZsmoothRisk = getScores(truth=thisPop$subareaPop$aggregationResults$ZRuralFineScalePrevalence[,j], 
-                                      est=subareaRuralEstsZ, estMat=subareaPopZ$ZRuralSmoothRisk, 
-                                      significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE, throwOutAllNAs=TRUE)
+  subareaStratScoresZsmoothRisk = getScores(truth=c(thisPop$subareaPop$aggregationResults$ZUrbanFineScalePrevalence[,j], 
+                                                    thisPop$subareaPop$aggregationResults$ZRuralFineScalePrevalence[,j]), 
+                                            est=c(subareaUrbanEstsZ, subareaRuralEstsZ), estMat=rbind(subareaPopZ$ZUrbanSmoothRisk, subareaPopZ$ZRuralSmoothRisk), 
+                                            significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE, throwOutAllNAs=TRUE)
   
   subareaScoresPsmoothRisk = getScores(truth=thisPop$subareaPop$aggregationResults$pFineScalePrevalence[,j], 
                                        est=subareaEstsP, estMat=subareaPopP$pSmoothRisk, 
@@ -2525,10 +2510,8 @@ processSimStudyResultsij = function(i, j, coarse=TRUE) {
                                     significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE)
   
   # add computation times to the scores
-  subareaUrbanScoresPprev = cbind(subareaUrbanScoresPprev, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[1])/60)
-  subareaUrbanScoresZprev = cbind(subareaUrbanScoresZprev, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[1])/60)
-  subareaRuralScoresPprev = cbind(subareaRuralScoresPprev, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[1])/60)
-  subareaRuralScoresZprev = cbind(subareaRuralScoresZprev, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[1])/60)
+  subareaStratScoresPprev = cbind(subareaStratScoresPprev, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[1])/60)
+  subareaStratScoresZprev = cbind(subareaStratScoresZprev, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[1])/60)
   subareaScoresPprev = cbind(subareaScoresPprev, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[1])/60)
   subareaScoresZprev = cbind(subareaScoresZprev, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[1])/60)
   subareaScoresPrelprev = cbind(subareaScoresPrelprev, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[1])/60)
@@ -2536,10 +2519,8 @@ processSimStudyResultsij = function(i, j, coarse=TRUE) {
   areaScoresZprev = cbind(areaScoresZprev, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[1])/60)
   areaScoresPrelprev = cbind(areaScoresPrelprev, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[1])/60)
   
-  subareaUrbanScoresPrisk = cbind(subareaUrbanScoresPrisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[2])/60)
-  subareaUrbanScoresZrisk = cbind(subareaUrbanScoresZrisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[2])/60)
-  subareaRuralScoresPrisk = cbind(subareaRuralScoresPrisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[2])/60)
-  subareaRuralScoresZrisk = cbind(subareaRuralScoresZrisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[2])/60)
+  subareaStratScoresPrisk = cbind(subareaStratScoresPrisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[2])/60)
+  subareaStratScoresZrisk = cbind(subareaStratScoresZrisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[2])/60)
   subareaScoresPrisk = cbind(subareaScoresPrisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[2])/60)
   subareaScoresZrisk = cbind(subareaScoresZrisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[2])/60)
   subareaScoresPrelrisk = cbind(subareaScoresPrelrisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[2])/60)
@@ -2547,10 +2528,8 @@ processSimStudyResultsij = function(i, j, coarse=TRUE) {
   areaScoresZrisk = cbind(areaScoresZrisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[2])/60)
   areaScoresPrelrisk = cbind(areaScoresPrelrisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[2])/60)
   
-  subareaUrbanScoresPsmoothRisk = cbind(subareaUrbanScoresPsmoothRisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[3])/60)
-  subareaUrbanScoresZsmoothRisk = cbind(subareaUrbanScoresZsmoothRisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[3])/60)
-  subareaRuralScoresPsmoothRisk = cbind(subareaRuralScoresPsmoothRisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[3])/60)
-  subareaRuralScoresZsmoothRisk = cbind(subareaRuralScoresZsmoothRisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[3])/60)
+  subareaStratScoresPsmoothRisk = cbind(subareaStratScoresPsmoothRisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[3])/60)
+  subareaStratScoresZsmoothRisk = cbind(subareaStratScoresZsmoothRisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[3])/60)
   subareaScoresPsmoothRisk = cbind(subareaScoresPsmoothRisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[3])/60)
   subareaScoresZsmoothRisk = cbind(subareaScoresZsmoothRisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[3])/60)
   subareaScoresPrelsmoothRisk = cbind(subareaScoresPrelsmoothRisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[3])/60)
@@ -2558,44 +2537,35 @@ processSimStudyResultsij = function(i, j, coarse=TRUE) {
   areaScoresZsmoothRisk = cbind(areaScoresZsmoothRisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[3])/60)
   areaScoresPrelsmoothRisk = cbind(areaScoresPrelsmoothRisk, Time=(totalTimes[1] + totalTimes[2] + aggregationTimings$processedTimings[3])/60)
   
-  save(subareaUrbanScoresPprev, subareaUrbanScoresZprev, 
-       subareaRuralScoresPprev, subareaRuralScoresZprev, 
+  save(subareaStratScoresPprev, subareaStratScoresZprev, 
        subareaScoresPprev, subareaScoresZprev, subareaScoresPrelprev, 
        areaScoresPprev, areaScoresZprev, areaScoresPrelprev, 
-       subareaUrbanScoresPrisk, subareaUrbanScoresZrisk, 
-       subareaRuralScoresPrisk, subareaRuralScoresZrisk, 
+       subareaStratScoresPrisk, subareaStratScoresZrisk, 
        subareaScoresPrisk, subareaScoresZrisk, subareaScoresPrelrisk, 
        areaScoresPrisk, areaScoresZrisk, areaScoresPrelrisk, 
-       subareaUrbanScoresPsmoothRisk, subareaUrbanScoresZsmoothRisk, 
-       subareaRuralScoresPsmoothRisk, subareaRuralScoresZsmoothRisk, 
+       subareaStratScoresPsmoothRisk, subareaStratScoresZsmoothRisk, 
        subareaScoresPsmoothRisk, subareaScoresZsmoothRisk, subareaScoresPrelsmoothRisk, 
        areaScoresPsmoothRisk, areaScoresZsmoothRisk, areaScoresPrelsmoothRisk, 
        aggregationTimings, totalTimes, 
        file=paste0("savedOutput/simStudyResults/tempFiles/simScores_i", i, "j", j, coarseText, ".RData"))
   
-  res = list(subareaUrbanScoresPprev, subareaUrbanScoresZprev, 
-             subareaRuralScoresPprev, subareaRuralScoresZprev, 
+  res = list(subareaStratScoresPprev, subareaStratScoresZprev, 
              subareaScoresPprev, subareaScoresZprev, subareaScoresPrelprev, 
              areaScoresPprev, areaScoresZprev, areaScoresPrelprev, 
-             subareaUrbanScoresPrisk, subareaUrbanScoresZrisk, 
-             subareaRuralScoresPrisk, subareaRuralScoresZrisk, 
+             subareaStratScoresPrisk, subareaStratScoresZrisk, 
              subareaScoresPrisk, subareaScoresZrisk, subareaScoresPrelrisk, 
              areaScoresPrisk, areaScoresZrisk, areaScoresPrelrisk, 
-             subareaUrbanScoresPsmoothRisk, subareaUrbanScoresZsmoothRisk, 
-             subareaRuralScoresPsmoothRisk, subareaRuralScoresZsmoothRisk, 
+             subareaStratScoresPsmoothRisk, subareaStratScoresZsmoothRisk, 
              subareaScoresPsmoothRisk, subareaScoresZsmoothRisk, subareaScoresPrelsmoothRisk, 
              areaScoresPsmoothRisk, areaScoresZsmoothRisk, areaScoresPrelsmoothRisk, 
              aggregationTimings, totalTimes)
-  names(res) = c("subareaUrbanScoresPprev", "subareaUrbanScoresZprev", 
-                 "subareaRuralScoresPprev", "subareaRuralScoresZprev", 
+  names(res) = c("subareaStratScoresPprev", "subareaStratScoresZprev", 
                  "subareaScoresPprev", "subareaScoresZprev", "subareaScoresPrelprev", 
                  "areaScoresPprev", "areaScoresZprev", "areaScoresPrelprev", 
-                 "subareaUrbanScoresPrisk", "subareaUrbanScoresZrisk", 
-                 "subareaRuralScoresPrisk", "subareaRuralScoresZrisk", 
+                 "subareaStratScoresPrisk", "subareaStratScoresZrisk", 
                  "subareaScoresPrisk", "subareaScoresZrisk", "subareaScoresPrelrisk", 
                  "areaScoresPrisk", "areaScoresZrisk", "areaScoresPrelrisk", 
-                 "subareaUrbanScoresPsmoothRisk", "subareaUrbanScoresZsmoothRisk", 
-                 "subareaRuralScoresPsmoothRisk", "subareaRuralScoresZsmoothRisk", 
+                 "subareaStratScoresPsmoothRisk", "subareaStratScoresZsmoothRisk", 
                  "subareaScoresPsmoothRisk", "subareaScoresZsmoothRisk", "subareaScoresPrelsmoothRisk", 
                  "areaScoresPsmoothRisk", "areaScoresZsmoothRisk", "areaScoresPrelsmoothRisk", 
                  "aggregationTimings", "totalTimes")
@@ -2620,6 +2590,8 @@ combineProcessedResults = function(is=1:54, maxJ=100, initialProcess=TRUE, combi
     print("Combining scores...")
     for(i in is) {
       
+      subareaStratScoresPprevAll = c()
+      subareaStratScoresZprevAll = c()
       subareaScoresPprevAll = c()
       subareaScoresZprevAll = c()
       subareaScoresPrelprevAll = c()
@@ -2627,6 +2599,8 @@ combineProcessedResults = function(is=1:54, maxJ=100, initialProcess=TRUE, combi
       areaScoresZprevAll = c()
       areaScoresPrelprevAll = c()
       
+      subareaStratScoresPriskAll = c()
+      subareaStratScoresPrelriskAll = c()
       subareaScoresPriskAll = c()
       subareaScoresPrelriskAll = c()
       subareaScoresZriskAll = c()
@@ -2634,6 +2608,8 @@ combineProcessedResults = function(is=1:54, maxJ=100, initialProcess=TRUE, combi
       areaScoresZriskAll = c()
       areaScoresPrelriskAll = c()
       
+      subareaStratScoresPsmoothRiskAll = c()
+      subareaStratScoresZsmoothRiskAll = c()
       subareaScoresPsmoothRiskAll = c()
       subareaScoresZsmoothRiskAll = c()
       subareaScoresPrelsmoothRiskAll = c()
@@ -2652,6 +2628,8 @@ combineProcessedResults = function(is=1:54, maxJ=100, initialProcess=TRUE, combi
         coarseText = ifelse(coarse, "Coarse", "")
         out = load(paste0("savedOutput/simStudyResults/tempFiles/simScores_i", i, "j", j, coarseText, ".RData"))
         
+        subareaStratScoresPprevAll = rbind(subareaStratScoresPprevAll, subareaStratScoresPprev)
+        subareaStratScoresZprevAll = rbind(subareaStratScoresZprevAll, subareaStratScoresZprev)
         subareaScoresPprevAll = rbind(subareaScoresPprevAll, subareaScoresPprev)
         subareaScoresZprevAll = rbind(subareaScoresZprevAll, subareaScoresZprev)
         subareaScoresPrelprevAll = rbind(subareaScoresPrelprevAll, subareaScoresPrelprev)
@@ -2659,6 +2637,8 @@ combineProcessedResults = function(is=1:54, maxJ=100, initialProcess=TRUE, combi
         areaScoresZprevAll = rbind(areaScoresZprevAll, areaScoresZprev)
         areaScoresPrelprevAll = rbind(areaScoresPrelprevAll, areaScoresPrelprev)
         
+        subareaStratScoresPriskAll = rbind(subareaStratScoresPriskAll, subareaStratScoresPrisk)
+        subareaStratScoresZriskAll = rbind(subareaStratScoresZriskAll, subareaStratScoresZrisk)
         subareaScoresPriskAll = rbind(subareaScoresPriskAll, subareaScoresPrisk)
         subareaScoresZriskAll = rbind(subareaScoresZriskAll, subareaScoresZrisk)
         subareaScoresPrelriskAll = rbind(subareaScoresPrelriskAll, subareaScoresPrelrisk)
@@ -2666,6 +2646,8 @@ combineProcessedResults = function(is=1:54, maxJ=100, initialProcess=TRUE, combi
         areaScoresZriskAll = rbind(areaScoresZriskAll, areaScoresZrisk)
         areaScoresPrelriskAll = rbind(areaScoresPrelriskAll, areaScoresPrelrisk)
         
+        subareaStratScoresPsmoothRiskAll = rbind(subareaStratScoresPsmoothRiskAll, subareaStratScoresPsmoothRisk)
+        subareaStratScoresZsmoothRiskAll = rbind(subareaStratScoresZsmoothRiskAll, subareaStratScoresZsmoothRisk)
         subareaScoresPsmoothRiskAll = rbind(subareaScoresPsmoothRiskAll, subareaScoresPsmoothRisk)
         subareaScoresZsmoothRiskAll = rbind(subareaScoresZsmoothRiskAll, subareaScoresZsmoothRisk)
         subareaScoresPrelsmoothRiskAll = rbind(subareaScoresPrelsmoothRiskAll, subareaScoresPrelsmoothRisk)
@@ -2680,6 +2662,8 @@ combineProcessedResults = function(is=1:54, maxJ=100, initialProcess=TRUE, combi
       colnames(aggregationTimingsDetailedAll) = row.names(aggregationTimings$allTimings)
       
       # calculate average scores
+      subareaStratScoresPprevAvg = colMeans(as.matrix(subareaStratScoresPprevAll))
+      subareaStratScoresZprevAvg = colMeans(as.matrix(subareaStratScoresZprevAll))
       subareaScoresPprevAvg = colMeans(as.matrix(subareaScoresPprevAll))
       subareaScoresZprevAvg = colMeans(as.matrix(subareaScoresZprevAll))
       subareaScoresPrelprevAvg = colMeans(as.matrix(subareaScoresPrelprevAll), na.rm=TRUE)
@@ -2687,6 +2671,8 @@ combineProcessedResults = function(is=1:54, maxJ=100, initialProcess=TRUE, combi
       areaScoresZprevAvg = colMeans(as.matrix(areaScoresZprevAll))
       areaScoresPrelprevAvg = colMeans(as.matrix(areaScoresPrelprevAll), na.rm=TRUE)
       
+      subareaStratScoresPriskAvg = colMeans(as.matrix(subareaStratScoresPriskAll))
+      subareaStratScoresZriskAvg = colMeans(as.matrix(subareaStratScoresZriskAll))
       subareaScoresPriskAvg = colMeans(as.matrix(subareaScoresPriskAll))
       subareaScoresZriskAvg = colMeans(as.matrix(subareaScoresZriskAll))
       subareaScoresPrelriskAvg = colMeans(as.matrix(subareaScoresPrelriskAll), na.rm=TRUE)
@@ -2694,6 +2680,8 @@ combineProcessedResults = function(is=1:54, maxJ=100, initialProcess=TRUE, combi
       areaScoresZriskAvg = colMeans(as.matrix(areaScoresZriskAll))
       areaScoresPrelriskAvg = colMeans(as.matrix(areaScoresPrelriskAll), na.rm=TRUE)
       
+      subareaStratScoresPsmoothRiskAvg = colMeans(as.matrix(subareaStratScoresPsmoothRiskAll))
+      subareaStratScoresZsmoothRiskAvg = colMeans(as.matrix(subareaStratScoresZsmoothRiskAll))
       subareaScoresPsmoothRiskAvg = colMeans(as.matrix(subareaScoresPsmoothRiskAll))
       subareaScoresZsmoothRiskAvg = colMeans(as.matrix(subareaScoresZsmoothRiskAll))
       subareaScoresPrelsmoothRiskAvg = colMeans(as.matrix(subareaScoresPrelsmoothRiskAll), na.rm=TRUE)
@@ -2706,17 +2694,23 @@ combineProcessedResults = function(is=1:54, maxJ=100, initialProcess=TRUE, combi
       aggregationTimingsProcessedAvg = colMeans(aggregationTimingsProcessedAll)
       totalTimesAvg = colMeans(totalTimesAll)
       
-      save(subareaScoresPprevAll, subareaScoresZprevAll, subareaScoresPrelprevAll, 
+      save(subareaStratScoresPprevAll, subareaStratScoresZprevAll, 
+           subareaScoresPprevAll, subareaScoresZprevAll, subareaScoresPrelprevAll, 
            areaScoresPprevAll, areaScoresZprevAll, areaScoresPrelprevAll, 
+           subareaStratScoresPriskAll, subareaStratScoresZriskAll, 
            subareaScoresPriskAll, subareaScoresZriskAll, subareaScoresPrelriskAll, 
            areaScoresPriskAll, areaScoresZriskAll, areaScoresPrelriskAll, 
+           subareaStratScoresPsmoothRiskAll, subareaStratScoresZsmoothRiskAll, 
            subareaScoresPsmoothRiskAll, subareaScoresZsmoothRiskAll, subareaScoresPrelsmoothRiskAll, 
            areaScoresPsmoothRiskAll, areaScoresZsmoothRiskAll, areaScoresPrelsmoothRiskAll, 
            aggregationTimingsDetailedAll, aggregationTimingsProcessedAll, totalTimesAll, 
+           subareaStratScoresPprevAvg, subareaStratScoresZprevAvg, 
            subareaScoresPprevAvg, subareaScoresZprevAvg, subareaScoresPrelprevAvg, 
            areaScoresPprevAvg, areaScoresZprevAvg, areaScoresPrelprevAvg, 
+           subareaStratScoresPriskAvg, subareaStratScoresZriskAvg, 
            subareaScoresPriskAvg, subareaScoresZriskAvg, subareaScoresPrelriskAvg, 
            areaScoresPriskAvg, areaScoresZriskAvg, areaScoresPrelriskAvg, 
+           subareaStratScoresPsmoothRiskAvg, subareaStratScoresZsmoothRiskAvg, 
            subareaScoresPsmoothRiskAvg, subareaScoresZsmoothRiskAvg, subareaScoresPrelsmoothRiskAvg, 
            areaScoresPsmoothRiskAvg, areaScoresZsmoothRiskAvg, areaScoresPrelsmoothRiskAvg, 
            aggregationTimingsDetailedAvg, aggregationTimingsProcessedAvg, totalTimesAvg, 
