@@ -626,24 +626,42 @@
 # NOTE: Discrete, count level credible intervals are estimated based on the input estMat along with coverage and CRPS
 getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=NULL, significance=.8, 
                      distances=NULL, breaks=30, doFuzzyReject=TRUE, getAverage=TRUE, anyNAisNA=FALSE, 
-                     returnNAs=FALSE, na.rm=FALSE, setInfToNA=FALSE) {
+                     returnNAs=FALSE, na.rm=FALSE, setInfToNA=FALSE, throwOutAllNAs=FALSE) {
   
   if(setInfToNA) {
-    truth[!is.finite(truth)] = NA
+    naRows = !is.finite(truth)
     if(!is.null(est)) {
-      est[!is.finite(est)] = NA
+      naRows = naRows | !is.finite(est)
     }
     if(!is.null(var)) {
-      var[!is.finite(var)] = NA
+      naRows = naRows | !is.finite(var)
     }
     if(!is.null(lower)) {
-      lower[!is.finite(lower)] = NA
+      naRows = naRows | !is.finite(lower)
     }
     if(!is.null(upper)) {
-      upper[!is.finite(upper)] = NA
+      naRows = naRows | !is.finite(upper)
+    }
+    if(!is.null(estMat) && throwOutAllNAs) {
+      naRows = naRows | apply(estMat, 1, function(x) {any(!is.finite)})
+    }
+    
+    truth[naRows] = NA
+    if(!is.null(est)) {
+      est[naRows] = NA
+    }
+    if(!is.null(var)) {
+      var[naRows] = NA
+    }
+    if(!is.null(lower)) {
+      lower[naRows] = NA
+    }
+    if(!is.null(upper)) {
+      upper[naRows] = NA
     }
     if(!is.null(estMat)) {
       estMat[!is.finite(estMat)] = NA
+      estMat[naRows,] = NA
     }
   }
   

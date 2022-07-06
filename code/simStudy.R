@@ -2420,10 +2420,11 @@ processSimStudyResultsij = function(i, j, coarse=TRUE) {
   subareaScoresZprev = getScores(truth=thisPop$subareaPop$aggregationResults$ZFineScalePrevalence[,j], 
                                  est=subareaEstsZ, estMat=subareaPopZ$ZFineScalePrevalence, 
                              significance=c(.8, .9, .95), doFuzzyReject=TRUE)
+  # every once in a while a subarea x stratum will have nonzero population but zero deaths. Hence, throwOutAllNAs must be set to TRUE for sensible scores
   subareaScoresPrelprev = getScores(truth=thisPop$subareaPop$aggregationResults$pUrbanFineScalePrevalence[,j]/
                                    thisPop$subareaPop$aggregationResults$pRuralFineScalePrevalence[,j], 
                                  estMat=subareaPopP$pUrbanFineScalePrevalence/subareaPopP$pRuralFineScalePrevalence, 
-                                 significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE)
+                                 significance=c(.8, .9, .95), doFuzzyReject=TRUE, na.rm=TRUE, setInfToNA=TRUE, throwOutAllNAs=TRUE)
   
   areaScoresPprev = getScores(truth=thisPop$areaPop$aggregationResults$pFineScalePrevalence[,j], 
                               est=areaEstsP, estMat=areaPopP$pFineScalePrevalence, 
@@ -2782,7 +2783,11 @@ generateJobList = function(workDir="savedOutput/simStudyResults/tempFiles/", iRa
   }
   missingJobInds = (1:length(fileExists))[!c(t(fileExists))]
   
-  if(length(missingJobInds) == 1) {
+  if(length(missingJobInds) == 0) {
+    setwd(thisDir)
+    print("No missing jobs")
+    return(invsible(NULL))
+  }else if(length(missingJobInds) == 1) {
     setwd(thisDir)
     return(missingJobInds)
   } else {
