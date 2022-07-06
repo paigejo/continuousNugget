@@ -643,7 +643,7 @@ getScores = function(truth, est=NULL, var=NULL, lower=NULL, upper=NULL, estMat=N
       naRows = naRows | !is.finite(upper)
     }
     if(!is.null(estMat) && throwOutAllNAs) {
-      naRows = naRows | apply(estMat, 1, function(x) {any(!is.finite)})
+      naRows = naRows | apply(estMat, 1, function(x) {any(!is.finite(x))})
     }
     
     truth[naRows] = NA
