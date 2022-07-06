@@ -2562,7 +2562,7 @@ processSimStudyResultsij = function(i, j, coarse=TRUE) {
        subareaRuralScoresPprev, subareaRuralScoresZprev, 
        subareaScoresPprev, subareaScoresZprev, subareaScoresPrelprev, 
        areaScoresPprev, areaScoresZprev, areaScoresPrelprev, 
-       subareaScoresUrbanPrisk, subareaUrbanScoresZrisk, 
+       subareaUrbanScoresPrisk, subareaUrbanScoresZrisk, 
        subareaRuralScoresPrisk, subareaRuralScoresZrisk, 
        subareaScoresPrisk, subareaScoresZrisk, subareaScoresPrelrisk, 
        areaScoresPrisk, areaScoresZrisk, areaScoresPrelrisk, 
