@@ -7,7 +7,7 @@
 # valRanges: matrix with 2 rows and ncols length equal to the number of scoring rules with 
 #            first row being the low end of the score range and second being the high end.
 makeFancyTableFinal = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", "SR"), 
-                          valRanges=NULL, response=c("prevalence", "burden"), areaLevel=c("Admin2", "Admin1")) {
+                          valRanges=NULL, response=c("prevalence", "burden", "relative prevalence"), areaLevel=c("Admin2 times stratum", "Admin2", "Admin1")) {
   type = match.arg(type)
   response = match.arg(response)
   areaLevel = match.arg(areaLevel)
@@ -161,8 +161,11 @@ makeFancyTableFinal = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", 
       if(thisScore == "RMSE") {
         if(response == "prevalence") {
           formattedTab = data.frame(signif(thisTab, 1))
-        } else {
+        } else if(response == "burden") {
           formattedTab = data.frame(round(thisTab, 0))
+        } else {
+          formattedTab = data.frame(signif(thisTab, 1))
+          browser()
         }
         
         scale = 0
@@ -172,11 +175,17 @@ makeFancyTableFinal = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", 
                                   scale=-4, digits=1)
           formattedTab = out$scalars
           scale = -4
-        } else {
+        } else if(response == "burden") {
           out = formatEngineering(as.data.frame(round(thisTab, digits=5)), 
                                   scale=0, digits=0)
           formattedTab = out$scalars
           scale = 0
+        } else {
+          out = formatEngineering(as.data.frame(round(thisTab, digits=5)), 
+                                  scale=-4, digits=1)
+          formattedTab = out$scalars
+          scale = -4
+          browser()
         }
       } else if(thisScore == "CRPS") {
         out = formatEngineering(as.data.frame(round(thisTab, digits=3)), 
@@ -323,7 +332,7 @@ makeFancyTableFinal = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", 
     print(kbl(data.frame(tempTab), booktabs = T, escape = F, align = "c", format="latex", 
               linesep=c("", "\\addlinespace"), digits=2, 
               caption=paste0(captionRoot1, scoreText, captionRoot2, colorCaption, scaleCaption), 
-              col.names=NULL, bottomrule=FALSE, label=paste0(type, "_", thisScore, "_", areaLevel, "_", response)) %>% 
+              col.names=NULL, bottomrule=FALSE, label=paste0(type, "_", thisScore, "_", gsub(" ", "", areaLevel, fixed = TRUE), "_", gsub(" ", "", response, fixed = TRUE))) %>% 
             column_spec(column=c(6, 10), width="0em") %>%
             column_spec(column=2, border_right=TRUE) %>%
             myadd_header_above(c("$r_{\\\\tiny \\\\mbox{clust}}$"=1, "\\\\diagbox[width=.3in, height=.3in, innerleftsep=.04in, innerrightsep=-.02in]{$\\\\beta$}{$\\\\varphi$}"=1, 
@@ -678,7 +687,7 @@ makeFancyTable = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", 
 # intScore80, intScore90, intScore95, 
 # cvg80, cvg90, cvg95, 
 # width80, width90, with95, time
-getFullMeanScoresDF = function(iRange=1:54, maxJ=100, coarse=TRUE, areaLevel=c("subarea", "area"), 
+getFullMeanScoresDF = function(iRange=1:54, maxJ=100, coarse=TRUE, areaLevel=c("subareaxstrat", "subarea", "area"), 
                                response=c("p", "Z", "relPrev")) {
   areaLevel = match.arg(areaLevel)
   response = match.arg(response)
@@ -699,7 +708,15 @@ getFullMeanScoresDF = function(iRange=1:54, maxJ=100, coarse=TRUE, areaLevel=c("
     thisFile = paste0("savedOutput/simStudyResults/simScoresAll_i", i, "maxJ", maxJ, coarseText, ".RData")
     out = load(thisFile)
     
-    if(areaLevel == "subarea" && response == "p") {
+    if(areaLevel == "subareaxstrat" && response == "p") {
+      allDat = rbind(allDat, data.frame(c(popPar, list(Model="Prevalence"), as.list(subareaStratScoresPprevAvg))))
+      allDat = rbind(allDat, c(popPar, Model="Risk", subareaStratScoresPriskAvg))
+      allDat = rbind(allDat, c(popPar, Model="SmoothRisk", subareaStratScoresPsmoothRiskAvg))
+    } else if(areaLevel == "subareaxstrat" && response == "Z") {
+      allDat = rbind(allDat, data.frame(c(popPar, list(Model="Prevalence"), as.list(subareaStratScoresZprevAvg))))
+      allDat = rbind(allDat, c(popPar, Model="Risk", subareaStratScoresZriskAvg))
+      allDat = rbind(allDat, c(popPar, Model="SmoothRisk", subareaStratScoresZsmoothRiskAvg))
+    } else if(areaLevel == "subarea" && response == "p") {
       allDat = rbind(allDat, data.frame(c(popPar, list(Model="Prevalence"), as.list(subareaScoresPprevAvg))))
       allDat = rbind(allDat, c(popPar, Model="Risk", subareaScoresPriskAvg))
       allDat = rbind(allDat, c(popPar, Model="SmoothRisk", subareaScoresPsmoothRiskAvg))
@@ -711,6 +728,10 @@ getFullMeanScoresDF = function(iRange=1:54, maxJ=100, coarse=TRUE, areaLevel=c("
       if(!is.finite(subareaScoresZprevAvg[names(subareaScoresZprevAvg) == "Coverage80"])) {
         browser()
       }
+    } else if(areaLevel == "subarea" && response == "relPrev") {
+      allDat = rbind(allDat, data.frame(c(popPar, list(Model="Prevalence"), as.list(subareaScoresPrelprevAvg))))
+      allDat = rbind(allDat, c(popPar, Model="Risk", subareaScoresPrelriskAvg))
+      allDat = rbind(allDat, c(popPar, Model="SmoothRisk", subareaScoresPrelsmoothRiskAvg))
     } else if(areaLevel == "area" && response == "p") {
       allDat = rbind(allDat, data.frame(c(popPar, list(Model="Prevalence"), as.list(areaScoresPprevAvg))))
       allDat = rbind(allDat, c(popPar, Model="Risk", areaScoresPriskAvg))
@@ -719,6 +740,10 @@ getFullMeanScoresDF = function(iRange=1:54, maxJ=100, coarse=TRUE, areaLevel=c("
       allDat = rbind(allDat, data.frame(c(popPar, list(Model="Prevalence"), as.list(areaScoresZprevAvg))))
       allDat = rbind(allDat, c(popPar, Model="Risk", areaScoresZriskAvg))
       allDat = rbind(allDat, c(popPar, Model="SmoothRisk", areaScoresZsmoothRiskAvg))
+    } else if(areaLevel == "area" && response == "relPrev") {
+      allDat = rbind(allDat, data.frame(c(popPar, list(Model="Prevalence"), as.list(areaScoresPrelprevAvg))))
+      allDat = rbind(allDat, c(popPar, Model="Risk", areaScoresPrelriskAvg))
+      allDat = rbind(allDat, c(popPar, Model="SmoothRisk", areaScoresPrelsmoothRiskAvg))
     }
   }
   

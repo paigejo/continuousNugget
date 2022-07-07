@@ -2600,10 +2600,10 @@ combineProcessedResults = function(is=1:54, maxJ=100, initialProcess=TRUE, combi
       areaScoresPrelprevAll = c()
       
       subareaStratScoresPriskAll = c()
-      subareaStratScoresPrelriskAll = c()
+      subareaStratScoresZriskAll = c()
       subareaScoresPriskAll = c()
-      subareaScoresPrelriskAll = c()
       subareaScoresZriskAll = c()
+      subareaScoresPrelriskAll = c()
       areaScoresPriskAll = c()
       areaScoresZriskAll = c()
       areaScoresPrelriskAll = c()
