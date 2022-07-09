@@ -7,7 +7,8 @@
 # valRanges: matrix with 2 rows and ncols length equal to the number of scoring rules with 
 #            first row being the low end of the score range and second being the high end.
 makeFancyTableFinal = function(meanScoresDF, type=c("PvSR", "RvSR", "PvR", "P", "R", "SR"), 
-                          valRanges=NULL, response=c("prevalence", "burden", "relative prevalence"), areaLevel=c("Admin2 times stratum", "Admin2", "Admin1")) {
+                          valRanges=NULL, response=c("prevalence", "burden", "relative prevalence"), 
+                          areaLevel=c("Admin2 times stratum", "Admin2", "Admin1")) {
   type = match.arg(type)
   response = match.arg(response)
   areaLevel = match.arg(areaLevel)

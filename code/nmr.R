@@ -1720,7 +1720,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   # yRange = range(allDat, na.rm=TRUE)
   plot(meanEAsConstituency, constituencyDat, col=cols[2], pch=pchs[2], main="Relative prevalence", 
        xlab="", ylab="", log="xy", xlim=xRange, ylim=yRange, cex=cexs[2])
-  abline(v=3000, lty=2)
+  # abline(v=3000, lty=2)
   points(meanEAsCounty, countyDat, col=cols[3], pch=pchs[3], cex=cexs[3])
   
   # legend("bottomleft", c("Constituency", "County"), 
