@@ -26,14 +26,14 @@ out
 pop@file@name = paste0(tempDirectory, "/worldpop_total_1y_2014_00_00.tif")
 
 # get frame/pop info ----
-popMatSimple = makePopIntegrationTab(kmRes=5, pop=pop, domainPoly=kenyaPoly, 
-                                     eastLim=eastLim, northLim=northLim, 
-                                     mapProjection=projKenya, poppa=poppaKenya, 
-                                     poppsub=poppsubKenya, stratifyByUrban=TRUE, 
-                                     areaMapDat=adm1, subareaMapDat=adm2, 
-                                     areaPolygonSubsetI=30)
+# popMatSimple = makePopIntegrationTab(kmRes=5, pop=pop, domainPoly=kenyaPoly, 
+#                                      eastLim=eastLim, northLim=northLim, 
+#                                      mapProjection=projKenya, poppa=poppaKenya, 
+#                                      poppsub=poppsubKenya, stratifyByUrban=TRUE, 
+#                                      areaMapDat=adm1, subareaMapDat=adm2, 
+#                                      areaPolygonSubsetI=30)
 
-popMatSimpleNeonatal = adjustPopMat(popMatSimple, poppaTarget=poppsubKenyaNeonatal, adjustBy="subarea")
+# popMatSimpleNeonatal = adjustPopMat(popMatSimple, poppaTarget=poppsubKenyaNeonatal, adjustBy="subarea")
 easpaSimple = makeDefaultEASPA()
 easpaSimple = easpaSimple[easpaSimple$area == "Nairobi",]
 poppsubSimple = poppsubKenya

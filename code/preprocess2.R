@@ -187,3 +187,114 @@ poppsubKenyaNeonatalThresh = cbind(subarea=poppsubKenyaNeonatalThresh$region, ar
 save(kenyaPoly, adm1, adm2, kenyaMesh, file="savedOutput/global/kenyaMapData.RData")
 save(popMatKenya, popMatKenyaNeonatal, popMatKenyaThresh, popMatKenyaNeonatalThresh, file="savedOutput/global/kenyaPopulationMats.RData")
 
+# make facebook popMat files ----
+popFace = raster("data/popData/facebook_2020.tif")
+
+if(FALSE) {
+  ## Construct poppsubKenya, a table of urban/rural general population totals 
+  ## in each subarea. Technically, this is not necessary since we can load in 
+  ## poppsubKenya via data(kenyaPopulationData). First, we will need to calculate 
+  ## the areas in km^2 of the areas and subareas
+  
+  library(rgdal)
+  library(sp)
+  
+  # use Lambert equal area projection of areas (Admin-1) and subareas (Admin-2)
+  midLon = mean(adm1@bbox[1,])
+  midLat = mean(adm1@bbox[2,])
+  p4s = paste0("+proj=laea +x_0=0 +y_0=0 +lon_0=", midLon, 
+               " +lat_0=", midLat, " +units=km")
+  
+  library(rgdal)
+  
+  adm1proj <- spTransform(adm1, CRS(p4s))
+  adm2proj <- spTransform(adm2, CRS(p4s))
+  
+  # now calculate spatial area in km^2
+  library(rgeos)
+  admin1Areas = gArea(adm1proj, TRUE)
+  admin2Areas = gArea(adm2proj, TRUE)
+  areapaKenya = data.frame(area=adm1proj@data$NAME_1, spatialArea=admin1Areas)
+  areapsubKenya = data.frame(area=adm2proj@data$NAME_1, subarea=adm2proj@data$NAME_2, 
+                             spatialArea=admin2Areas)
+  
+  # Calculate general population totals at the subarea (Admin-2) x urban/rural 
+  # level and using 1km resolution population grid. Assign urbanicity by 
+  # thresholding population density based on estimated proportion population 
+  # urban/rural, making sure total area (Admin-1) urban/rural populations in 
+  # each area matches poppaKenya.
+  require(fields)
+  # NOTE: the following function will typically take ~20 minutes. Can speed up 
+  #       by setting kmRes to be higher, but we recommend fine resolution for 
+  #       this step, since it only needs to be done once. Instead of running this, 
+  #       you can simply run data(kenyaPopulationData)
+  system.time(poppsubKenyaFace <- getPoppsub(
+    kmRes=1, pop=popFace, domainPoly=kenyaPoly,
+    eastLim=eastLim, northLim=northLim, mapProjection=projKenya,
+    poppa = poppaKenya, areapa=areapaKenya, areapsub=areapsubKenya, 
+    areaMapDat=adm1, subareaMapDat=adm2, 
+    areaNameVar = "NAME_1", subareaNameVar="NAME_2"))
+  
+  # threshold poppsub so that subareas with too small an urban or rural population 
+  # don't have any (for mainly computational purposes)
+  poppsubKenyaFaceThresh = thresholdPoppsub(poppsubKenyaFace, threshProp = .005)
+}
+
+# Now generate a general population integration table at 5km resolution, 
+# based on subarea (Admin-2) x urban/rural population totals. This takes 
+# ~1 minute
+system.time(popMatKenyaFace <- makePopIntegrationTab(
+  kmRes=5, pop=popFace, domainPoly=kenyaPoly,
+  eastLim=eastLim, northLim=northLim, mapProjection=projKenya,
+  poppa = poppaKenya, poppsub=poppsubKenya, 
+  areaMapDat = adm1, subareaMapDat = adm2,
+  areaNameVar = "NAME_1", subareaNameVar="NAME_2"))
+
+system.time(popMatKenyaThresh <- makePopIntegrationTab(
+  kmRes=5, pop=popFace, domainPoly=kenyaPoly,
+  eastLim=eastLim, northLim=northLim, mapProjection=projKenya,
+  poppa = poppaKenya, poppsub=poppsubKenyaThresh, 
+  areaMapDat = adm1, subareaMapDat = adm2,
+  areaNameVar = "NAME_1", subareaNameVar="NAME_2"))
+
+## Adjust popMat to be target (neonatal) rather than general population 
+## density. First create the target population frame
+## (these numbers are based on IPUMS microcensus data)
+mothersPerHouseholdUrb = 0.3497151
+childrenPerMotherUrb = 1.295917
+mothersPerHouseholdRur = 0.4787696
+childrenPerMotherRur = 1.455222
+targetPopPerStratumUrban = easpaKenya$HHUrb * mothersPerHouseholdUrb * 
+  childrenPerMotherUrb
+targetPopPerStratumRural = easpaKenya$HHRur * mothersPerHouseholdRur * 
+  childrenPerMotherRur
+easpaKenyaNeonatal = easpaKenya
+easpaKenyaNeonatal$popUrb = targetPopPerStratumUrban
+easpaKenyaNeonatal$popRur = targetPopPerStratumRural
+easpaKenyaNeonatal$popTotal = easpaKenyaNeonatal$popUrb + 
+  easpaKenyaNeonatal$popRur
+easpaKenyaNeonatal$pctUrb = 100 * easpaKenyaNeonatal$popUrb / 
+  easpaKenyaNeonatal$popTotal
+easpaKenyaNeonatal$pctTotal = 
+  100 * easpaKenyaNeonatal$popTotal / sum(easpaKenyaNeonatal$popTotal)
+
+# Generate the target population density by scaling the current 
+# population density grid at the Admin1 x urban/rural level
+areaSubareaTab = data.frame(area=adm2@data$NAME_1, subarea = adm2@data$NAME_2)
+
+popMatKenyaNeonatal = adjustPopMat(popMatKenya, easpaKenyaNeonatal)
+popMatKenyaNeonatalThresh = adjustPopMat(popMatKenyaThresh, easpaKenyaNeonatal)
+
+# Generate neonatal population table from the neonatal population integration 
+# matrix. This is technically not necessary for population simulation purposes, 
+# but is here for illustrative purposes
+poppsubKenyaNeonatal = poppRegionFromPopMat(popMatKenyaNeonatal, 
+                                            popMatKenyaNeonatal$subarea)
+poppsubKenyaNeonatal = cbind(subarea=poppsubKenyaNeonatal$region, area=areaSubareaTab$area[match(poppsubKenyaNeonatal$region, areaSubareaTab$subarea)], poppsubKenyaNeonatal[,-1])
+poppsubKenyaNeonatalThresh = poppRegionFromPopMat(popMatKenyaNeonatalThresh, 
+                                                  popMatKenyaNeonatalThresh$subarea)
+poppsubKenyaNeonatalThresh = cbind(subarea=poppsubKenyaNeonatalThresh$region, area=areaSubareaTab$area[match(poppsubKenyaNeonatalThresh$region, areaSubareaTab$subarea)], poppsubKenyaNeonatalThresh[,-1])
+
+# save files
+save(kenyaPoly, adm1, adm2, kenyaMesh, file="savedOutput/global/kenyaMapData.RData")
+save(popMatKenya, popMatKenyaNeonatal, popMatKenyaThresh, popMatKenyaNeonatalThresh, file="savedOutput/global/kenyaPopulationMats.RData")

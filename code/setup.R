@@ -216,20 +216,6 @@ poppsubKenyaNeonatal =
 poppcon = poppsubKenya
 poppconAdjusted = poppsubKenyaNeonatal
 
-poppsubKenyaThresh = SUMMER:::poppRegionFromPopMat(popMatKenyaThresh, 
-                                                           popMatKenyaThresh$subarea)
-poppsubKenyaThresh = 
-  cbind(subarea=poppsubKenyaThresh$region, 
-        area=adm2@data$NAME_1[match(poppsubKenyaThresh$region, adm2@data$NAME_2)], 
-        poppsubKenyaThresh[,-1])
-
-poppsubKenyaNeonatalThresh = SUMMER:::poppRegionFromPopMat(popMatKenyaNeonatalThresh, 
-                                                     popMatKenyaNeonatal$subarea)
-poppsubKenyaNeonatalThresh = 
-  cbind(subarea=poppsubKenyaNeonatalThresh$region, 
-        area=adm2@data$NAME_1[match(poppsubKenyaNeonatalThresh$region, adm2@data$NAME_2)], 
-        poppsubKenyaNeonatalThresh[,-1])
-
 # load enumeration areas and neonatal mortality data
 load(paste0(globalDirectory, "kenyaEAs.RData"))
 load(paste0(globalDirectory, "kenyaData.RData"))
@@ -244,6 +230,20 @@ popGridThresh = popMatKenyaThresh
 popGridAdjustedThresh = popMatKenyaNeonatalThresh
 load(paste0(globalDirectory, "popGridCoarse.RData"))
 load(paste0(globalDirectory, "popGridCoarseAdjusted.RData"))
+
+poppsubKenyaThresh = SUMMER:::poppRegionFromPopMat(popMatKenyaThresh, 
+                                                   popMatKenyaThresh$subarea)
+poppsubKenyaThresh = 
+  cbind(subarea=poppsubKenyaThresh$region, 
+        area=adm2@data$NAME_1[match(poppsubKenyaThresh$region, adm2@data$NAME_2)], 
+        poppsubKenyaThresh[,-1])
+
+poppsubKenyaNeonatalThresh = SUMMER:::poppRegionFromPopMat(popMatKenyaNeonatalThresh, 
+                                                           popMatKenyaNeonatal$subarea)
+poppsubKenyaNeonatalThresh = 
+  cbind(subarea=poppsubKenyaNeonatalThresh$region, 
+        area=adm2@data$NAME_1[match(poppsubKenyaNeonatalThresh$region, adm2@data$NAME_2)], 
+        poppsubKenyaNeonatalThresh[,-1])
 
 # load limits
 load(paste0(globalDirectory, "lims.RData"))
