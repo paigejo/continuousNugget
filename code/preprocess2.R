@@ -122,6 +122,10 @@ if(FALSE) {
     poppa = poppaKenya, areapa=areapaKenya, areapsub=areapsubKenya, 
     areaMapDat=adm1, subareaMapDat=adm2, 
     areaNameVar = "NAME_1", subareaNameVar="NAME_2"))
+  
+  # threshold poppsub so that subareas with too small an urban or rural population 
+  # don't have any (for mainly computational purposes)
+  poppsubKenyaThresh = thresholdPoppsub(poppsubKenya, threshProp = .005)
 }
 
 # Now generate a general population integration table at 5km resolution, 
@@ -131,6 +135,13 @@ system.time(popMatKenya <- makePopIntegrationTab(
   kmRes=5, pop=pop, domainPoly=kenyaPoly,
   eastLim=eastLim, northLim=northLim, mapProjection=projKenya,
   poppa = poppaKenya, poppsub=poppsubKenya, 
+  areaMapDat = adm1, subareaMapDat = adm2,
+  areaNameVar = "NAME_1", subareaNameVar="NAME_2"))
+
+system.time(popMatKenyaThresh <- makePopIntegrationTab(
+  kmRes=5, pop=pop, domainPoly=kenyaPoly,
+  eastLim=eastLim, northLim=northLim, mapProjection=projKenya,
+  poppa = poppaKenya, poppsub=poppsubKenyaThresh, 
   areaMapDat = adm1, subareaMapDat = adm2,
   areaNameVar = "NAME_1", subareaNameVar="NAME_2"))
 
@@ -157,15 +168,22 @@ easpaKenyaNeonatal$pctTotal =
 
 # Generate the target population density by scaling the current 
 # population density grid at the Admin1 x urban/rural level
+areaSubareaTab = data.frame(area=adm2@data$NAME_1, subarea = adm2@data$NAME_2)
+
 popMatKenyaNeonatal = adjustPopMat(popMatKenya, easpaKenyaNeonatal)
+popMatKenyaNeonatalThresh = adjustPopMat(popMatKenyaThresh, easpaKenyaNeonatal)
 
 # Generate neonatal population table from the neonatal population integration 
 # matrix. This is technically not necessary for population simulation purposes, 
 # but is here for illustrative purposes
 poppsubKenyaNeonatal = poppRegionFromPopMat(popMatKenyaNeonatal, 
                                             popMatKenyaNeonatal$subarea)
+poppsubKenyaNeonatal = cbind(subarea=poppsubKenyaNeonatal$region, area=areaSubareaTab$area[match(poppsubKenyaNeonatal$region, areaSubareaTab$subarea)], poppsubKenyaNeonatal[,-1])
+poppsubKenyaNeonatalThresh = poppRegionFromPopMat(popMatKenyaNeonatalThresh, 
+                                            popMatKenyaNeonatalThresh$subarea)
+poppsubKenyaNeonatalThresh = cbind(subarea=poppsubKenyaNeonatalThresh$region, area=areaSubareaTab$area[match(poppsubKenyaNeonatalThresh$region, areaSubareaTab$subarea)], poppsubKenyaNeonatalThresh[,-1])
 
 # save files
 save(kenyaPoly, adm1, adm2, kenyaMesh, file="savedOutput/global/kenyaMapData.RData")
-save(popMatKenya, popMatKenyaNeonatal, file="savedOutput/global/kenyaPopulationMats.RData")
+save(popMatKenya, popMatKenyaNeonatal, popMatKenyaThresh, popMatKenyaNeonatalThresh, file="savedOutput/global/kenyaPopulationMats.RData")
 

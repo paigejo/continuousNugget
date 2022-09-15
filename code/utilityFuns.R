@@ -5863,3 +5863,61 @@ logitNormSqMean = function(muSigmaMat, ...)
     }
   }
 }
+
+# threshold poppsub so that, if the population in the urban/rural part of a subarea
+# is too small, set it to zero.
+thresholdPoppsub = function(poppsub, threshProp=.01) {
+  areas = sort(unique(poppsub$area))
+  
+  toThreshUrb = poppsub$pctUrb < 100*threshProp
+  toThreshRur = poppsub$pctUrb > 100*(1-threshProp)
+  toThresh = toThreshUrb | toThreshRur
+  for(i in 1:length(areas)) {
+    thisArea = areas[i]
+    areaI = poppsub$area == thisArea
+    
+    thisToThresh = toThresh[areaI]
+    
+    # if any dubareas need to be thresholded, must total stratum population to be 
+    # same as before the threshold
+    if(any(thisToThresh)) {
+      thisToThreshUrb = toThreshUrb[areaI]
+      thisToThreshRur = toThreshRur[areaI]
+      
+      if(any(thisToThreshUrb)) {
+        totalUrbPop = sum(poppsub[areaI,]$popUrb)
+        leftUrbPop = sum(poppsub[areaI,]$popUrb[!thisToThreshUrb])
+        
+        scaleFac = totalUrbPop / leftUrbPop
+        scaleVec = rep(scaleFac, length(thisToThresh))
+        scaleVec[thisToThreshUrb] = 0
+        
+        poppsub[areaI,]$popUrb = poppsub[areaI,]$popUrb * scaleVec
+      }
+      
+      if(any(thisToThreshRur)) {
+        totalRurPop = sum(poppsub[areaI,]$popRur)
+        leftRurPop = sum(poppsub[areaI,]$popRur[!thisToThreshRur])
+        
+        scaleFac = totalRurPop / leftRurPop
+        scaleVec = rep(scaleFac, length(thisToThresh))
+        scaleVec[thisToThreshRur] = 0
+        
+        poppsub[areaI,]$popRur = poppsub[areaI,]$popRur * scaleVec
+      }
+      
+      # recalculate popTotal, pctUrb
+      poppsub[areaI,]$popTotal = poppsub[areaI,]$popUrb + poppsub[areaI,]$popRur
+      poppsub[areaI,]$pctUrb = 100 * poppsub[areaI,]$popUrb / poppsub[areaI,]$popTotal
+    }
+  }
+  
+  # recalculate pctTotal
+  poppsub$pctTotal = 100 * poppsub$popTotal / sum(poppsub$popTotal)
+  
+  poppsub
+}
+
+
+
+

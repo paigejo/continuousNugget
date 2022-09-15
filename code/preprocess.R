@@ -209,8 +209,17 @@ popGridCoarse = makePopIntegrationTab(kmRes=25, pop=pop, domainPoly=kenyaPoly,
 popGridCoarseAdjusted = adjustPopMat(popGridCoarse, poppaTarget=poppsubKenyaNeonatal, adjustBy="subarea")
 save(popGridCoarse, file=paste0(globalDirectory, "popGridCoarse.RData"))
 save(popGridCoarseAdjusted, file=paste0(globalDirectory, "popGridCoarseAdjusted.RData"))
-# popGridCoarseAdjustedWomen = makeInterpPopGrid(kmRes=25, adjustPopSurface=TRUE, "women", poppcon=poppcon, conMap=adm2)
-# save(popGridCoarseAdjustedWomen, file=paste0(globalDirectory, "popGridCoarseAdjustedWomen.RData"))
+
+# now use thresholded poppsub
+popGridCoarseThresh = makePopIntegrationTab(kmRes=25, pop=pop, domainPoly=kenyaPoly, 
+                                      eastLim=eastLim, northLim=northLim, 
+                                      mapProjection=SUMMER::projKenya, poppa=poppaKenya, 
+                                      poppsub=poppsubKenyaThresh, stratifyByUrban=TRUE, 
+                                      areaMapDat=adm1, subareaMapDat=adm2)
+
+popGridCoarseAdjustedThresh = adjustPopMat(popGridCoarseThresh, poppaTarget=poppsubKenyaNeonatalThresh, adjustBy="subarea")
+save(popGridCoarse, file=paste0(globalDirectory, "popGridCoarse.RData"))
+save(popGridCoarseAdjusted, file=paste0(globalDirectory, "popGridCoarseAdjusted.RData"))
 
 # datasets (these were already created in readDat3)
 source("code/readDat3.R")

@@ -43,61 +43,6 @@ easpa25$popUrb = 25 * easpa25$EAUrb
 easpa25$popRur = 25 * easpa25$EARur
 easpa25$popTotal = easpa25$popUrb + easpa25$popRur
 
-# simulate truths ----
-constituenciesN = poppsubKenya$area == "Nairobi"
-countyN = sort(unique(poppaKenya$area)) == "Nairobi"
-set.seed(123) # THIS LINE IS NEW, ADDED AFTER GRID RES TEST WAS DONE
-seeds = sample(1:100000, 100, replace=FALSE)
-inlaSeeds = sample(1:100000, 100, replace=FALSE)
-if(doSetup) {
-  truths = list()
-  dats = list()
-  for(i in 1:100) {
-    # simulate population over all of Kenya and generate survey from the EAs
-    thisTime = system.time(simDatKenya <- generateSimDataSetsLCPB2(nsim=1, targetPopMat=popMatKenyaNeonatal, 
-                                                                   popMat=popMatKenya, 
-                                                                   doFineScaleRisk=TRUE, doSmoothRisk=TRUE, 
-                                                                   gridLevel=FALSE, subareaLevel=TRUE, 
-                                                                   fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
-                                                                   logisticApproximation=FALSE, 
-                                                                   dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
-                                                                   seed=seeds[i], inla.seed=inlaSeeds[i], 
-                                                                   simPopOnly=FALSE, returnEAinfo=TRUE, 
-                                                                   easpa=easpaKenya, poppsub=poppsubKenya))
-    
-    simDatKenya$overSampDat = NULL
-    simDatKenya$simulatedEAs$eaDat = NULL
-    simDatKenya$simulatedEAs$eaSamples = NULL
-    simDatKenya$simulatedEAs$clustDat = NULL
-    simDatKenya$simulatedEAs$thisclustpc = NULL
-    
-    # get the data and the true population
-    dat = simDatKenya$SRSDat$clustDat[[1]]
-    dat$y = dat$Z
-    dat$n = dat$N
-    dat$admin1 = dat$area
-    dat$admin2 = dat$subarea
-    dats[[i]] = dat
-    
-    EAsN = simDatKenya$simulatedEAs$aggregatedPop$eaPop$eaDatList[[1]]$area == "Nariobi"
-    truePrevalenceEAsKenya = simDatKenya$simulatedEAs$aggregatedPop$eaPop$eaDatList[[1]]$pFineScalePrevalence
-    truePrevalenceEAsKenya = truePrevalenceEAsKenya[EAsN]
-    truePrevalenceConstituencyKenya = simDatKenya$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pFineScalePrevalence
-    truePrevalenceConstituencyKenya = truePrevalenceConstituencyKenya[constituenciesN]
-    truePrevalenceCountyKenya = simDatKenya$simulatedEAs$aggregatedPop$areaPop$aggregationResults$pFineScalePrevalence
-    truePrevalenceCountyKenya = truePrevalenceCountyKenya[countyN]
-    
-    truths[[i]]  = list(EAsN=EAsN, truePrevalenceEAsKenya=truePrevalenceEAsKenya, 
-                        truePrevalenceConstituencyKenya=truePrevalenceConstituencyKenya, 
-                        truePrevalenceCountyKenya=truePrevalenceCountyKenya)
-  }
-  save(dats, truths, file="savedOutput/simpleExample/gridResTest_datsAndTruths.RData")
-} else {
-  out = load("savedOutput/simpleExample/gridResTest_datsAndTruths.RData")
-}
-
-
-
 # Generate grids ----
 # construct integration grids at different resolutions
 # resolutions = c(1, 10, 20, 40, 60, 80)
@@ -158,12 +103,71 @@ if(doSetup) {
 # combine the grids into 1 matrix for evaluating the SPDE model all at once
 popMatCombined = do.call("rbind", popGrids)
 
+# simulate truths ----
+constituenciesN = poppsubKenya$area == "Nairobi"
+countyN = sort(unique(poppaKenya$area)) == "Nairobi"
+set.seed(123) # THIS LINE IS NEW, ADDED AFTER GRID RES TEST WAS DONE
+seeds = sample(1:100000, 100, replace=FALSE)
+inlaSeeds = sample(1:100000, 100, replace=FALSE)
+rhos = c(1/27, 1/9, 1/3)
+if(doSetup) {
+  truths = list()
+  dats = list()
+  
+  for(j in 1:length(rhos)) {
+    rho = rhos[j]
+    
+    for(i in 1:100) {
+      # simulate population over all of Kenya and generate survey from the EAs
+      thisTime = system.time(simDatKenya <- generateSimDataSetsLCPB2(nsim=1, targetPopMat=popMatKenyaNeonatal, 
+                                                                     popMat=popMatKenya, 
+                                                                     doFineScaleRisk=TRUE, doSmoothRisk=TRUE, 
+                                                                     gridLevel=FALSE, subareaLevel=TRUE, 
+                                                                     fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
+                                                                     logisticApproximation=FALSE, 
+                                                                     dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
+                                                                     seed=seeds[i], inla.seed=inlaSeeds[i], 
+                                                                     simPopOnly=FALSE, returnEAinfo=TRUE, 
+                                                                     easpa=easpaKenya, poppsub=poppsubKenya))
+      
+      simDatKenya$overSampDat = NULL
+      simDatKenya$simulatedEAs$eaDat = NULL
+      simDatKenya$simulatedEAs$eaSamples = NULL
+      simDatKenya$simulatedEAs$clustDat = NULL
+      simDatKenya$simulatedEAs$thisclustpc = NULL
+      
+      # get the data and the true population
+      dat = simDatKenya$SRSDat$clustDat[[1]]
+      dat$y = dat$Z
+      dat$n = dat$N
+      dat$admin1 = dat$area
+      dat$admin2 = dat$subarea
+      dats[[i]] = dat
+      
+      EAsN = simDatKenya$simulatedEAs$aggregatedPop$eaPop$eaDatList[[1]]$area == "Nariobi"
+      truePrevalenceEAsKenya = simDatKenya$simulatedEAs$aggregatedPop$eaPop$eaDatList[[1]]$pFineScalePrevalence
+      truePrevalenceEAsKenya = truePrevalenceEAsKenya[EAsN]
+      truePrevalenceConstituencyKenya = simDatKenya$simulatedEAs$aggregatedPop$subareaPop$aggregationResults$pFineScalePrevalence
+      truePrevalenceConstituencyKenya = truePrevalenceConstituencyKenya[constituenciesN]
+      truePrevalenceCountyKenya = simDatKenya$simulatedEAs$aggregatedPop$areaPop$aggregationResults$pFineScalePrevalence
+      truePrevalenceCountyKenya = truePrevalenceCountyKenya[countyN]
+      
+      truths[[i]]  = list(EAsN=EAsN, truePrevalenceEAsKenya=truePrevalenceEAsKenya, 
+                          truePrevalenceConstituencyKenya=truePrevalenceConstituencyKenya, 
+                          truePrevalenceCountyKenya=truePrevalenceCountyKenya, rho=rho)
+    }
+  }
+  save(dats, truths, file="savedOutput/simpleExample/gridResTest_datsAndTruths.RData")
+} else {
+  out = load("savedOutput/simpleExample/gridResTest_datsAndTruths.RData")
+}
+
 # Run main results ----
 # fit SPDE cluster level risk model over all integration points, for each truth, 
 # and then generate predictions from the aggregation model conditional on the 
-# risk model predictions
+# risk model posterior
 # spde$effRange, spde$margVar, familyPrec, clusterPrec, beta
-fixedParameters = list(spde=list(effRange=400, margVar=(1/3)^2), clusterPrec=2.5, beta=c(-2.9, -1))
+fixedParameters = list(spde=list(effRange=400), clusterPrec=2.5, beta=c(-2.9, -1))
 nSamples = rep(1000, length(resolutions))
 allAggResultsN = list()
 startI = 91
@@ -173,8 +177,11 @@ for(i in startI:endI) {
   print(paste0("Running analysis for truth ", i, "/", length(truths), ", endI=", endI))
   
   dat = dats[[i]]
+  margVar = truths[[i]]$rho
+  thisFixedParameters = fixedParameters
+  thisFixedParameters$spde = c(fixedParameters, list(margVar=margVar))
   spdeFitN = fitSPDEKenyaDat(dat, nPostSamples=max(nSamples), popMat=popMatCombined, 
-                             fixedParameters=fixedParameters, prior=NULL, strategy="simplified.laplace")
+                             fixedParameters=thisFixedParameters, prior=NULL, strategy="simplified.laplace")
   
   # remove unnecessary parts of the spdeFitN object to save space
   spdeFitN$mod$.args = NULL
@@ -222,7 +229,9 @@ for(i in startI:endI) {
                                    verbose=FALSE)
     
     # remove unnecessary components to save space
-    thisAggResultsN = list(subareaPop = thisAggResultsN$subareaPop)
+    thisAggResultsN = list(subareaPop = thisAggResultsN$subareaPop, 
+                           allTimings = thisAggResultsN$allTimings, 
+                           processedTimings = thisAggResultsN$processedTimings)
     thisAggResultsN$subareaPop$aggregationMatrices = NULL
     
     # compile results
@@ -297,130 +306,163 @@ allCoveragesSmoothRisk = list()
 allCoveragesRisk = list()
 allCoveragesPrevalence = list()
 allCoveragesGriddedRisk = list()
-for(i in 1:length(truths)) {
-  # get truth
-  truePrevalenceConstituencyKenya = truths[[i]]$truePrevalenceConstituencyKenya
+for(j in 1:length(rhos)) {
+  rho = truths[[i]]$rho
   
-  # Calculate RMSE, 80% and 95% Coverage
-  predsSmoothRisk = matrix(nrow=length(truePrevalenceConstituencyKenya), ncol=length(resolutions))
-  predsRisk = matrix(nrow=length(truePrevalenceConstituencyKenya), ncol=length(resolutions))
-  predsPrevalence = matrix(nrow=length(truePrevalenceConstituencyKenya), ncol=length(resolutions))
-  predsGriddedRisk = matrix(nrow=length(truePrevalenceConstituencyKenya), ncol=length(resolutions))
-  residsConstituencySmoothRisk = list()
-  residsConstituencyRisk = list()
-  residsConstituencyPrevalence = list()
-  residsConstituencyGriddedRisk = list()
-  for(j in 1:length(resolutions)) {
-    thisMaxSamples = min(c(nSamples[j], maxSamples))
-    predsSmoothRisk[,j] = rowMeans(allAggResultsN[[i]][[j]]$subareaPop$aggregationResults$pSmoothRisk[,1:thisMaxSamples])
-    predsRisk[,j] = rowMeans(allAggResultsN[[i]][[j]]$subareaPop$aggregationResults$pFineScaleRisk[,1:thisMaxSamples])
-    predsPrevalence[,j] = rowMeans(allAggResultsN[[i]][[j]]$subareaPop$aggregationResults$pFineScalePrevalence[,1:thisMaxSamples])
-    predsGriddedRisk[,j] = rowMeans(allAggResultsN[[i]][[j]]$subareaPop$aggregationResults$pGriddedRisk[,1:thisMaxSamples])
-    theseResidsSmoothRisk = sweep(allAggResultsN[[i]][[j]]$subareaPop$aggregationResults$pSmoothRisk[,1:thisMaxSamples], 1, truePrevalenceConstituencyKenya, "-")
-    theseResidsRisk = sweep(allAggResultsN[[i]][[j]]$subareaPop$aggregationResults$pFineScaleRisk[,1:thisMaxSamples], 1, truePrevalenceConstituencyKenya, "-")
-    theseResidsPrevalence = sweep(allAggResultsN[[i]][[j]]$subareaPop$aggregationResults$pFineScalePrevalence[,1:thisMaxSamples], 1, truePrevalenceConstituencyKenya, "-")
-    theseResidsGriddedRisk = sweep(allAggResultsN[[i]][[j]]$subareaPop$aggregationResults$pGriddedRisk[,1:thisMaxSamples], 1, truePrevalenceConstituencyKenya, "-")
-    residsConstituencySmoothRisk = c(residsConstituencySmoothRisk, list(theseResidsSmoothRisk))
-    residsConstituencyRisk = c(residsConstituencyRisk, list(theseResidsRisk))
-    residsConstituencyPrevalence = c(residsConstituencyPrevalence, list(theseResidsPrevalence))
-    residsConstituencyGriddedRisk = c(residsConstituencyGriddedRisk, list(theseResidsGriddedRisk))
-  }
-  allPredsSmoothRisk = c(allPredsSmoothRisk, list(predsSmoothRisk))
-  allPredsRisk = c(allPredsRisk, list(predsRisk))
-  allPredsPrevalence = c(allPredsPrevalence, list(predsPrevalence))
-  allPredsGriddedRisk = c(allPredsGriddedRisk, list(predsGriddedRisk))
+  thisRhoPredsSmoothRisk = list()
+  thisRhoPredsRisk = list()
+  thisRhoPredsPrevalence = list()
+  thisRhoPredsGriddedRisk = list()
+  thisRhoCIWidthsSmoothRisk = list()
+  thisRhoCIWidthsRisk = list()
+  thisRhoCIWidthsPrevalence = list()
+  thisRhoCIWidthsGriddedRisk = list()
+  thisRhoCoveragesSmoothRisk = list()
+  thisRhoCoveragesRisk = list()
+  thisRhoCoveragesPrevalence = list()
+  thisRhoCoveragesGriddedRisk = list()
   
-  lowConstituencySmoothRisk = lapply(residsConstituencySmoothRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
-  lowConstituencyRisk = lapply(residsConstituencyRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
-  lowConstituencyPrevalence = lapply(residsConstituencyPrevalence, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
-  lowConstituencyGriddedRisk = lapply(residsConstituencyGriddedRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
-  highConstituencySmoothRisk = lapply(residsConstituencySmoothRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9))})})
-  highConstituencyRisk = lapply(residsConstituencyRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9))})})
-  highConstituencyPrevalence = lapply(residsConstituencyPrevalence, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9))})})
-  highConstituencyGriddedRisk = lapply(residsConstituencyGriddedRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9))})})
-  
-  # CIWidthSmoothRisk = highConstituencySmoothRisk - lowConstituencySmoothRisk
-  # CIWidthRisk = highConstituencyRisk - lowConstituencyRisk
-  # CIWidthPrevalence = highConstituencyPrevalence - lowConstituencyPrevalence
-  # CIWidthGriddedRisk = highConstituencyGriddedRisk - lowConstituencyGriddedRisk
-  CIWidthSmoothRisk = lapply(residsConstituencySmoothRisk, 
-                             function(mat) {
-                               apply(mat, 1, function(x) {
-                                 quantile(x, probs=c(.975, .95, .9)) - quantile(x, probs=c(.025, .05, .1))})
+  for(i in 1:length(truths)) {
+    # get truth
+    truePrevalenceConstituencyKenya = truths[[i]]$truePrevalenceConstituencyKenya
+    
+    # Calculate RMSE, 80% and 95% Coverage
+    predsSmoothRisk = matrix(nrow=length(truePrevalenceConstituencyKenya), ncol=length(resolutions))
+    predsRisk = matrix(nrow=length(truePrevalenceConstituencyKenya), ncol=length(resolutions))
+    predsPrevalence = matrix(nrow=length(truePrevalenceConstituencyKenya), ncol=length(resolutions))
+    predsGriddedRisk = matrix(nrow=length(truePrevalenceConstituencyKenya), ncol=length(resolutions))
+    residsConstituencySmoothRisk = list()
+    residsConstituencyRisk = list()
+    residsConstituencyPrevalence = list()
+    residsConstituencyGriddedRisk = list()
+    for(j in 1:length(resolutions)) {
+      thisMaxSamples = min(c(nSamples[j], maxSamples))
+      predsSmoothRisk[,j] = rowMeans(allAggResultsN[[i]][[j]]$subareaPop$aggregationResults$pSmoothRisk[,1:thisMaxSamples])
+      predsRisk[,j] = rowMeans(allAggResultsN[[i]][[j]]$subareaPop$aggregationResults$pFineScaleRisk[,1:thisMaxSamples])
+      predsPrevalence[,j] = rowMeans(allAggResultsN[[i]][[j]]$subareaPop$aggregationResults$pFineScalePrevalence[,1:thisMaxSamples])
+      predsGriddedRisk[,j] = rowMeans(allAggResultsN[[i]][[j]]$subareaPop$aggregationResults$pGriddedRisk[,1:thisMaxSamples])
+      theseResidsSmoothRisk = sweep(allAggResultsN[[i]][[j]]$subareaPop$aggregationResults$pSmoothRisk[,1:thisMaxSamples], 1, truePrevalenceConstituencyKenya, "-")
+      theseResidsRisk = sweep(allAggResultsN[[i]][[j]]$subareaPop$aggregationResults$pFineScaleRisk[,1:thisMaxSamples], 1, truePrevalenceConstituencyKenya, "-")
+      theseResidsPrevalence = sweep(allAggResultsN[[i]][[j]]$subareaPop$aggregationResults$pFineScalePrevalence[,1:thisMaxSamples], 1, truePrevalenceConstituencyKenya, "-")
+      theseResidsGriddedRisk = sweep(allAggResultsN[[i]][[j]]$subareaPop$aggregationResults$pGriddedRisk[,1:thisMaxSamples], 1, truePrevalenceConstituencyKenya, "-")
+      residsConstituencySmoothRisk = c(residsConstituencySmoothRisk, list(theseResidsSmoothRisk))
+      residsConstituencyRisk = c(residsConstituencyRisk, list(theseResidsRisk))
+      residsConstituencyPrevalence = c(residsConstituencyPrevalence, list(theseResidsPrevalence))
+      residsConstituencyGriddedRisk = c(residsConstituencyGriddedRisk, list(theseResidsGriddedRisk))
+    }
+    thisRhoPredsSmoothRisk = c(thisRhoPredsSmoothRisk, list(predsSmoothRisk))
+    thisRhoPredsRisk = c(thisRhoPredsRisk, list(predsRisk))
+    thisRhoPredsPrevalence = c(thisRhoPredsPrevalence, list(predsPrevalence))
+    thisRhoPredsGriddedRisk = c(thisRhoPredsGriddedRisk, list(predsGriddedRisk))
+    
+    lowConstituencySmoothRisk = lapply(residsConstituencySmoothRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
+    lowConstituencyRisk = lapply(residsConstituencyRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
+    lowConstituencyPrevalence = lapply(residsConstituencyPrevalence, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
+    lowConstituencyGriddedRisk = lapply(residsConstituencyGriddedRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
+    highConstituencySmoothRisk = lapply(residsConstituencySmoothRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9))})})
+    highConstituencyRisk = lapply(residsConstituencyRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9))})})
+    highConstituencyPrevalence = lapply(residsConstituencyPrevalence, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9))})})
+    highConstituencyGriddedRisk = lapply(residsConstituencyGriddedRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9))})})
+    
+    # CIWidthSmoothRisk = highConstituencySmoothRisk - lowConstituencySmoothRisk
+    # CIWidthRisk = highConstituencyRisk - lowConstituencyRisk
+    # CIWidthPrevalence = highConstituencyPrevalence - lowConstituencyPrevalence
+    # CIWidthGriddedRisk = highConstituencyGriddedRisk - lowConstituencyGriddedRisk
+    CIWidthSmoothRisk = lapply(residsConstituencySmoothRisk, 
+                               function(mat) {
+                                 apply(mat, 1, function(x) {
+                                   quantile(x, probs=c(.975, .95, .9)) - quantile(x, probs=c(.025, .05, .1))})
                                })
-  CIWidthRisk = lapply(residsConstituencyRisk, 
-                       function(mat) {
-                         apply(mat, 1, function(x) {
-                           quantile(x, probs=c(.975, .95, .9)) - quantile(x, probs=c(.025, .05, .1))})
-                       })
-  CIWidthPrevalence = lapply(residsConstituencyPrevalence, 
+    CIWidthRisk = lapply(residsConstituencyRisk, 
+                         function(mat) {
+                           apply(mat, 1, function(x) {
+                             quantile(x, probs=c(.975, .95, .9)) - quantile(x, probs=c(.025, .05, .1))})
+                         })
+    CIWidthPrevalence = lapply(residsConstituencyPrevalence, 
+                               function(mat) {
+                                 apply(mat, 1, function(x) {
+                                   quantile(x, probs=c(.975, .95, .9)) - quantile(x, probs=c(.025, .05, .1))})
+                               })
+    CIWidthGriddedRisk = lapply(residsConstituencyGriddedRisk, 
+                                function(mat) {
+                                  apply(mat, 1, function(x) {
+                                    quantile(x, probs=c(.975, .95, .9)) - quantile(x, probs=c(.025, .05, .1))})
+                                })
+    thisRhoCIWidthsSmoothRisk = c(thisRhoCIWidthsSmoothRisk, list(CIWidthSmoothRisk))
+    thisRhoCIWidthsRisk = c(thisRhoCIWidthsRisk, list(CIWidthRisk))
+    thisRhoCIWidthsPrevalence = c(thisRhoCIWidthsPrevalence, list(CIWidthPrevalence))
+    thisRhoCIWidthsGriddedRisk = c(thisRhoCIWidthsGriddedRisk, list(CIWidthGriddedRisk))
+    
+    # this is never used anyway, so commented out:
+    # meanCIWidthSmoothRisk = colMeans(CIWidthSmoothRisk)
+    # meanCIWidthRisk = colMeans(CIWidthRisk)
+    # meanCIWidthPrevalence = colMeans(CIWidthPrevalence)
+    # meanCIWidthGriddedRisk = colMeans(CIWidthGriddedRisk)
+    
+    # inCISmoothRisk = (0 <= highConstituencySmoothRisk) & (0 >= lowConstituencySmoothRisk)
+    # inCIRisk = (0 <= highConstituencyRisk) & (0 >= lowConstituencyRisk)
+    # inCIPrevalence = (0 <= highConstituencyPrevalence) & (0 >= lowConstituencyPrevalence)
+    # inCIGriddedRisk = (0 <= highConstituencyGriddedRisk) & (0 >= lowConstituencyGriddedRisk)
+    inCISmoothRisk = lapply(residsConstituencySmoothRisk, 
+                            function(mat) {
+                              apply(mat, 1, function(x) {
+                                (0 <= quantile(x, probs=c(.975, .95, .9))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
+                            })
+    inCIRisk = lapply(residsConstituencyRisk, 
+                      function(mat) {
+                        apply(mat, 1, function(x) {
+                          (0 <= quantile(x, probs=c(.975, .95, .9))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
+                      })
+    inCIPrevalence = lapply(residsConstituencyPrevalence, 
+                            function(mat) {
+                              apply(mat, 1, function(x) {
+                                (0 <= quantile(x, probs=c(.975, .95, .9))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
+                            })
+    inCIGriddedRisk = lapply(residsConstituencyGriddedRisk, 
                              function(mat) {
                                apply(mat, 1, function(x) {
-                                 quantile(x, probs=c(.975, .95, .9)) - quantile(x, probs=c(.025, .05, .1))})
+                                 (0 <= quantile(x, probs=c(.975, .95, .9))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
                              })
-  CIWidthGriddedRisk = lapply(residsConstituencyGriddedRisk, 
-                              function(mat) {
-                                apply(mat, 1, function(x) {
-                                  quantile(x, probs=c(.975, .95, .9)) - quantile(x, probs=c(.025, .05, .1))})
-                              })
-  allCIWidthsSmoothRisk = c(allCIWidthsSmoothRisk, list(CIWidthSmoothRisk))
-  allCIWidthsRisk = c(allCIWidthsRisk, list(CIWidthRisk))
-  allCIWidthsPrevalence = c(allCIWidthsPrevalence, list(CIWidthPrevalence))
-  allCIWidthsGriddedRisk = c(allCIWidthsGriddedRisk, list(CIWidthGriddedRisk))
+    
+    # coverageSmoothRisk = colMeans(inCISmoothRisk)
+    # coverageRisk = colMeans(inCIRisk)
+    # coveragePrevalence = colMeans(inCIPrevalence)
+    # coverageGriddedRisk = colMeans(inCIGriddedRisk)
+    coverageSmoothRisk = sapply(inCISmoothRisk, rowMeans)
+    coverageRisk = sapply(inCIRisk, rowMeans)
+    coveragePrevalence = sapply(inCIPrevalence, rowMeans)
+    coverageGriddedRisk = sapply(inCIGriddedRisk, rowMeans)
+    thisRhoCoveragesSmoothRisk = c(thisRhoCoveragesSmoothRisk, list(coverageSmoothRisk))
+    thisRhoCoveragesRisk = c(thisRhoCoveragesRisk, list(coverageRisk))
+    thisRhoCoveragesPrevalence = c(thisRhoCoveragesPrevalence, list(coveragePrevalence))
+    thisRhoCoveragesGriddedRisk = c(thisRhoCoveragesGriddedRisk, list(coverageGriddedRisk))
+  }
   
-  # this is never used anyway, so commented out:
-  # meanCIWidthSmoothRisk = colMeans(CIWidthSmoothRisk)
-  # meanCIWidthRisk = colMeans(CIWidthRisk)
-  # meanCIWidthPrevalence = colMeans(CIWidthPrevalence)
-  # meanCIWidthGriddedRisk = colMeans(CIWidthGriddedRisk)
+  allPredsSmoothRisk = c(allPredsSmoothRisk, list(thisRhoPredsSmoothRisk))
+  allCIWidthsSmoothRisk = c(allCIWidthsSmoothRisk, list(thisRhoCIWidthsSmoothRisk))
+  allCoveragesSmoothRisk = c(allCoveragesSmoothRisk, list(thisRhoCoveragesSmoothRisk))
   
-  # inCISmoothRisk = (0 <= highConstituencySmoothRisk) & (0 >= lowConstituencySmoothRisk)
-  # inCIRisk = (0 <= highConstituencyRisk) & (0 >= lowConstituencyRisk)
-  # inCIPrevalence = (0 <= highConstituencyPrevalence) & (0 >= lowConstituencyPrevalence)
-  # inCIGriddedRisk = (0 <= highConstituencyGriddedRisk) & (0 >= lowConstituencyGriddedRisk)
-  inCISmoothRisk = lapply(residsConstituencySmoothRisk, 
-                          function(mat) {
-                            apply(mat, 1, function(x) {
-                              (0 <= quantile(x, probs=c(.975, .95, .9))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
-                          })
-  inCIRisk = lapply(residsConstituencyRisk, 
-                    function(mat) {
-                      apply(mat, 1, function(x) {
-                        (0 <= quantile(x, probs=c(.975, .95, .9))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
-                    })
-  inCIPrevalence = lapply(residsConstituencyPrevalence, 
-                          function(mat) {
-                            apply(mat, 1, function(x) {
-                              (0 <= quantile(x, probs=c(.975, .95, .9))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
-                          })
-  inCIGriddedRisk = lapply(residsConstituencyGriddedRisk, 
-                           function(mat) {
-                             apply(mat, 1, function(x) {
-                               (0 <= quantile(x, probs=c(.975, .95, .9))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
-                           })
+  allPredsGriddedRisk = c(allPredsGriddedRisk, list(thisRhoPredsGriddedRisk))
+  allCIWidthsGriddedRisk = c(allCIWidthsGriddedRisk, list(thisRhoCIWidthsGriddedRisk))
+  allCoveragesGriddedRisk = c(allCoveragesGriddedRisk, list(thisRhoCoveragesGriddedRisk))
   
-  # coverageSmoothRisk = colMeans(inCISmoothRisk)
-  # coverageRisk = colMeans(inCIRisk)
-  # coveragePrevalence = colMeans(inCIPrevalence)
-  # coverageGriddedRisk = colMeans(inCIGriddedRisk)
-  coverageSmoothRisk = sapply(inCISmoothRisk, rowMeans)
-  coverageRisk = sapply(inCIRisk, rowMeans)
-  coveragePrevalence = sapply(inCIPrevalence, rowMeans)
-  coverageGriddedRisk = sapply(inCIGriddedRisk, rowMeans)
-  allCoveragesSmoothRisk = c(allCoveragesSmoothRisk, list(coverageSmoothRisk))
-  allCoveragesRisk = c(allCoveragesRisk, list(coverageRisk))
-  allCoveragesPrevalence = c(allCoveragesPrevalence, list(coveragePrevalence))
-  allCoveragesGriddedRisk = c(allCoveragesGriddedRisk, list(coverageGriddedRisk))
+  allPredsRisk = c(allPredsRisk, list(thisRhoPredsRisk))
+  allCIWidthsRisk = c(allCIWidthsRisk, list(thisRhoCIWidthsRisk))
+  allCoveragesRisk = c(allCoveragesRisk, list(thisRhoCoveragesRisk))
+  
+  allPredsPrevalence = c(allPredsPrevalence, list(thisRhoPredsPrevalence))
+  allCIWidthsPrevalence = c(allCIWidthsPrevalence, list(thisRhoCIWidthsPrevalence))
+  allCoveragesPrevalence = c(allCoveragesPrevalence, list(thisRhoCoveragesPrevalence))
 }
 
 # compile relevant results
 
 ## central predictions
-allPredsSmoothRiskMat = do.call("rbind", allPredsSmoothRisk)
-allPredsRiskMat = do.call("rbind", allPredsRisk)
-allPredsPrevalenceMat = do.call("rbind", allPredsPrevalence)
-allPredsGriddedRiskMat = do.call("rbind", allPredsGriddedRisk)
-
+allPredsSmoothRiskMat = lapply(allPredsSmoothRisk, function(x) {do.call("rbind", x)})
+allPredsRiskMat = lapply(allPredsRisk, function(x) {do.call("rbind", x)})
+allPredsPrevalenceMat = lapply(allPredsPrevalence, function(x) {do.call("rbind", x)})
+allPredsGriddedRiskMat = lapply(allPredsGriddedRisk, function(x) {do.call("rbind", x)})
+browser()
 ## CI widths
 allCIWidthsSmoothRisk80 = lapply(allCIWidthsSmoothRisk, function(listOfResolutions) {
   sapply(listOfResolutions, function(x) {x[3,]})
@@ -463,7 +505,7 @@ allCIWidthsPrevalence95 = do.call("rbind", allCIWidthsPrevalence95)
 
 allCIWidthsGriddedRisk80 = lapply(allCIWidthsGriddedRisk, function(listOfResolutions) {
   sapply(listOfResolutions, function(x) {x[3,]})
-  })
+})
 allCIWidthsGriddedRisk80 = do.call("rbind", allCIWidthsGriddedRisk80)
 allCIWidthsGriddedRisk90 = lapply(allCIWidthsGriddedRisk, function(listOfResolutions) {
   sapply(listOfResolutions, function(x) {x[2,]})
@@ -510,11 +552,11 @@ N=length(tempCon)
 preds = c(allPredsSmoothRiskMat, allPredsRiskMat, 
           allPredsPrevalenceMat, allPredsGriddedRiskMat)
 predFrame = data.frame(Constituency=rep(tempCon, 4), 
-                          Resolution=rep(tempRes, 4), 
-                          Model=factor(c(rep("Smooth risk", N), rep("Risk", N), 
-                                         rep("Prevalence", N), rep("Gridded risk", N)), 
-                                       levels=c("Smooth risk", "Risk", "Prevalence", "Gridded risk")), 
-                          preds=preds)
+                       Resolution=rep(tempRes, 4), 
+                       Model=factor(c(rep("Smooth risk", N), rep("Risk", N), 
+                                      rep("Prevalence", N), rep("Gridded risk", N)), 
+                                    levels=c("Smooth risk", "Risk", "Prevalence", "Gridded risk")), 
+                       preds=preds)
 pdf(paste0("figures/gridResolutionTest/predictionVRes.pdf"), width=5, height=5)
 ggplot(predFrame, aes(factor(Resolution), preds, fill=factor(Model))) + 
   geom_boxplot(position="dodge2") + scale_y_continuous(trans="log10") +
@@ -589,7 +631,7 @@ pdf(paste0("figures/gridResolutionTest/meanCoverage80VRes.pdf"), width=5, height
 pchs = 15:18
 cols = rainbow(4)
 ylim = range(100*c(c(meanCoveragesSmoothRisk80), c(meanCoveragesRisk80), 
-             c(meanCoveragesPrevalence80), c(meanCoveragesGriddedRisk80)))
+                   c(meanCoveragesPrevalence80), c(meanCoveragesGriddedRisk80)))
 ylim = c(0, 100)
 plot(resolutions*.97, 100*meanCoveragesSmoothRisk80, pch=pchs[1], col=cols[1], 
      ylim=ylim, ylab="80% coverage", xlab="Grid resolution (km)", 
@@ -606,7 +648,7 @@ pdf(paste0("figures/gridResolutionTest/meanCoverage90VRes.pdf"), width=5, height
 pchs = 15:18
 cols = rainbow(4)
 ylim = range(100*c(c(meanCoveragesSmoothRisk90), c(meanCoveragesRisk90), 
-             c(meanCoveragesPrevalence90), c(meanCoveragesGriddedRisk90)))
+                   c(meanCoveragesPrevalence90), c(meanCoveragesGriddedRisk90)))
 ylim = c(0, 100)
 plot(resolutions*.97, 100*meanCoveragesSmoothRisk90, pch=pchs[1], col=cols[1], 
      ylim=ylim, ylab="90% coverage", xlab="Grid resolution (km)", 
@@ -623,7 +665,7 @@ pdf(paste0("figures/gridResolutionTest/meanCoverage95VRes.pdf"), width=5, height
 pchs = 15:18
 cols = rainbow(4)
 ylim = range(100*c(c(meanCoveragesSmoothRisk95), c(meanCoveragesRisk95), 
-             c(meanCoveragesPrevalence95), c(meanCoveragesGriddedRisk95)))
+                   c(meanCoveragesPrevalence95), c(meanCoveragesGriddedRisk95)))
 ylim = c(0, 100)
 plot(resolutions*.97, 100*meanCoveragesSmoothRisk95, pch=pchs[1], col=cols[1], 
      ylim=ylim, ylab="95% coverage", xlab="Grid resolution (km)", 
@@ -639,16 +681,16 @@ dev.off()
 ### boxplots of all coverages
 
 coverages = 100*c(c(allCoveragesSmoothRisk80), c(allCoveragesRisk80), 
-            c(allCoveragesPrevalence80), c(allCoveragesGriddedRisk80))
+                  c(allCoveragesPrevalence80), c(allCoveragesGriddedRisk80))
 tempRes = resolutions[row(allCoveragesSmoothRisk80)]
 tempTruth = factor(as.character(col(allCoveragesSmoothRisk80)))
 N=length(tempRes)
 coverageFrame = data.frame(Truth=rep(tempTruth, 4), 
-                          Resolution=rep(tempRes, 4), 
-                          Model=factor(c(rep("Smooth risk", N), rep("Risk", N), 
-                                         rep("Prevalence", N), rep("Gridded risk", N)), 
-                                       levels=c("Smooth risk", "Risk", "Prevalence", "Gridded risk")), 
-                          coverages=coverages)
+                           Resolution=rep(tempRes, 4), 
+                           Model=factor(c(rep("Smooth risk", N), rep("Risk", N), 
+                                          rep("Prevalence", N), rep("Gridded risk", N)), 
+                                        levels=c("Smooth risk", "Risk", "Prevalence", "Gridded risk")), 
+                           coverages=coverages)
 
 pdf(paste0("figures/gridResolutionTest/allCoveragesVRes80.pdf"), width=7, height=5)
 ggplot(coverageFrame, aes(factor(Resolution), coverages, fill=factor(Model))) + 

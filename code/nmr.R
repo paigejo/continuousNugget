@@ -6,14 +6,14 @@ getMortResults = function(seed=123, useCoarseGrid=FALSE, logisticApproximation=F
   
   easpa = makeDefaultEASPA()
   
-  poppsub = poppsubKenya
+  poppsub = poppsubKenyaThresh
   
   if(useCoarseGrid) {
-    popMat = popGridCoarse
-    popMatAdjusted = popGridCoarseAdjusted
+    popMat = popGridCoarseThresh
+    popMatAdjusted = popGridCoarseAdjustedThresh
   } else {
-    popMat = popGrid
-    popMatAdjusted = popGridAdjusted
+    popMat = popGridThresh
+    popMatAdjusted = popGridAdjustedThresh
   }
   
   # Fit the risk model:
@@ -74,9 +74,9 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   out = load(paste0("savedOutput/application/finalMort", coarseText, logisticText, ".RData"))
   
   if(coarse) {
-    popMat = popGridCoarse
+    popMat = popGridCoarseThresh
   } else {
-    popMat = popGrid
+    popMat = popGridThresh
   }
   
   # calculate the range of predictions and CI widths ----
