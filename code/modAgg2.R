@@ -118,14 +118,14 @@ makeEASPA2019 = function(neonatal = TRUE) {
 makeEASPAJittered = function(neonatal=TRUE, pctError=5, seed=123) {
   set.seed(seed)
   out = makeDefaultEASPA()
-  toJitter = as.matrix(out[,-c(1, 4, 7, 10:12)])
+  toJitter = as.matrix(out[,-c(1, 4, 7, 8:12)])
   zeros = toJitter == 0
   amounts = toJitter * pctError/100
   errs = toJitter
   errs[!zeros] = mapply(jitter, toJitter[!zeros], amount=amounts[!zeros])
   errs[,1:4] = round(errs[,1:4]) # make sure HHs and EAs are whole numbers
   
-  out[,-c(1, 4, 7, 10:12)] = errs
+  out[,-c(1, 4, 7, 8:12)] = errs
   out$EATotal = out$EAUrb + out$EARur
   out$popTotal = out$popUrb + out$popRur
   out$HHTotal = out$HHUrb + out$HHRur

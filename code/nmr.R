@@ -2238,48 +2238,178 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
       }
     }
     
-    rangePrevalencePredPixel = c()
-    rangePrevalencePredConStrat = c()
-    rangePrevalencePredConstituency = c()
-    rangePrevalencePredCounty = c()
-    rangePrevalencePredProvince = c()
-    rangePrevalenceCIWidthPixel = c()
-    rangePrevalenceCIWidthConStrat = c()
-    rangePrevalenceCIWidthConstituency = c()
-    rangePrevalenceCIWidthCounty = c()
-    rangePrevalenceCIWidthProvince = c()
-    rangePrevalenceSDPixel = c()
-    rangePrevalenceSDConStrat = c()
-    rangePrevalenceSDConstituency = c()
-    rangePrevalenceSDCounty = c()
-    rangePrevalenceSDProvince = c()
-    
-    rangeCountPredPixel = c()
-    rangeCountPredConStrat = c()
-    rangeCountPredConstituency = c()
-    rangeCountPredCounty = c()
-    rangeCountPredProvince = c()
-    rangeCountCIWidthPixel = c()
-    rangeCountCIWidthConStrat = c()
-    rangeCountCIWidthConstituency = c()
-    rangeCountCIWidthCounty = c()
-    rangeCountCIWidthProvince = c()
-    rangeCountSDPixel = c()
-    rangeCountSDConStrat = c()
-    rangeCountSDConstituency = c()
-    rangeCountSDCounty = c()
-    rangeCountSDProvince = c()
-    
-    rangeRelativePrevalencePredConstituency = c()
-    rangeRelativePrevalencePredCounty = c()
-    rangeRelativePrevalencePredProvince = c()
-    rangeRelativePrevalenceCIWidthConstituency = c()
-    rangeRelativePrevalenceCIWidthCounty = c()
-    rangeRelativePrevalenceCIWidthProvince = c()
-    rangeRelativePrevalenceSDConstituency = c()
-    rangeRelativePrevalenceSDCounty = c()
-    rangeRelativePrevalenceSDProvince = c()
+    if(resultType == "std") {
+      rangePrevalencePredPixel_std = rangePrevalencePredPixel
+      rangePrevalencePredConStrat_std = rangePrevalencePredConStrat
+      rangePrevalencePredConstituency_std = rangePrevalencePredConstituency
+      rangePrevalencePredCounty_std = rangePrevalencePredCounty
+      rangePrevalencePredProvince_std = rangePrevalencePredProvince
+      rangePrevalenceCIWidthPixel_std = rangePrevalenceCIWidthPixel
+      rangePrevalenceCIWidthConStrat_std = rangePrevalenceCIWidthConStrat
+      rangePrevalenceCIWidthConstituency_std = rangePrevalenceCIWidthConstituency
+      rangePrevalenceCIWidthCounty_std = rangePrevalenceCIWidthCounty
+      rangePrevalenceCIWidthProvince_std = rangePrevalenceCIWidthProvince
+      rangePrevalenceSDPixel_std = rangePrevalenceSDPixel
+      rangePrevalenceSDConStrat_std = rangePrevalenceSDConStrat
+      rangePrevalenceSDConstituency_std = rangePrevalenceSDConstituency
+      rangePrevalenceSDCounty_std = rangePrevalenceSDCounty
+      rangePrevalenceSDProvince_std = rangePrevalenceSDProvince
+      
+      rangeCountPredPixel_std = rangeCountPredPixel
+      rangeCountPredConStrat_std = rangeCountPredConStrat
+      rangeCountPredConstituency_std = rangeCountPredConstituency
+      rangeCountPredCounty_std = rangeCountPredCounty
+      rangeCountPredProvince_std = rangeCountPredProvince
+      rangeCountCIWidthPixel_std = rangeCountCIWidthPixel
+      rangeCountCIWidthConStrat_std = rangeCountCIWidthConStrat
+      rangeCountCIWidthConstituency_std = rangeCountCIWidthConstituency
+      rangeCountCIWidthCounty_std = rangeCountCIWidthCounty
+      rangeCountCIWidthProvince_std = rangeCountCIWidthProvince
+      rangeCountSDPixel_std = rangeCountSDPixel
+      rangeCountSDConStrat_std = rangeCountSDConStrat
+      rangeCountSDConstituency_std = rangeCountSDConstituency
+      rangeCountSDCounty_std = rangeCountSDCounty
+      rangeCountSDProvince_std = rangeCountSDProvince
+      
+      rangeRelativePrevalencePredConstituency_std = rangeRelativePrevalencePredConstituency
+      rangeRelativePrevalencePredCounty_std = rangeRelativePrevalencePredCounty
+      rangeRelativePrevalencePredProvince_std = rangeRelativePrevalencePredProvince
+      rangeRelativePrevalenceCIWidthConstituency_std = rangeRelativePrevalenceCIWidthConstituency
+      rangeRelativePrevalenceCIWidthCounty_std = rangeRelativePrevalenceCIWidthCounty
+      rangeRelativePrevalenceCIWidthProvince_std = rangeRelativePrevalenceCIWidthProvince
+      rangeRelativePrevalenceSDConstituency_std = rangeRelativePrevalenceSDConstituency
+      rangeRelativePrevalenceSDCounty_std = rangeRelativePrevalenceSDCounty
+      rangeRelativePrevalenceSDProvince_std = rangeRelativePrevalenceSDProvince
+    } else if(resultType == "FBpop") {
+      rangePrevalencePredPixel_std = rangePrevalencePredPixel
+      rangePrevalencePredConStrat_std = rangePrevalencePredConStrat
+      rangePrevalencePredConstituency_std = rangePrevalencePredConstituency
+      rangePrevalencePredCounty_std = rangePrevalencePredCounty
+      rangePrevalencePredProvince_std = rangePrevalencePredProvince
+      rangePrevalenceCIWidthPixel_std = rangePrevalenceCIWidthPixel
+      rangePrevalenceCIWidthConStrat_std = rangePrevalenceCIWidthConStrat
+      rangePrevalenceCIWidthConstituency_std = rangePrevalenceCIWidthConstituency
+      rangePrevalenceCIWidthCounty_std = rangePrevalenceCIWidthCounty
+      rangePrevalenceCIWidthProvince_std = rangePrevalenceCIWidthProvince
+      rangePrevalenceSDPixel_std = rangePrevalenceSDPixel
+      rangePrevalenceSDConStrat_std = rangePrevalenceSDConStrat
+      rangePrevalenceSDConstituency_std = rangePrevalenceSDConstituency
+      rangePrevalenceSDCounty_std = rangePrevalenceSDCounty
+      rangePrevalenceSDProvince_std = rangePrevalenceSDProvince
+      
+      rangeCountPredPixel_std = rangeCountPredPixel
+      rangeCountPredConStrat_std = rangeCountPredConStrat
+      rangeCountPredConstituency_std = rangeCountPredConstituency
+      rangeCountPredCounty_std = rangeCountPredCounty
+      rangeCountPredProvince_std = rangeCountPredProvince
+      rangeCountCIWidthPixel_std = rangeCountCIWidthPixel
+      rangeCountCIWidthConStrat_std = rangeCountCIWidthConStrat
+      rangeCountCIWidthConstituency_std = rangeCountCIWidthConstituency
+      rangeCountCIWidthCounty_std = rangeCountCIWidthCounty
+      rangeCountCIWidthProvince_std = rangeCountCIWidthProvince
+      rangeCountSDPixel_std = rangeCountSDPixel
+      rangeCountSDConStrat_std = rangeCountSDConStrat
+      rangeCountSDConstituency_std = rangeCountSDConstituency
+      rangeCountSDCounty_std = rangeCountSDCounty
+      rangeCountSDProvince_std = rangeCountSDProvince
+      
+      rangeRelativePrevalencePredConstituency_std = rangeRelativePrevalencePredConstituency
+      rangeRelativePrevalencePredCounty_std = rangeRelativePrevalencePredCounty
+      rangeRelativePrevalencePredProvince_std = rangeRelativePrevalencePredProvince
+      rangeRelativePrevalenceCIWidthConstituency_std = rangeRelativePrevalenceCIWidthConstituency
+      rangeRelativePrevalenceCIWidthCounty_std = rangeRelativePrevalenceCIWidthCounty
+      rangeRelativePrevalenceCIWidthProvince_std = rangeRelativePrevalenceCIWidthProvince
+      rangeRelativePrevalenceSDConstituency_std = rangeRelativePrevalenceSDConstituency
+      rangeRelativePrevalenceSDCounty_std = rangeRelativePrevalenceSDCounty
+      rangeRelativePrevalenceSDProvince_std = rangeRelativePrevalenceSDProvince
+    }  else if(resultType == "census2019") {
+      rangePrevalencePredPixel_2019 = rangePrevalencePredPixel
+      rangePrevalencePredConStrat_2019 = rangePrevalencePredConStrat
+      rangePrevalencePredConstituency_2019 = rangePrevalencePredConstituency
+      rangePrevalencePredCounty_2019 = rangePrevalencePredCounty
+      rangePrevalencePredProvince_2019 = rangePrevalencePredProvince
+      rangePrevalenceCIWidthPixel_2019 = rangePrevalenceCIWidthPixel
+      rangePrevalenceCIWidthConStrat_2019 = rangePrevalenceCIWidthConStrat
+      rangePrevalenceCIWidthConstituency_2019 = rangePrevalenceCIWidthConstituency
+      rangePrevalenceCIWidthCounty_2019 = rangePrevalenceCIWidthCounty
+      rangePrevalenceCIWidthProvince_2019 = rangePrevalenceCIWidthProvince
+      rangePrevalenceSDPixel_2019 = rangePrevalenceSDPixel
+      rangePrevalenceSDConStrat_2019 = rangePrevalenceSDConStrat
+      rangePrevalenceSDConstituency_2019 = rangePrevalenceSDConstituency
+      rangePrevalenceSDCounty_2019 = rangePrevalenceSDCounty
+      rangePrevalenceSDProvince_2019 = rangePrevalenceSDProvince
+      
+      rangeCountPredPixel_2019 = rangeCountPredPixel
+      rangeCountPredConStrat_2019 = rangeCountPredConStrat
+      rangeCountPredConstituency_2019 = rangeCountPredConstituency
+      rangeCountPredCounty_2019 = rangeCountPredCounty
+      rangeCountPredProvince_2019 = rangeCountPredProvince
+      rangeCountCIWidthPixel_2019 = rangeCountCIWidthPixel
+      rangeCountCIWidthConStrat_2019 = rangeCountCIWidthConStrat
+      rangeCountCIWidthConstituency_2019 = rangeCountCIWidthConstituency
+      rangeCountCIWidthCounty_2019 = rangeCountCIWidthCounty
+      rangeCountCIWidthProvince_2019 = rangeCountCIWidthProvince
+      rangeCountSDPixel_2019 = rangeCountSDPixel
+      rangeCountSDConStrat_2019 = rangeCountSDConStrat
+      rangeCountSDConstituency_2019 = rangeCountSDConstituency
+      rangeCountSDCounty_2019 = rangeCountSDCounty
+      rangeCountSDProvince_2019 = rangeCountSDProvince
+      
+      rangeRelativePrevalencePredConstituency_2019 = rangeRelativePrevalencePredConstituency
+      rangeRelativePrevalencePredCounty_2019 = rangeRelativePrevalencePredCounty
+      rangeRelativePrevalencePredProvince_2019 = rangeRelativePrevalencePredProvince
+      rangeRelativePrevalenceCIWidthConstituency_2019 = rangeRelativePrevalenceCIWidthConstituency
+      rangeRelativePrevalenceCIWidthCounty_2019 = rangeRelativePrevalenceCIWidthCounty
+      rangeRelativePrevalenceCIWidthProvince_2019 = rangeRelativePrevalenceCIWidthProvince
+      rangeRelativePrevalenceSDConstituency_2019 = rangeRelativePrevalenceSDConstituency
+      rangeRelativePrevalenceSDCounty_2019 = rangeRelativePrevalenceSDCounty
+      rangeRelativePrevalenceSDProvince_2019 = rangeRelativePrevalenceSDProvince
+    } else if(resultType == "censusJittered") {
+      rangePrevalencePredPixel_jittered = rangePrevalencePredPixel
+      rangePrevalencePredConStrat_jittered = rangePrevalencePredConStrat
+      rangePrevalencePredConstituency_jittered = rangePrevalencePredConstituency
+      rangePrevalencePredCounty_jittered = rangePrevalencePredCounty
+      rangePrevalencePredProvince_jittered = rangePrevalencePredProvince
+      rangePrevalenceCIWidthPixel_jittered = rangePrevalenceCIWidthPixel
+      rangePrevalenceCIWidthConStrat_jittered = rangePrevalenceCIWidthConStrat
+      rangePrevalenceCIWidthConstituency_jittered = rangePrevalenceCIWidthConstituency
+      rangePrevalenceCIWidthCounty_jittered = rangePrevalenceCIWidthCounty
+      rangePrevalenceCIWidthProvince_jittered = rangePrevalenceCIWidthProvince
+      rangePrevalenceSDPixel_jittered = rangePrevalenceSDPixel
+      rangePrevalenceSDConStrat_jittered = rangePrevalenceSDConStrat
+      rangePrevalenceSDConstituency_jittered = rangePrevalenceSDConstituency
+      rangePrevalenceSDCounty_jittered = rangePrevalenceSDCounty
+      rangePrevalenceSDProvince_jittered = rangePrevalenceSDProvince
+      
+      rangeCountPredPixel_jittered = rangeCountPredPixel
+      rangeCountPredConStrat_jittered = rangeCountPredConStrat
+      rangeCountPredConstituency_jittered = rangeCountPredConstituency
+      rangeCountPredCounty_jittered = rangeCountPredCounty
+      rangeCountPredProvince_jittered = rangeCountPredProvince
+      rangeCountCIWidthPixel_jittered = rangeCountCIWidthPixel
+      rangeCountCIWidthConStrat_jittered = rangeCountCIWidthConStrat
+      rangeCountCIWidthConstituency_jittered = rangeCountCIWidthConstituency
+      rangeCountCIWidthCounty_jittered = rangeCountCIWidthCounty
+      rangeCountCIWidthProvince_jittered = rangeCountCIWidthProvince
+      rangeCountSDPixel_jittered = rangeCountSDPixel
+      rangeCountSDConStrat_jittered = rangeCountSDConStrat
+      rangeCountSDConstituency_jittered = rangeCountSDConstituency
+      rangeCountSDCounty_jittered = rangeCountSDCounty
+      rangeCountSDProvince_jittered = rangeCountSDProvince
+      
+      rangeRelativePrevalencePredConstituency_jittered = rangeRelativePrevalencePredConstituency
+      rangeRelativePrevalencePredCounty_jittered = rangeRelativePrevalencePredCounty
+      rangeRelativePrevalencePredProvince_jittered = rangeRelativePrevalencePredProvince
+      rangeRelativePrevalenceCIWidthConstituency_jittered = rangeRelativePrevalenceCIWidthConstituency
+      rangeRelativePrevalenceCIWidthCounty_jittered = rangeRelativePrevalenceCIWidthCounty
+      rangeRelativePrevalenceCIWidthProvince_jittered = rangeRelativePrevalenceCIWidthProvince
+      rangeRelativePrevalenceSDConstituency_jittered = rangeRelativePrevalenceSDConstituency
+      rangeRelativePrevalenceSDCounty_jittered = rangeRelativePrevalenceSDCounty
+      rangeRelativePrevalenceSDProvince_jittered = rangeRelativePrevalenceSDProvince
+    }
   }
+  
+  fullRange
   
   # make plots ----
   

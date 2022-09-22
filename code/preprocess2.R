@@ -435,11 +435,7 @@ save(poppsubKenya2019, poppsubKenya2019Thresh, poppsubKenya2019Neonatal, poppsub
 # Make jittered census popMat/poppsub files ----
 source("code/modAgg2.R")
 easpaJittered = makeEASPAJittered(neonatal=FALSE)
-easpaJittered$pctUrb = 100 * easpaJittered$popUrb / easpaJittered$popTotal
-easpaJittered$pctTotal = 100 * easpaJittered$popTotal / sum(easpaJittered$popTotal)
 easpaJitteredNeonatal = makeEASPAJittered(neonatal=TRUE)
-easpaJitteredNeonatal$pctUrb = 100 * easpaJitteredNeonatal$popUrb / easpaJitteredNeonatal$popTotal
-easpaJitteredNeonatal$pctTotal = 100 * easpaJitteredNeonatal$popTotal / sum(easpaJitteredNeonatal$popTotal)
 
 if(FALSE) {
   ## Construct poppsubKenya, a table of urban/rural general population totals 
