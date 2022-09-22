@@ -106,7 +106,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
     easpa = makeDefaultEASPA()
     poppsub = poppsubKenyaThresh
     
-    if(useCoarseGrid) {
+    if(coarse) {
       popMat = popGridCoarseThresh
       popMatAdjusted = popGridCoarseAdjustedThresh
     } else {
@@ -120,7 +120,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
     easpa = makeEASPAfacebook()
     poppsub = poppsubKenyaFaceThresh
     
-    if(useCoarseGrid) {
+    if(coarse) {
       popMat = popMatCoarseFaceThresh
       popMatAdjusted = popMatCoarseAdjustedFaceThresh
     } else {
