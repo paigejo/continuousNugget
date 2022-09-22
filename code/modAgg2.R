@@ -134,18 +134,18 @@ makeEASPAJittered = function(neonatal=TRUE, pctError=5, seed=123) {
     # adjust populations to be neonatal populations
     load(paste0(globalDirectory, "empiricalDistributions.RData"))
     
-    targetPopPerStratumUrban = dat$HHUrb * ecdfExpectation(empiricalDistributions$mothersUrban) * 
+    targetPopPerStratumUrban = out$HHUrb * ecdfExpectation(empiricalDistributions$mothersUrban) * 
       ecdfExpectation(empiricalDistributions$childrenUrban)
-    targetPopPerStratumRural = dat$HHRur * ecdfExpectation(empiricalDistributions$mothersRural) * 
+    targetPopPerStratumRural = out$HHRur * ecdfExpectation(empiricalDistributions$mothersRural) * 
       ecdfExpectation(empiricalDistributions$childrenRural)
     
-    dat$popUrb = targetPopPerStratumUrban
-    dat$popRur = targetPopPerStratumRural
-    dat$popTotal = dat$popUrb + dat$popRur
+    out$popUrb = targetPopPerStratumUrban
+    out$popRur = targetPopPerStratumRural
+    out$popTotal = out$popUrb + out$popRur
   }
   
-  dat$pctUrb = 100 * dat$popUrb / dat$popTotal
-  dat$pctTotal = 100 * dat$popTotal / sum(dat$popTotal)
+  out$pctUrb = 100 * out$popUrb / out$popTotal
+  out$pctTotal = 100 * out$popTotal / sum(out$popTotal)
   
   out
 }
