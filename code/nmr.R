@@ -19,6 +19,9 @@ getMortResults = function(seed=123, useCoarseGrid=FALSE, logisticApproximation=F
       popMatAdjusted = popGridAdjustedThresh
     }
   } else if(resultType == "FBpop") {
+    out = load("savedOutput/global/kenyaFacePopulationMats.RData")
+    out = load("savedOutput/global/poppsubFace.RData")
+    
     easpa = makeEASPAfacebook()
     poppsub = poppsubKenyaFaceThresh
     
@@ -111,6 +114,9 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
       popMatAdjusted = popGridAdjustedThresh
     }
   } else if(resultType == "FBpop") {
+    out = load("savedOutput/global/kenyaFacePopulationMats.RData")
+    out = load("savedOutput/global/poppsubFace.RData")
+    
     easpa = makeEASPAfacebook()
     poppsub = poppsubKenyaFaceThresh
     
