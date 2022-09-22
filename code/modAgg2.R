@@ -115,22 +115,37 @@ makeEASPA2019 = function(neonatal = TRUE) {
   dat
 }
 
-makeEASPAJittered = function(useThresh=TRUE, pctError=5, seed=123) {
+makeEASPAJittered = function(neonatal=TRUE, pctError=5, seed=123) {
   set.seed(seed)
   out = makeDefaultEASPA()
   toJitter = as.matrix(out[,-c(1, 4, 7, 10:12)])
+  zeros = toJitter == 0
   amounts = toJitter * pctError/100
-  errs = jitter(toJitter, amount=amounts)
-  errs[,1:4] = round(errs[,1:4])
-  errs[amounts == 0] = 0
+  errs = toJitter
+  errs[!zeros] = mapply(jitter, toJitter[!zeros], amount=amounts[!zeros])
+  errs[,1:4] = round(errs[,1:4]) # make sure HHs and EAs are whole numbers
   
-  out[,c(1, 4, 7, 10:12)] = errs
+  out[,-c(1, 4, 7, 10:12)] = errs
   out$EATotal = out$EAUrb + out$EARur
   out$popTotal = out$popUrb + out$popRur
   out$HHTotal = out$HHUrb + out$HHRur
   
-  out$pctTotal = out$popTotal / sum(out$popTotal)
-  out$pctUrb = out$popUrb / out$popTotal
+  if(neonatal) {
+    # adjust populations to be neonatal populations
+    load(paste0(globalDirectory, "empiricalDistributions.RData"))
+    
+    targetPopPerStratumUrban = dat$HHUrb * ecdfExpectation(empiricalDistributions$mothersUrban) * 
+      ecdfExpectation(empiricalDistributions$childrenUrban)
+    targetPopPerStratumRural = dat$HHRur * ecdfExpectation(empiricalDistributions$mothersRural) * 
+      ecdfExpectation(empiricalDistributions$childrenRural)
+    
+    dat$popUrb = targetPopPerStratumUrban
+    dat$popRur = targetPopPerStratumRural
+    dat$popTotal = dat$popUrb + dat$popRur
+  }
+  
+  dat$pctUrb = 100 * dat$popUrb / dat$popTotal
+  dat$pctTotal = 100 * dat$popTotal / sum(dat$popTotal)
   
   out
 }
