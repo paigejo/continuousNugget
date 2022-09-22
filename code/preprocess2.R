@@ -228,12 +228,34 @@ if(FALSE) {
   #       by setting kmRes to be higher, but we recommend fine resolution for 
   #       this step, since it only needs to be done once. Instead of running this, 
   #       you can simply run data(kenyaPopulationData)
-  system.time(poppsubKenyaFace <- getPoppsub(
+  system.time(out <- makePopIntegrationTab(
     kmRes=1, pop=popFace, domainPoly=kenyaPoly,
     eastLim=eastLim, northLim=northLim, mapProjection=projKenya,
     poppa = poppaKenya, areapa=areapaKenya, areapsub=areapsubKenya, 
-    areaMapDat=adm1, subareaMapDat=adm2, 
-    areaNameVar = "NAME_1", subareaNameVar="NAME_2"))
+    areaMapDat=adm1, subareaMapDat=adm2, returnPoppTables=TRUE, 
+    areaNameVar = "NAME_1", subareaNameVar="NAME_2", 
+    fixZeroPopDensitySubareas=TRUE))
+  
+  # make sure we don't get any zero population subareas. If so, substitute in 
+  # population totals and density from the WorldPop population estimates 
+  poppsubKenyaFace = out$poppsub
+  popMatKenyaFace = out$popMat
+  
+  poppsubKenyaFace = modifyPoppsub(poppsubKenyaFace, poppsubKenya[is.nan(poppsubKenyaFace$pctUrb),])
+  
+  # system.time(out <- makePopIntegrationTab(
+  #   kmRes=1, pop=popFace, poppsub=poppsubKenyaFace, domainPoly=kenyaPoly,
+  #   eastLim=eastLim, northLim=northLim, mapProjection=projKenya,
+  #   poppa = poppaKenya, areapa=areapaKenya, areapsub=areapsubKenya, 
+  #   areaMapDat=adm1, subareaMapDat=adm2, returnPoppTables=TRUE, 
+  #   areaNameVar = "NAME_1", subareaNameVar="NAME_2", extractChunkSize=1000, 
+  #   fixZeroPopDensitySubareas=TRUE))
+  # poppsubKenyaFace = out$poppsub
+  # popMatKenyaFace = out$popMat
+  # 
+  # popMatKenyaFace$pop[popMatKenyaFace$subarea %in% poppsubKenyaFace$subarea[is.nan(poppsubKenyaFace$pctUrb)]] =
+  #   popMatKenya$pop[popMatKenyaFace$subarea %in% poppsubKenyaFace$subarea[is.nan(poppsubKenyaFace$pctUrb)]]
+  # 
   
   # threshold poppsub so that subareas with too small an urban or rural population 
   # don't have any (for mainly computational purposes)
@@ -243,19 +265,34 @@ if(FALSE) {
 # Now generate a general population integration table at 5km resolution, 
 # based on subarea (Admin-2) x urban/rural population totals. This takes 
 # ~1 minute
+
+# apparently raster and terra don't use chunked operations for extract function...
+# instead we must use ad hoc solution of aggregating facebook population density 
+# raster to coarser resolution before making the integration table to avoid memory 
+# issues. :(
+# defaultRasterOptions = rasterOptions()
+# rasterOptions(maxmemory=1e8, chunksize=1e5, todisk=TRUE, memfrac=.1)
+# rasterOptions(, todisk=FALSE)
+# terraOptions(memfrac=.2, todisk=TRUE, memmax=1)
+
+popFaceAgg = raster::aggregate(popFace, fact=100, fun=sum)
 system.time(popMatKenyaFace <- makePopIntegrationTab(
-  kmRes=5, pop=popFace, domainPoly=kenyaPoly,
+  kmRes=5, pop=popFaceAgg, domainPoly=kenyaPoly,
   eastLim=eastLim, northLim=northLim, mapProjection=projKenya,
   poppa = poppaKenya, poppsub=poppsubKenya, 
   areaMapDat = adm1, subareaMapDat = adm2,
-  areaNameVar = "NAME_1", subareaNameVar="NAME_2"))
+  areaNameVar = "NAME_1", subareaNameVar="NAME_2", 
+  fixZeroPopDensitySubareas=TRUE))
 
-system.time(popMatKenyaThresh <- makePopIntegrationTab(
-  kmRes=5, pop=popFace, domainPoly=kenyaPoly,
+system.time(popMatKenyaFaceThresh <- makePopIntegrationTab(
+  kmRes=5, pop=popFaceAgg, domainPoly=kenyaPoly,
   eastLim=eastLim, northLim=northLim, mapProjection=projKenya,
-  poppa = poppaKenya, poppsub=poppsubKenyaThresh, 
+  poppa = poppaKenya, poppsub=poppsubKenyaFaceThresh, 
   areaMapDat = adm1, subareaMapDat = adm2,
-  areaNameVar = "NAME_1", subareaNameVar="NAME_2"))
+  areaNameVar = "NAME_1", subareaNameVar="NAME_2", 
+  fixZeroPopDensitySubareas=TRUE))
+
+source()
 
 ## Adjust popMat to be target (neonatal) rather than general population 
 ## density. First create the target population frame
@@ -282,19 +319,21 @@ easpaKenyaNeonatal$pctTotal =
 # population density grid at the Admin1 x urban/rural level
 areaSubareaTab = data.frame(area=adm2@data$NAME_1, subarea = adm2@data$NAME_2)
 
-popMatKenyaNeonatal = adjustPopMat(popMatKenya, easpaKenyaNeonatal)
-popMatKenyaNeonatalThresh = adjustPopMat(popMatKenyaThresh, easpaKenyaNeonatal)
+popMatKenyaFaceNeonatal = adjustPopMat(popMatKenyaFace, easpaKenyaNeonatal)
+popMatKenyaFaceNeonatalThresh = adjustPopMat(popMatKenyaFaceThresh, easpaKenyaNeonatal)
 
 # Generate neonatal population table from the neonatal population integration 
 # matrix. This is technically not necessary for population simulation purposes, 
 # but is here for illustrative purposes
-poppsubKenyaNeonatal = poppRegionFromPopMat(popMatKenyaNeonatal, 
+poppsubKenyaFaceNeonatal = poppRegionFromPopMat(popMatKenyaNeonatal, 
                                             popMatKenyaNeonatal$subarea)
-poppsubKenyaNeonatal = cbind(subarea=poppsubKenyaNeonatal$region, area=areaSubareaTab$area[match(poppsubKenyaNeonatal$region, areaSubareaTab$subarea)], poppsubKenyaNeonatal[,-1])
-poppsubKenyaNeonatalThresh = poppRegionFromPopMat(popMatKenyaNeonatalThresh, 
-                                                  popMatKenyaNeonatalThresh$subarea)
-poppsubKenyaNeonatalThresh = cbind(subarea=poppsubKenyaNeonatalThresh$region, area=areaSubareaTab$area[match(poppsubKenyaNeonatalThresh$region, areaSubareaTab$subarea)], poppsubKenyaNeonatalThresh[,-1])
+poppsubKenyaFaceNeonatal = cbind(subarea=poppsubKenyaFaceNeonatal$region, area=areaSubareaTab$area[match(poppsubKenyaFaceNeonatal$region, areaSubareaTab$subarea)], poppsubKenyaFaceNeonatal[,-1])
+poppsubKenyaFaceNeonatalThresh = poppRegionFromPopMat(popMatKenyaFaceNeonatalThresh, 
+                                                  popMatKenyaFaceNeonatalThresh$subarea)
+poppsubKenyaFaceNeonatalThresh = cbind(subarea=poppsubKenyaFaceNeonatalThresh$region, area=areaSubareaTab$area[match(poppsubKenyaFaceNeonatalThresh$region, areaSubareaTab$subarea)], poppsubKenyaFaceNeonatalThresh[,-1])
 
 # save files
-save(kenyaPoly, adm1, adm2, kenyaMesh, file="savedOutput/global/kenyaMapData.RData")
-save(popMatKenya, popMatKenyaNeonatal, popMatKenyaThresh, popMatKenyaNeonatalThresh, file="savedOutput/global/kenyaPopulationMats.RData")
+save(popMatKenyaFace, popMatKenyaFaceNeonatal, popMatKenyaFaceThresh, popMatKenyaFaceNeonatalThresh, file="savedOutput/global/kenyaFacePopulationMats.RData")
+save(poppsubKenyaFace, poppsubKenyaFaceThresh, poppsubKenyaFaceNeonatal, poppsubKenyaFaceNeonatalThresh, file="savedOutput/global/poppsubFace.RData")
+
+# Make 2019 Census ----

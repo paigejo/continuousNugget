@@ -77,6 +77,89 @@ makeDefaultEASPA = function(dataType=c("children", "women"), validationClusterI=
   out
 }
 
+makeEASPAfacebook = function() {
+  makeDefaultEASPA()
+}
+
+makeEASPA2019 = function(neonatal = TRUE) {
+  totalEAs = 129123 # (according to https://www.knbs.or.ke/get-ready-to-be-counted/)
+  dat = read.csv2("data/popData/2019census.csv", header = TRUE)
+  names(dat)[1] = "area"
+  dat = dat[order(dat$area),]
+  
+  defaultEaspa = makeDefaultEASPA()
+  totalEAsDefault = sum(defaultEaspa$EATotal)
+  newEAsUrb = round((defaultEaspa$EAUrb/totalEAsDefault) * totalEAs)
+  newEAsRur = round((defaultEaspa$EARur/totalEAsDefault) * totalEAs)
+  newEAsTotal = newEAsUrb + newEAsRur
+  
+  dat = cbind(data.frame(area=dat$area, EAUrb=newEAsUrb, EARur=newEAsRur, EATotal=newEAsTotal), dat[,5:7], dat[,2:4])
+  
+  if(neonatal) {
+    # adjust populations to be neonatal populations
+    load(paste0(globalDirectory, "empiricalDistributions.RData"))
+    
+    targetPopPerStratumUrban = dat$HHUrb * ecdfExpectation(empiricalDistributions$mothersUrban) * 
+      ecdfExpectation(empiricalDistributions$childrenUrban)
+    targetPopPerStratumRural = dat$HHRur * ecdfExpectation(empiricalDistributions$mothersRural) * 
+      ecdfExpectation(empiricalDistributions$childrenRural)
+    
+    dat$popUrb = targetPopPerStratumUrban
+    dat$popRur = targetPopPerStratumRural
+    dat$popTotal = dat$popUrb + dat$popRur
+    
+    dat$pctUrb = 100 * dat$popUrb / dat$popTotal
+    dat$pctTotal = 100 * dat$popTotal / sum(dat$popTotal)
+  }
+  
+  dat
+}
+
+makeEASPAJittered = function(useThresh=TRUE, pctError=5, seed=123) {
+  set.seed(seed)
+  out = makeDefaultEASPA()
+  toJitter = as.matrix(out[,-c(1, 4, 7, 10:12)])
+  amounts = toJitter * pctError/100
+  errs = jitter(toJitter, amount=amounts)
+  errs[,1:4] = round(errs[,1:4])
+  errs[amounts == 0] = 0
+  
+  out[,c(1, 4, 7, 10:12)] = errs
+  out$EATotal = out$EAUrb + out$EARur
+  out$popTotal = out$popUrb + out$popRur
+  out$HHTotal = out$HHUrb + out$HHRur
+  
+  out$pctTotal = out$popTotal / sum(out$popTotal)
+  out$pctUrb = out$popUrb / out$popTotal
+  
+  out
+}
+
+makePoppsubJittered = function(useThresh=TRUE, pctError=5, seed=12) {
+  set.seed(seed)
+  if(useThresh) {
+    out = poppsubKenyaThresh
+  } else {
+    out = poppsubKenya
+  }
+  
+  toJitter = as.matrix(out[,-c(1, 2, 5:7)])
+  amounts = toJitter * pctError/100
+  errs = jitter(toJitter, amount=amounts)
+  errs[,1:4] = round(errs[,1:4])
+  errs[amounts == 0] = 0
+  
+  out[,c(1, 4, 7, 10:12)] = errs
+  out$EATotal = out$EAUrb + out$EARur
+  out$popTotal = out$popUrb + out$popRur
+  out$HHTotal = out$HHUrb + out$HHRur
+  
+  out$pctTotal = out$popTotal / sum(out$popTotal)
+  out$pctUrb = out$popUrb / out$popTotal
+  
+  out
+}
+
 # Use the popGrid variable to construct a matrix suitable for input into the aggregation models. 
 # population matrix must have the following values: 
 # lon: longitude
@@ -1890,6 +1973,7 @@ simPopCustom = function(logitRiskDraws, sigmaEpsilonDraws, easpa, popMat, target
   }
 }
 
+# adjusts popMat to match poppsub and targetPopMat to match easpa
 checkPopFrameAndIntWeights = function(popMat, targetPopMat, easpa, poppsub, stopOnFrameMismatch=TRUE, 
                                       tol=1e-3) {
   # first check the adjusted (target) population density

@@ -1,20 +1,44 @@
 # script for getting all NMR results for the application
-# 25GB
-getMortResults = function(seed=123, useCoarseGrid=FALSE, logisticApproximation=FALSE, nPostSamples=1000) {
-  time1 = proc.time()[3]
+# 11GB for 10k posterior samples, 1.1Gb for 10k posterior samples under coarse resolution
+getMortResults = function(seed=123, useCoarseGrid=FALSE, logisticApproximation=FALSE, nPostSamples=1000, 
+                          resultType=c("std", "FBpop", "census2019", "censusJittered")) {
+  resultType = match.arg(resultType)
   set.seed(seed)
   
-  easpa = makeDefaultEASPA()
+  time1 = proc.time()[3]
   
-  poppsub = poppsubKenyaThresh
-  
-  if(useCoarseGrid) {
-    popMat = popGridCoarseThresh
-    popMatAdjusted = popGridCoarseAdjustedThresh
-  } else {
-    popMat = popGridThresh
-    popMatAdjusted = popGridAdjustedThresh
+  if(resultType == "std") {
+    easpa = makeDefaultEASPA()
+    poppsub = poppsubKenyaThresh
+    
+    if(useCoarseGrid) {
+      popMat = popGridCoarseThresh
+      popMatAdjusted = popGridCoarseAdjustedThresh
+    } else {
+      popMat = popGridThresh
+      popMatAdjusted = popGridAdjustedThresh
+    }
+  } else if(resultType == "FBpop") {
+    easpa = makeEASPAfacebook()
+    poppsub = poppsubKenyaFaceThresh
+    
+    if(useCoarseGrid) {
+      popMat = popMatCoarseFaceThresh
+      popMatAdjusted = popMatCoarseAdjustedFaceThresh
+    } else {
+      popMat = popMatKenyaFaceThresh
+      popMatAdjusted = popMatKenyaFaceNeonatalThresh
+    }
+  } else if(resultType == "census2019") {
+    easpa = makeEASPA2019()
+    poppsub = poppsubKenya2019Thresh
+  } else if(resultType == "censusJittered") {
+    easpa = makeEASPAJittered()
+    poppsub = poppsubKenyaJitteredThresh
   }
+  
+  
+  
   
   # Fit the risk model:
   time2 = proc.time()[3]
@@ -52,17 +76,18 @@ getMortResults = function(seed=123, useCoarseGrid=FALSE, logisticApproximation=F
   names(totalTimes) = c("setup", "SPDEmodel", "aggregationModel", "totalTime")
   
   # save file
-  fileName = paste0("savedOutput/application/finalMort", ifelse(useCoarseGrid, "Coarse", ""), ".RData")
-  save(riskOut, pixelPop, subareaPop, areaPop, logitDraws, aggregationTimings, rawTimes, totalTimes, file=fileName)
+  fileName = paste0("savedOutput/application/finalMort", ifelse(useCoarseGrid, "Coarse", ""), "_", resultType, ".RData")
+  save(riskOut, pixelPop, subareaPop, areaPop, logitDraws, aggregationTimings, rawTimes, totalTimes, resultType, file=fileName)
   
   list(riskOut=riskOut, pixelPop=pixelPop, subareaPop=subareaPop, 
        areaPop=areaPop, logitDraws=logitDraws, 
        aggregationTimings=aggregationTimings, 
-       rawTimes=rawTimes, totalTimes=totalTimes)
+       rawTimes=rawTimes, totalTimes=totalTimes, resultType=resultType)
 }
 
 # Make plots for the neonatal mortality application
-makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
+makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95, 
+                         resultType=c("std", "FBpop", "census2019", "censusJittered")) {
   alpha = 1 - signif
   
   # first load the model predictions
@@ -71,12 +96,37 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   }
   logisticText = ifelse(!logisticApproximation, "", "logisticApprox")
   coarseText = ifelse(!coarse, "", "Coarse")
-  out = load(paste0("savedOutput/application/finalMort", coarseText, logisticText, ".RData"))
+  resultTypeText = paste0("_", resultType)
+  out = load(paste0("savedOutput/application/finalMort", coarseText, logisticText, resultTypeText, ".RData"))
   
-  if(coarse) {
-    popMat = popGridCoarseThresh
-  } else {
-    popMat = popGridThresh
+  if(resultType == "std") {
+    easpa = makeDefaultEASPA()
+    poppsub = poppsubKenyaThresh
+    
+    if(useCoarseGrid) {
+      popMat = popGridCoarseThresh
+      popMatAdjusted = popGridCoarseAdjustedThresh
+    } else {
+      popMat = popGridThresh
+      popMatAdjusted = popGridAdjustedThresh
+    }
+  } else if(resultType == "FBpop") {
+    easpa = makeEASPAfacebook()
+    poppsub = poppsubKenyaFaceThresh
+    
+    if(useCoarseGrid) {
+      popMat = popMatCoarseFaceThresh
+      popMatAdjusted = popMatCoarseAdjustedFaceThresh
+    } else {
+      popMat = popMatKenyaFaceThresh
+      popMatAdjusted = popMatKenyaFaceNeonatalThresh
+    }
+  } else if(resultType == "census2019") {
+    easpa = makeEASPA2019()
+    poppsub = poppsubKenya2019Thresh
+  } else if(resultType == "censusJittered") {
+    easpa = makeEASPAJittered()
+    poppsub = poppsubKenyaJitteredThresh
   }
   
   # calculate the range of predictions and CI widths ----
@@ -181,8 +231,8 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
       rangePrevalenceSDPixelLCPb = range(prevalenceSDPixelLCPb, na.rm=TRUE)
       rangeCountSDPixelLCPb = range(countSDPixelLCPb, na.rm=TRUE)
     }  else if(thisLevel == "constrat") {
-      urbanConstituencies = poppcon$County == "Nairobi" | poppcon$County == "Mombasa"
-      undefinedPrevalenceConStrats = c(poppcon$popUrb == 0, poppcon$popRur == 0)
+      urbanConstituencies = poppsub$County == "Nairobi" | poppsub$County == "Mombasa"
+      undefinedPrevalenceConStrats = c(poppsub$popUrb == 0, poppsub$popRur == 0)
       rangePrevalencePredConStrat = range(c(rangePrevalencePredConStrat, 
                                             rowMeans(subareaPop$pUrbanFineScaleRisk, na.rm=TRUE), 
                                             rowMeans(subareaPop$pRuralFineScaleRisk, na.rm=TRUE)), na.rm=TRUE)
@@ -238,8 +288,8 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
                               apply(subareaPop$ZRuralFineScaleRisk, 1, sd, na.rm=TRUE))
       countSDConStratLCPb = countSDConStratLCPb[!undefinedPrevalenceConStrats]
     } else if(thisLevel == "constituency") {
-      urbanConstituencies = poppcon$County == "Nairobi" | poppcon$County == "Mombasa"
-      undefinedRelativePrevalenceConstituencies = (poppcon$popUrb == 0) | (poppcon$popRur == 0)
+      urbanConstituencies = poppsub$County == "Nairobi" | poppsub$County == "Mombasa"
+      undefinedRelativePrevalenceConstituencies = (poppsub$popUrb == 0) | (poppsub$popRur == 0)
       rangePrevalencePredConstituency = range(c(rangePrevalencePredConstituency, 
                                                 rowMeans(subareaPop$pFineScaleRisk, na.rm=TRUE)))
       rangeCountPredConstituency = range(c(rangeCountPredConstituency, 
@@ -417,7 +467,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   #                     rangePrevalenceCIWidthCounty))
   
   # browser()
-  png(paste0(figDirectory, "application/prevalenceMeanCIWidth", logisticText, coarseText, ".png"), width=1500, height=1000)
+  png(paste0(figDirectory, "application/prevalenceMeanCIWidth", logisticText, coarseText, resultTypeText, ".png"), width=1500, height=1000)
   par(mfrow=c(2,3), oma=c(5,5,5,5), mar=c(3.1, 5.1, 1.1, 7.1))
   
   # pixel level
@@ -527,7 +577,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   meanRangeConstituency = range(constituencyMean)
   meanRangeCounty = range(countyMean)
   
-  png(paste0(figDirectory, "application/burdenMeanCIWidth", logisticText, coarseText, ".png"), width=1500, height=1000)
+  png(paste0(figDirectory, "application/burdenMeanCIWidth", logisticText, coarseText, resultTypeText, ".png"), width=1500, height=1000)
   par(mfrow=c(2,3), oma=c(5,5,5,5), mar=c(3.1, 5.1, 1.1, 7.1))
   
   # pixel level
@@ -645,7 +695,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   urbDivergingCols = makeGreenBlueDivergingColors(64, center=1, valRange=meanRange)
   urbDivergingCols = centerColorScale(64, valRange=meanRange, center=1, colScale=makeGreenBlueDivergingColors, scaleFun=log)
   
-  png(paste0(figDirectory, "application/relativePrevMeanCIWidth", logisticText, coarseText, ".png"), width=1000, height=1000)
+  png(paste0(figDirectory, "application/relativePrevMeanCIWidth", logisticText, coarseText, resultTypeText, ".png"), width=1000, height=1000)
   par(mfrow=c(2,2), oma=c(3,5,3,3), mar=c(3.1, 5.1, 1.1, 5.1))
   
   # constituency level
@@ -725,7 +775,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
                        rangePrevalenceCIWidthCounty))
   widthRangePixel = rangePrevalenceCIWidthPixel
   
-  png(paste0(figDirectory, "application/prevalenceCIWidth", logisticText, coarseText, ".png"), width=1000, height=1000)
+  png(paste0(figDirectory, "application/prevalenceCIWidth", logisticText, coarseText, resultTypeText, ".png"), width=1000, height=1000)
   par(mfrow=c(2,2), oma=c( 0,0,4,7), mar=c(6.1, 8.5, 1.1, 3.5))
   
   # pixel level
@@ -793,7 +843,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   meanRangeCounty = rangeCountPredCounty
   # meanRangeProvince = rangeCountPredProvince
   
-  png(paste0(figDirectory, "application/countMean", logisticText, coarseText, ".png"), width=1000, height=1000)
+  png(paste0(figDirectory, "application/countMean", logisticText, coarseText, resultTypeText, ".png"), width=1000, height=1000)
   par(mfrow=c(2,2), oma=c( 0,0,4,7), mar=c(6.1, 8.5, 1.1, 3.5))
   
   # pixel level
@@ -863,7 +913,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   widthRangeCounty = rangeCountCIWidthCounty
   # widthRangeProvince = rangeCountCIWidthProvince
   
-  png(paste0(figDirectory, "application/countWidth", logisticText, coarseText, ".png"), width=1000, height=1000)
+  png(paste0(figDirectory, "application/countWidth", logisticText, coarseText, resultTypeText, ".png"), width=1000, height=1000)
   par(mfrow=c(2,2), oma=c( 0,0,4,7), mar=c(6.1, 8.5, 1.1, 3.5))
   
   # pixel level
@@ -933,7 +983,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
                       rangeRelativePrevalencePredCounty))
   urbDivergingCols = makeGreenBlueDivergingColors(64, center=1, valRange=meanRange)
   
-  png(paste0(figDirectory, "application/relativePrevalence", logisticText, coarseText, ".png"), width=1000, height=1000)
+  png(paste0(figDirectory, "application/relativePrevalence", logisticText, coarseText, resultTypeText, ".png"), width=1000, height=1000)
   par(mfrow=c(2,2), oma=c( 0,4,4,7), mar=c(6.1, 6.5, 1.1, 2.5))
   
   # constituency level
@@ -1029,7 +1079,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   ### prevalence (with abs width) ----
   
   # absolute prevalence uncertainty
-  pdf(paste0(figDirectory, "application/prevalenceWidthBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
+  pdf(paste0(figDirectory, "application/prevalenceWidthBoxplot", logisticText, coarseText, resultTypeText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   pixels = length(prevalenceCIWidthPixel)
@@ -1061,7 +1111,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   dev.off()
   
   ### prevalence ----
-  pdf(paste0(figDirectory, "application/prevalenceRelWidthBoxplot", logisticText, coarseText, ".pdf"), width=8, height=5)
+  pdf(paste0(figDirectory, "application/prevalenceRelWidthBoxplot", logisticText, coarseText, resultTypeText, ".pdf"), width=8, height=5)
   par(mfrow=c(1,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   # pixels = length(prevalenceCIWidthPixel)
@@ -1106,7 +1156,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   dev.off()
   browser()
   ### prevalence (SD) ----
-  pdf(paste0(figDirectory, "application/prevalenceRelSDBoxplot", logisticText, coarseText, ".pdf"), width=8, height=5)
+  pdf(paste0(figDirectory, "application/prevalenceRelSDBoxplot", logisticText, coarseText, resultTypeText, ".pdf"), width=8, height=5)
   par(mfrow=c(1,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   # pixels = length(prevalenceSDPixel)
@@ -1151,7 +1201,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   dev.off()
   
   ### prevalence (SD, con strat) ----
-  pdf(paste0(figDirectory, "application/prevalenceRelSDBoxplotConStrat", logisticText, coarseText, ".pdf"), width=9, height=6)
+  pdf(paste0(figDirectory, "application/prevalenceRelSDBoxplotConStrat", logisticText, coarseText, resultTypeText, ".pdf"), width=9, height=6)
   par(mfrow=c(2,3), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   conStrats = length(prevalenceSDConStratlcpb)
@@ -1216,7 +1266,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   dev.off()
   
   ### burden (abs scale) ----
-  pdf(paste0(figDirectory, "application/countWidthBoxplot", logisticText, coarseText, ".pdf"), width=8, height=5)
+  pdf(paste0(figDirectory, "application/countWidthBoxplot", logisticText, coarseText, resultTypeText, ".pdf"), width=8, height=5)
   par(mfrow=c(1,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   # pixels = length(countCIWidthPixel)
@@ -1247,7 +1297,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   dev.off()
   
   ### burden ----
-  pdf(paste0(figDirectory, "application/countRelWidthBoxplot", logisticText, coarseText, ".pdf"), width=8, height=5)
+  pdf(paste0(figDirectory, "application/countRelWidthBoxplot", logisticText, coarseText, resultTypeText, ".pdf"), width=8, height=5)
   par(mfrow=c(1,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   # pixels = length(countCIWidthPixel)
@@ -1292,7 +1342,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   dev.off()
   
   ### Burden (SD) ----
-  pdf(paste0(figDirectory, "application/countRelSDBoxplotWithPixel", logisticText, coarseText, ".pdf"), width=6, height=6)
+  pdf(paste0(figDirectory, "application/countRelSDBoxplotWithPixel", logisticText, coarseText, resultTypeText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   pixels = length(countSDPixel)
@@ -1338,7 +1388,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   dev.off()
   
   ### Burden (SD, no pixel) ----
-  pdf(paste0(figDirectory, "application/countRelSDBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
+  pdf(paste0(figDirectory, "application/countRelSDBoxplot", logisticText, coarseText, resultTypeText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   constituencies = length(countSDConstituency)
@@ -1374,7 +1424,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   mtext(side = 1, "Model", line = 3, cex=1)
   
   ### Burden (SD, no pixel, con strat) ----
-  pdf(paste0(figDirectory, "application/countRelSDBoxplotConStrat", logisticText, coarseText, ".pdf"), width=9, height=6)
+  pdf(paste0(figDirectory, "application/countRelSDBoxplotConStrat", logisticText, coarseText, resultTypeText, ".pdf"), width=9, height=6)
   par(mfrow=c(2,3), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   conStrats = length(countSDConStratlcpb)
@@ -1439,7 +1489,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   dev.off()
   
   ### Relative prevalence CI width (abs scale) ----
-  pdf(paste0(figDirectory, "application/relativePrevalenceWidthBoxplot", logisticText, coarseText, ".pdf"), width=6, height=6)
+  pdf(paste0(figDirectory, "application/relativePrevalenceWidthBoxplot", logisticText, coarseText, resultTypeText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   constituencies = length(relativePrevalenceCIWidthConstituency)
@@ -1493,7 +1543,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   dev.off()
   
   ### relative prevalence (SD) ----
-  pdf(paste0(figDirectory, "application/relativePrevalenceWidthBoxplotSD", logisticText, coarseText, ".pdf"), width=6, height=6)
+  pdf(paste0(figDirectory, "application/relativePrevalenceWidthBoxplotSD", logisticText, coarseText, resultTypeText, ".pdf"), width=6, height=6)
   par(mfrow=c(2,2), oma=c(3,3,2,0), mar=c(2, 2, 2, 1))
   
   onstituencies = length(relativePrevalenceSDConstituency)
@@ -1564,7 +1614,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   allPchs = c(rep(pchs[1], length(meanEAsConStrat)), rep(pchs[2], length(meanEAsConstituency)), rep(pchs[3], length(meanEAsCounty)))
   
   ### prevalence ----
-  pdf(paste0(figDirectory, "application/prevalencePctIncreaseSDvsEAs", logisticText, coarseText, ".pdf"), width=5, height=5)
+  pdf(paste0(figDirectory, "application/prevalencePctIncreaseSDvsEAs", logisticText, coarseText, resultTypeText, ".pdf"), width=5, height=5)
   
   conStratDat = 100*(prevalenceCIWidthConStrat-prevalenceCIWidthConStratlcpb)/prevalenceCIWidthConStratlcpb
   constituencyDat = 100*(prevalenceCIWidthConstituency-prevalenceCIWidthConstituencylcpb)/prevalenceCIWidthConstituencylcpb
@@ -1590,7 +1640,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   dev.off()
   
   ### burden ----
-  pdf(paste0(figDirectory, "application/countPctIncreaseSDvsEAs", logisticText, coarseText, ".pdf"), width=5, height=5)
+  pdf(paste0(figDirectory, "application/countPctIncreaseSDvsEAs", logisticText, coarseText, resultTypeText, ".pdf"), width=5, height=5)
   
   conStratDat = 100*(countCIWidthConStrat-countCIWidthConStratlcpb)/countCIWidthConStratlcpb
   constituencyDat = 100*(countCIWidthConstituency-countCIWidthConstituencylcpb)/countCIWidthConstituencylcpb
@@ -1616,7 +1666,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   dev.off()
   
   ### relative prevalence ----
-  pdf(paste0(figDirectory, "application/relativePrevalencePctIncreaseSDvsEAs", logisticText, coarseText, ".pdf"), width=5, height=5)
+  pdf(paste0(figDirectory, "application/relativePrevalencePctIncreaseSDvsEAs", logisticText, coarseText, resultTypeText, ".pdf"), width=5, height=5)
   
   constituencyDat = 100*(relativePrevalenceCIWidthConstituency-relativePrevalenceCIWidthConstituencylcpb)/relativePrevalenceCIWidthConstituencylcpb
   countyDat = 100*(relativePrevalenceCIWidthCounty-relativePrevalenceCIWidthCountylcpb)/relativePrevalenceCIWidthCountylcpb
@@ -1637,7 +1687,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95) {
   dev.off()
   
   ### All ----
-  pdf(paste0(figDirectory, "application/allPctIncreaseSDvsEAs", logisticText, coarseText, ".pdf"), width=9, height=4)
+  pdf(paste0(figDirectory, "application/allPctIncreaseSDvsEAs", logisticText, coarseText, resultTypeText, ".pdf"), width=9, height=4)
   options(scipen=5)
   par(mfrow=c(1, 3), mar=c(4, 2.5, 3, 1), oma=c(0, 2, 0, 0))
   
