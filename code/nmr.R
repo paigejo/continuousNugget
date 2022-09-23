@@ -1116,18 +1116,18 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
   
   pixels = length(prevalenceCIWidthPixel)
   pixelDat = data.frame(modelName=c(rep("Smooth Risk", pixels), rep("Risk", pixels), rep("Prevalence", pixels)), 
-                       width=c(prevalenceCIWidthPixellcpb, prevalenceCIWidthPixelLCPb, prevalenceCIWidthPixel))
+                        width=c(prevalenceCIWidthPixellcpb, prevalenceCIWidthPixelLCPb, prevalenceCIWidthPixel))
   boxplot(width~modelName, data=pixelDat, ylab="", xlab="Model", main="Pixel", col="skyblue", log="y")
   mtext(side = 2, "95% CI width", line = 3, cex=1)
   
   constituencies = length(prevalenceCIWidthConstituency)
   constituencyDat = data.frame(modelName=c(rep("Smooth Risk", constituencies), rep("Risk", constituencies), rep("Prevalence", constituencies)), 
-                        width=c(prevalenceCIWidthConstituencylcpb, prevalenceCIWidthConstituencyLCPb, prevalenceCIWidthConstituency))
+                               width=c(prevalenceCIWidthConstituencylcpb, prevalenceCIWidthConstituencyLCPb, prevalenceCIWidthConstituency))
   boxplot(width~modelName, data=constituencyDat, ylab="95% CI Width", xlab="Model", main="Constituency", col="skyblue", log="y")
   
   counties = length(prevalenceCIWidthCounty)
   countyDat = data.frame(modelName=c(rep("Smooth Risk", counties), rep("Risk", counties), rep("Prevalence", counties)), 
-                           width=c(prevalenceCIWidthCountylcpb, prevalenceCIWidthCountyLCPb, prevalenceCIWidthCounty))
+                         width=c(prevalenceCIWidthCountylcpb, prevalenceCIWidthCountyLCPb, prevalenceCIWidthCounty))
   boxplot(width~modelName, data=countyDat, ylab="95% CI Width", xlab="Model", main="County", col="skyblue", log="y")
   mtext(side = 2, "95% CI width", line = 3, cex=1)
   mtext(side = 1, "Model", line = 3, cex=1)
@@ -1157,18 +1157,18 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
   
   constituencies = length(prevalenceCIWidthConstituency)
   constituencyDat = data.frame(modelName=c(rep("Smooth Risk", constituencies), rep("Risk", constituencies), rep("Prevalence", constituencies)), 
-                        width=c(100*(prevalenceCIWidthConstituencylcpb-prevalenceCIWidthConstituencylcpb)/prevalenceCIWidthConstituencylcpb, 
-                                100*(prevalenceCIWidthConstituencyLCPb-prevalenceCIWidthConstituencylcpb)/prevalenceCIWidthConstituencylcpb, 
-                                100*(prevalenceCIWidthConstituency-prevalenceCIWidthConstituencylcpb)/prevalenceCIWidthConstituencylcpb))
+                               width=c(100*(prevalenceCIWidthConstituencylcpb-prevalenceCIWidthConstituencylcpb)/prevalenceCIWidthConstituencylcpb, 
+                                       100*(prevalenceCIWidthConstituencyLCPb-prevalenceCIWidthConstituencylcpb)/prevalenceCIWidthConstituencylcpb, 
+                                       100*(prevalenceCIWidthConstituency-prevalenceCIWidthConstituencylcpb)/prevalenceCIWidthConstituencylcpb))
   boxplot(width~modelName, data=constituencyDat, ylab="", xlab="", main="Constituency", col="skyblue")
   abline(h=0, lty=2)
   mtext(side = 2, "Percent increase", line = 3, cex=1)
   
   counties = length(prevalenceCIWidthCounty)
   countyDat = data.frame(modelName=c(rep("Smooth Risk", counties), rep("Risk", counties), rep("Prevalence", counties)), 
-                               width=c(100*(prevalenceCIWidthCountylcpb-prevalenceCIWidthCountylcpb)/prevalenceCIWidthCountylcpb, 
-                                       100*(prevalenceCIWidthCountyLCPb-prevalenceCIWidthCountylcpb)/prevalenceCIWidthCountylcpb, 
-                                       100*(prevalenceCIWidthCounty-prevalenceCIWidthCountylcpb)/prevalenceCIWidthCountylcpb))
+                         width=c(100*(prevalenceCIWidthCountylcpb-prevalenceCIWidthCountylcpb)/prevalenceCIWidthCountylcpb, 
+                                 100*(prevalenceCIWidthCountyLCPb-prevalenceCIWidthCountylcpb)/prevalenceCIWidthCountylcpb, 
+                                 100*(prevalenceCIWidthCounty-prevalenceCIWidthCountylcpb)/prevalenceCIWidthCountylcpb))
   boxplot(width~modelName, data=countyDat, ylab="Percent Increase", xlab="", main="County", col="skyblue")
   abline(h=0, lty=2)
   mtext(side = 1, "Model", line = 3, cex=1)
@@ -1438,9 +1438,9 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
   
   constituencies = length(countSDConstituency)
   constituencyDatRel = data.frame(modelName=c(rep("Smooth Risk", constituencies), rep("Risk", constituencies), rep("Prevalence", constituencies)), 
-                               width=c(100*(countSDConstituencylcpb-countSDConstituencylcpb)/countSDConstituencylcpb, 
-                                       100*(countSDConstituencyLCPb-countSDConstituencylcpb)/countSDConstituencylcpb, 
-                                       100*(countSDConstituency-countSDConstituencylcpb)/countSDConstituencylcpb))
+                                  width=c(100*(countSDConstituencylcpb-countSDConstituencylcpb)/countSDConstituencylcpb, 
+                                          100*(countSDConstituencyLCPb-countSDConstituencylcpb)/countSDConstituencylcpb, 
+                                          100*(countSDConstituency-countSDConstituencylcpb)/countSDConstituencylcpb))
   boxplot(width~modelName, data=constituencyDatRel, ylab="", xlab="", main="Constituency", col="skyblue")
   abline(h=0, lty=2)
   mtext(side = 1, "Model", line = 3, cex=1)
@@ -1448,9 +1448,9 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
   
   counties = length(countSDCounty)
   countyDatRel = data.frame(modelName=c(rep("Smooth Risk", counties), rep("Risk", counties), rep("Prevalence", counties)), 
-                         width=c(100*(countSDCountylcpb-countSDCountylcpb)/countSDCountylcpb, 
-                                 100*(countSDCountyLCPb-countSDCountylcpb)/countSDCountylcpb, 
-                                 100*(countSDCounty-countSDCountylcpb)/countSDCountylcpb))
+                            width=c(100*(countSDCountylcpb-countSDCountylcpb)/countSDCountylcpb, 
+                                    100*(countSDCountyLCPb-countSDCountylcpb)/countSDCountylcpb, 
+                                    100*(countSDCounty-countSDCountylcpb)/countSDCountylcpb))
   boxplot(width~modelName, data=countyDatRel, ylab="", xlab="", main="County", col="skyblue")
   abline(h=0, lty=2)
   mtext(side = 1, "Model", line = 3, cex=1)
@@ -1461,7 +1461,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
   
   conStrats = length(countSDConStratlcpb)
   conStratDat = data.frame(modelName=c(rep("Smooth latent", conStrats), rep("Latent", conStrats), rep("Empirical", conStrats)), 
-                               width=c(countSDConStratlcpb, countSDConStratLCPb, countSDConStrat))
+                           width=c(countSDConStratlcpb, countSDConStratLCPb, countSDConStrat))
   boxplot(width~modelName, data=conStratDat, ylab="", xlab="", main="Constituency x stratum", col="skyblue")
   abline(h=0, lty=2)
   mtext(side = 2, "Burden SD", line = 3, cex=1)
@@ -1480,9 +1480,9 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
   
   conStrats = length(countSDConStratlcpb)
   conStratDatRel = data.frame(modelName=c(rep("Smooth latent", conStrats), rep("latent", conStrats), rep("Empirical", conStrats)), 
-                                  width=c(100*(countSDConStratlcpb-countSDConStratlcpb)/countSDConStratlcpb, 
-                                          100*(countSDConStratLCPb-countSDConStratlcpb)/countSDConStratlcpb, 
-                                          100*(countSDConStrat-countSDConStratlcpb)/countSDConStratlcpb))
+                              width=c(100*(countSDConStratlcpb-countSDConStratlcpb)/countSDConStratlcpb, 
+                                      100*(countSDConStratLCPb-countSDConStratlcpb)/countSDConStratlcpb, 
+                                      100*(countSDConStrat-countSDConStratlcpb)/countSDConStratlcpb))
   boxplot(width~modelName, data=conStratDatRel, ylab="", xlab="", main="Constituency x stratum", col="skyblue")
   abline(h=0, lty=2)
   mtext(side = 1, "Model", line = 3, cex=1)
@@ -1537,7 +1537,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
   
   # provinces = length(relativePrevalenceCIWidthProvince)
   # provinceDat = data.frame(modelName=c(rep("Smooth Risk", provinces), rep("Risk", provinces), rep("Prevalence", provinces)), 
-                           # width=c(relativePrevalenceCIWidthProvincelcpb, relativePrevalenceCIWidthProvinceLCPb, relativePrevalenceCIWidthProvince))
+  # width=c(relativePrevalenceCIWidthProvincelcpb, relativePrevalenceCIWidthProvinceLCPb, relativePrevalenceCIWidthProvince))
   # boxplot(width~modelName, data=provinceDat, ylab="", xlab="", main="Province", col="skyblue")
   
   # relative relativePrevalence uncertainty
@@ -1831,6 +1831,40 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
   # table of mean pct increase SD for each type of area
   # 3 sets columns: prev, burd, relPrev
   # 3 rows: constituency x stratum, constituency, county
+  conStratDat = 100*(prevalenceSDConStrat-prevalenceSDConStratlcpb)/prevalenceSDConStratlcpb
+  constituencyDat = 100*(prevalenceSDConstituency-prevalenceSDConstituencylcpb)/prevalenceSDConstituencylcpb
+  countyDat = 100*(prevalenceSDCounty-prevalenceSDCountylcpb)/prevalenceSDCountylcpb
+  prevConStrat = mean(conStratDat)
+  prevCon = mean(constituencyDat)
+  prevCounty = mean(countyDat)
+  prevMeans = c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty)
+  
+  conStratDat = 100*(countSDConStrat-countSDConStratlcpb)/countSDConStratlcpb
+  constituencyDat = 100*(countSDConstituency-countSDConstituencylcpb)/countSDConstituencylcpb
+  countyDat = 100*(countSDCounty-countSDCountylcpb)/countSDCountylcpb
+  burdConStrat = mean(conStratDat)
+  burdCon = mean(constituencyDat)
+  burdCounty = mean(countyDat)
+  burdMeans = c("conStrat"=burdConStrat, "constituency"=burdCon, "county"=burdCounty)
+  
+  constituencyDat = 100*(relativePrevalenceSDConstituency-relativePrevalenceSDConstituencylcpb)/relativePrevalenceSDConstituencylcpb
+  countyDat = 100*(relativePrevalenceSDCounty-relativePrevalenceSDCountylcpb)/relativePrevalenceSDCountylcpb
+  relPrevCon = mean(constituencyDat, na.rm=TRUE)
+  relPrevCounty = mean(countyDat, na.rm=TRUE)
+  relPrevMeans = c("conStrat"=NA, "constituency"=relPrevCon, "county"=relPrevCounty)
+  
+  tab = cbind(prevMeans, burdMeans, relPrevMeans)
+  colnames(tab) = c("Prevalence", "Burden", "Relative prevalence")
+  row.names(tab) = c("Constituency x stratum", "Constituency", "County")
+  tab = round(tab, 0)
+  
+  print(xtable(tab, digits=0, 
+               caption=paste0("Summary statistics for risk model parameters when ", 
+                              "fit to NMR data from the 2014 KDHS for 2010-2014 ", 
+                              tableText, "."), 
+               label=paste0("tab:riskModTable_", resultType)))
+  
+  # same for CI width
   conStratDat = 100*(prevalenceCIWidthConStrat-prevalenceCIWidthConStratlcpb)/prevalenceCIWidthConStratlcpb
   constituencyDat = 100*(prevalenceCIWidthConstituency-prevalenceCIWidthConstituencylcpb)/prevalenceCIWidthConstituencylcpb
   countyDat = 100*(prevalenceCIWidthCounty-prevalenceCIWidthCountylcpb)/prevalenceCIWidthCountylcpb
@@ -1933,125 +1967,15 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
       poppsub = poppsubKenyaJitteredThresh
     }
     
-    # calculate the range of predictions and CI widths ----
-    rangePrevalencePredPixel = c()
-    rangePrevalencePredConStrat = c()
-    rangePrevalencePredConstituency = c()
-    rangePrevalencePredCounty = c()
-    rangePrevalencePredProvince = c()
-    rangePrevalenceCIWidthPixel = c()
-    rangePrevalenceCIWidthConStrat = c()
-    rangePrevalenceCIWidthConstituency = c()
-    rangePrevalenceCIWidthCounty = c()
-    rangePrevalenceCIWidthProvince = c()
-    rangePrevalenceSDPixel = c()
-    rangePrevalenceSDConStrat = c()
-    rangePrevalenceSDConstituency = c()
-    rangePrevalenceSDCounty = c()
-    rangePrevalenceSDProvince = c()
-    
-    rangeCountPredPixel = c()
-    rangeCountPredConStrat = c()
-    rangeCountPredConstituency = c()
-    rangeCountPredCounty = c()
-    rangeCountPredProvince = c()
-    rangeCountCIWidthPixel = c()
-    rangeCountCIWidthConStrat = c()
-    rangeCountCIWidthConstituency = c()
-    rangeCountCIWidthCounty = c()
-    rangeCountCIWidthProvince = c()
-    rangeCountSDPixel = c()
-    rangeCountSDConStrat = c()
-    rangeCountSDConstituency = c()
-    rangeCountSDCounty = c()
-    rangeCountSDProvince = c()
-    
-    rangeRelativePrevalencePredConstituency = c()
-    rangeRelativePrevalencePredCounty = c()
-    rangeRelativePrevalencePredProvince = c()
-    rangeRelativePrevalenceCIWidthConstituency = c()
-    rangeRelativePrevalenceCIWidthCounty = c()
-    rangeRelativePrevalenceCIWidthProvince = c()
-    rangeRelativePrevalenceSDConstituency = c()
-    rangeRelativePrevalenceSDCounty = c()
-    rangeRelativePrevalenceSDProvince = c()
-    
-    # make the color scales
+    # calculate predictions and SDs ----
     
     areaLevels = c("pixel", "constrat", "constituency", "county") # province results no longer supported
     for(i in 1:length(areaLevels)) {
       thisLevel = areaLevels[i]
       
-      if(thisLevel == "pixel") {
-        rangePrevalencePredPixel = range(c(rangePrevalencePredPixel, 
-                                           rowMeans(pixelPop$pSmoothRisk, na.rm=TRUE)))
-        rangeCountPredPixel = range(c(rangeCountPredPixel, 
-                                      rowMeans(pixelPop$ZSmoothRisk, na.rm=TRUE)))
-        
-        # threshold average population denominator per pixel to reduce noise
-        prevalenceCIWidthPixel = apply(pixelPop$pFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        countCIWidthPixel = apply(pixelPop$ZFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        nPerPixel = rowSums(pixelPop$NFineScalePrevalence)
-        prevalenceCIWidthPixel[nPerPixel <= 1000*1] = NA
-        countCIWidthPixel[nPerPixel <= 1000*1 | countCIWidthPixel < 1] = NA
-        rangePrevalenceCIWidthPixel = range(prevalenceCIWidthPixel, na.rm=TRUE)
-        rangeCountCIWidthPixel = range(countCIWidthPixel, na.rm=TRUE)
-        
-        prevalenceSDPixel = apply(pixelPop$pFineScalePrevalence, 1, sd, na.rm=TRUE)
-        countSDPixel = apply(pixelPop$ZFineScalePrevalence, 1, sd, na.rm=TRUE)
-        nPerPixel = rowSums(pixelPop$NFineScalePrevalence)
-        prevalenceSDPixel[nPerPixel <= 1000*1] = NA
-        countSDPixel[nPerPixel <= 1000*1 | countSDPixel < 1] = NA
-        rangePrevalenceSDPixel = range(prevalenceSDPixel, na.rm=TRUE)
-        rangeCountSDPixel = range(countSDPixel, na.rm=TRUE)
-        
-        # do the same but for the lcpb model
-        prevalenceCIWidthPixellcpb = apply(pixelPop$pSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        countCIWidthPixellcpb = apply(pixelPop$ZSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        # prevalenceCIWidthPixellcpb[nPerPixel <= 1000*1] = NA
-        # countCIWidthPixellcpb[nPerPixel <= 1000*1 | is.na(countCIWidthPixel)] = NA
-        rangePrevalenceCIWidthPixellcpb = range(prevalenceCIWidthPixellcpb, na.rm=TRUE)
-        rangeCountCIWidthPixellcpb = range(countCIWidthPixellcpb, na.rm=TRUE)
-        
-        prevalenceSDPixellcpb = apply(pixelPop$pSmoothRisk, 1, sd, na.rm=TRUE)
-        countSDPixellcpb = apply(pixelPop$ZSmoothRisk, 1, sd, na.rm=TRUE)
-        prevalenceSDPixellcpb[nPerPixel <= 1000*1] = NA
-        countSDPixellcpb[nPerPixel <= 1000*1 | is.na(countSDPixel)] = NA
-        rangePrevalenceSDPixellcpb = range(prevalenceSDPixellcpb, na.rm=TRUE)
-        rangeCountSDPixellcpb = range(countSDPixellcpb, na.rm=TRUE)
-        
-        # do the same but for the LCPb model
-        prevalenceCIWidthPixelLCPb = apply(pixelPop$pFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        countCIWidthPixelLCPb = apply(pixelPop$ZFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        prevalenceCIWidthPixelLCPb[nPerPixel <= 1000*1] = NA
-        countCIWidthPixelLCPb[nPerPixel <= 1000*1 | is.na(countCIWidthPixel)] = NA
-        rangePrevalenceCIWidthPixelLCPb = range(prevalenceCIWidthPixelLCPb, na.rm=TRUE)
-        rangeCountCIWidthPixelLCPb = range(countCIWidthPixelLCPb, na.rm=TRUE)
-        
-        prevalenceSDPixelLCPb = apply(pixelPop$pFineScaleRisk, 1, sd, na.rm=TRUE)
-        countSDPixelLCPb = apply(pixelPop$ZFineScaleRisk, 1, sd, na.rm=TRUE)
-        prevalenceSDPixelLCPb[nPerPixel <= 1000*1] = NA
-        countSDPixelLCPb[nPerPixel <= 1000*1 | is.na(countSDPixel)] = NA
-        rangePrevalenceSDPixelLCPb = range(prevalenceSDPixelLCPb, na.rm=TRUE)
-        rangeCountSDPixelLCPb = range(countSDPixelLCPb, na.rm=TRUE)
-      }  else if(thisLevel == "constrat") {
+      if(thisLevel == "constrat") {
         urbanConstituencies = poppsub$County == "Nairobi" | poppsub$County == "Mombasa"
         undefinedPrevalenceConStrats = c(poppsub$popUrb == 0, poppsub$popRur == 0)
-        rangePrevalencePredConStrat = range(c(rangePrevalencePredConStrat, 
-                                              rowMeans(subareaPop$pUrbanFineScaleRisk, na.rm=TRUE), 
-                                              rowMeans(subareaPop$pRuralFineScaleRisk, na.rm=TRUE)), na.rm=TRUE)
-        rangeCountPredConStrat = range(c(rangeCountPredConStrat, 
-                                         rowMeans(subareaPop$ZUrbanFineScaleRisk), 
-                                         rowMeans(subareaPop$ZRuralFineScaleRisk)), na.rm=TRUE)
-        
-        prevalenceCIWidthConStrat = c(apply(subareaPop$pUrbanFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
-                                      apply(subareaPop$pRuralFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-        prevalenceCIWidthConStrat = prevalenceCIWidthConStrat[!undefinedPrevalenceConStrats]
-        countCIWidthConStrat = c(apply(subareaPop$ZUrbanFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
-                                 apply(subareaPop$ZRuralFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-        countCIWidthConStrat = countCIWidthConStrat[!undefinedPrevalenceConStrats]
-        rangePrevalenceCIWidthConStrat = range(prevalenceCIWidthConStrat)
-        rangeCountCIWidthConStrat = range(countCIWidthConStrat)
         
         prevalenceSDConStrat = c(apply(subareaPop$pUrbanFineScalePrevalence, 1, sd, na.rm=TRUE), 
                                  apply(subareaPop$pRuralFineScalePrevalence, 1, sd, na.rm=TRUE))
@@ -2059,17 +1983,8 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
         countSDConStrat = c(apply(subareaPop$ZUrbanFineScalePrevalence, 1, sd, na.rm=TRUE), 
                             apply(subareaPop$ZRuralFineScalePrevalence, 1, sd, na.rm=TRUE))
         countSDConStrat = countSDConStrat[!undefinedPrevalenceConStrats]
-        rangePrevalenceSDConStrat = range(prevalenceSDConStrat)
-        rangeCountSDConStrat = range(countSDConStrat)
         
-        # get credible interval widths for the lcpb model
-        prevalenceCIWidthConStratlcpb = c(apply(subareaPop$pUrbanSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
-                                          apply(subareaPop$pRuralSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-        prevalenceCIWidthConStratlcpb = prevalenceCIWidthConStratlcpb[!undefinedPrevalenceConStrats]
-        countCIWidthConStratlcpb = c(apply(subareaPop$ZUrbanSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
-                                     apply(subareaPop$ZRuralSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-        countCIWidthConStratlcpb = countCIWidthConStratlcpb[!undefinedPrevalenceConStrats]
-        
+        # get same for the lcpb model
         prevalenceSDConStratlcpb = c(apply(subareaPop$pUrbanSmoothRisk, 1, sd, na.rm=TRUE), 
                                      apply(subareaPop$pRuralSmoothRisk, 1, sd, na.rm=TRUE))
         prevalenceSDConStratlcpb = prevalenceSDConStratlcpb[!undefinedPrevalenceConStrats]
@@ -2078,340 +1993,790 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
         countSDConStratlcpb = countSDConStratlcpb[!undefinedPrevalenceConStrats]
         
         # do the same for the LCPb model
-        prevalenceCIWidthConStratLCPb = c(apply(subareaPop$pUrbanFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
-                                          apply(subareaPop$pRuralFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-        prevalenceCIWidthConStratLCPb = prevalenceCIWidthConStratLCPb[!undefinedPrevalenceConStrats]
-        countCIWidthConStratLCPb = c(apply(subareaPop$ZUrbanFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}), 
-                                     apply(subareaPop$ZRuralFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))}))
-        countCIWidthConStratLCPb = countCIWidthConStratLCPb[!undefinedPrevalenceConStrats]
-        
         prevalenceSDConStratLCPb = c(apply(subareaPop$pUrbanFineScaleRisk, 1, sd, na.rm=TRUE), 
                                      apply(subareaPop$pRuralFineScaleRisk, 1, sd, na.rm=TRUE))
         prevalenceSDConStratLCPb = prevalenceSDConStratLCPb[!undefinedPrevalenceConStrats]
         countSDConStratLCPb = c(apply(subareaPop$ZUrbanFineScaleRisk, 1, sd, na.rm=TRUE), 
                                 apply(subareaPop$ZRuralFineScaleRisk, 1, sd, na.rm=TRUE))
         countSDConStratLCPb = countSDConStratLCPb[!undefinedPrevalenceConStrats]
+        
+        # predictions: prevalence, burden, relPrev
+        prevalencePredsConStrat = c(rowMeans(subareaPop$pUrbanFineScalePrevalence, na.rm=TRUE), 
+                                    rowMeans(subareaPop$pRuralFineScalePrevalence, na.rm=TRUE))
+        prevalencePredsConStratlcpb = c(rowMeans(subareaPop$pUrbanSmoothRisk, na.rm=TRUE), 
+                                        rowMeans(subareaPop$pRuralSmoothRisk, na.rm=TRUE))
+        prevalencePredsConStratLCPb = c(rowMeans(subareaPop$pUrbanFineScaleRisk, na.rm=TRUE), 
+                                        rowMeans(subareaPop$pRuralFineScaleRisk, na.rm=TRUE))
+        
+        countPredsConStrat = c(rowMeans(subareaPop$ZUrbanFineScalePrevalence, na.rm=TRUE), 
+                               rowMeans(subareaPop$ZRuralFineScalePrevalence, na.rm=TRUE))
+        countPredsConStratlcpb = c(rowMeans(subareaPop$ZUrbanSmoothRisk, na.rm=TRUE), 
+                                   rowMeans(subareaPop$ZRuralSmoothRisk, na.rm=TRUE))
+        countPredsConStratLCPb = c(rowMeans(subareaPop$ZUrbanFineScaleRisk, na.rm=TRUE), 
+                                   rowMeans(subareaPop$ZRuralFineScaleRisk, na.rm=TRUE))
       } else if(thisLevel == "constituency") {
         urbanConstituencies = poppsub$County == "Nairobi" | poppsub$County == "Mombasa"
         undefinedRelativePrevalenceConstituencies = (poppsub$popUrb == 0) | (poppsub$popRur == 0)
-        rangePrevalencePredConstituency = range(c(rangePrevalencePredConstituency, 
-                                                  rowMeans(subareaPop$pFineScaleRisk, na.rm=TRUE)))
-        rangeCountPredConstituency = range(c(rangeCountPredConstituency, 
-                                             rowMeans(subareaPop$ZFineScaleRisk)), na.rm=TRUE)
         relativePrevalencePredConstituency = rowMeans(subareaPop$pUrbanFineScalePrevalence/subareaPop$pRuralFineScalePrevalence, na.rm=TRUE)
         undefinedRelativePrevalenceConstituencies = undefinedRelativePrevalenceConstituencies | !is.finite(relativePrevalencePredConstituency)
         relativePrevalencePredConstituency[undefinedRelativePrevalenceConstituencies] = NA
         
-        rangeRelativePrevalencePredConstituency = range(relativePrevalencePredConstituency[is.finite(relativePrevalencePredConstituency)], na.rm=TRUE)
-        
-        prevalenceCIWidthConstituency = apply(subareaPop$pFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        countCIWidthConstituency = apply(subareaPop$ZFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        rangePrevalenceCIWidthConstituency = range(prevalenceCIWidthConstituency)
-        rangeCountCIWidthConstituency = range(countCIWidthConstituency)
-        relativePrevalenceCIWidthConstituency = apply(subareaPop$pUrbanFineScalePrevalence/subareaPop$pRuralFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        relativePrevalenceCIWidthConstituency[undefinedRelativePrevalenceConstituencies] = NA
-        rangeRelativePrevalenceCIWidthConstituency = range(relativePrevalenceCIWidthConstituency[is.finite(relativePrevalenceCIWidthConstituency)], na.rm=TRUE)
-        
         prevalenceSDConstituency = apply(subareaPop$pFineScalePrevalence, 1, sd, na.rm=TRUE)
         countSDConstituency = apply(subareaPop$ZFineScalePrevalence, 1, sd, na.rm=TRUE)
-        rangePrevalenceSDConstituency = range(prevalenceSDConstituency)
-        rangeCountSDConstituency = range(countSDConstituency)
         relativePrevalenceSDConstituency = apply(subareaPop$pUrbanFineScalePrevalence/subareaPop$pRuralFineScalePrevalence, 1, sd, na.rm=TRUE)
         relativePrevalenceSDConstituency[undefinedRelativePrevalenceConstituencies] = NA
-        rangeRelativePrevalenceSDConstituency = range(relativePrevalenceSDConstituency[is.finite(relativePrevalenceSDConstituency)], na.rm=TRUE)
         
-        # get credible interval widths for the lcpb model
-        prevalenceCIWidthConstituencylcpb = apply(subareaPop$pSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        countCIWidthConstituencylcpb = apply(subareaPop$ZSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        relativePrevalenceCIWidthConstituencylcpb = apply(subareaPop$pUrbanSmoothRisk/subareaPop$pRuralSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        relativePrevalenceCIWidthConstituencylcpb[undefinedRelativePrevalenceConstituencies] = NA
-        
+        # get SDs for the lcpb model
         prevalenceSDConstituencylcpb = apply(subareaPop$pSmoothRisk, 1, sd, na.rm=TRUE)
         countSDConstituencylcpb = apply(subareaPop$ZSmoothRisk, 1, sd, na.rm=TRUE)
         relativePrevalenceSDConstituencylcpb = apply(subareaPop$pUrbanSmoothRisk/subareaPop$pRuralSmoothRisk, 1, sd, na.rm=TRUE)
         relativePrevalenceSDConstituencylcpb[undefinedRelativePrevalenceConstituencies] = NA
         
         # do the same for the LCPb model
-        prevalenceCIWidthConstituencyLCPb = apply(subareaPop$pFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        countCIWidthConstituencyLCPb = apply(subareaPop$ZFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        relativePrevalenceCIWidthConstituencyLCPb = apply(subareaPop$pUrbanFineScaleRisk/subareaPop$pRuralFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        relativePrevalenceCIWidthConstituencyLCPb[undefinedRelativePrevalenceConstituencies] = NA
-        
         prevalenceSDConstituencyLCPb = apply(subareaPop$pFineScaleRisk, 1, sd, na.rm=TRUE)
         countSDConstituencyLCPb = apply(subareaPop$ZFineScaleRisk, 1, sd, na.rm=TRUE)
         relativePrevalenceSDConstituencyLCPb = apply(subareaPop$pUrbanFineScaleRisk/subareaPop$pRuralFineScaleRisk, 1, sd, na.rm=TRUE)
         relativePrevalenceSDConstituencyLCPb[undefinedRelativePrevalenceConstituencies] = NA
+        
+        # predictions: prevalence, burden, relPrev
+        prevalencePredsConstituency = rowMeans(subareaPop$pFineScalePrevalence, na.rm=TRUE)
+        prevalencePredsConstituencylcpb = rowMeans(subareaPop$pSmoothRisk, na.rm=TRUE)
+        prevalencePredsConstituencyLCPb = rowMeans(subareaPop$pFineScaleRisk, na.rm=TRUE)
+        
+        countPredsConstituency = rowMeans(subareaPop$ZFineScalePrevalence, na.rm=TRUE)
+        countPredsConstituencylcpb = rowMeans(subareaPop$ZSmoothRisk, na.rm=TRUE)
+        countPredsConstituencyLCPb = rowMeans(subareaPop$ZFineScaleRisk, na.rm=TRUE)
+        
+        relativePrevalencePredsConstituency = rowMeans(subareaPop$pUrbanFineScalePrevalence/subareaPop$pRuralFineScalePrevalence, na.rm=TRUE)
+        relativePrevalencePredsConstituencylcpb = rowMeans(subareaPop$pUrbanSmoothRisk/subareaPop$pRuralSmoothRisk, na.rm=TRUE)
+        relativePrevalencePredsConstituencyLCPb = rowMeans(subareaPop$pUrbanFineScaleRisk/subareaPop$pRuralFineScaleRisk, na.rm=TRUE)
+        relativePrevalencePredsConstituency[undefinedRelativePrevalenceConstituencies] = NA
+        relativePrevalencePredsConstituencylcpb[undefinedRelativePrevalenceConstituencies] = NA
+        relativePrevalencePredsConstituencyLCPb[undefinedRelativePrevalenceConstituencies] = NA
       } else if(thisLevel == "county") {
         urbanCounties = sort(poppc$County) == "Nairobi" | sort(poppc$County) == "Mombasa"
-        rangePrevalencePredCounty = range(c(rangePrevalencePredCounty, 
-                                            rowMeans(areaPop$pFineScaleRisk, na.rm=TRUE)))
-        rangeCountPredCounty = range(c(rangeCountPredCounty, 
-                                       rowMeans(areaPop$ZFineScaleRisk, na.rm=TRUE)))
         relativePrevalencePredCounty = rowMeans(areaPop$pUrbanFineScalePrevalence/areaPop$pRuralFineScalePrevalence, na.rm=TRUE)
         relativePrevalencePredCounty[urbanCounties] = NA
-        rangeRelativePrevalencePredCounty = range(relativePrevalencePredCounty[is.finite(relativePrevalencePredCounty)], na.rm=TRUE)
-        
-        prevalenceCIWidthCounty = apply(areaPop$pFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        countCIWidthCounty = apply(areaPop$ZFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        rangePrevalenceCIWidthCounty = range(prevalenceCIWidthCounty)
-        rangeCountCIWidthCounty = range(countCIWidthCounty)
-        relativePrevalenceCIWidthCounty = apply(areaPop$pUrbanFineScalePrevalence/areaPop$pRuralFineScalePrevalence, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        relativePrevalenceCIWidthCounty[urbanCounties] = NA
-        rangeRelativePrevalenceCIWidthCounty = range(relativePrevalenceCIWidthCounty[is.finite(relativePrevalenceCIWidthCounty)], na.rm=TRUE)
         
         prevalenceSDCounty = apply(areaPop$pFineScalePrevalence, 1, sd, na.rm=TRUE)
         countSDCounty = apply(areaPop$ZFineScalePrevalence, 1, sd, na.rm=TRUE)
-        rangePrevalenceSDCounty = range(prevalenceSDCounty)
-        rangeCountSDCounty = range(countSDCounty)
         relativePrevalenceSDCounty = apply(areaPop$pUrbanFineScalePrevalence/areaPop$pRuralFineScalePrevalence, 1, sd, na.rm=TRUE)
         relativePrevalenceSDCounty[urbanCounties] = NA
-        rangeRelativePrevalenceSDCounty = range(relativePrevalenceSDCounty[is.finite(relativePrevalenceSDCounty)], na.rm=TRUE)
         
-        # get credible interval widths for the lcpb model
-        prevalenceCIWidthCountylcpb = apply(areaPop$pSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        countCIWidthCountylcpb = apply(areaPop$ZSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        relativePrevalenceCIWidthCountylcpb = apply(areaPop$pUrbanSmoothRisk/areaPop$pRuralSmoothRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        relativePrevalenceCIWidthCountylcpb[urbanCounties] = NA
-        
+        # get SDs for the lcpb model
         prevalenceSDCountylcpb = apply(areaPop$pSmoothRisk, 1, sd, na.rm=TRUE)
         countSDCountylcpb = apply(areaPop$ZSmoothRisk, 1, sd, na.rm=TRUE)
         relativePrevalenceSDCountylcpb = apply(areaPop$pUrbanSmoothRisk/areaPop$pRuralSmoothRisk, 1, sd, na.rm=TRUE)
         relativePrevalenceSDCountylcpb[urbanCounties] = NA
         
-        # get credible interval widths for the LCPb model
-        prevalenceCIWidthCountyLCPb = apply(areaPop$pFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        countCIWidthCountyLCPb = apply(areaPop$ZFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        relativePrevalenceCIWidthCountyLCPb = apply(areaPop$pUrbanFineScaleRisk/areaPop$pRuralFineScaleRisk, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        relativePrevalenceCIWidthCountyLCPb[urbanCounties] = NA
-        
+        # get SDs for the LCPb model
         prevalenceSDCountyLCPb = apply(areaPop$pFineScaleRisk, 1, sd, na.rm=TRUE)
         countSDCountyLCPb = apply(areaPop$ZFineScaleRisk, 1, sd, na.rm=TRUE)
         relativePrevalenceSDCountyLCPb = apply(areaPop$pUrbanFineScaleRisk/areaPop$pRuralFineScaleRisk, 1, sd, na.rm=TRUE)
         relativePrevalenceSDCountyLCPb[urbanCounties] = NA
-      } else if(thisLevel == "province") {
-        urbanProvinces = sort(regionMap@data$NAME_1) == "Nairobi"
-        rangePrevalencePredProvince = range(c(rangePrevalencePredProvince, 
-                                              rowMeans(agg$aggregatedResultsLCPb$regionMatrices$p, na.rm=TRUE)))
-        rangeCountPredProvince = range(c(rangeCountPredProvince, 
-                                         rowMeans(agg$aggregatedResultsLCPb$regionMatrices$Z, na.rm=TRUE)))
-        relativePrevalencePredProvince = rowMeans(agg$aggregatedResultsLCPB$regionMatrices$pUrban/agg$aggregatedResultsLCPB$regionMatrices$pRural, na.rm=TRUE)
-        relativePrevalencePredProvince[urbanProvinces] = NA
-        rangeRelativePrevalencePredProvince = range(relativePrevalencePredProvince[is.finite(relativePrevalencePredProvince)], na.rm=TRUE)
         
-        prevalenceCIWidthProvince = apply(agg$aggregatedResultsLCPB$regionMatrices$p, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        countCIWidthProvince = apply(agg$aggregatedResultsLCPB$regionMatrices$Z, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        rangePrevalenceCIWidthProvince = range(prevalenceCIWidthProvince)
-        rangeCountCIWidthProvince = range(countCIWidthProvince)
-        relativePrevalenceCIWidthProvince = apply(agg$aggregatedResultsLCPB$regionMatrices$pUrban/agg$aggregatedResultsLCPB$regionMatrices$pRural, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        relativePrevalenceCIWidthProvince[urbanProvinces] = NA
-        rangeRelativePrevalenceCIWidthProvince = range(relativePrevalenceCIWidthProvince[is.finite(relativePrevalenceCIWidthProvince)], na.rm=TRUE)
+        # predictions: prevalence, burden, relPrev
+        prevalencePredsCounty = rowMeans(areaPop$pFineScalePrevalence, na.rm=TRUE)
+        prevalencePredsCountylcpb = rowMeans(areaPop$pSmoothRisk, na.rm=TRUE)
+        prevalencePredsCountyLCPb = rowMeans(areaPop$pFineScaleRisk, na.rm=TRUE)
         
-        prevalenceSDProvince = apply(agg$aggregatedResultsLCPB$regionMatrices$p, 1, sd, na.rm=TRUE)
-        countSDProvince = apply(agg$aggregatedResultsLCPB$regionMatrices$Z, 1, sd, na.rm=TRUE)
-        rangePrevalenceSDProvince = range(prevalenceSDProvince)
-        rangeCountSDProvince = range(countSDProvince)
-        relativePrevalenceSDProvince = apply(agg$aggregatedResultsLCPB$regionMatrices$pUrban/agg$aggregatedResultsLCPB$regionMatrices$pRural, 1, sd, na.rm=TRUE)
-        relativePrevalenceSDProvince[urbanProvinces] = NA
-        rangeRelativePrevalenceSDProvince = range(relativePrevalenceSDProvince[is.finite(relativePrevalenceSDProvince)], na.rm=TRUE)
+        countPredsCounty = rowMeans(areaPop$ZFineScalePrevalence, na.rm=TRUE)
+        countPredsCountylcpb = rowMeans(areaPop$ZSmoothRisk, na.rm=TRUE)
+        countPredsCountyLCPb = rowMeans(areaPop$ZFineScaleRisk, na.rm=TRUE)
         
-        # now calculate credible interval widths for the lcpb model
-        prevalenceCIWidthProvincelcpb = apply(agg$aggregatedResultslcpb$regionMatrices$p, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        countCIWidthProvincelcpb = apply(agg$aggregatedResultslcpb$regionMatrices$Z, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        relativePrevalenceCIWidthProvincelcpb = apply(agg$aggregatedResultslcpb$regionMatrices$pUrban/agg$aggregatedResultslcpb$regionMatrices$pRural, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        relativePrevalenceCIWidthProvincelcpb[urbanProvinces] = NA
-        
-        prevalenceSDProvincelcpb = apply(agg$aggregatedResultslcpb$regionMatrices$p, 1, sd, na.rm=TRUE)
-        countSDProvincelcpb = apply(agg$aggregatedResultslcpb$regionMatrices$Z, 1, sd, na.rm=TRUE)
-        relativePrevalenceSDProvincelcpb = apply(agg$aggregatedResultslcpb$regionMatrices$pUrban/agg$aggregatedResultslcpb$regionMatrices$pRural, 1, sd, na.rm=TRUE)
-        relativePrevalenceSDProvincelcpb[urbanProvinces] = NA
-        
-        # now calculate credible interval widths for the LCPb model
-        prevalenceCIWidthProvinceLCPb = apply(agg$aggregatedResultsLCPb$regionMatrices$p, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        countCIWidthProvinceLCPb = apply(agg$aggregatedResultsLCPb$regionMatrices$Z, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        relativePrevalenceCIWidthProvinceLCPb = apply(agg$aggregatedResultsLCPb$regionMatrices$pUrban/agg$aggregatedResultsLCPb$regionMatrices$pRural, 1, function(x) {diff(quantile(x, probs=c(alpha/2, 1-alpha/2), na.rm=TRUE))})
-        relativePrevalenceCIWidthProvinceLCPb[urbanProvinces] = NA
-        
-        prevalenceSDProvinceLCPb = apply(agg$aggregatedResultsLCPb$regionMatrices$p, 1, sd, na.rm=TRUE)
-        countSDProvinceLCPb = apply(agg$aggregatedResultsLCPb$regionMatrices$Z, 1, sd, na.rm=TRUE)
-        relativePrevalenceSDProvinceLCPb = apply(agg$aggregatedResultsLCPb$regionMatrices$pUrban/agg$aggregatedResultsLCPb$regionMatrices$pRural, 1, sd, na.rm=TRUE)
-        relativePrevalenceSDProvinceLCPb[urbanProvinces] = NA
+        relativePrevalencePredsCounty = rowMeans(areaPop$pUrbanFineScalePrevalence/areaPop$pRuralFineScalePrevalence, na.rm=TRUE)
+        relativePrevalencePredsCountylcpb = rowMeans(areaPop$pUrbanSmoothRisk/areaPop$pRuralSmoothRisk, na.rm=TRUE)
+        relativePrevalencePredsCountyLCPb = rowMeans(areaPop$pUrbanFineScaleRisk/areaPop$pRuralFineScaleRisk, na.rm=TRUE)
+        relativePrevalencePredsCounty[urbanCounties] = NA
+        relativePrevalencePredsCountylcpb[urbanCounties] = NA
+        relativePrevalencePredsCountyLCPb[urbanCounties] = NA
       }
     }
     
     if(resultType == "std") {
-      rangePrevalencePredPixel_std = rangePrevalencePredPixel
-      rangePrevalencePredConStrat_std = rangePrevalencePredConStrat
-      rangePrevalencePredConstituency_std = rangePrevalencePredConstituency
-      rangePrevalencePredCounty_std = rangePrevalencePredCounty
-      rangePrevalencePredProvince_std = rangePrevalencePredProvince
-      rangePrevalenceCIWidthPixel_std = rangePrevalenceCIWidthPixel
-      rangePrevalenceCIWidthConStrat_std = rangePrevalenceCIWidthConStrat
-      rangePrevalenceCIWidthConstituency_std = rangePrevalenceCIWidthConstituency
-      rangePrevalenceCIWidthCounty_std = rangePrevalenceCIWidthCounty
-      rangePrevalenceCIWidthProvince_std = rangePrevalenceCIWidthProvince
-      rangePrevalenceSDPixel_std = rangePrevalenceSDPixel
-      rangePrevalenceSDConStrat_std = rangePrevalenceSDConStrat
-      rangePrevalenceSDConstituency_std = rangePrevalenceSDConstituency
-      rangePrevalenceSDCounty_std = rangePrevalenceSDCounty
-      rangePrevalenceSDProvince_std = rangePrevalenceSDProvince
+      urbanConstituencies_std = urbanConstituencies
+      undefinedPrevalenceConStrats_std = undefinedPrevalenceConStrats
+      prevalencePredsConStrat_std = prevalencePredsConStrat
+      prevalenceSDConStrat_std = prevalenceSDConStrat
+      countSDConStrat_std = countSDConStrat
       
-      rangeCountPredPixel_std = rangeCountPredPixel
-      rangeCountPredConStrat_std = rangeCountPredConStrat
-      rangeCountPredConstituency_std = rangeCountPredConstituency
-      rangeCountPredCounty_std = rangeCountPredCounty
-      rangeCountPredProvince_std = rangeCountPredProvince
-      rangeCountCIWidthPixel_std = rangeCountCIWidthPixel
-      rangeCountCIWidthConStrat_std = rangeCountCIWidthConStrat
-      rangeCountCIWidthConstituency_std = rangeCountCIWidthConstituency
-      rangeCountCIWidthCounty_std = rangeCountCIWidthCounty
-      rangeCountCIWidthProvince_std = rangeCountCIWidthProvince
-      rangeCountSDPixel_std = rangeCountSDPixel
-      rangeCountSDConStrat_std = rangeCountSDConStrat
-      rangeCountSDConstituency_std = rangeCountSDConstituency
-      rangeCountSDCounty_std = rangeCountSDCounty
-      rangeCountSDProvince_std = rangeCountSDProvince
+      # get same for the lcpb model
+      prevalencePredsConStratlcpb_std = prevalencePredsConStratlcpb
+      prevalenceSDConStratlcpb_std = prevalenceSDConStratlcpb
+      countSDConStratlcpb_std = countSDConStratlcpb
       
-      rangeRelativePrevalencePredConstituency_std = rangeRelativePrevalencePredConstituency
-      rangeRelativePrevalencePredCounty_std = rangeRelativePrevalencePredCounty
-      rangeRelativePrevalencePredProvince_std = rangeRelativePrevalencePredProvince
-      rangeRelativePrevalenceCIWidthConstituency_std = rangeRelativePrevalenceCIWidthConstituency
-      rangeRelativePrevalenceCIWidthCounty_std = rangeRelativePrevalenceCIWidthCounty
-      rangeRelativePrevalenceCIWidthProvince_std = rangeRelativePrevalenceCIWidthProvince
-      rangeRelativePrevalenceSDConstituency_std = rangeRelativePrevalenceSDConstituency
-      rangeRelativePrevalenceSDCounty_std = rangeRelativePrevalenceSDCounty
-      rangeRelativePrevalenceSDProvince_std = rangeRelativePrevalenceSDProvince
+      # do the same for the LCPb model
+      prevalencePredsConStratLCPb_std = prevalencePredsConStrat
+      prevalenceSDConStratLCPb_std = prevalenceSDConStratLCPb
+      countSDConStratLCPb_std = countSDConStratLCPb
+      
+      urbanConstituencies_std = urbanConstituencies
+      undefinedRelativePrevalenceConstituencies_std = undefinedRelativePrevalenceConstituencies
+      relativePrevalencePredConstituency_std = relativePrevalencePredConstituency
+      
+      prevalenceSDConstituency_std = prevalenceSDConstituency
+      countSDConstituency_std = countSDConstituency
+      relativePrevalenceSDConstituency_std = relativePrevalenceSDConstituency
+      
+      # get SDs for the lcpb model
+      prevalenceSDConstituencylcpb_std = prevalenceSDConstituencylcpb
+      countSDConstituencylcpb_std = countSDConstituencylcpb
+      relativePrevalenceSDConstituencylcpb_std = relativePrevalenceSDConstituencylcpb
+      
+      # do the same for the LCPb model
+      prevalenceSDConstituencyLCPb_std = prevalenceSDConstituencyLCPb
+      countSDConstituencyLCPb_std = countSDConstituencyLCPb
+      relativePrevalenceSDConstituencyLCPb_std = relativePrevalenceSDConstituencyLCPb
+      
+      urbanCounties_std = urbanCounties
+      relativePrevalencePredCounty_std = relativePrevalencePredCounty
+      
+      prevalenceSDCounty_std = prevalenceSDCounty
+      countSDCounty_std = countSDCounty
+      relativePrevalenceSDCounty_std = relativePrevalenceSDCounty
+      
+      # get SDs for the lcpb model
+      prevalenceSDCountylcpb_std = prevalenceSDCountylcpb
+      countSDCountylcpb_std = countSDCountylcpb
+      relativePrevalenceSDCountylcpb_std = relativePrevalenceSDCountylcpb
+      
+      # get SDs for the LCPb model
+      prevalenceSDCountyLCPb_std = prevalenceSDCountyLCPb
+      countSDCountyLCPb_std = countSDCountyLCPb
+      relativePrevalenceSDCountyLCPb_std = relativePrevalenceSDCountyLCPb
+      
+      # predictions
+      prevalencePredsConStrat_std = prevalencePredsConStrat
+      prevalencePredsConStratlcpb_std = prevalencePredsConStratlcpb
+      prevalencePredsConStratLCPb_std = prevalencePredsConStratLCPb
+      
+      countPredsConStrat_std = countPredsConStrat
+      countPredsConStratlcpb_std = countPredsConStratlcpb
+      countPredsConStratLCPb_std = countPredsConStratLCPb
+      
+      
+      prevalencePredsConstituency_std = prevalencePredsConstituency
+      prevalencePredsConstituencylcpb_std = prevalencePredsConstituencylcpb
+      prevalencePredsConstituencyLCPb_std = prevalencePredsConstituencyLCPb
+      
+      countPredsConstituency_std = countPredsConstituency
+      countPredsConstituencylcpb_std = countPredsConstituencylcpb
+      countPredsConstituencyLCPb_std = countPredsConstituencyLCPb
+      
+      relativePrevalencePredsConstituency_std = relativePrevalencePredsConstituency
+      relativePrevalencePredsConstituencylcpb_std = relativePrevalencePredsConstituencylcpb
+      relativePrevalencePredsConstituencyLCPb_std = relativePrevalencePredsConstituencyLCPb
+      
+      
+      prevalencePredsCounty_std = prevalencePredsCounty
+      prevalencePredsCountylcpb_std = prevalencePredsCountylcpb
+      prevalencePredsCountyLCPb_std = prevalencePredsCountyLCPb
+      
+      countPredsCounty_std = countPredsCounty
+      countPredsCountylcpb_std = countPredsCountylcpb
+      countPredsCountyLCPb_std = countPredsCountyLCPb
+      
+      relativePrevalencePredsCounty_std = relativePrevalencePredsCounty
+      relativePrevalencePredsCountylcpb_std = relativePrevalencePredsCountylcpb
+      relativePrevalencePredsCountyLCPb_std = relativePrevalencePredsCountyLCPb
     } else if(resultType == "FBpop") {
-      rangePrevalencePredPixel_std = rangePrevalencePredPixel
-      rangePrevalencePredConStrat_std = rangePrevalencePredConStrat
-      rangePrevalencePredConstituency_std = rangePrevalencePredConstituency
-      rangePrevalencePredCounty_std = rangePrevalencePredCounty
-      rangePrevalencePredProvince_std = rangePrevalencePredProvince
-      rangePrevalenceCIWidthPixel_std = rangePrevalenceCIWidthPixel
-      rangePrevalenceCIWidthConStrat_std = rangePrevalenceCIWidthConStrat
-      rangePrevalenceCIWidthConstituency_std = rangePrevalenceCIWidthConstituency
-      rangePrevalenceCIWidthCounty_std = rangePrevalenceCIWidthCounty
-      rangePrevalenceCIWidthProvince_std = rangePrevalenceCIWidthProvince
-      rangePrevalenceSDPixel_std = rangePrevalenceSDPixel
-      rangePrevalenceSDConStrat_std = rangePrevalenceSDConStrat
-      rangePrevalenceSDConstituency_std = rangePrevalenceSDConstituency
-      rangePrevalenceSDCounty_std = rangePrevalenceSDCounty
-      rangePrevalenceSDProvince_std = rangePrevalenceSDProvince
+      urbanConstituencies_FBpop = urbanConstituencies
+      undefinedPrevalenceConStrats_FBpop = undefinedPrevalenceConStrats
       
-      rangeCountPredPixel_std = rangeCountPredPixel
-      rangeCountPredConStrat_std = rangeCountPredConStrat
-      rangeCountPredConstituency_std = rangeCountPredConstituency
-      rangeCountPredCounty_std = rangeCountPredCounty
-      rangeCountPredProvince_std = rangeCountPredProvince
-      rangeCountCIWidthPixel_std = rangeCountCIWidthPixel
-      rangeCountCIWidthConStrat_std = rangeCountCIWidthConStrat
-      rangeCountCIWidthConstituency_std = rangeCountCIWidthConstituency
-      rangeCountCIWidthCounty_std = rangeCountCIWidthCounty
-      rangeCountCIWidthProvince_std = rangeCountCIWidthProvince
-      rangeCountSDPixel_std = rangeCountSDPixel
-      rangeCountSDConStrat_std = rangeCountSDConStrat
-      rangeCountSDConstituency_std = rangeCountSDConstituency
-      rangeCountSDCounty_std = rangeCountSDCounty
-      rangeCountSDProvince_std = rangeCountSDProvince
+      prevalenceSDConStrat_FBpop = prevalenceSDConStrat
+      countSDConStrat_FBpop = countSDConStrat
       
-      rangeRelativePrevalencePredConstituency_std = rangeRelativePrevalencePredConstituency
-      rangeRelativePrevalencePredCounty_std = rangeRelativePrevalencePredCounty
-      rangeRelativePrevalencePredProvince_std = rangeRelativePrevalencePredProvince
-      rangeRelativePrevalenceCIWidthConstituency_std = rangeRelativePrevalenceCIWidthConstituency
-      rangeRelativePrevalenceCIWidthCounty_std = rangeRelativePrevalenceCIWidthCounty
-      rangeRelativePrevalenceCIWidthProvince_std = rangeRelativePrevalenceCIWidthProvince
-      rangeRelativePrevalenceSDConstituency_std = rangeRelativePrevalenceSDConstituency
-      rangeRelativePrevalenceSDCounty_std = rangeRelativePrevalenceSDCounty
-      rangeRelativePrevalenceSDProvince_std = rangeRelativePrevalenceSDProvince
+      # get SDss for the lcpb model
+      prevalenceSDConStratlcpb_FBpop = prevalenceSDConStratlcpb
+      countSDConStratlcpb_FBpop = countSDConStratlcpb
+      
+      # do the same for the LCPb model
+      prevalenceSDConStratLCPb_FBpop = prevalenceSDConStratLCPb
+      countSDConStratLCPb_FBpop = countSDConStratLCPb
+      
+      urbanConstituencies_FBpop = urbanConstituencies
+      undefinedRelativePrevalenceConstituencies_FBpop = undefinedRelativePrevalenceConstituencies
+      relativePrevalencePredConstituency_FBpop = relativePrevalencePredConstituency
+      
+      prevalenceSDConstituency_FBpop = prevalenceSDConstituency
+      countSDConstituency_FBpop = countSDConstituency
+      relativePrevalenceSDConstituency_FBpop = relativePrevalenceSDConstituency
+      
+      # get SDs for the lcpb model
+      prevalenceSDConstituencylcpb_FBpop = prevalenceSDConstituencylcpb
+      countSDConstituencylcpb_FBpop = countSDConstituencylcpb
+      relativePrevalenceSDConstituencylcpb_FBpop = relativePrevalenceSDConstituencylcpb
+      
+      # do the same for the LCPb model
+      prevalenceSDConstituencyLCPb_FBpop = prevalenceSDConstituencyLCPb
+      countSDConstituencyLCPb_FBpop = countSDConstituencyLCPb
+      relativePrevalenceSDConstituencyLCPb_FBpop = relativePrevalenceSDConstituencyLCPb
+      
+      urbanCounties_FBpop = urbanCounties
+      relativePrevalencePredCounty_FBpop = relativePrevalencePredCounty
+      
+      prevalenceSDCounty_FBpop = prevalenceSDCounty
+      countSDCounty_FBpop = countSDCounty
+      relativePrevalenceSDCounty_FBpop = relativePrevalenceSDCounty
+      
+      # get SDs for the lcpb model
+      prevalenceSDCountylcpb_FBpop = prevalenceSDCountylcpb
+      countSDCountylcpb_FBpop = countSDCountylcpb
+      relativePrevalenceSDCountylcpb_FBpop = relativePrevalenceSDCountylcpb
+      
+      # get SDs for the LCPb model
+      prevalenceSDCountyLCPb_FBpop = prevalenceSDCountyLCPb
+      countSDCountyLCPb_FBpop = countSDCountyLCPb
+      relativePrevalenceSDCountyLCPb_FBpop = relativePrevalenceSDCountyLCPb
+      
+      # predictions
+      prevalencePredsConStrat_FBpop = prevalencePredsConStrat
+      prevalencePredsConStratlcpb_FBpop = prevalencePredsConStratlcpb
+      prevalencePredsConStratLCPb_FBpop = prevalencePredsConStratLCPb
+      
+      countPredsConStrat_FBpop = countPredsConStrat
+      countPredsConStratlcpb_FBpop = countPredsConStratlcpb
+      countPredsConStratLCPb_FBpop = countPredsConStratLCPb
+      
+      
+      prevalencePredsConstituency_FBpop = prevalencePredsConstituency
+      prevalencePredsConstituencylcpb_FBpop = prevalencePredsConstituencylcpb
+      prevalencePredsConstituencyLCPb_FBpop = prevalencePredsConstituencyLCPb
+      
+      countPredsConstituency_FBpop = countPredsConstituency
+      countPredsConstituencylcpb_FBpop = countPredsConstituencylcpb
+      countPredsConstituencyLCPb_FBpop = countPredsConstituencyLCPb
+      
+      relativePrevalencePredsConstituency_FBpop = relativePrevalencePredsConstituency
+      relativePrevalencePredsConstituencylcpb_FBpop = relativePrevalencePredsConstituencylcpb
+      relativePrevalencePredsConstituencyLCPb_FBpop = relativePrevalencePredsConstituencyLCPb
+      
+      
+      prevalencePredsCounty_FBpop = prevalencePredsCounty
+      prevalencePredsCountylcpb_FBpop = prevalencePredsCountylcpb
+      prevalencePredsCountyLCPb_FBpop = prevalencePredsCountyLCPb
+      
+      countPredsCounty_FBpop = countPredsCounty
+      countPredsCountylcpb_FBpop = countPredsCountylcpb
+      countPredsCountyLCPb_FBpop = countPredsCountyLCPb
+      
+      relativePrevalencePredsCounty_FBpop = relativePrevalencePredsCounty
+      relativePrevalencePredsCountylcpb_FBpop = relativePrevalencePredsCountylcpb
+      relativePrevalencePredsCountyLCPb_FBpop = relativePrevalencePredsCountyLCPb
     }  else if(resultType == "census2019") {
-      rangePrevalencePredPixel_2019 = rangePrevalencePredPixel
-      rangePrevalencePredConStrat_2019 = rangePrevalencePredConStrat
-      rangePrevalencePredConstituency_2019 = rangePrevalencePredConstituency
-      rangePrevalencePredCounty_2019 = rangePrevalencePredCounty
-      rangePrevalencePredProvince_2019 = rangePrevalencePredProvince
-      rangePrevalenceCIWidthPixel_2019 = rangePrevalenceCIWidthPixel
-      rangePrevalenceCIWidthConStrat_2019 = rangePrevalenceCIWidthConStrat
-      rangePrevalenceCIWidthConstituency_2019 = rangePrevalenceCIWidthConstituency
-      rangePrevalenceCIWidthCounty_2019 = rangePrevalenceCIWidthCounty
-      rangePrevalenceCIWidthProvince_2019 = rangePrevalenceCIWidthProvince
-      rangePrevalenceSDPixel_2019 = rangePrevalenceSDPixel
-      rangePrevalenceSDConStrat_2019 = rangePrevalenceSDConStrat
-      rangePrevalenceSDConstituency_2019 = rangePrevalenceSDConstituency
-      rangePrevalenceSDCounty_2019 = rangePrevalenceSDCounty
-      rangePrevalenceSDProvince_2019 = rangePrevalenceSDProvince
+      urbanConstituencies_2019 = urbanConstituencies
+      undefinedPrevalenceConStrats_2019 = undefinedPrevalenceConStrats
       
-      rangeCountPredPixel_2019 = rangeCountPredPixel
-      rangeCountPredConStrat_2019 = rangeCountPredConStrat
-      rangeCountPredConstituency_2019 = rangeCountPredConstituency
-      rangeCountPredCounty_2019 = rangeCountPredCounty
-      rangeCountPredProvince_2019 = rangeCountPredProvince
-      rangeCountCIWidthPixel_2019 = rangeCountCIWidthPixel
-      rangeCountCIWidthConStrat_2019 = rangeCountCIWidthConStrat
-      rangeCountCIWidthConstituency_2019 = rangeCountCIWidthConstituency
-      rangeCountCIWidthCounty_2019 = rangeCountCIWidthCounty
-      rangeCountCIWidthProvince_2019 = rangeCountCIWidthProvince
-      rangeCountSDPixel_2019 = rangeCountSDPixel
-      rangeCountSDConStrat_2019 = rangeCountSDConStrat
-      rangeCountSDConstituency_2019 = rangeCountSDConstituency
-      rangeCountSDCounty_2019 = rangeCountSDCounty
-      rangeCountSDProvince_2019 = rangeCountSDProvince
+      prevalenceSDConStrat_2019 = prevalenceSDConStrat
+      countSDConStrat_2019 = countSDConStrat
       
-      rangeRelativePrevalencePredConstituency_2019 = rangeRelativePrevalencePredConstituency
-      rangeRelativePrevalencePredCounty_2019 = rangeRelativePrevalencePredCounty
-      rangeRelativePrevalencePredProvince_2019 = rangeRelativePrevalencePredProvince
-      rangeRelativePrevalenceCIWidthConstituency_2019 = rangeRelativePrevalenceCIWidthConstituency
-      rangeRelativePrevalenceCIWidthCounty_2019 = rangeRelativePrevalenceCIWidthCounty
-      rangeRelativePrevalenceCIWidthProvince_2019 = rangeRelativePrevalenceCIWidthProvince
-      rangeRelativePrevalenceSDConstituency_2019 = rangeRelativePrevalenceSDConstituency
-      rangeRelativePrevalenceSDCounty_2019 = rangeRelativePrevalenceSDCounty
-      rangeRelativePrevalenceSDProvince_2019 = rangeRelativePrevalenceSDProvince
+      # get SDss for the lcpb model
+      prevalenceSDConStratlcpb_2019 = prevalenceSDConStratlcpb
+      countSDConStratlcpb_2019 = countSDConStratlcpb
+      
+      # do the same for the LCPb model
+      prevalenceSDConStratLCPb_2019 = prevalenceSDConStratLCPb
+      countSDConStratLCPb_2019 = countSDConStratLCPb
+      
+      urbanConstituencies_2019 = urbanConstituencies
+      undefinedRelativePrevalenceConstituencies_2019 = undefinedRelativePrevalenceConstituencies
+      relativePrevalencePredConstituency_2019 = relativePrevalencePredConstituency
+      
+      prevalenceSDConstituency_2019 = prevalenceSDConstituency
+      countSDConstituency_2019 = countSDConstituency
+      relativePrevalenceSDConstituency_2019 = relativePrevalenceSDConstituency
+      
+      # get SDs for the lcpb model
+      prevalenceSDConstituencylcpb_2019 = prevalenceSDConstituencylcpb
+      countSDConstituencylcpb_2019 = countSDConstituencylcpb
+      relativePrevalenceSDConstituencylcpb_2019 = relativePrevalenceSDConstituencylcpb
+      
+      # do the same for the LCPb model
+      prevalenceSDConstituencyLCPb_2019 = prevalenceSDConstituencyLCPb
+      countSDConstituencyLCPb_2019 = countSDConstituencyLCPb
+      relativePrevalenceSDConstituencyLCPb_2019 = relativePrevalenceSDConstituencyLCPb
+      
+      urbanCounties_2019 = urbanCounties
+      relativePrevalencePredCounty_2019 = relativePrevalencePredCounty
+      
+      prevalenceSDCounty_2019 = prevalenceSDCounty
+      countSDCounty_2019 = countSDCounty
+      relativePrevalenceSDCounty_2019 = relativePrevalenceSDCounty
+      
+      # get SDs for the lcpb model
+      prevalenceSDCountylcpb_2019 = prevalenceSDCountylcpb
+      countSDCountylcpb_2019 = countSDCountylcpb
+      relativePrevalenceSDCountylcpb_2019 = relativePrevalenceSDCountylcpb
+      
+      # get SDs for the LCPb model
+      prevalenceSDCountyLCPb_2019 = prevalenceSDCountyLCPb
+      countSDCountyLCPb_2019 = countSDCountyLCPb
+      relativePrevalenceSDCountyLCPb_2019 = relativePrevalenceSDCountyLCPb
+      
+      # predictions
+      prevalencePredsConStrat_2019 = prevalencePredsConStrat
+      prevalencePredsConStratlcpb_2019 = prevalencePredsConStratlcpb
+      prevalencePredsConStratLCPb_2019 = prevalencePredsConStratLCPb
+      
+      countPredsConStrat_2019 = countPredsConStrat
+      countPredsConStratlcpb_2019 = countPredsConStratlcpb
+      countPredsConStratLCPb_2019 = countPredsConStratLCPb
+      
+      
+      prevalencePredsConstituency_2019 = prevalencePredsConstituency
+      prevalencePredsConstituencylcpb_2019 = prevalencePredsConstituencylcpb
+      prevalencePredsConstituencyLCPb_2019 = prevalencePredsConstituencyLCPb
+      
+      countPredsConstituency_2019 = countPredsConstituency
+      countPredsConstituencylcpb_2019 = countPredsConstituencylcpb
+      countPredsConstituencyLCPb_2019 = countPredsConstituencyLCPb
+      
+      relativePrevalencePredsConstituency_2019 = relativePrevalencePredsConstituency
+      relativePrevalencePredsConstituencylcpb_2019 = relativePrevalencePredsConstituencylcpb
+      relativePrevalencePredsConstituencyLCPb_2019 = relativePrevalencePredsConstituencyLCPb
+      
+      
+      prevalencePredsCounty_2019 = prevalencePredsCounty
+      prevalencePredsCountylcpb_2019 = prevalencePredsCountylcpb
+      prevalencePredsCountyLCPb_2019 = prevalencePredsCountyLCPb
+      
+      countPredsCounty_2019 = countPredsCounty
+      countPredsCountylcpb_2019 = countPredsCountylcpb
+      countPredsCountyLCPb_2019 = countPredsCountyLCPb
+      
+      relativePrevalencePredsCounty_2019 = relativePrevalencePredsCounty
+      relativePrevalencePredsCountylcpb_2019 = relativePrevalencePredsCountylcpb
+      relativePrevalencePredsCountyLCPb_2019 = relativePrevalencePredsCountyLCPb
     } else if(resultType == "censusJittered") {
-      rangePrevalencePredPixel_jittered = rangePrevalencePredPixel
-      rangePrevalencePredConStrat_jittered = rangePrevalencePredConStrat
-      rangePrevalencePredConstituency_jittered = rangePrevalencePredConstituency
-      rangePrevalencePredCounty_jittered = rangePrevalencePredCounty
-      rangePrevalencePredProvince_jittered = rangePrevalencePredProvince
-      rangePrevalenceCIWidthPixel_jittered = rangePrevalenceCIWidthPixel
-      rangePrevalenceCIWidthConStrat_jittered = rangePrevalenceCIWidthConStrat
-      rangePrevalenceCIWidthConstituency_jittered = rangePrevalenceCIWidthConstituency
-      rangePrevalenceCIWidthCounty_jittered = rangePrevalenceCIWidthCounty
-      rangePrevalenceCIWidthProvince_jittered = rangePrevalenceCIWidthProvince
-      rangePrevalenceSDPixel_jittered = rangePrevalenceSDPixel
-      rangePrevalenceSDConStrat_jittered = rangePrevalenceSDConStrat
-      rangePrevalenceSDConstituency_jittered = rangePrevalenceSDConstituency
-      rangePrevalenceSDCounty_jittered = rangePrevalenceSDCounty
-      rangePrevalenceSDProvince_jittered = rangePrevalenceSDProvince
+      urbanConstituencies_jittered = urbanConstituencies
+      undefinedPrevalenceConStrats_jittered = undefinedPrevalenceConStrats
       
-      rangeCountPredPixel_jittered = rangeCountPredPixel
-      rangeCountPredConStrat_jittered = rangeCountPredConStrat
-      rangeCountPredConstituency_jittered = rangeCountPredConstituency
-      rangeCountPredCounty_jittered = rangeCountPredCounty
-      rangeCountPredProvince_jittered = rangeCountPredProvince
-      rangeCountCIWidthPixel_jittered = rangeCountCIWidthPixel
-      rangeCountCIWidthConStrat_jittered = rangeCountCIWidthConStrat
-      rangeCountCIWidthConstituency_jittered = rangeCountCIWidthConstituency
-      rangeCountCIWidthCounty_jittered = rangeCountCIWidthCounty
-      rangeCountCIWidthProvince_jittered = rangeCountCIWidthProvince
-      rangeCountSDPixel_jittered = rangeCountSDPixel
-      rangeCountSDConStrat_jittered = rangeCountSDConStrat
-      rangeCountSDConstituency_jittered = rangeCountSDConstituency
-      rangeCountSDCounty_jittered = rangeCountSDCounty
-      rangeCountSDProvince_jittered = rangeCountSDProvince
+      prevalenceSDConStrat_jittered = prevalenceSDConStrat
+      countSDConStrat_jittered = countSDConStrat
       
-      rangeRelativePrevalencePredConstituency_jittered = rangeRelativePrevalencePredConstituency
-      rangeRelativePrevalencePredCounty_jittered = rangeRelativePrevalencePredCounty
-      rangeRelativePrevalencePredProvince_jittered = rangeRelativePrevalencePredProvince
-      rangeRelativePrevalenceCIWidthConstituency_jittered = rangeRelativePrevalenceCIWidthConstituency
-      rangeRelativePrevalenceCIWidthCounty_jittered = rangeRelativePrevalenceCIWidthCounty
-      rangeRelativePrevalenceCIWidthProvince_jittered = rangeRelativePrevalenceCIWidthProvince
-      rangeRelativePrevalenceSDConstituency_jittered = rangeRelativePrevalenceSDConstituency
-      rangeRelativePrevalenceSDCounty_jittered = rangeRelativePrevalenceSDCounty
-      rangeRelativePrevalenceSDProvince_jittered = rangeRelativePrevalenceSDProvince
+      # get SDss for the lcpb model
+      prevalenceSDConStratlcpb_jittered = prevalenceSDConStratlcpb
+      countSDConStratlcpb_jittered = countSDConStratlcpb
+      
+      # do the same for the LCPb model
+      prevalenceSDConStratLCPb_jittered = prevalenceSDConStratLCPb
+      countSDConStratLCPb_jittered = countSDConStratLCPb
+      
+      urbanConstituencies_jittered = urbanConstituencies
+      undefinedRelativePrevalenceConstituencies_jittered = undefinedRelativePrevalenceConstituencies
+      relativePrevalencePredConstituency_jittered = relativePrevalencePredConstituency
+      
+      prevalenceSDConstituency_jittered = prevalenceSDConstituency
+      countSDConstituency_jittered = countSDConstituency
+      relativePrevalenceSDConstituency_jittered = relativePrevalenceSDConstituency
+      
+      # get SDs for the lcpb model
+      prevalenceSDConstituencylcpb_jittered = prevalenceSDConstituencylcpb
+      countSDConstituencylcpb_jittered = countSDConstituencylcpb
+      relativePrevalenceSDConstituencylcpb_jittered = relativePrevalenceSDConstituencylcpb
+      
+      # do the same for the LCPb model
+      prevalenceSDConstituencyLCPb_jittered = prevalenceSDConstituencyLCPb
+      countSDConstituencyLCPb_jittered = countSDConstituencyLCPb
+      relativePrevalenceSDConstituencyLCPb_jittered = relativePrevalenceSDConstituencyLCPb
+      
+      urbanCounties_jittered = urbanCounties
+      relativePrevalencePredCounty_jittered = relativePrevalencePredCounty
+      
+      prevalenceSDCounty_jittered = prevalenceSDCounty
+      countSDCounty_jittered = countSDCounty
+      relativePrevalenceSDCounty_jittered = relativePrevalenceSDCounty
+      
+      # get SDs for the lcpb model
+      prevalenceSDCountylcpb_jittered = prevalenceSDCountylcpb
+      countSDCountylcpb_jittered = countSDCountylcpb
+      relativePrevalenceSDCountylcpb_jittered = relativePrevalenceSDCountylcpb
+      
+      # get SDs for the LCPb model
+      prevalenceSDCountyLCPb_jittered = prevalenceSDCountyLCPb
+      countSDCountyLCPb_jittered = countSDCountyLCPb
+      relativePrevalenceSDCountyLCPb_jittered = relativePrevalenceSDCountyLCPb
+      
+      # predictions
+      prevalencePredsConStrat_jittered = prevalencePredsConStrat
+      prevalencePredsConStratlcpb_jittered = prevalencePredsConStratlcpb
+      prevalencePredsConStratLCPb_jittered = prevalencePredsConStratLCPb
+      
+      countPredsConStrat_jittered = countPredsConStrat
+      countPredsConStratlcpb_jittered = countPredsConStratlcpb
+      countPredsConStratLCPb_jittered = countPredsConStratLCPb
+      
+      
+      prevalencePredsConstituency_jittered = prevalencePredsConstituency
+      prevalencePredsConstituencylcpb_jittered = prevalencePredsConstituencylcpb
+      prevalencePredsConstituencyLCPb_jittered = prevalencePredsConstituencyLCPb
+      
+      countPredsConstituency_jittered = countPredsConstituency
+      countPredsConstituencylcpb_jittered = countPredsConstituencylcpb
+      countPredsConstituencyLCPb_jittered = countPredsConstituencyLCPb
+      
+      relativePrevalencePredsConstituency_jittered = relativePrevalencePredsConstituency
+      relativePrevalencePredsConstituencylcpb_jittered = relativePrevalencePredsConstituencylcpb
+      relativePrevalencePredsConstituencyLCPb_jittered = relativePrevalencePredsConstituencyLCPb
+      
+      
+      prevalencePredsCounty_jittered = prevalencePredsCounty
+      prevalencePredsCountylcpb_jittered = prevalencePredsCountylcpb
+      prevalencePredsCountyLCPb_jittered = prevalencePredsCountyLCPb
+      
+      countPredsCounty_jittered = countPredsCounty
+      countPredsCountylcpb_jittered = countPredsCountylcpb
+      countPredsCountyLCPb_jittered = countPredsCountyLCPb
+      
+      relativePrevalencePredsCounty_jittered = relativePrevalencePredsCounty
+      relativePrevalencePredsCountylcpb_jittered = relativePrevalencePredsCountylcpb
+      relativePrevalencePredsCountyLCPb_jittered = relativePrevalencePredsCountyLCPb
     }
   }
   
-  fullRange
+  # Combine data into tables ----
+  allPrevalenceSDs_std = c(prevalenceSDsConStrat_std, prevalenceSDsConstituency_std, prevalenceSDsCounty_std)
+  allPrevalenceSDslcpb_std = c(prevalenceSDsConStratlcpb_std, prevalenceSDsConstituencylcpb_std, prevalenceSDsCountylcpb_std)
+  allPrevalenceSDsLCPb_std = c(prevalenceSDsConStratLCPb_std, prevalenceSDsConstituencyLCPb_std, prevalenceSDsCountyLCPb_std)
   
-  # make plots ----
+  allPrevalenceSDs_FBpop = c(prevalenceSDsConStrat_FBpop, prevalenceSDsConstituency_FBpop, prevalenceSDsCounty_FBpop)
+  allPrevalenceSDslcpb_FBpop = c(prevalenceSDsConStratlcpb_FBpop, prevalenceSDsConstituencylcpb_FBpop, prevalenceSDsCountylcpb_FBpop)
+  allPrevalenceSDsLCPb_FBpop = c(prevalenceSDsConStratLCPb_FBpop, prevalenceSDsConstituencyLCPb_FBpop, prevalenceSDsCountyLCPb_FBpop)
+  
+  allPrevalenceSDs_2019 = c(prevalenceSDsConStrat_2019, prevalenceSDsConstituency_2019, prevalenceSDsCounty_2019)
+  allPrevalenceSDslcpb_2019 = c(prevalenceSDsConStratlcpb_2019, prevalenceSDsConstituencylcpb_2019, prevalenceSDsCountylcpb_2019)
+  allPrevalenceSDsLCPb_2019 = c(prevalenceSDsConStratLCPb_2019, prevalenceSDsConstituencyLCPb_2019, prevalenceSDsCountyLCPb_2019)
+  
+  allPrevalenceSDs_jittered = c(prevalenceSDsConStrat_jittered, prevalenceSDsConstituency_jittered, prevalenceSDsCounty_jittered)
+  allPrevalenceSDslcpb_jittered = c(prevalenceSDsConStratlcpb_jittered, prevalenceSDsConstituencylcpb_jittered, prevalenceSDsCountylcpb_jittered)
+  allPrevalenceSDsLCPb_jittered = c(prevalenceSDsConStratLCPb_jittered, prevalenceSDsConstituencyLCPb_jittered, prevalenceSDsCountyLCPb_jittered)
+  
+  
+  allPrevalencePreds_std = c(prevalencePredsConStrat_std, prevalencePredsConstituency_std, prevalencePredsCounty_std)
+  allPrevalencePredslcpb_std = c(prevalencePredsConStratlcpb_std, prevalencePredsConstituencylcpb_std, prevalencePredsCountylcpb_std)
+  allPrevalencePredsLCPb_std = c(prevalencePredsConStratLCPb_std, prevalencePredsConstituencyLCPb_std, prevalencePredsCountyLCPb_std)
+  
+  allPrevalencePreds_FBpop = c(prevalencePredsConStrat_FBpop, prevalencePredsConstituency_FBpop, prevalencePredsCounty_FBpop)
+  allPrevalencePredslcpb_FBpop = c(prevalencePredsConStratlcpb_FBpop, prevalencePredsConstituencylcpb_FBpop, prevalencePredsCountylcpb_FBpop)
+  allPrevalencePredsLCPb_FBpop = c(prevalencePredsConStratLCPb_FBpop, prevalencePredsConstituencyLCPb_FBpop, prevalencePredsCountyLCPb_FBpop)
+  
+  allPrevalencePreds_2019 = c(prevalencePredsConStrat_2019, prevalencePredsConstituency_2019, prevalencePredsCounty_2019)
+  allPrevalencePredslcpb_2019 = c(prevalencePredsConStratlcpb_2019, prevalencePredsConstituencylcpb_2019, prevalencePredsCountylcpb_2019)
+  allPrevalencePredsLCPb_2019 = c(prevalencePredsConStratLCPb_2019, prevalencePredsConstituencyLCPb_2019, prevalencePredsCountyLCPb_2019)
+  
+  allPrevalencePreds_jittered = c(prevalencePredsConStrat_jittered, prevalencePredsConstituency_jittered, prevalencePredsCounty_jittered)
+  allPrevalencePredslcpb_jittered = c(prevalencePredsConStratlcpb_jittered, prevalencePredsConstituencylcpb_jittered, prevalencePredsCountylcpb_jittered)
+  allPrevalencePredsLCPb_jittered = c(prevalencePredsConStratLCPb_jittered, prevalencePredsConstituencyLCPb_jittered, prevalencePredsCountyLCPb_jittered)
+  
+  areaLevelPrevalence = c(rep("Constituency x stratum", length(prevalencePredsConStrat_std)), 
+                          rep("Constituency", length(prevalencePredsConstituency_std)), 
+                          rep("County", length(prevalencePredsCounty_std)))
+  
+  fullPrevalenceTab = data.frame(areaLevel=areaLevelPrevalence, 
+                                 allPrevalencePreds_std, allPrevalencePredslcpb_std, allPrevalencePredsLCPb_std, 
+                                 allPrevalencePreds_FBpop, allPrevalencePredslcpb_FBpop, allPrevalencePredsLCPb_FBpop, 
+                                 allPrevalencePreds_2019, allPrevalencePredslcpb_2019, allPrevalencePredsLCPb_2019, 
+                                 allPrevalencePreds_jittered, allPrevalencePredslcpb_jittered, allPrevalencePredsLCPb_jittered)
+  
+  fullPrevalenceTabSD = data.frame(areaLevel=areaLevelPrevalence, 
+                                 allPrevalenceSDs_std, allPrevalenceSDslcpb_std, allPrevalenceSDsLCPb_std, 
+                                 allPrevalenceSDs_FBpop, allPrevalenceSDslcpb_FBpop, allPrevalenceSDsLCPb_FBpop, 
+                                 allPrevalenceSDs_2019, allPrevalenceSDslcpb_2019, allPrevalenceSDsLCPb_2019, 
+                                 allPrevalenceSDs_jittered, allPrevalenceSDslcpb_jittered, allPrevalenceSDsLCPb_jittered)
+  
+  fullPrevalenceTabPct = data.frame(areaLevel=areaLevelPrevalence, 
+                                 empiricial_FBpop=100*(allPrevalencePreds_FBpop-allPrevalencePreds_std)/allPrevalencePreds_std, 
+                                   latent_FBpop=100*(allPrevalencePredslcpb_FBpop-allPrevalencePredslcpb_std)/allPrevalencePredslcpb_std, 
+                                   smoothLatent_FBpop=100*(allPrevalencePredsLCPb_FBpop-allPrevalencePredsLCPb_std)/allPrevalencePredsLCPb_std, 
+                                 empiricial_2019=100*(allPrevalencePreds_2019-allPrevalencePreds_std)/allPrevalencePreds_std, 
+                                   latent_2019=100*(allPrevalencePredslcpb_2019-allPrevalencePredslcpb_std)/allPrevalencePredslcpb_std, 
+                                   smoothLatent_2019=100*(allPrevalencePredsLCPb_2019-allPrevalencePredsLCPb_std)/allPrevalencePredsLCPb_std, 
+                                 empiricial_jittered=100*(allPrevalencePreds_jittered-allPrevalencePreds_std)/allPrevalencePreds_std, 
+                                   latent_jittered=100*(allPrevalencePredslcpb_jittered-allPrevalencePredslcpb_std)/allPrevalencePredslcpb_std, 
+                                   smoothLatent_jittered=100*(allPrevalencePredsLCPb_jittered-allPrevalencePredsLCPb_std)/allPrevalencePredsLCPb_std)
+  
+  fullPrevalenceTabSDPct = data.frame(areaLevel=areaLevelPrevalence, 
+                                    empiricial_FBpop=100*(allPrevalenceSDs_FBpop-allPrevalenceSDs_std)/allPrevalenceSDs_std, 
+                                      latent_FBpop=100*(allPrevalenceSDslcpb_FBpop-allPrevalenceSDslcpb_std)/allPrevalenceSDslcpb_std, 
+                                      smoothLatent_FBpop=100*(allPrevalenceSDsLCPb_FBpop-allPrevalenceSDsLCPb_std)/allPrevalenceSDsLCPb_std, 
+                                    empiricial_2019=100*(allPrevalenceSDs_2019-allPrevalenceSDs_std)/allPrevalenceSDs_std, 
+                                      latent_2019=100*(allPrevalenceSDslcpb_2019-allPrevalenceSDslcpb_std)/allPrevalenceSDslcpb_std, 
+                                      smoothLatent_2019=100*(allPrevalenceSDsLCPb_2019-allPrevalenceSDsLCPb_std)/allPrevalenceSDsLCPb_std, 
+                                    empiricial_jittered=100*(allPrevalenceSDs_jittered-allPrevalenceSDs_std)/allPrevalenceSDs_std, 
+                                      latent_jittered=100*(allPrevalenceSDslcpb_jittered-allPrevalenceSDslcpb_std)/allPrevalenceSDslcpb_std, 
+                                      smoothLatent_jittered=100*(allPrevalenceSDsLCPb_jittered-allPrevalenceSDsLCPb_std)/allPrevalenceSDsLCPb_std)
+  
+  allCountSDs_std = c(countSDsConStrat_std, countSDsConstituency_std, countSDsCounty_std)
+  allCountSDslcpb_std = c(countSDsConStratlcpb_std, countSDsConstituencylcpb_std, countSDsCountylcpb_std)
+  allCountSDsLCPb_std = c(countSDsConStratLCPb_std, countSDsConstituencyLCPb_std, countSDsCountyLCPb_std)
+  
+  allCountSDs_FBpop = c(countSDsConStrat_FBpop, countSDsConstituency_FBpop, countSDsCounty_FBpop)
+  allCountSDslcpb_FBpop = c(countSDsConStratlcpb_FBpop, countSDsConstituencylcpb_FBpop, countSDsCountylcpb_FBpop)
+  allCountSDsLCPb_FBpop = c(countSDsConStratLCPb_FBpop, countSDsConstituencyLCPb_FBpop, countSDsCountyLCPb_FBpop)
+  
+  allCountSDs_2019 = c(countSDsConStrat_2019, countSDsConstituency_2019, countSDsCounty_2019)
+  allCountSDslcpb_2019 = c(countSDsConStratlcpb_2019, countSDsConstituencylcpb_2019, countSDsCountylcpb_2019)
+  allCountSDsLCPb_2019 = c(countSDsConStratLCPb_2019, countSDsConstituencyLCPb_2019, countSDsCountyLCPb_2019)
+  
+  allCountSDs_jittered = c(countSDsConStrat_jittered, countSDsConstituency_jittered, countSDsCounty_jittered)
+  allCountSDslcpb_jittered = c(countSDsConStratlcpb_jittered, countSDsConstituencylcpb_jittered, countSDsCountylcpb_jittered)
+  allCountSDsLCPb_jittered = c(countSDsConStratLCPb_jittered, countSDsConstituencyLCPb_jittered, countSDsCountyLCPb_jittered)
+  
+  
+  allCountPreds_std = c(countPredsConStrat_std, countPredsConstituency_std, countPredsCounty_std)
+  allCountPredslcpb_std = c(countPredsConStratlcpb_std, countPredsConstituencylcpb_std, countPredsCountylcpb_std)
+  allCountPredsLCPb_std = c(countPredsConStratLCPb_std, countPredsConstituencyLCPb_std, countPredsCountyLCPb_std)
+  
+  allCountPreds_FBpop = c(countPredsConStrat_FBpop, countPredsConstituency_FBpop, countPredsCounty_FBpop)
+  allCountPredslcpb_FBpop = c(countPredsConStratlcpb_FBpop, countPredsConstituencylcpb_FBpop, countPredsCountylcpb_FBpop)
+  allCountPredsLCPb_FBpop = c(countPredsConStratLCPb_FBpop, countPredsConstituencyLCPb_FBpop, countPredsCountyLCPb_FBpop)
+  
+  allCountPreds_2019 = c(countPredsConStrat_2019, countPredsConstituency_2019, countPredsCounty_2019)
+  allCountPredslcpb_2019 = c(countPredsConStratlcpb_2019, countPredsConstituencylcpb_2019, countPredsCountylcpb_2019)
+  allCountPredsLCPb_2019 = c(countPredsConStratLCPb_2019, countPredsConstituencyLCPb_2019, countPredsCountyLCPb_2019)
+  
+  allCountPreds_jittered = c(countPredsConStrat_jittered, countPredsConstituency_jittered, countPredsCounty_jittered)
+  allCountPredslcpb_jittered = c(countPredsConStratlcpb_jittered, countPredsConstituencylcpb_jittered, countPredsCountylcpb_jittered)
+  allCountPredsLCPb_jittered = c(countPredsConStratLCPb_jittered, countPredsConstituencyLCPb_jittered, countPredsCountyLCPb_jittered)
+  
+  areaLevelCount = c(rep("Constituency x stratum", length(countPredsConStrat_std)), 
+                          rep("Constituency", length(countPredsConstituency_std)), 
+                          rep("County", length(countPredsCounty_std)))
+  
+  fullCountTab = data.frame(areaLevel=areaLevelCount, 
+                                 allCountPreds_std, allCountPredslcpb_std, allCountPredsLCPb_std, 
+                                 allCountPreds_FBpop, allCountPredslcpb_FBpop, allCountPredsLCPb_FBpop, 
+                                 allCountPreds_2019, allCountPredslcpb_2019, allCountPredsLCPb_2019, 
+                                 allCountPreds_jittered, allCountPredslcpb_jittered, allCountPredsLCPb_jittered)
+  
+  fullCountTabSD = data.frame(areaLevel=areaLevelCount, 
+                                   allCountSDs_std, allCountSDslcpb_std, allCountSDsLCPb_std, 
+                                   allCountSDs_FBpop, allCountSDslcpb_FBpop, allCountSDsLCPb_FBpop, 
+                                   allCountSDs_2019, allCountSDslcpb_2019, allCountSDsLCPb_2019, 
+                                   allCountSDs_jittered, allCountSDslcpb_jittered, allCountSDsLCPb_jittered)
+  
+  fullCountTabPct = data.frame(areaLevel=areaLevelCount, 
+                                    empiricial_FBpop=100*(allCountPreds_FBpop-allCountPreds_std)/allCountPreds_std, 
+                                      latent_FBpop=100*(allCountPredslcpb_FBpop-allCountPredslcpb_std)/allCountPredslcpb_std, 
+                                      smoothLatent_FBpop=100*(allCountPredsLCPb_FBpop-allCountPredsLCPb_std)/allCountPredsLCPb_std, 
+                                    empiricial_2019=100*(allCountPreds_2019-allCountPreds_std)/allCountPreds_std, 
+                                      latent_2019=100*(allCountPredslcpb_2019-allCountPredslcpb_std)/allCountPredslcpb_std, 
+                                      smoothLatent_2019=100*(allCountPredsLCPb_2019-allCountPredsLCPb_std)/allCountPredsLCPb_std, 
+                                    empiricial_jittered=100*(allCountPreds_jittered-allCountPreds_std)/allCountPreds_std, 
+                                      latent_jittered=100*(allCountPredslcpb_jittered-allCountPredslcpb_std)/allCountPredslcpb_std, 
+                                      smoothLatent_jittered=100*(allCountPredsLCPb_jittered-allCountPredsLCPb_std)/allCountPredsLCPb_std)
+  
+  fullCountTabSDPct = data.frame(areaLevel=areaLevelCount, 
+                                      empiricial_FBpop=100*(allCountSDs_FBpop-allCountSDs_std)/allCountSDs_std, 
+                                        latent_FBpop=100*(allCountSDslcpb_FBpop-allCountSDslcpb_std)/allCountSDslcpb_std, 
+                                        smoothLatent_FBpop=100*(allCountSDsLCPb_FBpop-allCountSDsLCPb_std)/allCountSDsLCPb_std, 
+                                      empiricial_2019=100*(allCountSDs_2019-allCountSDs_std)/allCountSDs_std, 
+                                        latent_2019=100*(allCountSDslcpb_2019-allCountSDslcpb_std)/allCountSDslcpb_std, 
+                                        smoothLatent_2019=100*(allCountSDsLCPb_2019-allCountSDsLCPb_std)/allCountSDsLCPb_std, 
+                                      empiricial_jittered=100*(allCountSDs_jittered-allCountSDs_std)/allCountSDs_std, 
+                                        latent_jittered=100*(allCountSDslcpb_jittered-allCountSDslcpb_std)/allCountSDslcpb_std, 
+                                        smoothLatent_jittered=100*(allCountSDsLCPb_jittered-allCountSDsLCPb_std)/allCountSDsLCPb_std)
+  
+  allRelPrevSDs_std = c(relativePrevalenceSDsConstituency_std, relativePrevalenceSDsCounty_std)
+  allRelPrevSDslcpb_std = c(relativePrevalenceSDsConstituencylcpb_std, relativePrevalenceSDsCountylcpb_std)
+  allRelPrevSDsLCPb_std = c(relativePrevalenceSDsConstituencyLCPb_std, relativePrevalenceSDsCountyLCPb_std)
+  
+  allRelPrevSDs_FBpop = c(relativePrevalenceSDsConstituency_FBpop, relativePrevalenceSDsCounty_FBpop)
+  allRelPrevSDslcpb_FBpop = c(relativePrevalenceSDsConstituencylcpb_FBpop, relativePrevalenceSDsCountylcpb_FBpop)
+  allRelPrevSDsLCPb_FBpop = c(relativePrevalenceSDsConstituencyLCPb_FBpop, relativePrevalenceSDsCountyLCPb_FBpop)
+  
+  allRelPrevSDs_2019 = c(relativePrevalenceSDsConstituency_2019, relativePrevalenceSDsCounty_2019)
+  allRelPrevSDslcpb_2019 = c(relativePrevalenceSDsConstituencylcpb_2019, relativePrevalenceSDsCountylcpb_2019)
+  allRelPrevSDsLCPb_2019 = c(relativePrevalenceSDsConstituencyLCPb_2019, relativePrevalenceSDsCountyLCPb_2019)
+  
+  allRelPrevSDs_jittered = c(relativePrevalenceSDsConstituency_jittered, relativePrevalenceSDsCounty_jittered)
+  allRelPrevSDslcpb_jittered = c(relativePrevalenceSDsConstituencylcpb_jittered, relativePrevalenceSDsCountylcpb_jittered)
+  allRelPrevSDsLCPb_jittered = c(relativePrevalenceSDsConstituencyLCPb_jittered, relativePrevalenceSDsCountyLCPb_jittered)
+  
+  
+  allRelPrevPreds_std = c(relativePrevalencePredsConstituency_std, relativePrevalencePredsCounty_std)
+  allRelPrevPredslcpb_std = c(relativePrevalencePredsConstituencylcpb_std, relativePrevalencePredsCountylcpb_std)
+  allRelPrevPredsLCPb_std = c(relativePrevalencePredsConstituencyLCPb_std, relativePrevalencePredsCountyLCPb_std)
+  
+  allRelPrevPreds_FBpop = c(relativePrevalencePredsConstituency_FBpop, relativePrevalencePredsCounty_FBpop)
+  allRelPrevPredslcpb_FBpop = c(relativePrevalencePredsConstituencylcpb_FBpop, relativePrevalencePredsCountylcpb_FBpop)
+  allRelPrevPredsLCPb_FBpop = c(relativePrevalencePredsConstituencyLCPb_FBpop, relativePrevalencePredsCountyLCPb_FBpop)
+  
+  allRelPrevPreds_2019 = c(relativePrevalencePredsConstituency_2019, relativePrevalencePredsCounty_2019)
+  allRelPrevPredslcpb_2019 = c(relativePrevalencePredsConstituencylcpb_2019, relativePrevalencePredsCountylcpb_2019)
+  allRelPrevPredsLCPb_2019 = c(relativePrevalencePredsConstituencyLCPb_2019, relativePrevalencePredsCountyLCPb_2019)
+  
+  allRelPrevPreds_jittered = c(relativePrevalencePredsConstituency_jittered, relativePrevalencePredsCounty_jittered)
+  allRelPrevPredslcpb_jittered = c(relativePrevalencePredsConstituencylcpb_jittered, relativePrevalencePredsCountylcpb_jittered)
+  allRelPrevPredsLCPb_jittered = c(relativePrevalencePredsConstituencyLCPb_jittered, relativePrevalencePredsCountyLCPb_jittered)
+  
+  areaLevelRelPrev = c(rep("Constituency", length(relativePrevalencePredsConstituency_std)), 
+                       rep("County", length(relativePrevalencePredsCounty_std)))
+  
+  fullRelPrevTab = data.frame(areaLevel=areaLevelRelPrev, 
+                              allRelPrevPreds_std, allRelPrevPredslcpb_std, allRelPrevPredsLCPb_std, 
+                              allRelPrevPreds_FBpop, allRelPrevPredslcpb_FBpop, allRelPrevPredsLCPb_FBpop, 
+                              allRelPrevPreds_2019, allRelPrevPredslcpb_2019, allRelPrevPredsLCPb_2019, 
+                              allRelPrevPreds_jittered, allRelPrevPredslcpb_jittered, allRelPrevPredsLCPb_jittered)
+  
+  fullRelPrevTabSD = data.frame(areaLevel=areaLevelRelPrev, 
+                                   allRelPrevSDs_std, allRelPrevSDslcpb_std, allRelPrevSDsLCPb_std, 
+                                   allRelPrevSDs_FBpop, allRelPrevSDslcpb_FBpop, allRelPrevSDsLCPb_FBpop, 
+                                   allRelPrevSDs_2019, allRelPrevSDslcpb_2019, allRelPrevSDsLCPb_2019, 
+                                   allRelPrevSDs_jittered, allRelPrevSDslcpb_jittered, allRelPrevSDsLCPb_jittered)
+  
+  fullRelPrevTabPct = data.frame(areaLevel=areaLevelRelPrev, 
+                                    empiricial_FBpop=100*(allRelPrevPreds_FBpop-allRelPrevPreds_std)/allRelPrevPreds_std, 
+                                      latent_FBpop=100*(allRelPrevPredslcpb_FBpop-allRelPrevPredslcpb_std)/allRelPrevPredslcpb_std, 
+                                      smoothLatent_FBpop=100*(allRelPrevPredsLCPb_FBpop-allRelPrevPredsLCPb_std)/allRelPrevPredsLCPb_std, 
+                                    empiricial_2019=100*(allRelPrevPreds_2019-allRelPrevPreds_std)/allRelPrevPreds_std, 
+                                      latent_2019=100*(allRelPrevPredslcpb_2019-allRelPrevPredslcpb_std)/allRelPrevPredslcpb_std, 
+                                      smoothLatent_2019=100*(allRelPrevPredsLCPb_2019-allRelPrevPredsLCPb_std)/allRelPrevPredsLCPb_std, 
+                                    empiricial_jittered=100*(allRelPrevPreds_jittered-allRelPrevPreds_std)/allRelPrevPreds_std, 
+                                      latent_jittered=100*(allRelPrevPredslcpb_jittered-allRelPrevPredslcpb_std)/allRelPrevPredslcpb_std, 
+                                      smoothLatent_jittered=100*(allRelPrevPredsLCPb_jittered-allRelPrevPredsLCPb_std)/allRelPrevPredsLCPb_std)
+  
+  fullRelPrevTabSDPct = data.frame(areaLevel=areaLevelRelPrev, 
+                                      empiricial_FBpop=100*(allRelPrevSDs_FBpop-allRelPrevSDs_std)/allRelPrevSDs_std, 
+                                        latent_FBpop=100*(allRelPrevSDslcpb_FBpop-allRelPrevSDslcpb_std)/allRelPrevSDslcpb_std, 
+                                        smoothLatent_FBpop=100*(allRelPrevSDsLCPb_FBpop-allRelPrevSDsLCPb_std)/allRelPrevSDsLCPb_std, 
+                                      empiricial_2019=100*(allRelPrevSDs_2019-allRelPrevSDs_std)/allRelPrevSDs_std, 
+                                        latent_2019=100*(allRelPrevSDslcpb_2019-allRelPrevSDslcpb_std)/allRelPrevSDslcpb_std, 
+                                        smoothLatent_2019=100*(allRelPrevSDsLCPb_2019-allRelPrevSDsLCPb_std)/allRelPrevSDsLCPb_std, 
+                                      empiricial_jittered=100*(allRelPrevSDs_jittered-allRelPrevSDs_std)/allRelPrevSDs_std, 
+                                        latent_jittered=100*(allRelPrevSDslcpb_jittered-allRelPrevSDslcpb_std)/allRelPrevSDslcpb_std, 
+                                        smoothLatent_jittered=100*(allRelPrevSDsLCPb_jittered-allRelPrevSDsLCPb_std)/allRelPrevSDsLCPb_std)
+  
+  # Calculate plotting range ----
+  fullRangePredsPrevalence = range(as.matrix(fullPrevalenceTab[,-1], na.rm=TRUE))
+  fullRangePredsPctPrevalence = range(as.matrix(fullPrevalenceTabPct[,-1], na.rm=TRUE))
+  fullRangeSDsPrevalence = range(as.matrix(fullPrevalenceTabSD[,-1], na.rm=TRUE))
+  fullRangeSDsPctPrevalance = range(as.matrix(fullPrevalenceTabSDPct[,-1], na.rm=TRUE))
+  
+  fullRangePredsCount = range(as.matrix(fullCountTab[,-1], na.rm=TRUE))
+  fullRangePredsPctCount = range(as.matrix(fullCountTabPct[,-1], na.rm=TRUE))
+  fullRangeSDsCount = range(as.matrix(fullCountTabSD[,-1], na.rm=TRUE))
+  fullRangeSDsPctCount = range(as.matrix(fullCountTabSDPct[,-1], na.rm=TRUE))
+  
+  fullRangePredsRelPrev = range(as.matrix(fullRelPrevTab[,-1], na.rm=TRUE))
+  fullRangePredsPctRelPrev = range(as.matrix(fullRelPrevTabPct[,-1], na.rm=TRUE))
+  fullRangeSDsRelPrev = range(as.matrix(fullRelPrevTabSD[,-1], na.rm=TRUE))
+  fullRangeSDsPctRelPrev = range(as.matrix(fullRelPrevTabSDPct[,-1], na.rm=TRUE))
+  
+  # Make tables ----
+  
+  # table of mean pct increase SD for each type of area and scenario
+  # 3 sets columns: prev, burd, relPrev
+  # 3 rows: constituency x stratum, constituency, county
+  
+  browser()
+  
+  # Empirical model ----
+  # FBpop
+  prevConStrat = mean(fullPrevalenceTabPct$empiricial_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"])
+  prevCon = mean(fullPrevalenceTabPct$empiricial_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency"])
+  prevCounty = mean(fullPrevalenceTabPct$empiricial_FBpop[fullPrevalenceTabPct$areaLevel == "County"])
+  prevConStratSD = mean(fullPrevalenceTabSDPct$empiricial_FBpop[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"])
+  prevConSD = mean(fullPrevalenceTabSDPct$empiricial_FBpop[fullPrevalenceTabSDPct$areaLevel == "Constituency"])
+  prevCountySD = mean(fullPrevalenceTabSDPct$empiricial_FBpop[fullPrevalenceTabSDPct$areaLevel == "County"])
+  prevMeans = cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD))
+  
+  countConStrat = mean(fullCountTabPct$empiricial_FBpop[fullCountTabPct$areaLevel == "Constituency x stratum"])
+  countCon = mean(fullCountTabPct$empiricial_FBpop[fullCountTabPct$areaLevel == "Constituency"])
+  countCounty = mean(fullCountTabPct$empiricial_FBpop[fullCountTabPct$areaLevel == "County"])
+  countConStratSD = mean(fullCountTabSDPct$empiricial_FBpop[fullCountTabSDPct$areaLevel == "Constituency x stratum"])
+  countConSD = mean(fullCountTabSDPct$empiricial_FBpop[fullCountTabSDPct$areaLevel == "Constituency"])
+  countCountySD = mean(fullCountTabSDPct$empiricial_FBpop[fullCountTabSDPct$areaLevel == "County"])
+  countMeans = cbind(c("conStrat"=countConStrat, "constituency"=countCon, "county"=countCounty), 
+                c("conStratSD"=countConStratSD, "constituencySD"=countConSD, "countySD"=countCountySD))
+  
+  relPrevConStrat = NA
+  relPrevCon = mean(fullRelPrevTabPct$empiricial_FBpop[fullRelPrevTabPct$areaLevel == "Constituency"])
+  relPrevCounty = mean(fullRelPrevTabPct$empiricial_FBpop[fullRelPrevTabPct$areaLevel == "County"])
+  relPrevConStratSD = NA
+  relPrevConSD = mean(fullRelPrevTabSDPct$empiricial_FBpop[fullRelPrevTabSDPct$areaLevel == "Constituency"])
+  relPrevCountySD = mean(fullRelPrevTabSDPct$empiricial_FBpop[fullRelPrevTabSDPct$areaLevel == "County"])
+  relPrevMeans = cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD))
+  
+  # 2019
+  prevConStrat = mean(fullPrevalenceTabPct$empiricial_2019[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"])
+  prevCon = mean(fullPrevalenceTabPct$empiricial_2019[fullPrevalenceTabPct$areaLevel == "Constituency"])
+  prevCounty = mean(fullPrevalenceTabPct$empiricial_2019[fullPrevalenceTabPct$areaLevel == "County"])
+  prevConStratSD = mean(fullPrevalenceTabSDPct$empiricial_2019[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"])
+  prevConSD = mean(fullPrevalenceTabSDPct$empiricial_2019[fullPrevalenceTabSDPct$areaLevel == "Constituency"])
+  prevCountySD = mean(fullPrevalenceTabSDPct$empiricial_2019[fullPrevalenceTabSDPct$areaLevel == "County"])
+  prevMeans = rbind(prevMeans, 
+                    cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                      c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD)))
+  
+  countConStrat = mean(fullCountTabPct$empiricial_2019[fullCountTabPct$areaLevel == "Constituency x stratum"])
+  countCon = mean(fullCountTabPct$empiricial_2019[fullCountTabPct$areaLevel == "Constituency"])
+  countCounty = mean(fullCountTabPct$empiricial_2019[fullCountTabPct$areaLevel == "County"])
+  countConStratSD = mean(fullCountTabSDPct$empiricial_2019[fullCountTabSDPct$areaLevel == "Constituency x stratum"])
+  countConSD = mean(fullCountTabSDPct$empiricial_2019[fullCountTabSDPct$areaLevel == "Constituency"])
+  countCountySD = mean(fullCountTabSDPct$empiricial_2019[fullCountTabSDPct$areaLevel == "County"])
+  countMeans = rbind(countMeans, 
+                     cbind(c("conStrat"=countConStrat, "constituency"=countCon, "county"=countCounty), 
+                       c("conStratSD"=countConStratSD, "constituencySD"=countConSD, "countySD"=countCountySD)))
+    
+  relPrevConStrat = NA
+  relPrevCon = mean(fullRelPrevTabPct$empiricial_2019[fullRelPrevTabPct$areaLevel == "Constituency"])
+  relPrevCounty = mean(fullRelPrevTabPct$empiricial_2019[fullRelPrevTabPct$areaLevel == "County"])
+  relPrevConStratSD = NA
+  relPrevConSD = mean(fullRelPrevTabSDPct$empiricial_2019[fullRelPrevTabSDPct$areaLevel == "Constituency"])
+  relPrevCountySD = mean(fullRelPrevTabSDPct$empiricial_2019[fullRelPrevTabSDPct$areaLevel == "County"])
+  relPrevMeans = rbind(relPrevMeans, 
+                       cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                         c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD)))
+  
+  # jittered
+  prevConStrat = mean(fullPrevalenceTabPct$empiricial_jittered[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"])
+  prevCon = mean(fullPrevalenceTabPct$empiricial_jittered[fullPrevalenceTabPct$areaLevel == "Constituency"])
+  prevCounty = mean(fullPrevalenceTabPct$empiricial_jittered[fullPrevalenceTabPct$areaLevel == "County"])
+  prevConStratSD = mean(fullPrevalenceTabSDPct$empiricial_jittered[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"])
+  prevConSD = mean(fullPrevalenceTabSDPct$empiricial_jittered[fullPrevalenceTabSDPct$areaLevel == "Constituency"])
+  prevCountySD = mean(fullPrevalenceTabSDPct$empiricial_jittered[fullPrevalenceTabSDPct$areaLevel == "County"])
+  prevMeans = rbind(prevMeans, 
+                cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                  c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD)))
+  
+  countConStrat = mean(fullCountTabPct$empiricial_jittered[fullCountTabPct$areaLevel == "Constituency x stratum"])
+  countCon = mean(fullCountTabPct$empiricial_jittered[fullCountTabPct$areaLevel == "Constituency"])
+  countCounty = mean(fullCountTabPct$empiricial_jittered[fullCountTabPct$areaLevel == "County"])
+  countConStratSD = mean(fullCountTabSDPct$empiricial_jittered[fullCountTabSDPct$areaLevel == "Constituency x stratum"])
+  countConSD = mean(fullCountTabSDPct$empiricial_jittered[fullCountTabSDPct$areaLevel == "Constituency"])
+  countCountySD = mean(fullCountTabSDPct$empiricial_jittered[fullCountTabSDPct$areaLevel == "County"])
+  countMeans = rbind(countMeans, 
+                 cbind(c("conStrat"=countConStrat, "constituency"=countCon, "county"=countCounty), 
+                   c("conStratSD"=countConStratSD, "constituencySD"=countConSD, "countySD"=countCountySD)))
+  
+  relPrevConStrat = NA
+  relPrevCon = mean(fullRelPrevTabPct$empiricial_jittered[fullRelPrevTabPct$areaLevel == "Constituency"])
+  relPrevCounty = mean(fullRelPrevTabPct$empiricial_jittered[fullRelPrevTabPct$areaLevel == "County"])
+  relPrevConStratSD = NA
+  relPrevConSD = mean(fullRelPrevTabSDPct$empiricial_jittered[fullRelPrevTabSDPct$areaLevel == "Constituency"])
+  relPrevCountySD = mean(fullRelPrevTabSDPct$empiricial_jittered[fullRelPrevTabSDPct$areaLevel == "County"])
+  relPrevMeans = rbind(relPrevMeans, 
+                   cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                     c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD)))
+  
+  # combine into single table
+  tab = cbind(prevMeans, countMeans, relPrevMeans)
+  colnames(tab) = c("Prevalence", "Burden", "Relative prevalence", 
+                    "PrevalenceS", "BurdenS", "Relative prevalenceS")
+  row.names(tab) = rep(c("Constituency x stratum", "Constituency", "County"), 3)
+  tab = round(tab, 0)
+  
+  print(xtable(tab, digits=0, 
+               caption=paste0("Mean percent difference of empirical model posterior ", 
+                              "mean and SD under sensitivity analysis scenarios ", 
+                              "compared to under the original data."), 
+               label=paste0("tab:pctIncreaseSensitivity_empirical")))
+  
+  
+  # Make plots ----
   
   # load shape files for plotting
   # require(maptools)
