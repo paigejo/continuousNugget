@@ -2471,7 +2471,7 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
   }
   
   # Combine data into tables ----
-  allPrevalenceSDs_std = c(prevalenceSDConStrat_std, prevalenceSDConstituency_std, prevalenceSDCounty_std)
+  allPrevalenceSD_std = c(prevalenceSDConStrat_std, prevalenceSDConstituency_std, prevalenceSDCounty_std)
   allPrevalenceSDlcpb_std = c(prevalenceSDConStratlcpb_std, prevalenceSDConstituencylcpb_std, prevalenceSDCountylcpb_std)
   allPrevalenceSDLCPb_std = c(prevalenceSDConStratLCPb_std, prevalenceSDConstituencyLCPb_std, prevalenceSDCountyLCPb_std)
   
