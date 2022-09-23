@@ -2471,21 +2471,21 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
   }
   
   # Combine data into tables ----
-  allPrevalenceSDs_std = c(prevalenceSDsConStrat_std, prevalenceSDsConstituency_std, prevalenceSDsCounty_std)
-  allPrevalenceSDslcpb_std = c(prevalenceSDsConStratlcpb_std, prevalenceSDsConstituencylcpb_std, prevalenceSDsCountylcpb_std)
-  allPrevalenceSDsLCPb_std = c(prevalenceSDsConStratLCPb_std, prevalenceSDsConstituencyLCPb_std, prevalenceSDsCountyLCPb_std)
+  allPrevalenceSDs_std = c(prevalenceSDConStrat_std, prevalenceSDConstituency_std, prevalenceSDCounty_std)
+  allPrevalenceSDlcpb_std = c(prevalenceSDConStratlcpb_std, prevalenceSDConstituencylcpb_std, prevalenceSDCountylcpb_std)
+  allPrevalenceSDLCPb_std = c(prevalenceSDConStratLCPb_std, prevalenceSDConstituencyLCPb_std, prevalenceSDCountyLCPb_std)
   
-  allPrevalenceSDs_FBpop = c(prevalenceSDsConStrat_FBpop, prevalenceSDsConstituency_FBpop, prevalenceSDsCounty_FBpop)
-  allPrevalenceSDslcpb_FBpop = c(prevalenceSDsConStratlcpb_FBpop, prevalenceSDsConstituencylcpb_FBpop, prevalenceSDsCountylcpb_FBpop)
-  allPrevalenceSDsLCPb_FBpop = c(prevalenceSDsConStratLCPb_FBpop, prevalenceSDsConstituencyLCPb_FBpop, prevalenceSDsCountyLCPb_FBpop)
+  allPrevalenceSD_FBpop = c(prevalenceSDConStrat_FBpop, prevalenceSDConstituency_FBpop, prevalenceSDCounty_FBpop)
+  allPrevalenceSDlcpb_FBpop = c(prevalenceSDConStratlcpb_FBpop, prevalenceSDConstituencylcpb_FBpop, prevalenceSDCountylcpb_FBpop)
+  allPrevalenceSDLCPb_FBpop = c(prevalenceSDConStratLCPb_FBpop, prevalenceSDConstituencyLCPb_FBpop, prevalenceSDCountyLCPb_FBpop)
   
-  allPrevalenceSDs_2019 = c(prevalenceSDsConStrat_2019, prevalenceSDsConstituency_2019, prevalenceSDsCounty_2019)
-  allPrevalenceSDslcpb_2019 = c(prevalenceSDsConStratlcpb_2019, prevalenceSDsConstituencylcpb_2019, prevalenceSDsCountylcpb_2019)
-  allPrevalenceSDsLCPb_2019 = c(prevalenceSDsConStratLCPb_2019, prevalenceSDsConstituencyLCPb_2019, prevalenceSDsCountyLCPb_2019)
+  allPrevalenceSD_2019 = c(prevalenceSDConStrat_2019, prevalenceSDConstituency_2019, prevalenceSDCounty_2019)
+  allPrevalenceSDlcpb_2019 = c(prevalenceSDConStratlcpb_2019, prevalenceSDConstituencylcpb_2019, prevalenceSDCountylcpb_2019)
+  allPrevalenceSDLCPb_2019 = c(prevalenceSDConStratLCPb_2019, prevalenceSDConstituencyLCPb_2019, prevalenceSDCountyLCPb_2019)
   
-  allPrevalenceSDs_jittered = c(prevalenceSDsConStrat_jittered, prevalenceSDsConstituency_jittered, prevalenceSDsCounty_jittered)
-  allPrevalenceSDslcpb_jittered = c(prevalenceSDsConStratlcpb_jittered, prevalenceSDsConstituencylcpb_jittered, prevalenceSDsCountylcpb_jittered)
-  allPrevalenceSDsLCPb_jittered = c(prevalenceSDsConStratLCPb_jittered, prevalenceSDsConstituencyLCPb_jittered, prevalenceSDsCountyLCPb_jittered)
+  allPrevalenceSD_jittered = c(prevalenceSDConStrat_jittered, prevalenceSDConstituency_jittered, prevalenceSDCounty_jittered)
+  allPrevalenceSDlcpb_jittered = c(prevalenceSDConStratlcpb_jittered, prevalenceSDConstituencylcpb_jittered, prevalenceSDCountylcpb_jittered)
+  allPrevalenceSDLCPb_jittered = c(prevalenceSDConStratLCPb_jittered, prevalenceSDConstituencyLCPb_jittered, prevalenceSDCountyLCPb_jittered)
   
   
   allPrevalencePreds_std = c(prevalencePredsConStrat_std, prevalencePredsConstituency_std, prevalencePredsCounty_std)
@@ -2515,10 +2515,10 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
                                  allPrevalencePreds_jittered, allPrevalencePredslcpb_jittered, allPrevalencePredsLCPb_jittered)
   
   fullPrevalenceTabSD = data.frame(areaLevel=areaLevelPrevalence, 
-                                 allPrevalenceSDs_std, allPrevalenceSDslcpb_std, allPrevalenceSDsLCPb_std, 
-                                 allPrevalenceSDs_FBpop, allPrevalenceSDslcpb_FBpop, allPrevalenceSDsLCPb_FBpop, 
-                                 allPrevalenceSDs_2019, allPrevalenceSDslcpb_2019, allPrevalenceSDsLCPb_2019, 
-                                 allPrevalenceSDs_jittered, allPrevalenceSDslcpb_jittered, allPrevalenceSDsLCPb_jittered)
+                                 allPrevalenceSD_std, allPrevalenceSDlcpb_std, allPrevalenceSDLCPb_std, 
+                                 allPrevalenceSD_FBpop, allPrevalenceSDlcpb_FBpop, allPrevalenceSDLCPb_FBpop, 
+                                 allPrevalenceSD_2019, allPrevalenceSDlcpb_2019, allPrevalenceSDLCPb_2019, 
+                                 allPrevalenceSD_jittered, allPrevalenceSDlcpb_jittered, allPrevalenceSDLCPb_jittered)
   
   fullPrevalenceTabPct = data.frame(areaLevel=areaLevelPrevalence, 
                                  empiricial_FBpop=100*(allPrevalencePreds_FBpop-allPrevalencePreds_std)/allPrevalencePreds_std, 
@@ -2532,31 +2532,31 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
                                    smoothLatent_jittered=100*(allPrevalencePredsLCPb_jittered-allPrevalencePredsLCPb_std)/allPrevalencePredsLCPb_std)
   
   fullPrevalenceTabSDPct = data.frame(areaLevel=areaLevelPrevalence, 
-                                    empiricial_FBpop=100*(allPrevalenceSDs_FBpop-allPrevalenceSDs_std)/allPrevalenceSDs_std, 
-                                      latent_FBpop=100*(allPrevalenceSDslcpb_FBpop-allPrevalenceSDslcpb_std)/allPrevalenceSDslcpb_std, 
-                                      smoothLatent_FBpop=100*(allPrevalenceSDsLCPb_FBpop-allPrevalenceSDsLCPb_std)/allPrevalenceSDsLCPb_std, 
-                                    empiricial_2019=100*(allPrevalenceSDs_2019-allPrevalenceSDs_std)/allPrevalenceSDs_std, 
-                                      latent_2019=100*(allPrevalenceSDslcpb_2019-allPrevalenceSDslcpb_std)/allPrevalenceSDslcpb_std, 
-                                      smoothLatent_2019=100*(allPrevalenceSDsLCPb_2019-allPrevalenceSDsLCPb_std)/allPrevalenceSDsLCPb_std, 
-                                    empiricial_jittered=100*(allPrevalenceSDs_jittered-allPrevalenceSDs_std)/allPrevalenceSDs_std, 
-                                      latent_jittered=100*(allPrevalenceSDslcpb_jittered-allPrevalenceSDslcpb_std)/allPrevalenceSDslcpb_std, 
-                                      smoothLatent_jittered=100*(allPrevalenceSDsLCPb_jittered-allPrevalenceSDsLCPb_std)/allPrevalenceSDsLCPb_std)
+                                    empiricial_FBpop=100*(allPrevalenceSD_FBpop-allPrevalenceSD_std)/allPrevalenceSD_std, 
+                                      latent_FBpop=100*(allPrevalenceSDlcpb_FBpop-allPrevalenceSDlcpb_std)/allPrevalenceSDlcpb_std, 
+                                      smoothLatent_FBpop=100*(allPrevalenceSDLCPb_FBpop-allPrevalenceSDLCPb_std)/allPrevalenceSDLCPb_std, 
+                                    empiricial_2019=100*(allPrevalenceSD_2019-allPrevalenceSD_std)/allPrevalenceSD_std, 
+                                      latent_2019=100*(allPrevalenceSDlcpb_2019-allPrevalenceSDlcpb_std)/allPrevalenceSDlcpb_std, 
+                                      smoothLatent_2019=100*(allPrevalenceSDLCPb_2019-allPrevalenceSDLCPb_std)/allPrevalenceSDLCPb_std, 
+                                    empiricial_jittered=100*(allPrevalenceSD_jittered-allPrevalenceSD_std)/allPrevalenceSD_std, 
+                                      latent_jittered=100*(allPrevalenceSDlcpb_jittered-allPrevalenceSDlcpb_std)/allPrevalenceSDlcpb_std, 
+                                      smoothLatent_jittered=100*(allPrevalenceSDLCPb_jittered-allPrevalenceSDLCPb_std)/allPrevalenceSDLCPb_std)
   
-  allCountSDs_std = c(countSDsConStrat_std, countSDsConstituency_std, countSDsCounty_std)
-  allCountSDslcpb_std = c(countSDsConStratlcpb_std, countSDsConstituencylcpb_std, countSDsCountylcpb_std)
-  allCountSDsLCPb_std = c(countSDsConStratLCPb_std, countSDsConstituencyLCPb_std, countSDsCountyLCPb_std)
+  allCountSD_std = c(countSDConStrat_std, countSDConstituency_std, countSDCounty_std)
+  allCountSDlcpb_std = c(countSDConStratlcpb_std, countSDConstituencylcpb_std, countSDCountylcpb_std)
+  allCountSDLCPb_std = c(countSDConStratLCPb_std, countSDConstituencyLCPb_std, countSDCountyLCPb_std)
   
-  allCountSDs_FBpop = c(countSDsConStrat_FBpop, countSDsConstituency_FBpop, countSDsCounty_FBpop)
-  allCountSDslcpb_FBpop = c(countSDsConStratlcpb_FBpop, countSDsConstituencylcpb_FBpop, countSDsCountylcpb_FBpop)
-  allCountSDsLCPb_FBpop = c(countSDsConStratLCPb_FBpop, countSDsConstituencyLCPb_FBpop, countSDsCountyLCPb_FBpop)
+  allCountSD_FBpop = c(countSDConStrat_FBpop, countSDConstituency_FBpop, countSDCounty_FBpop)
+  allCountSDlcpb_FBpop = c(countSDConStratlcpb_FBpop, countSDConstituencylcpb_FBpop, countSDCountylcpb_FBpop)
+  allCountSDLCPb_FBpop = c(countSDConStratLCPb_FBpop, countSDConstituencyLCPb_FBpop, countSDCountyLCPb_FBpop)
   
-  allCountSDs_2019 = c(countSDsConStrat_2019, countSDsConstituency_2019, countSDsCounty_2019)
-  allCountSDslcpb_2019 = c(countSDsConStratlcpb_2019, countSDsConstituencylcpb_2019, countSDsCountylcpb_2019)
-  allCountSDsLCPb_2019 = c(countSDsConStratLCPb_2019, countSDsConstituencyLCPb_2019, countSDsCountyLCPb_2019)
+  allCountSD_2019 = c(countSDConStrat_2019, countSDConstituency_2019, countSDCounty_2019)
+  allCountSDlcpb_2019 = c(countSDConStratlcpb_2019, countSDConstituencylcpb_2019, countSDCountylcpb_2019)
+  allCountSDLCPb_2019 = c(countSDConStratLCPb_2019, countSDConstituencyLCPb_2019, countSDCountyLCPb_2019)
   
-  allCountSDs_jittered = c(countSDsConStrat_jittered, countSDsConstituency_jittered, countSDsCounty_jittered)
-  allCountSDslcpb_jittered = c(countSDsConStratlcpb_jittered, countSDsConstituencylcpb_jittered, countSDsCountylcpb_jittered)
-  allCountSDsLCPb_jittered = c(countSDsConStratLCPb_jittered, countSDsConstituencyLCPb_jittered, countSDsCountyLCPb_jittered)
+  allCountSD_jittered = c(countSDConStrat_jittered, countSDConstituency_jittered, countSDCounty_jittered)
+  allCountSDlcpb_jittered = c(countSDConStratlcpb_jittered, countSDConstituencylcpb_jittered, countSDCountylcpb_jittered)
+  allCountSDLCPb_jittered = c(countSDConStratLCPb_jittered, countSDConstituencyLCPb_jittered, countSDCountyLCPb_jittered)
   
   
   allCountPreds_std = c(countPredsConStrat_std, countPredsConstituency_std, countPredsCounty_std)
@@ -2586,10 +2586,10 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
                                  allCountPreds_jittered, allCountPredslcpb_jittered, allCountPredsLCPb_jittered)
   
   fullCountTabSD = data.frame(areaLevel=areaLevelCount, 
-                                   allCountSDs_std, allCountSDslcpb_std, allCountSDsLCPb_std, 
-                                   allCountSDs_FBpop, allCountSDslcpb_FBpop, allCountSDsLCPb_FBpop, 
-                                   allCountSDs_2019, allCountSDslcpb_2019, allCountSDsLCPb_2019, 
-                                   allCountSDs_jittered, allCountSDslcpb_jittered, allCountSDsLCPb_jittered)
+                                   allCountSD_std, allCountSDlcpb_std, allCountSDLCPb_std, 
+                                   allCountSD_FBpop, allCountSDlcpb_FBpop, allCountSDLCPb_FBpop, 
+                                   allCountSD_2019, allCountSDlcpb_2019, allCountSDLCPb_2019, 
+                                   allCountSD_jittered, allCountSDlcpb_jittered, allCountSDLCPb_jittered)
   
   fullCountTabPct = data.frame(areaLevel=areaLevelCount, 
                                     empiricial_FBpop=100*(allCountPreds_FBpop-allCountPreds_std)/allCountPreds_std, 
@@ -2603,31 +2603,31 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
                                       smoothLatent_jittered=100*(allCountPredsLCPb_jittered-allCountPredsLCPb_std)/allCountPredsLCPb_std)
   
   fullCountTabSDPct = data.frame(areaLevel=areaLevelCount, 
-                                      empiricial_FBpop=100*(allCountSDs_FBpop-allCountSDs_std)/allCountSDs_std, 
-                                        latent_FBpop=100*(allCountSDslcpb_FBpop-allCountSDslcpb_std)/allCountSDslcpb_std, 
-                                        smoothLatent_FBpop=100*(allCountSDsLCPb_FBpop-allCountSDsLCPb_std)/allCountSDsLCPb_std, 
-                                      empiricial_2019=100*(allCountSDs_2019-allCountSDs_std)/allCountSDs_std, 
-                                        latent_2019=100*(allCountSDslcpb_2019-allCountSDslcpb_std)/allCountSDslcpb_std, 
-                                        smoothLatent_2019=100*(allCountSDsLCPb_2019-allCountSDsLCPb_std)/allCountSDsLCPb_std, 
-                                      empiricial_jittered=100*(allCountSDs_jittered-allCountSDs_std)/allCountSDs_std, 
-                                        latent_jittered=100*(allCountSDslcpb_jittered-allCountSDslcpb_std)/allCountSDslcpb_std, 
-                                        smoothLatent_jittered=100*(allCountSDsLCPb_jittered-allCountSDsLCPb_std)/allCountSDsLCPb_std)
+                                      empiricial_FBpop=100*(allCountSD_FBpop-allCountSD_std)/allCountSD_std, 
+                                        latent_FBpop=100*(allCountSDlcpb_FBpop-allCountSDlcpb_std)/allCountSDlcpb_std, 
+                                        smoothLatent_FBpop=100*(allCountSDLCPb_FBpop-allCountSDLCPb_std)/allCountSDLCPb_std, 
+                                      empiricial_2019=100*(allCountSD_2019-allCountSD_std)/allCountSD_std, 
+                                        latent_2019=100*(allCountSDlcpb_2019-allCountSDlcpb_std)/allCountSDlcpb_std, 
+                                        smoothLatent_2019=100*(allCountSDLCPb_2019-allCountSDLCPb_std)/allCountSDLCPb_std, 
+                                      empiricial_jittered=100*(allCountSD_jittered-allCountSD_std)/allCountSD_std, 
+                                        latent_jittered=100*(allCountSDlcpb_jittered-allCountSDlcpb_std)/allCountSDlcpb_std, 
+                                        smoothLatent_jittered=100*(allCountSDLCPb_jittered-allCountSDLCPb_std)/allCountSDLCPb_std)
   
-  allRelPrevSDs_std = c(relativePrevalenceSDsConstituency_std, relativePrevalenceSDsCounty_std)
-  allRelPrevSDslcpb_std = c(relativePrevalenceSDsConstituencylcpb_std, relativePrevalenceSDsCountylcpb_std)
-  allRelPrevSDsLCPb_std = c(relativePrevalenceSDsConstituencyLCPb_std, relativePrevalenceSDsCountyLCPb_std)
+  allRelPrevSD_std = c(relativePrevalenceSDConstituency_std, relativePrevalenceSDCounty_std)
+  allRelPrevSDlcpb_std = c(relativePrevalenceSDConstituencylcpb_std, relativePrevalenceSDCountylcpb_std)
+  allRelPrevSDLCPb_std = c(relativePrevalenceSDConstituencyLCPb_std, relativePrevalenceSDCountyLCPb_std)
   
-  allRelPrevSDs_FBpop = c(relativePrevalenceSDsConstituency_FBpop, relativePrevalenceSDsCounty_FBpop)
-  allRelPrevSDslcpb_FBpop = c(relativePrevalenceSDsConstituencylcpb_FBpop, relativePrevalenceSDsCountylcpb_FBpop)
-  allRelPrevSDsLCPb_FBpop = c(relativePrevalenceSDsConstituencyLCPb_FBpop, relativePrevalenceSDsCountyLCPb_FBpop)
+  allRelPrevSD_FBpop = c(relativePrevalenceSDConstituency_FBpop, relativePrevalenceSDCounty_FBpop)
+  allRelPrevSDlcpb_FBpop = c(relativePrevalenceSDConstituencylcpb_FBpop, relativePrevalenceSDCountylcpb_FBpop)
+  allRelPrevSDLCPb_FBpop = c(relativePrevalenceSDConstituencyLCPb_FBpop, relativePrevalenceSDCountyLCPb_FBpop)
   
-  allRelPrevSDs_2019 = c(relativePrevalenceSDsConstituency_2019, relativePrevalenceSDsCounty_2019)
-  allRelPrevSDslcpb_2019 = c(relativePrevalenceSDsConstituencylcpb_2019, relativePrevalenceSDsCountylcpb_2019)
-  allRelPrevSDsLCPb_2019 = c(relativePrevalenceSDsConstituencyLCPb_2019, relativePrevalenceSDsCountyLCPb_2019)
+  allRelPrevSD_2019 = c(relativePrevalenceSDConstituency_2019, relativePrevalenceSDCounty_2019)
+  allRelPrevSDlcpb_2019 = c(relativePrevalenceSDConstituencylcpb_2019, relativePrevalenceSDCountylcpb_2019)
+  allRelPrevSDLCPb_2019 = c(relativePrevalenceSDConstituencyLCPb_2019, relativePrevalenceSDCountyLCPb_2019)
   
-  allRelPrevSDs_jittered = c(relativePrevalenceSDsConstituency_jittered, relativePrevalenceSDsCounty_jittered)
-  allRelPrevSDslcpb_jittered = c(relativePrevalenceSDsConstituencylcpb_jittered, relativePrevalenceSDsCountylcpb_jittered)
-  allRelPrevSDsLCPb_jittered = c(relativePrevalenceSDsConstituencyLCPb_jittered, relativePrevalenceSDsCountyLCPb_jittered)
+  allRelPrevSD_jittered = c(relativePrevalenceSDConstituency_jittered, relativePrevalenceSDCounty_jittered)
+  allRelPrevSDlcpb_jittered = c(relativePrevalenceSDConstituencylcpb_jittered, relativePrevalenceSDCountylcpb_jittered)
+  allRelPrevSDLCPb_jittered = c(relativePrevalenceSDConstituencyLCPb_jittered, relativePrevalenceSDCountyLCPb_jittered)
   
   
   allRelPrevPreds_std = c(relativePrevalencePredsConstituency_std, relativePrevalencePredsCounty_std)
@@ -2656,10 +2656,10 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
                               allRelPrevPreds_jittered, allRelPrevPredslcpb_jittered, allRelPrevPredsLCPb_jittered)
   
   fullRelPrevTabSD = data.frame(areaLevel=areaLevelRelPrev, 
-                                   allRelPrevSDs_std, allRelPrevSDslcpb_std, allRelPrevSDsLCPb_std, 
-                                   allRelPrevSDs_FBpop, allRelPrevSDslcpb_FBpop, allRelPrevSDsLCPb_FBpop, 
-                                   allRelPrevSDs_2019, allRelPrevSDslcpb_2019, allRelPrevSDsLCPb_2019, 
-                                   allRelPrevSDs_jittered, allRelPrevSDslcpb_jittered, allRelPrevSDsLCPb_jittered)
+                                   allRelPrevSD_std, allRelPrevSDlcpb_std, allRelPrevSDLCPb_std, 
+                                   allRelPrevSD_FBpop, allRelPrevSDlcpb_FBpop, allRelPrevSDLCPb_FBpop, 
+                                   allRelPrevSD_2019, allRelPrevSDlcpb_2019, allRelPrevSDLCPb_2019, 
+                                   allRelPrevSD_jittered, allRelPrevSDlcpb_jittered, allRelPrevSDLCPb_jittered)
   
   fullRelPrevTabPct = data.frame(areaLevel=areaLevelRelPrev, 
                                     empiricial_FBpop=100*(allRelPrevPreds_FBpop-allRelPrevPreds_std)/allRelPrevPreds_std, 
@@ -2673,15 +2673,15 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
                                       smoothLatent_jittered=100*(allRelPrevPredsLCPb_jittered-allRelPrevPredsLCPb_std)/allRelPrevPredsLCPb_std)
   
   fullRelPrevTabSDPct = data.frame(areaLevel=areaLevelRelPrev, 
-                                      empiricial_FBpop=100*(allRelPrevSDs_FBpop-allRelPrevSDs_std)/allRelPrevSDs_std, 
-                                        latent_FBpop=100*(allRelPrevSDslcpb_FBpop-allRelPrevSDslcpb_std)/allRelPrevSDslcpb_std, 
-                                        smoothLatent_FBpop=100*(allRelPrevSDsLCPb_FBpop-allRelPrevSDsLCPb_std)/allRelPrevSDsLCPb_std, 
-                                      empiricial_2019=100*(allRelPrevSDs_2019-allRelPrevSDs_std)/allRelPrevSDs_std, 
-                                        latent_2019=100*(allRelPrevSDslcpb_2019-allRelPrevSDslcpb_std)/allRelPrevSDslcpb_std, 
-                                        smoothLatent_2019=100*(allRelPrevSDsLCPb_2019-allRelPrevSDsLCPb_std)/allRelPrevSDsLCPb_std, 
-                                      empiricial_jittered=100*(allRelPrevSDs_jittered-allRelPrevSDs_std)/allRelPrevSDs_std, 
-                                        latent_jittered=100*(allRelPrevSDslcpb_jittered-allRelPrevSDslcpb_std)/allRelPrevSDslcpb_std, 
-                                        smoothLatent_jittered=100*(allRelPrevSDsLCPb_jittered-allRelPrevSDsLCPb_std)/allRelPrevSDsLCPb_std)
+                                      empiricial_FBpop=100*(allRelPrevSD_FBpop-allRelPrevSD_std)/allRelPrevSD_std, 
+                                        latent_FBpop=100*(allRelPrevSDlcpb_FBpop-allRelPrevSDlcpb_std)/allRelPrevSDlcpb_std, 
+                                        smoothLatent_FBpop=100*(allRelPrevSDLCPb_FBpop-allRelPrevSDLCPb_std)/allRelPrevSDLCPb_std, 
+                                      empiricial_2019=100*(allRelPrevSD_2019-allRelPrevSD_std)/allRelPrevSD_std, 
+                                        latent_2019=100*(allRelPrevSDlcpb_2019-allRelPrevSDlcpb_std)/allRelPrevSDlcpb_std, 
+                                        smoothLatent_2019=100*(allRelPrevSDLCPb_2019-allRelPrevSDLCPb_std)/allRelPrevSDLCPb_std, 
+                                      empiricial_jittered=100*(allRelPrevSD_jittered-allRelPrevSD_std)/allRelPrevSD_std, 
+                                        latent_jittered=100*(allRelPrevSDlcpb_jittered-allRelPrevSDlcpb_std)/allRelPrevSDlcpb_std, 
+                                        smoothLatent_jittered=100*(allRelPrevSDLCPb_jittered-allRelPrevSDLCPb_std)/allRelPrevSDLCPb_std)
   
   # Calculate plotting range ----
   fullRangePredsPrevalence = range(as.matrix(fullPrevalenceTab[,-1], na.rm=TRUE))
