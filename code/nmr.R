@@ -128,7 +128,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
     easpa = makeDefaultEASPA()
     poppsub = poppsubKenyaThresh
     
-    if(useCoarseGrid) {
+    if(coarse) {
       popMat = popGridCoarseThresh
       popMatAdjusted = popGridCoarseAdjustedThresh
     } else {
@@ -142,7 +142,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
     easpa = makeEASPAfacebook()
     poppsub = poppsubKenyaFaceThresh
     
-    if(useCoarseGrid) {
+    if(coarse) {
       popMat = popMatCoarseFaceThresh
       popMatAdjusted = popMatCoarseAdjustedFaceThresh
     } else {
@@ -156,7 +156,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
     easpa = makeEASPA2019()
     poppsub = poppsubKenya2019Thresh
     
-    if(useCoarseGrid) {
+    if(coarse) {
       popMat = popMatCoarse2019Thresh
       popMatAdjusted = popMatCoarseAdjusted2019Thresh
     } else {
@@ -170,7 +170,7 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
     easpa = makeEASPAJittered()
     poppsub = poppsubKenyaJitteredThresh
     
-    if(useCoarseGrid) {
+    if(coarse) {
       popMat = popMatCoarseJitteredThresh
       popMatAdjusted = popMatCoarseAdjustedJitteredThresh
     } else {
@@ -1952,7 +1952,7 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
       easpa = makeDefaultEASPA()
       poppsub = poppsubKenyaThresh
       
-      if(useCoarseGrid) {
+      if(coarse) {
         popMat = popGridCoarseThresh
         popMatAdjusted = popGridCoarseAdjustedThresh
       } else {
@@ -1966,7 +1966,7 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
       easpa = makeEASPAfacebook()
       poppsub = poppsubKenyaFaceThresh
       
-      if(useCoarseGrid) {
+      if(coarse) {
         popMat = popMatCoarseFaceThresh
         popMatAdjusted = popMatCoarseAdjustedFaceThresh
       } else {
@@ -1980,7 +1980,7 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
       easpa = makeEASPA2019()
       poppsub = poppsubKenya2019Thresh
       
-      if(useCoarseGrid) {
+      if(coarse) {
         popMat = popMatCoarse2019Thresh
         popMatAdjusted = popMatCoarseAdjusted2019Thresh
       } else {
@@ -1994,7 +1994,7 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
       easpa = makeEASPAJittered()
       poppsub = poppsubKenyaJitteredThresh
       
-      if(useCoarseGrid) {
+      if(coarse) {
         popMat = popMatCoarseJitteredThresh
         popMatAdjusted = popMatCoarseAdjustedJitteredThresh
       } else {
