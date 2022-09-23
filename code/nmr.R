@@ -2002,6 +2002,9 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
         popMatAdjusted = popMatKenyaJitteredNeonatalThresh
       }
     }
+    if(!is.null(poppsub$area)) {
+      poppsub$County = poppsub$area
+    }
     
     # calculate predictions and SDs ----
     
@@ -2010,31 +2013,30 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
       thisLevel = areaLevels[i]
       
       if(thisLevel == "constrat") {
-        urbanConstituencies = poppsub$County == "Nairobi" | poppsub$County == "Mombasa"
         undefinedPrevalenceConStrats = c(poppsub$popUrb == 0, poppsub$popRur == 0)
         
         prevalenceSDConStrat = c(apply(subareaPop$pUrbanFineScalePrevalence, 1, sd, na.rm=TRUE), 
                                  apply(subareaPop$pRuralFineScalePrevalence, 1, sd, na.rm=TRUE))
-        prevalenceSDConStrat = prevalenceSDConStrat[!undefinedPrevalenceConStrats]
+        # prevalenceSDConStrat = prevalenceSDConStrat[!undefinedPrevalenceConStrats]
         countSDConStrat = c(apply(subareaPop$ZUrbanFineScalePrevalence, 1, sd, na.rm=TRUE), 
                             apply(subareaPop$ZRuralFineScalePrevalence, 1, sd, na.rm=TRUE))
-        countSDConStrat = countSDConStrat[!undefinedPrevalenceConStrats]
+        # countSDConStrat = countSDConStrat[!undefinedPrevalenceConStrats]
         
         # get same for the lcpb model
         prevalenceSDConStratlcpb = c(apply(subareaPop$pUrbanSmoothRisk, 1, sd, na.rm=TRUE), 
                                      apply(subareaPop$pRuralSmoothRisk, 1, sd, na.rm=TRUE))
-        prevalenceSDConStratlcpb = prevalenceSDConStratlcpb[!undefinedPrevalenceConStrats]
+        # prevalenceSDConStratlcpb = prevalenceSDConStratlcpb[!undefinedPrevalenceConStrats]
         countSDConStratlcpb = c(apply(subareaPop$ZUrbanSmoothRisk, 1, sd, na.rm=TRUE), 
                                 apply(subareaPop$ZRuralSmoothRisk, 1, sd, na.rm=TRUE))
-        countSDConStratlcpb = countSDConStratlcpb[!undefinedPrevalenceConStrats]
+        # countSDConStratlcpb = countSDConStratlcpb[!undefinedPrevalenceConStrats]
         
         # do the same for the LCPb model
         prevalenceSDConStratLCPb = c(apply(subareaPop$pUrbanFineScaleRisk, 1, sd, na.rm=TRUE), 
                                      apply(subareaPop$pRuralFineScaleRisk, 1, sd, na.rm=TRUE))
-        prevalenceSDConStratLCPb = prevalenceSDConStratLCPb[!undefinedPrevalenceConStrats]
+        # prevalenceSDConStratLCPb = prevalenceSDConStratLCPb[!undefinedPrevalenceConStrats]
         countSDConStratLCPb = c(apply(subareaPop$ZUrbanFineScaleRisk, 1, sd, na.rm=TRUE), 
                                 apply(subareaPop$ZRuralFineScaleRisk, 1, sd, na.rm=TRUE))
-        countSDConStratLCPb = countSDConStratLCPb[!undefinedPrevalenceConStrats]
+        # countSDConStratLCPb = countSDConStratLCPb[!undefinedPrevalenceConStrats]
         
         # predictions: prevalence, burden, relPrev
         prevalencePredsConStrat = c(rowMeans(subareaPop$pUrbanFineScalePrevalence, na.rm=TRUE), 
