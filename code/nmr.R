@@ -125,11 +125,10 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
   out = load(paste0("savedOutput/application/finalMort", coarseText, logisticText, resultTypeText, ".RData"))
   
   if(resultType == "std") {
-    tableText = "using 2009 census and WorldPop data"
     easpa = makeDefaultEASPA()
     poppsub = poppsubKenyaThresh
     
-    if(coarse) {
+    if(useCoarseGrid) {
       popMat = popGridCoarseThresh
       popMatAdjusted = popGridCoarseAdjustedThresh
     } else {
@@ -137,14 +136,13 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
       popMatAdjusted = popGridAdjustedThresh
     }
   } else if(resultType == "FBpop") {
-    tableText = "using 2009 census and Facebook population data"
     out = load("savedOutput/global/kenyaFacePopulationMats.RData")
     out = load("savedOutput/global/poppsubFace.RData")
     
     easpa = makeEASPAfacebook()
     poppsub = poppsubKenyaFaceThresh
     
-    if(coarse) {
+    if(useCoarseGrid) {
       popMat = popMatCoarseFaceThresh
       popMatAdjusted = popMatCoarseAdjustedFaceThresh
     } else {
@@ -152,13 +150,33 @@ makeMortPlots = function(logisticApproximation=FALSE, coarse=TRUE, signif=.95,
       popMatAdjusted = popMatKenyaFaceNeonatalThresh
     }
   } else if(resultType == "census2019") {
-    tableText = "using 2019 census and WorldPop data"
+    load("savedOutput/global/kenya2019PopulationMats.RData")
+    load("savedOutput/global/poppsub2019.RData")
+    
     easpa = makeEASPA2019()
     poppsub = poppsubKenya2019Thresh
+    
+    if(useCoarseGrid) {
+      popMat = popMatCoarse2019Thresh
+      popMatAdjusted = popMatCoarseAdjusted2019Thresh
+    } else {
+      popMat = popMatKenya2019Thresh
+      popMatAdjusted = popMatKenya2019NeonatalThresh
+    }
   } else if(resultType == "censusJittered") {
-    tableText = "using 5% jittered 2009 census and WorldPop data"
+    load("savedOutput/global/kenyaJitteredPopulationMats.RData")
+    load("savedOutput/global/poppsubJittered.RData")
+    
     easpa = makeEASPAJittered()
     poppsub = poppsubKenyaJitteredThresh
+    
+    if(useCoarseGrid) {
+      popMat = popMatCoarseJitteredThresh
+      popMatAdjusted = popMatCoarseAdjustedJitteredThresh
+    } else {
+      popMat = popMatKenyaJitteredThresh
+      popMatAdjusted = popMatKenyaJitteredNeonatalThresh
+    }
   }
   
   # calculate the range of predictions and CI widths ----
@@ -1931,11 +1949,10 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
     out = load(paste0("savedOutput/application/finalMort", coarseText, logisticText, resultTypeText, ".RData"))
     
     if(resultType == "std") {
-      tableText = "using 2009 census and WorldPop data"
       easpa = makeDefaultEASPA()
       poppsub = poppsubKenyaThresh
       
-      if(coarse) {
+      if(useCoarseGrid) {
         popMat = popGridCoarseThresh
         popMatAdjusted = popGridCoarseAdjustedThresh
       } else {
@@ -1943,14 +1960,13 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
         popMatAdjusted = popGridAdjustedThresh
       }
     } else if(resultType == "FBpop") {
-      tableText = "using 2009 census and Facebook population data"
       out = load("savedOutput/global/kenyaFacePopulationMats.RData")
       out = load("savedOutput/global/poppsubFace.RData")
       
       easpa = makeEASPAfacebook()
       poppsub = poppsubKenyaFaceThresh
       
-      if(coarse) {
+      if(useCoarseGrid) {
         popMat = popMatCoarseFaceThresh
         popMatAdjusted = popMatCoarseAdjustedFaceThresh
       } else {
@@ -1958,13 +1974,33 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
         popMatAdjusted = popMatKenyaFaceNeonatalThresh
       }
     } else if(resultType == "census2019") {
-      tableText = "using 2019 census and WorldPop data"
+      load("savedOutput/global/kenya2019PopulationMats.RData")
+      load("savedOutput/global/poppsub2019.RData")
+      
       easpa = makeEASPA2019()
       poppsub = poppsubKenya2019Thresh
+      
+      if(useCoarseGrid) {
+        popMat = popMatCoarse2019Thresh
+        popMatAdjusted = popMatCoarseAdjusted2019Thresh
+      } else {
+        popMat = popMatKenya2019Thresh
+        popMatAdjusted = popMatKenya2019NeonatalThresh
+      }
     } else if(resultType == "censusJittered") {
-      tableText = "using 5% jittered 2009 census and WorldPop data"
+      load("savedOutput/global/kenyaJitteredPopulationMats.RData")
+      load("savedOutput/global/poppsubJittered.RData")
+      
       easpa = makeEASPAJittered()
       poppsub = poppsubKenyaJitteredThresh
+      
+      if(useCoarseGrid) {
+        popMat = popMatCoarseJitteredThresh
+        popMatAdjusted = popMatCoarseAdjustedJitteredThresh
+      } else {
+        popMat = popMatKenyaJitteredThresh
+        popMatAdjusted = popMatKenyaJitteredNeonatalThresh
+      }
     }
     
     # calculate predictions and SDs ----
