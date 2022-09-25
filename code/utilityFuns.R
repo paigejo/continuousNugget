@@ -18,6 +18,10 @@ expit <- function(x) {
   res
 }
 
+niceMean = function(x) {
+  mean(x[is.finite(x)], na.rm=TRUE)
+}
+
 # Do precomputations for computing precision matrix for a single layer or a block diagonal sparse 
 # precision matrix for multiple layers
 # kappa: scale of Matern covariance with smoothness 1
