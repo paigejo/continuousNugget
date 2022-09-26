@@ -3297,7 +3297,223 @@ generatePlottingSymbols = function() {
   dev.off()
 }
 
+getCustomScaleTicks = function(usr, scaleFun=sqrt, nint=5, log=FALSE) {
+  # axisTicks(range(scaleFun(x)), log=log, nint=nint)
+  axp <- unlist(.axisPars(range(scaleFun(usr)), log = log, nintLog = nint), 
+                use.names = FALSE)
+  .Call(C_R_CreateAtVector, axp, usr, nint, log)
+}
 
+
+#' Determine square root axis tick mark positions
+#'
+#' Determine square root axis tick mark positions
+#'
+#' This function calculates positions for tick marks for data
+#' that has been transformed with `sqrt()`, specifically a directional
+#' transformation like `sqrt(abs(x)) * sign(x)`.
+#'
+#' The main goal of this function is to provide reasonably placed
+#' tick marks using integer values.
+#'
+#' @return
+#' Invisibly returns a numeric vector of axis tick positions,
+#' named by the display label.
+#' The axis values are in square root space while the labels represent
+#' the normal space values.
+#'
+#' @family jam plot functions
+#'
+#' @param side integer value indicating the axis position, as used
+#'    by `axis()`, 1=bottom, 2=left, 3=top, 4=right.
+#' @param x optional numeric vector representing the numeric range
+#'    to be labeled.
+#' @param pretty.n numeric value indicating the number of desired
+#'    tick marks, passed to `pretty()`.
+#' @param u5.bias numeric value passed to `pretty()` to influence the
+#'    frequency of intermediate tick marks.
+#' @param big.mark character value passed to `format()` which helps
+#'    visually distinguish numbers larger than 1000.
+#' @param plot logical indicating whether to plot the axis tick
+#'    marks and labels.
+#' @param las,cex.axis numeric values passed to `axis()` when drawing
+#'    the axis, by default `las=2` plots labels rotated
+#'    perpendicular to the axis.
+#' @param ... additional parameters are passed to `pretty()`.
+#'
+#' @export
+sqrtAxis <- function
+(side=1,
+ x=NULL,
+ pretty.n=10,
+ u5.bias=0,
+ big.mark=",",
+ plot=TRUE,
+ las=2,
+ cex.axis=0.6,
+ ...)
+{
+  ## Purpose is to generate a set of tick marks for sqrt
+  ## transformed data axes.  It assumes data is already sqrt-transformed,
+  ## and that negative values have been treated like:
+  ## sqrt(abs(x))*sign(x)
+  if (length(side) > 2) {
+    x <- side;
+    side <- 0;
+  }
+  if (length(side) == 0) {
+    side <- 0;
+  }
+  if (1 %in% side) {
+    xRange <- par("usr")[1:2];
+  } else if (2 %in% side) {
+    xRange <- par("usr")[3:4];
+  } else if (length(x) > 0) {
+    xRange <- range(x, na.rm=TRUE);
+  }
+  
+  subdivideSqrt <- function(atPretty1, n=pretty.n, ...) {
+    ## Purpose is to take x in form of 0,x1,
+    ## and subdivide using pretty()
+    atPretty1a <- unique(sort(abs(atPretty1)));
+    atPretty1b <- tail(atPretty1a, -2);
+    atPretty2a <- pretty(head(atPretty1a,2), n=n, ...);
+    return(unique(sort(c(atPretty2a, atPretty1b))));
+  }
+  
+  ## Determine tick positions
+  nSubFactor <- 2.44;
+  
+  atPretty1 <- pretty(xRange^2*sign(xRange),
+                      u5.bias=u5.bias,
+                      n=(pretty.n)^(1/nSubFactor));
+  
+  atPretty1old <- atPretty1;
+  while (length(atPretty1) <= pretty.n) {
+    atPretty1new <- subdivideSqrt(atPretty1,
+                                  n=noiseFloor(minimum=2, (pretty.n)^(1/nSubFactor)));
+    atPretty1 <- atPretty1new[atPretty1new <= max(abs(xRange^2))];
+    atPretty1old <- atPretty1;
+  }
+  atPretty3 <- unique(sort(
+    rep(atPretty1,
+        each=length(unique(sign(xRange)))) * sign(xRange)));
+  atPretty <- atPretty3[
+    (atPretty3 >= head(xRange,1)^2*sign(head(xRange,1)) &
+       atPretty3 <= tail(xRange, 1)^2*sign(tail(xRange, 1)))];
+  
+  xLabel <- sapply(atPretty, function(i){
+    format(i,
+           trim=TRUE,
+           digits=2,
+           big.mark=big.mark);
+  });
+  ## Transform to square root space
+  atSqrt <- sqrt(abs(atPretty))*sign(atPretty);
+  if (plot) {
+    axis(side=side,
+         at=atSqrt,
+         labels=xLabel,
+         las=las,
+         cex.axis=cex.axis,
+         ...);
+  }
+  
+  invisible(nameVector(atSqrt, xLabel));
+}
+
+#' Apply noise floor and ceiling to numeric vector
+#'
+#' Apply noise floor and ceiling to numeric vector
+#'
+#' A noise floor is useful when detected numeric values are sometimes below
+#' a clear noise threshold, and where some downstream ratio may be calculated
+#' using these values. Applying a noise floor ensures the ratios and not
+#' artificially higher, especially in cases where the values involved are
+#' least reliable. This procedure is expected to produce more conservative
+#' and appropriate ratios in that scenario.
+#'
+#' A ceiling is similar, values above the ceiling are set to the ceiling,
+#' which is practical when values above a certain threshold are conceptually
+#' similar to those at the threshold. One clear example is plotting
+#' `-log10(Pvalue)` when the range of P-values might approach 1e-1000.
+#' In this case, setting a ceiling of 50 conceptually equates P-values
+#' below 1e-50, while also restricting the axis range of a plot.
+#'
+#' The ability to set values at the floor to a different value, using
+#' `newValue` different from `minimum`, is intended to allow separation
+#' of numeric values from the floor for illustrative purposes.
+#'
+#' @return
+#' A numeric vector or matrix, matching the input type `x` where numeric
+#' values are fixed to the `minimum` and `ceiling` values as defined
+#' by `newValue` and `newCeiling`, respectively.
+#'
+#' @family jam numeric functions
+#'
+#' @param x numeric vector or matrix
+#' @param minimum numeric floor value
+#' @param newValue numeric, by default the same as the floor value. Sometimes
+#'    it can be useful to define a different value, one example is to define
+#'    values as NA, or another distinct number away from the floor.
+#' @param adjustNA logical whether to change NA values to the newValue.
+#' @param ceiling numeric value, optionally a ceiling. If defined, then values
+#'    above the ceiling value are set to newCeiling.
+#' @param newCeiling numeric value when ceiling is defined, values above the
+#'    ceiling are set to this numeric value.
+#' @param ... additional parameters are ignored.
+#'
+#' @examples
+#' # start with some random data
+#' n <- 2000;
+#' x1 <- rnorm(n);
+#' y1 <- rnorm(n);
+#'
+#' # apply noise floor and ceiling
+#' x2 <- noiseFloor(x1, minimum=-2, ceiling=2);
+#' y2 <- noiseFloor(y1, minimum=-2, ceiling=2);
+#'
+#' # apply noise floor and ceiling with custom replacement values
+#' xm <- cbind(x=x1, y=y1);
+#' xm3 <- noiseFloor(xm,
+#'    minimum=-2, newValue=-3,
+#'    ceiling=2, newCeiling=3);
+#'
+#' parMfrow <- par("mfrow");
+#' par("mfrow"=c(2,2));
+#' plotSmoothScatter(x1, y1);
+#' plotSmoothScatter(x2, y2);
+#' plotSmoothScatter(xm3);
+#' par("mfrow"=parMfrow);
+#'
+#' @export
+noiseFloor <- function
+(x,
+ minimum=0,
+ newValue=minimum,
+ adjustNA=FALSE,
+ ceiling=NULL,
+ newCeiling=ceiling,
+ ...)
+{
+  ## Purpose is to apply a noise floor, that is, to set all values
+  ## to be at least 'minimum' amount.
+  ## This function performs no scaling or normalization.
+  if (length(x) == 0) {
+    return(x);
+  }
+  if (length(minimum) > 0) {
+    if (adjustNA) {
+      x[is.na(x) | (!is.na(x) & x < minimum)] <- newValue;
+    } else {
+      x[!is.na(x) & x < minimum] <- newValue;
+    }
+  }
+  if (length(ceiling) > 0) {
+    x[!is.na(x) & x > ceiling] <- newCeiling;
+  }
+  return(x);
+}
 
 
 

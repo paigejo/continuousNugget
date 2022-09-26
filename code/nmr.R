@@ -3070,7 +3070,7 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
   urbCols=makeGreenBlueSequentialColors(64)
   
   
-  ## Percent diff preds ----
+  ## Percent diff ----
   browser()
   
   # Calculate number of EAs per area in standard case
@@ -3089,6 +3089,7 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
   allCols = c(rep(cols[1], length(meanEAsConStrat)), rep(cols[2], length(meanEAsConstituency)), rep(cols[3], length(meanEAsCounty)))
   allPchs = c(rep(pchs[1], length(meanEAsConStrat)), rep(pchs[2], length(meanEAsConstituency)), rep(pchs[3], length(meanEAsCounty)))
   
+  ### Individual plots ----
   for(predictionType in c("preds", "SDs")) {
     if(predictionType == "preds") {
       allVals = c(as.matrix(fullPrevalenceTabPct[,-1]), 
@@ -3129,8 +3130,8 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
               thisTab = fullPrevalenceTab
               thisTabPct = fullPrevalenceTabPct
             } else if(predictionType == "SDs") {
-              thisTabSD = fullPrevalenceTabSD
-              thisTabSDPct = fullPrevalenceTabSDPct
+              thisTab = fullPrevalenceTabSD
+              thisTabPct = fullPrevalenceTabSDPct
             }
           } else if(outcome == "burden") {
             outText = "Burden"
@@ -3138,8 +3139,8 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
               thisTab = fullCountTab
               thisTabPct = fullCountTabPct
             } else if(predictionType == "SDs") {
-              thisTabSD = fullCountTabSD
-              thisTabSDPct = fullCountTabSDPct
+              thisTab = fullCountTabSD
+              thisTabPct = fullCountTabSDPct
             }
           } else if(outcome == "relative prevalence") {
             outText = "RelPrev"
@@ -3147,10 +3148,14 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
               thisTab = fullRelPrevTab
               thisTabPct = fullRelPrevTabPct
             } else if(predictionType == "SDs") {
-              thisTabSD = fullRelPrevTabSD
-              thisTabSDPct = fullRelPrevTabSDPct
+              thisTab = fullRelPrevTabSD
+              thisTabPct = fullRelPrevTabSDPct
             }
           }
+          
+          allVals = c(as.matrix(fullPrevalenceTabPct[,-1]), 
+                      as.matrix(fullCountTabPct[,-1]), 
+                      as.matrix(fullRelPrevTabPct[,-1]))
           
           pdf(paste0(figDirectory, "application/sensPctDiff", outText, scenario, modType, predictionType, logisticText, coarseText, ".pdf"), width=5, height=5)
           
@@ -3192,6 +3197,122 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
     }
   }
   
+  ### Combined plots ----
+  for(predictionType in c("preds", "SDs")) {
+    if(predictionType == "preds") {
+      allVals = c(as.matrix(fullPrevalenceTabPct[,-1]), 
+                  as.matrix(fullCountTabPct[,-1]), 
+                  as.matrix(fullRelPrevTabPct[,-1]))
+      pctDiffRange = range(abs(allVals[is.finite(allVals)]), na.rm=TRUE)
+    } else if(predictionType == "SDs") {
+      allVals = c(as.matrix(fullPrevalenceTabSDPct[,-1]), 
+                  as.matrix(fullCountTabSDPct[,-1]), 
+                  as.matrix(fullRelPrevTabSDPct[,-1]))
+      pctDiffRange = range(abs(allVals[is.finite(allVals)]), na.rm=TRUE)
+    }
+    
+    for(scenario in c("FBpop", "2019", "jittered")) {
+      
+      if(scenario == "FBpop") {
+        plotText = " (Facebook)"
+      } else if(scenario == "2019") {
+        plotText = " (2019 census)"
+      } else if(scenario == "jittered") {
+        plotText = " (jittered census)"
+      }
+      
+      pdf(paste0(figDirectory, "application/sensAllPctDiff", scenario, predictionType, logisticText, coarseText, ".pdf"), width=9, height=9)
+      par(mfrow=c(3,3))
+      
+      for(modType in c("empirical", "latent", "smooth")) {
+        
+        if(modType == "empirical") {
+          modVarNameRoot = ""
+        } else if(modType == "latent") {
+          modVarNameRoot = "LCPb_"
+        } else if(modType == "smooth") {
+          modVarNameRoot = "lcpb_"
+        }
+        
+        for(outcome in c("prevalence", "burden", "relative prevalence")) {
+          if(outcome == "prevalence") {
+            outText = "Prev"
+            if(predictionType == "preds") {
+              thisTab = fullPrevalenceTab
+              thisTabPct = fullPrevalenceTabPct
+            } else if(predictionType == "SDs") {
+              thisTab = fullPrevalenceTabSD
+              thisTabPct = fullPrevalenceTabSDPct
+            }
+          } else if(outcome == "burden") {
+            outText = "Burden"
+            if(predictionType == "preds") {
+              thisTab = fullCountTab
+              thisTabPct = fullCountTabPct
+            } else if(predictionType == "SDs") {
+              thisTab = fullCountTabSD
+              thisTabPct = fullCountTabSDPct
+            }
+          } else if(outcome == "relative prevalence") {
+            outText = "RelPrev"
+            if(predictionType == "preds") {
+              thisTab = fullRelPrevTab
+              thisTabPct = fullRelPrevTabPct
+            } else if(predictionType == "SDs") {
+              thisTab = fullRelPrevTabSD
+              thisTabPct = fullRelPrevTabSDPct
+            }
+          }
+          
+          thisTab = thisTab[,grepl(scenario, names(thisTab))]
+          thisTabPct = thisTabPct[,grepl(scenario, names(thisTabPct))]
+          
+          if(modType == "empirical") {
+            mainText = paste0(toupper(outcome), " ", 
+                              ifelse(predictionType == "preds", "estimates", "SDs"))
+          } else {
+            mainText = ""
+          }
+          
+          
+          allPctDiff = thisTabPct[[paste0(modVarNameRoot, scenario)]]
+          allPctDiff = abs(allPctDiff)
+          conStratDat = allPctDiff[thisTabPct$areaLevel == "Constituency x stratum"]
+          constituencyDat = allPctDiff[thisTabPct$areaLevel == "Constituency"]
+          countyDat = allPctDiff[thisTabPct$areaLevel == "County"]
+          
+          allDat = c(conStratDat, constituencyDat, countyDat)
+          minVal = min(allDat[allDat > 0], na.rm=TRUE)*.95
+          # conStratDat[conStratDat < 0] = minVal
+          # constituencyDat[constituencyDat < 0] = minVal
+          # countyDat[countyDat < 0] = minVal
+          xRange = range(meanEAs)
+          yRange = c(minVal, max(allDat[is.finite(allDat)]))
+          # yRange = pctDiffRange
+          temp = as.matrix(thisTabPct[,-1])
+          yRange = c(0, max(temp[is.finite(temp)]))
+          plot(meanEAsConStrat[conStratDat>0], conStratDat[conStratDat>0], col=cols[1], pch=pchs[1], main=mainText, 
+               xlab=ifelse(modType=="smooth latent", "Mean number EAs", ""), 
+               ylab=ifelse(outcome=="prevalence", "Absolute difference (percent)", ""), 
+               log="x", xlim=xRange, ylim=yRange, cex=cexs[1])
+          # points(meanEAsConStrat[conStratDat<=0], rep(minVal, sum(conStratDat<=0)), col=cols[1], pch=pchs[1], cex=cexs[1])
+          points(meanEAsConstituency[constituencyDat>0], constituencyDat[constituencyDat>0], col=cols[2], pch=pchs[2], cex=cexs[2])
+          # points(meanEAsConstituency[constituencyDat<=0], rep(minVal, sum(constituencyDat<=0)), col=cols[2], pch=pchs[2], cex=cexs[2])
+          points(meanEAsCounty[countyDat>0], countyDat[countyDat>0], col=cols[3], pch=pchs[3], cex=cexs[3])
+          # points(meanEAsCounty[countyDat<=0], rep(minVal, sum(countyDat<=0)), col=cols[3], pch=pchs[3], cex=cexs[3])
+          
+          if((outcome == "relative prevalence") && modType == "latent") {
+            legend("topright", c("Constituency x stratum", "Constituency", "County"), 
+                   pch=pchs, col=cols, cex=.7)
+          }
+          
+        }
+        
+      }
+      
+      dev.off()
+    }
+  }
   
 }
 
