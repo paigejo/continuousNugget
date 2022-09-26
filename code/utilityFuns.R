@@ -5118,7 +5118,7 @@ meanHHPerCon = function(numToPrint=0) {
 }
 
 # get average number of EAs per constituency
-meanEAsPerCon2 = function(numToPrint=0, easpa = makeDefaultEASPA()) {
+meanEAsPerCon2 = function(numToPrint=0, easpa = makeDefaultEASPA(), poppsub=poppsubKenya, poppa=poppaKenya) {
   # area: the name or id of the area
   # EAUrb: the number of EAs in the urban part of the area
   # EARur: the number of EAs in the rural part of the area
@@ -5130,26 +5130,26 @@ meanEAsPerCon2 = function(numToPrint=0, easpa = makeDefaultEASPA()) {
   # popRur: the number of people in the rural part of the area
   # popTotal: the number of people in the the area
   
-  thisPoppaKenya = poppaKenya[order(poppaKenya$area),]
+  thisPoppa = poppa[order(poppa$area),]
   
-  countyI = match(poppsubKenya$area, easpa$area)
+  countyI = match(poppsub$area, easpa$area)
   easInUrbanStratum = easpa$EAUrb[countyI]
   easInRuralStratum = easpa$EARur[countyI]
-  popInUrbanStratum = thisPoppaKenya$popUrb[countyI]
-  popInRuralStratum = thisPoppaKenya$popRur[countyI]
+  popInUrbanStratum = thisPoppa$popUrb[countyI]
+  popInRuralStratum = thisPoppa$popRur[countyI]
   
-  out = aggregate(poppsubKenya$popUrb, by=list(County=poppsubKenya$area), FUN=sum)
-  sortI = sort(thisPoppaKenya$area, index.return=TRUE)$ix
-  cbind(out, thisPoppaKenya[sortI,])
+  out = aggregate(poppsub$popUrb, by=list(County=poppsub$area), FUN=sum)
+  sortI = sort(thisPoppa$area, index.return=TRUE)$ix
+  cbind(out, thisPoppa[sortI,])
   
-  popFractionUrb = poppsubKenya$popUrb / popInUrbanStratum
-  popFractionRur = poppsubKenya$popRur / popInRuralStratum
+  popFractionUrb = poppsub$popUrb / popInUrbanStratum
+  popFractionRur = poppsub$popRur / popInRuralStratum
   popFractionRur[!is.finite(popFractionRur)] = 0
   meanUrbanEAs = easInUrbanStratum * popFractionUrb
   meanRuralEAs = easInRuralStratum * popFractionRur
   meanTotalEAs = meanUrbanEAs + meanRuralEAs
   
-  out = cbind(poppsubKenya, meanUrbanEAs=meanUrbanEAs, meanRuralEAs=meanRuralEAs, meanTotalEAs=meanTotalEAs)
+  out = cbind(poppsub, meanUrbanEAs=meanUrbanEAs, meanRuralEAs=meanRuralEAs, meanTotalEAs=meanTotalEAs)
   
   if(numToPrint > 0) {
     # print numToPrint constituencies with the smallest number of EAs

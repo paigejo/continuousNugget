@@ -337,11 +337,7 @@ save(poppsubKenyaFace, poppsubKenyaFaceThresh, poppsubKenyaFaceNeonatal, poppsub
 # Make 2019 census popMat/poppsub files ----
 source("code/modAgg2.R")
 easpa2019 = makeEASPA2019(neonatal=FALSE)
-easpa2019$pctUrb = 100 * easpa2019$popUrb / easpa2019$popTotal
-easpa2019$pctTotal = 100 * easpa2019$popTotal / sum(easpa2019$popTotal)
 easpa2019Neonatal = makeEASPA2019(neonatal=TRUE)
-easpa2019Neonatal$pctUrb = 100 * easpa2019Neonatal$popUrb / easpa2019Neonatal$popTotal
-easpa2019Neonatal$pctTotal = 100 * easpa2019Neonatal$popTotal / sum(easpa2019Neonatal$popTotal)
 
 if(FALSE) {
   ## Construct poppsubKenya, a table of urban/rural general population totals 

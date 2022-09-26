@@ -2805,7 +2805,7 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
               prevMeans[,2], countMeans[,2], relPrevMeans[,2])
   colnames(tab) = c("Prevalence", "Burden", "Relative prevalence", 
                     "PrevalenceS", "BurdenS", "Relative prevalenceS")
-  row.names(tab) = rep(c("Constituency x stratum", "Constituency", "County"), 3)
+  row.names(tab) = rep(c("Constituency times stratum", "Constituency", "County"), 3)
   tab = round(tab, 0)
   
   print(xtable(tab, digits=0, 
@@ -2814,6 +2814,244 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
                               "compared to under the original data."), 
                label=paste0("tab:pctIncreaseSensitivity_empirical")))
   
+  # Latent model ----
+  # FBpop
+  prevConStrat = mean(abs(fullPrevalenceTabPct$latent_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevCon = mean(abs(fullPrevalenceTabPct$latent_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$latent_FBpop[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = mean(abs(fullPrevalenceTabSDPct$latent_FBpop[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$latent_FBpop[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$latent_FBpop[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevMeans = cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                    c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD))
+  
+  countConStrat = niceMean(abs(fullCountTabPct$latent_FBpop[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  countCon = mean(abs(fullCountTabPct$latent_FBpop[fullCountTabPct$areaLevel == "Constituency"]))
+  countCounty = mean(abs(fullCountTabPct$latent_FBpop[fullCountTabPct$areaLevel == "County"]))
+  countConStratSD = niceMean(abs(fullCountTabSDPct$latent_FBpop[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  countConSD = mean(abs(fullCountTabSDPct$latent_FBpop[fullCountTabSDPct$areaLevel == "Constituency"]))
+  countCountySD = mean(abs(fullCountTabSDPct$latent_FBpop[fullCountTabSDPct$areaLevel == "County"]))
+  countMeans = cbind(c("conStrat"=countConStrat, "constituency"=countCon, "county"=countCounty), 
+                     c("conStratSD"=countConStratSD, "constituencySD"=countConSD, "countySD"=countCountySD))
+  
+  relPrevConStrat = NA
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$latent_FBpop[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$latent_FBpop[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevConStratSD = NA
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$latent_FBpop[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$latent_FBpop[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevMeans = cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                       c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD))
+  
+  # 2019
+  prevConStrat = mean(abs(fullPrevalenceTabPct$latent_2019[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevCon = mean(abs(fullPrevalenceTabPct$latent_2019[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$latent_2019[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = mean(abs(fullPrevalenceTabSDPct$latent_2019[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$latent_2019[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$latent_2019[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevMeans = rbind(prevMeans, 
+                    cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                          c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD)))
+  
+  countConStrat = niceMean(abs(fullCountTabPct$latent_2019[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  countCon = mean(abs(fullCountTabPct$latent_2019[fullCountTabPct$areaLevel == "Constituency"]))
+  countCounty = mean(abs(fullCountTabPct$latent_2019[fullCountTabPct$areaLevel == "County"]))
+  countConStratSD = niceMean(abs(fullCountTabSDPct$latent_2019[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  countConSD = mean(abs(fullCountTabSDPct$latent_2019[fullCountTabSDPct$areaLevel == "Constituency"]))
+  countCountySD = mean(abs(fullCountTabSDPct$latent_2019[fullCountTabSDPct$areaLevel == "County"]))
+  countMeans = rbind(countMeans, 
+                     cbind(c("conStrat"=countConStrat, "constituency"=countCon, "county"=countCounty), 
+                           c("conStratSD"=countConStratSD, "constituencySD"=countConSD, "countySD"=countCountySD)))
+  
+  relPrevConStrat = NA
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$latent_2019[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$latent_2019[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevConStratSD = NA
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$latent_2019[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$latent_2019[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevMeans = rbind(relPrevMeans, 
+                       cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                             c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD)))
+  
+  # jittered
+  prevConStrat = niceMean(abs(fullPrevalenceTabPct$latent_jittered[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]))
+  prevCon = mean(abs(fullPrevalenceTabPct$latent_jittered[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$latent_jittered[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = niceMean(abs(fullPrevalenceTabSDPct$latent_jittered[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]))
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$latent_jittered[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$latent_jittered[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevMeans = rbind(prevMeans, 
+                    cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                          c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD)))
+  
+  countConStrat = niceMean(abs(fullCountTabPct$latent_jittered[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  countCon = mean(abs(fullCountTabPct$latent_jittered[fullCountTabPct$areaLevel == "Constituency"]))
+  countCounty = mean(abs(fullCountTabPct$latent_jittered[fullCountTabPct$areaLevel == "County"]))
+  countConStratSD = niceMean(abs(fullCountTabSDPct$latent_jittered[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  countConSD = mean(abs(fullCountTabSDPct$latent_jittered[fullCountTabSDPct$areaLevel == "Constituency"]))
+  countCountySD = mean(abs(fullCountTabSDPct$latent_jittered[fullCountTabSDPct$areaLevel == "County"]))
+  countMeans = rbind(countMeans, 
+                     cbind(c("conStrat"=countConStrat, "constituency"=countCon, "county"=countCounty), 
+                           c("conStratSD"=countConStratSD, "constituencySD"=countConSD, "countySD"=countCountySD)))
+  
+  relPrevConStrat = NA
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$latent_jittered[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$latent_jittered[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevConStratSD = NA
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$latent_jittered[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$latent_jittered[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevMeans = rbind(relPrevMeans, 
+                       cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                             c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD)))
+  
+  # combine into single table
+  tab = cbind(prevMeans[,1], countMeans[,1], relPrevMeans[,1], 
+              prevMeans[,2], countMeans[,2], relPrevMeans[,2])
+  colnames(tab) = c("Prevalence", "Burden", "Relative prevalence", 
+                    "PrevalenceS", "BurdenS", "Relative prevalenceS")
+  row.names(tab) = rep(c("Constituency times stratum", "Constituency", "County"), 3)
+  tab = round(tab, 0)
+  
+  print(xtable(tab, digits=0, 
+               caption=paste0("Mean percent difference of latent model posterior ", 
+                              "mean and SD under sensitivity analysis scenarios ", 
+                              "compared to under the original data."), 
+               label=paste0("tab:pctIncreaseSensitivity_latent")))
+  
+  # Smooth Latent model ----
+  # FBpop
+  prevConStrat = mean(abs(fullPrevalenceTabPct$smoothLatent_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevCon = mean(abs(fullPrevalenceTabPct$smoothLatent_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$smoothLatent_FBpop[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = mean(abs(fullPrevalenceTabSDPct$smoothLatent_FBpop[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$smoothLatent_FBpop[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$smoothLatent_FBpop[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevMeans = cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                    c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD))
+  
+  countConStrat = niceMean(abs(fullCountTabPct$smoothLatent_FBpop[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  countCon = mean(abs(fullCountTabPct$smoothLatent_FBpop[fullCountTabPct$areaLevel == "Constituency"]))
+  countCounty = mean(abs(fullCountTabPct$smoothLatent_FBpop[fullCountTabPct$areaLevel == "County"]))
+  countConStratSD = niceMean(abs(fullCountTabSDPct$smoothLatent_FBpop[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  countConSD = mean(abs(fullCountTabSDPct$smoothLatent_FBpop[fullCountTabSDPct$areaLevel == "Constituency"]))
+  countCountySD = mean(abs(fullCountTabSDPct$smoothLatent_FBpop[fullCountTabSDPct$areaLevel == "County"]))
+  countMeans = cbind(c("conStrat"=countConStrat, "constituency"=countCon, "county"=countCounty), 
+                     c("conStratSD"=countConStratSD, "constituencySD"=countConSD, "countySD"=countCountySD))
+  
+  relPrevConStrat = NA
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$smoothLatent_FBpop[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$smoothLatent_FBpop[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevConStratSD = NA
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$smoothLatent_FBpop[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$smoothLatent_FBpop[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevMeans = cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                       c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD))
+  
+  # 2019
+  prevConStrat = mean(abs(fullPrevalenceTabPct$smoothLatent_2019[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevCon = mean(abs(fullPrevalenceTabPct$smoothLatent_2019[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$smoothLatent_2019[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = mean(abs(fullPrevalenceTabSDPct$smoothLatent_2019[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$smoothLatent_2019[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$smoothLatent_2019[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevMeans = rbind(prevMeans, 
+                    cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                          c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD)))
+  
+  countConStrat = niceMean(abs(fullCountTabPct$smoothLatent_2019[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  countCon = mean(abs(fullCountTabPct$smoothLatent_2019[fullCountTabPct$areaLevel == "Constituency"]))
+  countCounty = mean(abs(fullCountTabPct$smoothLatent_2019[fullCountTabPct$areaLevel == "County"]))
+  countConStratSD = niceMean(abs(fullCountTabSDPct$smoothLatent_2019[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  countConSD = mean(abs(fullCountTabSDPct$smoothLatent_2019[fullCountTabSDPct$areaLevel == "Constituency"]))
+  countCountySD = mean(abs(fullCountTabSDPct$smoothLatent_2019[fullCountTabSDPct$areaLevel == "County"]))
+  countMeans = rbind(countMeans, 
+                     cbind(c("conStrat"=countConStrat, "constituency"=countCon, "county"=countCounty), 
+                           c("conStratSD"=countConStratSD, "constituencySD"=countConSD, "countySD"=countCountySD)))
+  
+  relPrevConStrat = NA
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$smoothLatent_2019[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$smoothLatent_2019[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevConStratSD = NA
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$smoothLatent_2019[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$smoothLatent_2019[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevMeans = rbind(relPrevMeans, 
+                       cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                             c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD)))
+  
+  # jittered
+  prevConStrat = niceMean(abs(fullPrevalenceTabPct$smoothLatent_jittered[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]))
+  prevCon = mean(abs(fullPrevalenceTabPct$smoothLatent_jittered[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$smoothLatent_jittered[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = niceMean(abs(fullPrevalenceTabSDPct$smoothLatent_jittered[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]))
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$smoothLatent_jittered[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$smoothLatent_jittered[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevMeans = rbind(prevMeans, 
+                    cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                          c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD)))
+  
+  countConStrat = niceMean(abs(fullCountTabPct$smoothLatent_jittered[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  countCon = mean(abs(fullCountTabPct$smoothLatent_jittered[fullCountTabPct$areaLevel == "Constituency"]))
+  countCounty = mean(abs(fullCountTabPct$smoothLatent_jittered[fullCountTabPct$areaLevel == "County"]))
+  countConStratSD = niceMean(abs(fullCountTabSDPct$smoothLatent_jittered[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  countConSD = mean(abs(fullCountTabSDPct$smoothLatent_jittered[fullCountTabSDPct$areaLevel == "Constituency"]))
+  countCountySD = mean(abs(fullCountTabSDPct$smoothLatent_jittered[fullCountTabSDPct$areaLevel == "County"]))
+  countMeans = rbind(countMeans, 
+                     cbind(c("conStrat"=countConStrat, "constituency"=countCon, "county"=countCounty), 
+                           c("conStratSD"=countConStratSD, "constituencySD"=countConSD, "countySD"=countCountySD)))
+  
+  relPrevConStrat = NA
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$smoothLatent_jittered[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$smoothLatent_jittered[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevConStratSD = NA
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$smoothLatent_jittered[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$smoothLatent_jittered[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevMeans = rbind(relPrevMeans, 
+                       cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                             c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD)))
+  
+  # combine into single table
+  tab = cbind(prevMeans[,1], countMeans[,1], relPrevMeans[,1], 
+              prevMeans[,2], countMeans[,2], relPrevMeans[,2])
+  colnames(tab) = c("Prevalence", "Burden", "Relative prevalence", 
+                    "PrevalenceS", "BurdenS", "Relative prevalenceS")
+  row.names(tab) = rep(c("Constituency times stratum", "Constituency", "County"), 3)
+  tab = round(tab, 0)
+  
+  print(xtable(tab, digits=0, 
+               caption=paste0("Mean percent difference of smooth latent model posterior ", 
+                              "mean and SD under sensitivity analysis scenarios ", 
+                              "compared to under the original data."), 
+               label=paste0("tab:pctIncreaseSensitivity_smoothLatent")))
+  
+  # Adjust full data tables so the names are the same in each
+  tabNames = c("areaLevel", "std",
+               "lcpb_std", "LCPb_std",  
+               "FBpop", "lcpb_FBpop",
+               "LCPb_FBpop", "2019",     
+               "lcpb_2019", "LCPb_2019",  
+               "jittered", "lcpb_jittered",
+               "LCPb_jittered")
+  tabNamesPct = c("areaLevel", 
+                  "FBpop", "lcpb_FBpop",
+                  "LCPb_FBpop", "2019",     
+                  "lcpb_2019", "LCPb_2019",  
+                  "jittered", "lcpb_jittered",
+                  "LCPb_jittered")
+  names(fullPrevalenceTab) = tabNames
+  names(fullPrevalenceTabPct) = tabNamesPct
+  names(fullPrevalenceTabSD) = tabNames
+  names(fullPrevalenceTabSDPct) = tabNamesPct
+  
+  names(fullCountTab) = tabNames
+  names(fullCountTabPct) = tabNamesPct
+  names(fullCountTabSD) = tabNames
+  names(fullCountTabSDPct) = tabNamesPct
+  
+  names(fullRelPrevTab) = tabNames
+  names(fullRelPrevTabPct) = tabNamesPct
+  names(fullRelPrevTabSD) = tabNames
+  names(fullRelPrevTabSDPct) = tabNamesPct
   
   # Make plots ----
   
@@ -2831,9 +3069,129 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
   popCols=makePurpleYellowSequentialColors(64, rev=TRUE)
   urbCols=makeGreenBlueSequentialColors(64)
   
-  getWidth = function(x) {
-    diff(quantile(x, prob=c(alpha/2, 1-alpha/2), na.rm=TRUE))
+  
+  ## Percent diff preds ----
+  browser()
+  
+  # Calculate number of EAs per area in standard case
+  easpa = makeDefaultEASPA()
+  meanEAspSub = meanEAsPerCon2(easpa=easpa, poppsub=poppsubKenyaThresh, poppa=poppaKenya)
+  meanEAsConStrat = c(meanEAspSub$meanUrbanEAs, meanEAspSub$meanRuralEAs)
+  meanEAsConStrat = meanEAsConStrat[meanEAsConStrat != 0]
+  meanEAsConstituency = c(meanEAspSub$meanTotalEAs)
+  meanEAsCounty = easpa$EATotal
+  meanEAs = c(meanEAsConStrat, meanEAsConstituency, meanEAsCounty)
+  
+  # precompute plotting values
+  cols = c("blue", "purple", "red") # for conStrat, constituency, county
+  pchs = c(16, 15, 17)
+  cexs=c(.35, .5, .9)
+  allCols = c(rep(cols[1], length(meanEAsConStrat)), rep(cols[2], length(meanEAsConstituency)), rep(cols[3], length(meanEAsCounty)))
+  allPchs = c(rep(pchs[1], length(meanEAsConStrat)), rep(pchs[2], length(meanEAsConstituency)), rep(pchs[3], length(meanEAsCounty)))
+  
+  for(predictionType in c("preds", "SDs")) {
+    if(predictionType == "preds") {
+      allVals = c(as.matrix(fullPrevalenceTabPct[,-1]), 
+                  as.matrix(fullCountTabPct[,-1]), 
+                  as.matrix(fullRelPrevTabPct[,-1]))
+      pctDiffRange = range(abs(allVals[is.finite(allVals)]), na.rm=TRUE)
+    } else if(predictionType == "SDs") {
+      allVals = c(as.matrix(fullPrevalenceTabSDPct[,-1]), 
+                  as.matrix(fullCountTabSDPct[,-1]), 
+                  as.matrix(fullRelPrevTabSDPct[,-1]))
+      pctDiffRange = range(abs(allVals[is.finite(allVals)]), na.rm=TRUE)
+    }
+    
+    for(scenario in c("FBpop", "2019", "jittered")) {
+      
+      if(scenario == "FBpop") {
+        plotText = " (Facebook)"
+      } else if(scenario == "2019") {
+        plotText = " (2019 census)"
+      } else if(scenario == "jittered") {
+        plotText = " (jittered census)"
+      }
+      
+      for(modType in c("empirical", "latent", "smooth")) {
+        
+        if(modType == "empirical") {
+          modVarNameRoot = ""
+        } else if(modType == "latent") {
+          modVarNameRoot = "LCPb_"
+        } else if(modType == "smooth") {
+          modVarNameRoot = "lcpb_"
+        }
+        
+        for(outcome in c("prevalence", "burden", "relative prevalence")) {
+          if(outcome == "prevalence") {
+            outText = "Prev"
+            if(predictionType == "preds") {
+              thisTab = fullPrevalenceTab
+              thisTabPct = fullPrevalenceTabPct
+            } else if(predictionType == "SDs") {
+              thisTabSD = fullPrevalenceTabSD
+              thisTabSDPct = fullPrevalenceTabSDPct
+            }
+          } else if(outcome == "burden") {
+            outText = "Burden"
+            if(predictionType == "preds") {
+              thisTab = fullCountTab
+              thisTabPct = fullCountTabPct
+            } else if(predictionType == "SDs") {
+              thisTabSD = fullCountTabSD
+              thisTabSDPct = fullCountTabSDPct
+            }
+          } else if(outcome == "relative prevalence") {
+            outText = "RelPrev"
+            if(predictionType == "preds") {
+              thisTab = fullRelPrevTab
+              thisTabPct = fullRelPrevTabPct
+            } else if(predictionType == "SDs") {
+              thisTabSD = fullRelPrevTabSD
+              thisTabSDPct = fullRelPrevTabSDPct
+            }
+          }
+          
+          pdf(paste0(figDirectory, "application/sensPctDiff", outText, scenario, modType, predictionType, logisticText, coarseText, ".pdf"), width=5, height=5)
+          
+          if(scenario == "FBpop") {
+            allPctDiff = thisTabPct[[paste0(modVarNameRoot, "FBpop")]]
+          } else if(scenario == "2019") {
+            allPctDiff = thisTabPct[[paste0(modVarNameRoot, "2019")]]
+          } else if(scenario == "jittered") {
+            allPctDiff = thisTabPct[[paste0(modVarNameRoot, "jittered")]]
+          }
+          allPctDiff = abs(allPctDiff)
+          conStratDat = allPctDiff[thisTabPct$areaLevel == "Constituency x stratum"]
+          constituencyDat = allPctDiff[thisTabPct$areaLevel == "Constituency"]
+          countyDat = allPctDiff[thisTabPct$areaLevel == "County"]
+          
+          allDat = c(conStratDat, constituencyDat, countyDat)
+          minVal = min(allDat[allDat > 0], na.rm=TRUE)*.95
+          # conStratDat[conStratDat < 0] = minVal
+          # constituencyDat[constituencyDat < 0] = minVal
+          # countyDat[countyDat < 0] = minVal
+          xRange = range(meanEAs)
+          yRange = c(minVal, max(allDat[is.finite(allDat)]))
+          yRange = pctDiffRange
+          plot(meanEAsConStrat[conStratDat>0], conStratDat[conStratDat>0], col=cols[1], pch=pchs[1], main=paste0("Prevalence"), 
+               xlab="Mean number EAs", ylab="Absolute difference (percent)", log="x", xlim=xRange, ylim=yRange, cex=cexs[1])
+          # points(meanEAsConStrat[conStratDat<=0], rep(minVal, sum(conStratDat<=0)), col=cols[1], pch=pchs[1], cex=cexs[1])
+          points(meanEAsConstituency[constituencyDat>0], constituencyDat[constituencyDat>0], col=cols[2], pch=pchs[2], cex=cexs[2])
+          # points(meanEAsConstituency[constituencyDat<=0], rep(minVal, sum(constituencyDat<=0)), col=cols[2], pch=pchs[2], cex=cexs[2])
+          points(meanEAsCounty[countyDat>0], countyDat[countyDat>0], col=cols[3], pch=pchs[3], cex=cexs[3])
+          # points(meanEAsCounty[countyDat<=0], rep(minVal, sum(countyDat<=0)), col=cols[3], pch=pchs[3], cex=cexs[3])
+          
+          legend("topright", c("Constituency x stratum", "Constituency", "County"), 
+                 pch=pchs, col=cols, cex=.7)
+          
+          dev.off()
+        }
+        
+      }
+    }
   }
+  
   
 }
 

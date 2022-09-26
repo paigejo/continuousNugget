@@ -77,8 +77,26 @@ makeDefaultEASPA = function(dataType=c("children", "women"), validationClusterI=
   out
 }
 
-makeEASPAfacebook = function() {
-  makeDefaultEASPA()
+makeDefaultEASPA2 = function(neonatal=TRUE) {
+  
+  if(neonatal) {
+    out = merge(easpc, adjustPopulationPerCountyTable("children"))
+  } else {
+    out = merge(easpaKenya, poppaKenya)
+    out = out[,c(1, 5:10, 2:4, 11:12)]
+  }
+  
+  names(out)[1] = "area"
+  
+  # sort by area
+  sortI = sort(out$area, index.return=TRUE)$ix
+  out = out[sortI,]
+  
+  out
+}
+
+makeEASPAfacebook = function(neonatal=TRUE) {
+  makeDefaultEASPA2(neonatal=neonatal)
 }
 
 makeEASPA2019 = function(neonatal = TRUE) {
@@ -87,7 +105,7 @@ makeEASPA2019 = function(neonatal = TRUE) {
   names(dat)[1] = "area"
   dat = dat[order(dat$area),]
   
-  defaultEaspa = makeDefaultEASPA()
+  defaultEaspa = makeDefaultEASPA2(neonatal=neonatal)
   totalEAsDefault = sum(defaultEaspa$EATotal)
   newEAsUrb = round((defaultEaspa$EAUrb/totalEAsDefault) * totalEAs)
   newEAsRur = round((defaultEaspa$EARur/totalEAsDefault) * totalEAs)
@@ -107,17 +125,17 @@ makeEASPA2019 = function(neonatal = TRUE) {
     dat$popUrb = targetPopPerStratumUrban
     dat$popRur = targetPopPerStratumRural
     dat$popTotal = dat$popUrb + dat$popRur
-    
-    dat$pctUrb = 100 * dat$popUrb / dat$popTotal
-    dat$pctTotal = 100 * dat$popTotal / sum(dat$popTotal)
   }
+  
+  dat$pctUrb = 100 * dat$popUrb / dat$popTotal
+  dat$pctTotal = 100 * dat$popTotal / sum(dat$popTotal)
   
   dat
 }
 
 makeEASPAJittered = function(neonatal=TRUE, pctError=5, seed=123) {
   set.seed(seed)
-  out = makeDefaultEASPA()
+  out = makeDefaultEASPA2(neonatal=neonatal)
   toJitter = as.matrix(out[,-c(1, 4, 7, 8:12)])
   zeros = toJitter == 0
   amounts = toJitter * pctError/100
@@ -127,25 +145,7 @@ makeEASPAJittered = function(neonatal=TRUE, pctError=5, seed=123) {
   
   out[,-c(1, 4, 7, 8:12)] = errs
   out$EATotal = out$EAUrb + out$EARur
-  out$popTotal = out$popUrb + out$popRur
   out$HHTotal = out$HHUrb + out$HHRur
-  
-  if(neonatal) {
-    # adjust populations to be neonatal populations
-    load(paste0(globalDirectory, "empiricalDistributions.RData"))
-    
-    targetPopPerStratumUrban = out$HHUrb * ecdfExpectation(empiricalDistributions$mothersUrban) * 
-      ecdfExpectation(empiricalDistributions$childrenUrban)
-    targetPopPerStratumRural = out$HHRur * ecdfExpectation(empiricalDistributions$mothersRural) * 
-      ecdfExpectation(empiricalDistributions$childrenRural)
-    
-    out$popUrb = targetPopPerStratumUrban
-    out$popRur = targetPopPerStratumRural
-    out$popTotal = out$popUrb + out$popRur
-  }
-  
-  out$pctUrb = 100 * out$popUrb / out$popTotal
-  out$pctTotal = 100 * out$popTotal / sum(out$popTotal)
   
   out
 }
