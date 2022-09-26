@@ -809,3 +809,416 @@ noiseFloor <- function
   }
   return(x);
 }
+
+#' assign unique names for a vector
+#'
+#' assign unique names for a vector
+#'
+#' This function assigns unique names to a vector, if necessary it runs
+#' \code{\link{makeNames}} to create unique names. It differs from
+#' \code{\link[stats]{setNames}} in that it ensures names are unique,
+#' and when no names are supplied, it uses the vector itself to define
+#' names. It is helpful to run this function inside an \code{\link[base]{lapply}}
+#' function call, which by default maintains names, but does not assign
+#' names if the input data did not already have them.
+#'
+#' When used with a data.frame, it is particularly convenient to pull out
+#' a named vector of values. For example, log2 fold changes by gene, where
+#' the gene symbols are the name of the vector.
+#'
+#' \code{nameVector(genedata[,c("Gene","log2FC")])}
+#'
+#' @return vector with names defined
+#'
+#' @family jam string functions
+#'
+#' @param x vector input, or data.frame, matrix, or tibble with two columns,
+#'    the second column is used to name values in the first column.
+#' @param y NULL or character vector of names. If NULL then x is used.
+#'    Note that y is recycled to the length of x, prior to being sent
+#'    to the makeNamesFunc.
+#'    In fringe cases, y can be a matrix, data.frame, or tibble, in which
+#'    case \code{\link{pasteByRow}} will be used to create a character string
+#'    to be used for vector names. Note this case is activated only when x
+#'    is not a two column matrix, data.frame, or tibble.
+#' @param makeNamesFunc function to make names unique, by default
+#'    \code{\link{makeNames}} which ensures names are unique.
+#' @param ... passed to \code{\link{makeNamesFunc}}, or to
+#'    \code{\link{pasteByRow}} if y is a two column data.frame, matrix, or
+#'    tibble. Thus, \code{sep} can be defined here as a delimiter between
+#'    column values.
+#'
+#' @examples
+#' # it generally just creates names from the vector values
+#' nameVector(LETTERS[1:5]);
+#'
+#' # if values are replicated, the makeNames() function makes them unique
+#' V <- rep(LETTERS[1:5], each=3);
+#' nameVector(V);
+#'
+#' # for a two-column data.frame, it creates a named vector using
+#' # the values in the first column, and names in the second column.
+#' df <- data.frame(seq_along(V), V);
+#' df;
+#' nameVector(df);
+#'
+#' # Lastly, admittedly a fringe case, it can take a multi-column data.frame
+#' # to generate labels:
+#' nameVector(V, df);
+#'
+#' @export
+nameVector <- function
+(x,
+ y=NULL,
+ makeNamesFunc=makeNames,
+ ...)
+{
+  ## Purpose is to name a vector with its own values,
+  ## useful for lapply which only names output if the input
+  ## vector has names.
+  ##
+  ## A neat trick is to use the _v# naming scheme in makeNames to
+  ## create unique names based upon a single label, e.g.
+  ## set1colors <- nameVector(brewer.pal(15, "Set1"), "Set1");
+  ##   Set1_v1   Set1_v2   Set1_v3   Set1_v4   Set1_v5   Set1_v6   Set1_v7   Set1_v8   Set1_v9
+  ## "#E41A1C" "#377EB8" "#4DAF4A" "#984EA3" "#FF7F00" "#FFFF33" "#A65628" "#F781BF" "#999999"
+  ##
+  ## Added bonus, if given a 2-column table, it'll use them as x and y
+  if (igrepHas("dataframe", class(x))) {
+    x <- as.data.frame(x);
+  }
+  if (igrepHas("data.frame", class(x)) && ncol(x) == 2) {
+    y <- x[[2]];
+    x <- x[[1]];
+  } else if (igrepHas("matrix", class(x)) && ncol(x) == 2) {
+    y <- x[,2];
+    x <- x[,1];
+  }
+  if (length(y) > 0) {
+    if (igrepHas("data.frame|matrix", class(y))) {
+      ## If given a data.frame use pasteByRow() to create a string
+      y <- pasteByRow(y, ...);
+    }
+    names(x) <- makeNamesFunc(rep(y, length.out=length(x)), ...);
+  } else {
+    names(x) <- makeNamesFunc(x, ...);
+  }
+  return(x);
+}
+
+#' vector contains any case-insensitive grep match
+#'
+#' vector contains any case-insensitive grep match
+#'
+#' This function checks the input vector for any elements matching the
+#' grep pattern. The grep is performed case-insensitive (igrep). This function
+#' is particularly useful when checking function arguments or object class,
+#' where the class(a) might return multiple values, or where the name of
+#' the class might be slightly different than expected, e.g. data.frame,
+#' data_frame, DataFrame.
+#'
+#' @param pattern the grep pattern to use with `base::grep()`
+#' @param x vector to use in the grep
+#' @param ignore.case logical default TRUE, meaning the grep will be performed
+#'    in case-insensitive mode.
+#' @param minCount integer minimum number of matches required to return TRUE.
+#' @param naToBlank logical whether to convert NA to blank, instead of
+#'    allowing grep to handle NA values as-is.
+#'
+#' @return logical indicating whether the grep match criteria were met,
+#'    TRUE indicates the grep pattern was present in minCount or more
+#'    number of entries.
+#'
+#' @seealso `base::grep()`
+#'
+#' @examples
+#' a <- c("data.frame","data_frame","tibble","tbl");
+#' igrepHas("Data.*Frame", a);
+#' igrepHas("matrix", a);
+#'
+#' @family jam grep functions
+#'
+#' @export
+igrepHas <- function
+(pattern, x=NULL, ignore.case=TRUE,
+ minCount=1, naToBlank=FALSE,
+ ...)
+{
+  ## Purpose is a quick check for greppable substring, for if() statements
+  ##
+  ## naToBlank=TRUE will convert NA values to "" prior to running grep
+  ##
+  ## The special case where minCount is negative (minCount == -1) or larger
+  ## than length(x), it will be set to length(x) and therefore
+  ## requires all elements of x to meet the grep criteria
+  if (minCount < 0 || minCount > length(x)) {
+    minCount <- length(x);
+  }
+  if (length(x) == 0) {
+    return(FALSE);
+  } else {
+    if (naToBlank && any(is.na(x))) {
+      x[is.na(x)] <- "";
+    }
+    length(grep(pattern=pattern,
+                x=x,
+                ignore.case=ignore.case,
+                ...)) >= as.integer(minCount);
+  }
+}
+
+#' make unique vector names
+#'
+#' make unique vector names
+#'
+#' This function extends the basic goal from \code{\link[base]{make.names}}
+#' which is intended to make syntactically valid names from a character vector.
+#' This makeNames function makes names unique, and offers configurable methods
+#' to handle duplicate names. By default, any duplicated entries receive a
+#' suffix _v# where # is s running count of entries observed, starting at 1.
+#' The \code{\link[base]{make.names}} function, by contrast, renames the
+#' second observed entry starting at .1, leaving the original entry
+#' unchanged. Optionally, makeNames can rename all entries with a numeric
+#' suffix, for consistency.
+#'
+#' For example:
+#' \code{A, A, A, B, B, C}
+#' becomes:
+#' \code{A_v1, A_v2, A_v3, B_v1, B_v2, C}
+#'
+#' Also, makeNames always allows "_".
+#'
+#' This makeNames function is similar to \code{\link[base]{make.unique}}
+#' which also converts a vector into a unique vector by adding suffix values,
+#' however the \code{\link[base]{make.unique}} function intends to allow
+#' repeated operations which recognize duplicated entries and continually
+#' increment the suffix number. This makeNames function currently does not
+#' handle repeat operations. The recommended approach to workaround having
+#' pre-existing versioned names would be to remove suffix values prior to
+#' running this function. One small distinction from
+#' \code{\link[base]{make.unique}} is that makeNames does version the first
+#' entry in a set.
+#'
+#' @return character vector of unique names
+#'
+#' @family jam string functions
+#'
+#' @param x character vector to be used when defining names. All other
+#'    vector types will be coerced to character prior to use.
+#' @param unique argument which is ignored, included only for
+#'    compatibility with `base::make.names`. All results from
+#'    `makeNames()` are unique.
+#' @param suffix character separator between the original entry and the
+#'    version, if necessary.
+#' @param renameOnes logical whether to rename single, unduplicated, entries.
+#' @param doPadInteger logical whether to pad integer values to a consistent
+#'    number of digits, based upon all suffix values needed. This output
+#'    allows for more consistent sorting of names. To define a fixed number
+#'    of digits, use the useNchar parameter.
+#' @param useNchar integer or NULL, number of digits to use when padding
+#'    integer values with leading zero, only relevant when usePadInteger=TRUE.
+#' @param startN integer number used when numberStyle is "number", this integer
+#'    is used for the first entry to be renamed. You can use this value to
+#'    make zero-based suffix values, for example.
+#' @param numberStyle character style for version numbering
+#'    \describe{
+#'       \item{"number"}{Use integer numbers to represent each duplicated
+#'          entry.}
+#'       \item{"letters"}{Use lowercase letters to represent each duplicated
+#'          entry. The 27th entry uses the pattern "aa" to represent two
+#'          26-base digits. When doPadInteger=TRUE, a zero is still used
+#'          to pad the resulting version numbers, again to allow easy sorting
+#'          of text values, but also because there is no letter equivalent
+#'          for the number zero.
+#'          It is usually best to change the suffix to "_" or "" when using
+#'          "letters".}
+#'       \item{"LETTERS"}{Use uppercase letters to represent each duplicated
+#'          entry, with the same rules as applied to "letters".}
+#'    }
+#' @param renameFirst logical whether to rename the first entry in a set of
+#'    duplicated entries. If FALSE then the first entry in a set will not
+#'    be versioned, even when renameOnes=TRUE.
+#' @param keepNA logical whether to retain NA values using the string "NA".
+#'    If keepNA is FALSE, then NA values will remain NA, thus causing some
+#'    names to become `<NA>`, which can cause problems with some downstream
+#'    functions which assume all names are either NULL or non-NA.
+#'
+#' @examples
+#' V <- rep(LETTERS[1:3], c(2,3,1));
+#' makeNames(V);
+#' makeNames(V, renameOnes=TRUE);
+#' makeNames(V, renameFirst=FALSE);
+#' exons <- makeNames(rep("exon", 3), suffix="");
+#' makeNames(rep(exons, c(2,3,1)), numberStyle="letters", suffix="");
+#'
+#' @export
+makeNames <- function
+(x,
+ unique=TRUE,
+ suffix="_v",
+ renameOnes=FALSE,
+ doPadInteger=FALSE,
+ startN=1,
+ numberStyle=c("number","letters","LETTERS"),
+ useNchar=NULL,
+ renameFirst=TRUE,
+ keepNA=TRUE,
+ ...)
+{
+  ## Purpose is to make unique names without the R mangling that comes
+  ## with make.names().
+  ## By default, unique entries are not renamed, and entries with two or
+  ## more replicates are renamed to NAME_v1, NAME_v2, NAME_v3, etc.
+  ##
+  ## if renameOnes=TRUE, it will rename singlets to NAME_v1 even if there
+  ## is only one entry.
+  ##
+  ## renameFirst=TRUE will rename each duplicated entry NAME_v1, NAME_v2,
+  ## NAME_v3, etc.
+  ## renameFirst=FALSE will not rename the first in a set of duplicated
+  ## entries, e.g. NAME, NAME_v1, NAME_v2, etc.
+  ##
+  ## The distinction between renameOnes and renameFirst:
+  ## renameOnes=TRUE will rename all singlets and duplicated entries,
+  ## starting with the first entry.
+  ## renameOnes=FALSE will not rename singlet entries.
+  ## renameFirst=TRUE will only rename duplicated entries, starting with
+  ## the first entry.
+  ## renameFirst=FALSE will not rename the first entry in a set of
+  ## duplicated entries.
+  ##
+  ## the suffix can be changed, e.g. "_r" will name names NAME_r1,
+  ## NAME_r2, NAME_r3, etc.
+  ##
+  ## numberStyle="number" uses integers as the suffix
+  ## numberStyle="letters" uses lowercase letters as digits, similar to Excel column names
+  ## numberStyle="LETTERS" uses uppercase letters as digits, similar to Excel column names
+  ## Be aware that letters can only go to roughly 18,000 entries, given the current implementation
+  ## of colNum2excelName
+  ##
+  ## When useNchar is numeric, it sets doPadInteger=TRUE, and will use at least
+  ## that many digits in padding the integer.
+  ##
+  ##
+  ## TODO:
+  ## Update logic to be analogous to using make.unique(), which intends
+  ## to maintain previous versioning of names without appending deeper
+  ## suffices as appropriate.
+  ## E.g.     c("",    "",    "",    "_v1", "_v2", "_v3")
+  ## becomes  c("_v4", "_v5", "_v6", "_v1", "_v2", "_v3")
+  ## instead of
+  ##          c("_v1", "_v2", "_v3", "_v1", "_v2", "_v3")
+  ## or
+  ##          c("_v1_v1", "_v2_v1", "_v3_v1", "_v1_v2", "_v2_v2", "_v3_v2")
+  ##
+  if (length(x) == 0) {
+    return(x);
+  }
+  numberStyle <- match.arg(numberStyle);
+  if (!is.null(useNchar)) {
+    useNchar <- as.integer(useNchar);
+    doPadInteger=TRUE;
+  }
+  if (any(c("factor", "ordered") %in% class(x))) {
+    x <- as.character(x);
+  }
+  if (keepNA && any(is.na(x))) {
+    x <- rmNA(x,
+              naValue="NA");
+  }
+  
+  ## First check for duplicates using anyDuplicated()
+  ## version 0.0.35.900, this change speeds assignment
+  ## in large vectors when most entries are not duplicated.
+  dupes <- duplicated(x);
+  
+  ## Convert entries to a named count of occurences of each entry
+  if (any(dupes)) {
+    xSubDupes <- table(x[dupes]) + 1;
+    maxCt <- max(c(1,xSubDupes));
+    xSubOnes <- setNames(rep(1, sum(!dupes)), x[!dupes]);
+    xSub <- c(xSubOnes, xSubDupes);
+  } else {
+    xSub <- setNames(rep(1, sum(!dupes)), x[!dupes]);
+    maxCt <- 1;
+  }
+  ## version 0.0.34.900 and previous used the method below
+  #xSub <- table(as.character(x));
+  
+  ## Vector of counts to be used
+  versionsV <- as.integer(renameFirst):maxCt + startN - 1;
+  
+  ## If using letters, define the set of letter upfront to save processing
+  if (igrepHas("letters", numberStyle)) {
+    if (numberStyle %in% "letters") {
+      useLetters <- letters[1:26];
+      zeroVal <- "A";
+    } else {
+      useLetters <- LETTERS[1:26];
+      zeroVal <- "a";
+    }
+    num2letters <- colNum2excelName(versionsV,
+                                    useLetters=useLetters,
+                                    zeroVal=zeroVal,
+                                    ...);
+    versionsV <- num2letters;
+  }
+  if (doPadInteger) {
+    versionsV <- padInteger(versionsV,
+                            useNchar=useNchar,
+                            ...);
+  }
+  
+  ## If no duplicated entries
+  if (max(xSub) %in% c(-Inf,1)) {
+    ## If not renaming the singlet entries, send the same list back
+    if (!renameOnes) {
+      return(x);
+    } else {
+      ## If renaming singlets, simply paste the suffix and first entry
+      return(paste0(x, suffix, head(versionsV, 1)));
+    }
+  }
+  
+  if (renameOnes) {
+    xUse <- 1:length(x);
+  } else {
+    xUse <- (x %in% names(xSub)[xSub > 1]);
+  }
+  xSub1 <- x[xUse];
+  
+  ## Preserve the original order
+  names(xSub1) <- padInteger(seq_along(xSub1));
+  ## Split the vector into a list of vectors, by name
+  xSub2 <- split(xSub1, xSub1);
+  names(xSub2) <- NULL;
+  
+  ## Optionally pad the integer to facilitate sorting
+  ## Note: This padding only pads integers within each name,
+  ## not across all names.
+  xSub3 <- lapply(xSub2, function(i){
+    versionsV[seq_along(i)];
+  });
+  
+  ## Now simply paste the value, the suffix, and the new version
+  xSub1v <- paste0(unlist(xSub2), suffix, unlist(xSub3));
+  
+  ## Re-order the vector using the original order
+  names(xSub1v) <- names(unlist(xSub2));
+  xSub1v2 <- xSub1v[names(xSub1)];
+  
+  ## Assign only the entries we versioned
+  x[xUse] <- xSub1v2;
+  
+  ## Last check for renameFirst=FALSE, in which case we remove the first
+  ## versioned entry
+  if (!renameFirst) {
+    escapeRegex <- function(string){
+      gsub("([.|()\\^{}+$*?]|\\[|\\])", "\\\\\\1", string);
+    }
+    firstVer <- paste0(escapeRegex(paste0(suffix, head(versionsV, 1))), "$");
+    x[xUse] <- gsub(firstVer, "", x[xUse]);
+  }
+  
+  return(x);
+}
