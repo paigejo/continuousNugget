@@ -3054,6 +3054,7 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
   names(fullRelPrevTabSDPct) = tabNamesPct
   
   # Make plots ----
+  library(stringr)
   
   # load shape files for plotting
   # require(maptools)
@@ -3222,7 +3223,7 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
       }
       
       pdf(paste0(figDirectory, "application/sensAllPctDiff", scenario, predictionType, logisticText, coarseText, ".pdf"), width=9, height=9)
-      par(mfrow=c(3,3))
+      par(mfrow=c(3,3), oma=c(0, 4, 0, 0))
       
       for(modType in c("empirical", "latent", "smooth")) {
         
@@ -3264,11 +3265,11 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
             }
           }
           
-          thisTab = thisTab[,grepl(scenario, names(thisTab))]
-          thisTabPct = thisTabPct[,grepl(scenario, names(thisTabPct))]
+          thisTab = thisTab[,c(1, grep(scenario, names(thisTab)))]
+          thisTabPct = thisTabPct[,c(1, grep(scenario, names(thisTabPct)))]
           
           if(modType == "empirical") {
-            mainText = paste0(toupper(outcome), " ", 
+            mainText = paste0(str_to_title(outcome), " ", 
                               ifelse(predictionType == "preds", "estimates", "SDs"))
           } else {
             mainText = ""
@@ -3290,19 +3291,46 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
           yRange = c(minVal, max(allDat[is.finite(allDat)]))
           # yRange = pctDiffRange
           temp = as.matrix(thisTabPct[,-1])
-          yRange = c(0, max(temp[is.finite(temp)]))
-          plot(meanEAsConStrat[conStratDat>0], conStratDat[conStratDat>0], col=cols[1], pch=pchs[1], main=mainText, 
-               xlab=ifelse(modType=="smooth latent", "Mean number EAs", ""), 
+          yRange = sqrt(c(0, max(temp[is.finite(temp)])))
+          
+          sqrtTicks = sqrtAxis(0, yRange, plot=FALSE, big.mark = "")
+          sqrtTickLabel = names(sqrtTicks)
+          
+          plot(meanEAsConStrat[conStratDat>0], sqrt(conStratDat), col=cols[1], pch=pchs[1], main=mainText, 
+               xlab=ifelse(modType=="smooth", "Mean number EAs", ""), 
                ylab=ifelse(outcome=="prevalence", "Absolute difference (percent)", ""), 
-               log="x", xlim=xRange, ylim=yRange, cex=cexs[1])
+               log="x", xlim=xRange, ylim=yRange, cex=cexs[1], axes=FALSE, frame.plot=TRUE)
           # points(meanEAsConStrat[conStratDat<=0], rep(minVal, sum(conStratDat<=0)), col=cols[1], pch=pchs[1], cex=cexs[1])
-          points(meanEAsConstituency[constituencyDat>0], constituencyDat[constituencyDat>0], col=cols[2], pch=pchs[2], cex=cexs[2])
+          points(meanEAsConstituency[constituencyDat>0], sqrt(constituencyDat[constituencyDat>0]), col=cols[2], pch=pchs[2], cex=cexs[2])
           # points(meanEAsConstituency[constituencyDat<=0], rep(minVal, sum(constituencyDat<=0)), col=cols[2], pch=pchs[2], cex=cexs[2])
-          points(meanEAsCounty[countyDat>0], countyDat[countyDat>0], col=cols[3], pch=pchs[3], cex=cexs[3])
+          points(meanEAsCounty[countyDat>0], sqrt(countyDat[countyDat>0]), col=cols[3], pch=pchs[3], cex=cexs[3])
           # points(meanEAsCounty[countyDat<=0], rep(minVal, sum(countyDat<=0)), col=cols[3], pch=pchs[3], cex=cexs[3])
           
+          axis(1)
+          axis(2, at=sqrtTicks, labels=names(sqrtTicks))
+          
+          if(outcome == "prevalence") {
+            if(modType == "smooth") {
+              thisModType = "Smooth latent"
+            } else {
+              thisModType = str_to_title(modType)
+            }
+            adj = which(modType == c("empirical", "latent", "smooth")) / 3 - 1/6
+            mtext(thisModType, side=2, outer=TRUE, line=2, adj=adj)
+          }
+          
+          # plot(meanEAsConStrat[conStratDat>0], conStratDat[conStratDat>0], col=cols[1], pch=pchs[1], main=mainText, 
+          #      xlab=ifelse(modType=="smooth latent", "Mean number EAs", ""), 
+          #      ylab=ifelse(outcome=="prevalence", "Absolute difference (percent)", ""), 
+          #      log="x", xlim=xRange, ylim=yRange, cex=cexs[1])
+          # # points(meanEAsConStrat[conStratDat<=0], rep(minVal, sum(conStratDat<=0)), col=cols[1], pch=pchs[1], cex=cexs[1])
+          # points(meanEAsConstituency[constituencyDat>0], constituencyDat[constituencyDat>0], col=cols[2], pch=pchs[2], cex=cexs[2])
+          # # points(meanEAsConstituency[constituencyDat<=0], rep(minVal, sum(constituencyDat<=0)), col=cols[2], pch=pchs[2], cex=cexs[2])
+          # points(meanEAsCounty[countyDat>0], countyDat[countyDat>0], col=cols[3], pch=pchs[3], cex=cexs[3])
+          # # points(meanEAsCounty[countyDat<=0], rep(minVal, sum(countyDat<=0)), col=cols[3], pch=pchs[3], cex=cexs[3])
+          
           if((outcome == "relative prevalence") && modType == "latent") {
-            legend("topright", c("Constituency x stratum", "Constituency", "County"), 
+            legend("topleft", c("Constituency x stratum", "Constituency", "County"), 
                    pch=pchs, col=cols, cex=.7)
           }
           

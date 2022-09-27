@@ -580,7 +580,9 @@ for(k in 1:length(rhos)) {
     theme_classic()
   dev.off()
   
-  # Plot CI Widths versus resolution and model
+  browser()
+  
+  # Plot and make tables of CI Widths versus resolution and model
   ## 80% CIs
   CIWidth = c(c(allCIWidthsSmoothRisk80), c(allCIWidthsRisk80), 
               c(allCIWidthsPrevalence80), c(allCIWidthsGriddedRisk80))
