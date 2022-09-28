@@ -2511,38 +2511,54 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
                           rep("County", length(prevalencePredsCounty_std)))
   
   fullPrevalenceTab = data.frame(areaLevel=areaLevelPrevalence, 
-                                 allPrevalencePreds_std, allPrevalencePredslcpb_std, allPrevalencePredsLCPb_std, 
-                                 allPrevalencePreds_FBpop, allPrevalencePredslcpb_FBpop, allPrevalencePredsLCPb_FBpop, 
-                                 allPrevalencePreds_2019, allPrevalencePredslcpb_2019, allPrevalencePredsLCPb_2019, 
-                                 allPrevalencePreds_jittered, allPrevalencePredslcpb_jittered, allPrevalencePredsLCPb_jittered)
+                              empirical_std=allPrevalencePreds_std, 
+                                latent_std=allPrevalencePredsLCPb_std, 
+                                smoothLatent_std=allPrevalencePredslcpb_std, 
+                              empirical_FBpop=allPrevalencePreds_FBpop, 
+                                latent_FBpop=allPrevalencePredsLCPb_FBpop, 
+                                smoothLatent_FBpop=allPrevalencePredslcpb_FBpop, 
+                              empirical_2019=allPrevalencePreds_2019, 
+                                latent_2019=allPrevalencePredsLCPb_2019, 
+                                smoothLatent_2019=allPrevalencePredslcpb_2019, 
+                              empirical_jittered=allPrevalencePreds_jittered, 
+                                latent_jittered=allPrevalencePredsLCPb_jittered, 
+                                smoothLatent_jittered=allPrevalencePredslcpb_jittered)
   
   fullPrevalenceTabSD = data.frame(areaLevel=areaLevelPrevalence, 
-                                 allPrevalenceSD_std, allPrevalenceSDlcpb_std, allPrevalenceSDLCPb_std, 
-                                 allPrevalenceSD_FBpop, allPrevalenceSDlcpb_FBpop, allPrevalenceSDLCPb_FBpop, 
-                                 allPrevalenceSD_2019, allPrevalenceSDlcpb_2019, allPrevalenceSDLCPb_2019, 
-                                 allPrevalenceSD_jittered, allPrevalenceSDlcpb_jittered, allPrevalenceSDLCPb_jittered)
+                                empirical_std=allPrevalenceSD_std, 
+                                  latent_std=allPrevalenceSDLCPb_std, 
+                                  smoothLatent_std=allPrevalenceSDlcpb_std, 
+                                empirical_FBpop=allPrevalenceSD_FBpop, 
+                                  latent_FBpop=allPrevalenceSDLCPb_FBpop, 
+                                  smoothLatent_FBpop=allPrevalenceSDlcpb_FBpop, 
+                                empirical_2019=allPrevalenceSD_2019, 
+                                  latent_2019=allPrevalenceSDLCPb_2019, 
+                                  smoothLatent_2019=allPrevalenceSDlcpb_2019, 
+                                empirical_jittered=allPrevalenceSD_jittered, 
+                                  latent_jittered=allPrevalenceSDLCPb_jittered, 
+                                  smoothLatent_jittered=allPrevalenceSDlcpb_jittered)
   
   fullPrevalenceTabPct = data.frame(areaLevel=areaLevelPrevalence, 
-                                 empiricial_FBpop=100*(allPrevalencePreds_FBpop-allPrevalencePreds_std)/allPrevalencePreds_std, 
-                                   latent_FBpop=100*(allPrevalencePredslcpb_FBpop-allPrevalencePredslcpb_std)/allPrevalencePredslcpb_std, 
-                                   smoothLatent_FBpop=100*(allPrevalencePredsLCPb_FBpop-allPrevalencePredsLCPb_std)/allPrevalencePredsLCPb_std, 
-                                 empiricial_2019=100*(allPrevalencePreds_2019-allPrevalencePreds_std)/allPrevalencePreds_std, 
-                                   latent_2019=100*(allPrevalencePredslcpb_2019-allPrevalencePredslcpb_std)/allPrevalencePredslcpb_std, 
-                                   smoothLatent_2019=100*(allPrevalencePredsLCPb_2019-allPrevalencePredsLCPb_std)/allPrevalencePredsLCPb_std, 
-                                 empiricial_jittered=100*(allPrevalencePreds_jittered-allPrevalencePreds_std)/allPrevalencePreds_std, 
-                                   latent_jittered=100*(allPrevalencePredslcpb_jittered-allPrevalencePredslcpb_std)/allPrevalencePredslcpb_std, 
-                                   smoothLatent_jittered=100*(allPrevalencePredsLCPb_jittered-allPrevalencePredsLCPb_std)/allPrevalencePredsLCPb_std)
+                                 empirical_FBpop=100*(allPrevalencePreds_FBpop-allPrevalencePreds_std)/allPrevalencePreds_std, 
+                                   latent_FBpop=100*(allPrevalencePredsLCPb_FBpop-allPrevalencePredsLCPb_std)/allPrevalencePredsLCPb_std, 
+                                   smoothLatent_FBpop=100*(allPrevalencePredslcpb_FBpop-allPrevalencePredslcpb_std)/allPrevalencePredslcpb_std, 
+                                 empirical_2019=100*(allPrevalencePreds_2019-allPrevalencePreds_std)/allPrevalencePreds_std, 
+                                   latent_2019=100*(allPrevalencePredsLCPb_2019-allPrevalencePredsLCPb_std)/allPrevalencePredsLCPb_std, 
+                                   smoothLatent_2019=100*(allPrevalencePredslcpb_2019-allPrevalencePredslcpb_std)/allPrevalencePredslcpb_std, 
+                                 empirical_jittered=100*(allPrevalencePreds_jittered-allPrevalencePreds_std)/allPrevalencePreds_std, 
+                                   latent_jittered=100*(allPrevalencePredsLCPb_jittered-allPrevalencePredsLCPb_std)/allPrevalencePredsLCPb_std, 
+                                   smoothLatent_jittered=100*(allPrevalencePredslcpb_jittered-allPrevalencePredslcpb_std)/allPrevalencePredslcpb_std)
   
   fullPrevalenceTabSDPct = data.frame(areaLevel=areaLevelPrevalence, 
-                                    empiricial_FBpop=100*(allPrevalenceSD_FBpop-allPrevalenceSD_std)/allPrevalenceSD_std, 
-                                      latent_FBpop=100*(allPrevalenceSDlcpb_FBpop-allPrevalenceSDlcpb_std)/allPrevalenceSDlcpb_std, 
-                                      smoothLatent_FBpop=100*(allPrevalenceSDLCPb_FBpop-allPrevalenceSDLCPb_std)/allPrevalenceSDLCPb_std, 
-                                    empiricial_2019=100*(allPrevalenceSD_2019-allPrevalenceSD_std)/allPrevalenceSD_std, 
-                                      latent_2019=100*(allPrevalenceSDlcpb_2019-allPrevalenceSDlcpb_std)/allPrevalenceSDlcpb_std, 
-                                      smoothLatent_2019=100*(allPrevalenceSDLCPb_2019-allPrevalenceSDLCPb_std)/allPrevalenceSDLCPb_std, 
-                                    empiricial_jittered=100*(allPrevalenceSD_jittered-allPrevalenceSD_std)/allPrevalenceSD_std, 
-                                      latent_jittered=100*(allPrevalenceSDlcpb_jittered-allPrevalenceSDlcpb_std)/allPrevalenceSDlcpb_std, 
-                                      smoothLatent_jittered=100*(allPrevalenceSDLCPb_jittered-allPrevalenceSDLCPb_std)/allPrevalenceSDLCPb_std)
+                                    empirical_FBpop=100*(allPrevalenceSD_FBpop-allPrevalenceSD_std)/allPrevalenceSD_std, 
+                                      latent_FBpop=100*(allPrevalenceSDLCPb_FBpop-allPrevalenceSDLCPb_std)/allPrevalenceSDLCPb_std, 
+                                      smoothLatent_FBpop=100*(allPrevalenceSDlcpb_FBpop-allPrevalenceSDlcpb_std)/allPrevalenceSDlcpb_std, 
+                                    empirical_2019=100*(allPrevalenceSD_2019-allPrevalenceSD_std)/allPrevalenceSD_std, 
+                                      latent_2019=100*(allPrevalenceSDLCPb_2019-allPrevalenceSDLCPb_std)/allPrevalenceSDLCPb_std, 
+                                      smoothLatent_2019=100*(allPrevalenceSDlcpb_2019-allPrevalenceSDlcpb_std)/allPrevalenceSDlcpb_std, 
+                                    empirical_jittered=100*(allPrevalenceSD_jittered-allPrevalenceSD_std)/allPrevalenceSD_std, 
+                                      latent_jittered=100*(allPrevalenceSDLCPb_jittered-allPrevalenceSDLCPb_std)/allPrevalenceSDLCPb_std, 
+                                      smoothLatent_jittered=100*(allPrevalenceSDlcpb_jittered-allPrevalenceSDlcpb_std)/allPrevalenceSDlcpb_std)
   
   allCountSD_std = c(countSDConStrat_std, countSDConstituency_std, countSDCounty_std)
   allCountSDlcpb_std = c(countSDConStratlcpb_std, countSDConstituencylcpb_std, countSDCountylcpb_std)
@@ -2582,38 +2598,54 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
                           rep("County", length(countPredsCounty_std)))
   
   fullCountTab = data.frame(areaLevel=areaLevelCount, 
-                                 allCountPreds_std, allCountPredslcpb_std, allCountPredsLCPb_std, 
-                                 allCountPreds_FBpop, allCountPredslcpb_FBpop, allCountPredsLCPb_FBpop, 
-                                 allCountPreds_2019, allCountPredslcpb_2019, allCountPredsLCPb_2019, 
-                                 allCountPreds_jittered, allCountPredslcpb_jittered, allCountPredsLCPb_jittered)
+                                 empirical_std=allCountPreds_std, 
+                                   latent_std=allCountPredsLCPb_std, 
+                                   smoothLatent_std=allCountPredslcpb_std, 
+                                 empirical_FBpop=allCountPreds_FBpop, 
+                                   latent_FBpop=allCountPredsLCPb_FBpop, 
+                                   smoothLatent_FBpop=allCountPredslcpb_FBpop, 
+                                 empirical_2019=allCountPreds_2019, 
+                                   latent_2019=allCountPredsLCPb_2019, 
+                                   smoothLatent_2019=allCountPredslcpb_2019, 
+                                 empirical_jittered=allCountPreds_jittered, 
+                                   latent_jittered=allCountPredsLCPb_jittered, 
+                                   smoothLatent_jittered=allCountPredslcpb_jittered)
   
   fullCountTabSD = data.frame(areaLevel=areaLevelCount, 
-                                   allCountSD_std, allCountSDlcpb_std, allCountSDLCPb_std, 
-                                   allCountSD_FBpop, allCountSDlcpb_FBpop, allCountSDLCPb_FBpop, 
-                                   allCountSD_2019, allCountSDlcpb_2019, allCountSDLCPb_2019, 
-                                   allCountSD_jittered, allCountSDlcpb_jittered, allCountSDLCPb_jittered)
+                                   empirical_std=allCountSD_std, 
+                                     latent_std=allCountSDLCPb_std, 
+                                     smoothLatent_std=allCountSDlcpb_std, 
+                                   empirical_FBpop=allCountSD_FBpop, 
+                                     latent_FBpop=allCountSDLCPb_FBpop, 
+                                     smoothLatent_FBpop=allCountSDlcpb_FBpop, 
+                                   empirical_2019=allCountSD_2019, 
+                                     latent_2019=allCountSDLCPb_2019, 
+                                     smoothLatent_2019=allCountSDlcpb_2019, 
+                                   empirical_jittered=allCountSD_jittered, 
+                                     latent_jittered=allCountSDLCPb_jittered, 
+                                     smoothLatent_jittered=allCountSDlcpb_jittered)
   
   fullCountTabPct = data.frame(areaLevel=areaLevelCount, 
-                                    empiricial_FBpop=100*(allCountPreds_FBpop-allCountPreds_std)/allCountPreds_std, 
-                                      latent_FBpop=100*(allCountPredslcpb_FBpop-allCountPredslcpb_std)/allCountPredslcpb_std, 
-                                      smoothLatent_FBpop=100*(allCountPredsLCPb_FBpop-allCountPredsLCPb_std)/allCountPredsLCPb_std, 
-                                    empiricial_2019=100*(allCountPreds_2019-allCountPreds_std)/allCountPreds_std, 
-                                      latent_2019=100*(allCountPredslcpb_2019-allCountPredslcpb_std)/allCountPredslcpb_std, 
-                                      smoothLatent_2019=100*(allCountPredsLCPb_2019-allCountPredsLCPb_std)/allCountPredsLCPb_std, 
-                                    empiricial_jittered=100*(allCountPreds_jittered-allCountPreds_std)/allCountPreds_std, 
-                                      latent_jittered=100*(allCountPredslcpb_jittered-allCountPredslcpb_std)/allCountPredslcpb_std, 
-                                      smoothLatent_jittered=100*(allCountPredsLCPb_jittered-allCountPredsLCPb_std)/allCountPredsLCPb_std)
+                                    empirical_FBpop=100*(allCountPreds_FBpop-allCountPreds_std)/allCountPreds_std, 
+                                      latent_FBpop=100*(allCountPredsLCPb_FBpop-allCountPredsLCPb_std)/allCountPredsLCPb_std, 
+                                      smoothLatent_FBpop=100*(allCountPredslcpb_FBpop-allCountPredslcpb_std)/allCountPredslcpb_std, 
+                                    empirical_2019=100*(allCountPreds_2019-allCountPreds_std)/allCountPreds_std, 
+                                      latent_2019=100*(allCountPredsLCPb_2019-allCountPredsLCPb_std)/allCountPredsLCPb_std, 
+                                      smoothLatent_2019=100*(allCountPredslcpb_2019-allCountPredslcpb_std)/allCountPredslcpb_std, 
+                                    empirical_jittered=100*(allCountPreds_jittered-allCountPreds_std)/allCountPreds_std, 
+                                      latent_jittered=100*(allCountPredsLCPb_jittered-allCountPredsLCPb_std)/allCountPredsLCPb_std, 
+                                      smoothLatent_jittered=100*(allCountPredslcpb_jittered-allCountPredslcpb_std)/allCountPredslcpb_std)
   
   fullCountTabSDPct = data.frame(areaLevel=areaLevelCount, 
-                                      empiricial_FBpop=100*(allCountSD_FBpop-allCountSD_std)/allCountSD_std, 
-                                        latent_FBpop=100*(allCountSDlcpb_FBpop-allCountSDlcpb_std)/allCountSDlcpb_std, 
-                                        smoothLatent_FBpop=100*(allCountSDLCPb_FBpop-allCountSDLCPb_std)/allCountSDLCPb_std, 
-                                      empiricial_2019=100*(allCountSD_2019-allCountSD_std)/allCountSD_std, 
-                                        latent_2019=100*(allCountSDlcpb_2019-allCountSDlcpb_std)/allCountSDlcpb_std, 
-                                        smoothLatent_2019=100*(allCountSDLCPb_2019-allCountSDLCPb_std)/allCountSDLCPb_std, 
-                                      empiricial_jittered=100*(allCountSD_jittered-allCountSD_std)/allCountSD_std, 
-                                        latent_jittered=100*(allCountSDlcpb_jittered-allCountSDlcpb_std)/allCountSDlcpb_std, 
-                                        smoothLatent_jittered=100*(allCountSDLCPb_jittered-allCountSDLCPb_std)/allCountSDLCPb_std)
+                                      empirical_FBpop=100*(allCountSD_FBpop-allCountSD_std)/allCountSD_std, 
+                                        latent_FBpop=100*(allCountSDLCPb_FBpop-allCountSDLCPb_std)/allCountSDLCPb_std, 
+                                        smoothLatent_FBpop=100*(allCountSDlcpb_FBpop-allCountSDlcpb_std)/allCountSDlcpb_std, 
+                                      empirical_2019=100*(allCountSD_2019-allCountSD_std)/allCountSD_std, 
+                                        latent_2019=100*(allCountSDLCPb_2019-allCountSDLCPb_std)/allCountSDLCPb_std, 
+                                        smoothLatent_2019=100*(allCountSDlcpb_2019-allCountSDlcpb_std)/allCountSDlcpb_std, 
+                                      empirical_jittered=100*(allCountSD_jittered-allCountSD_std)/allCountSD_std, 
+                                        latent_jittered=100*(allCountSDLCPb_jittered-allCountSDLCPb_std)/allCountSDLCPb_std, 
+                                        smoothLatent_jittered=100*(allCountSDlcpb_jittered-allCountSDlcpb_std)/allCountSDlcpb_std)
   
   allRelPrevSD_std = c(relativePrevalenceSDConstituency_std, relativePrevalenceSDCounty_std)
   allRelPrevSDlcpb_std = c(relativePrevalenceSDConstituencylcpb_std, relativePrevalenceSDCountylcpb_std)
@@ -2652,38 +2684,54 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
                        rep("County", length(relativePrevalencePredsCounty_std)))
   
   fullRelPrevTab = data.frame(areaLevel=areaLevelRelPrev, 
-                              allRelPrevPreds_std, allRelPrevPredslcpb_std, allRelPrevPredsLCPb_std, 
-                              allRelPrevPreds_FBpop, allRelPrevPredslcpb_FBpop, allRelPrevPredsLCPb_FBpop, 
-                              allRelPrevPreds_2019, allRelPrevPredslcpb_2019, allRelPrevPredsLCPb_2019, 
-                              allRelPrevPreds_jittered, allRelPrevPredslcpb_jittered, allRelPrevPredsLCPb_jittered)
+                            empirical_std=allRelPrevPreds_std, 
+                              latent_std=allRelPrevPredsLCPb_std, 
+                              smoothLatent_std=allRelPrevPredslcpb_std, 
+                            empirical_FBpop=allRelPrevPreds_FBpop, 
+                              latent_FBpop=allRelPrevPredsLCPb_FBpop, 
+                              smoothLatent_FBpop=allRelPrevPredslcpb_FBpop, 
+                            empirical_2019=allRelPrevPreds_2019, 
+                              latent_2019=allRelPrevPredsLCPb_2019, 
+                              smoothLatent_2019=allRelPrevPredslcpb_2019, 
+                            empirical_jittered=allRelPrevPreds_jittered, 
+                              latent_jittered=allRelPrevPredsLCPb_jittered, 
+                              smoothLatent_jittered=allRelPrevPredslcpb_jittered)
   
   fullRelPrevTabSD = data.frame(areaLevel=areaLevelRelPrev, 
-                                   allRelPrevSD_std, allRelPrevSDlcpb_std, allRelPrevSDLCPb_std, 
-                                   allRelPrevSD_FBpop, allRelPrevSDlcpb_FBpop, allRelPrevSDLCPb_FBpop, 
-                                   allRelPrevSD_2019, allRelPrevSDlcpb_2019, allRelPrevSDLCPb_2019, 
-                                   allRelPrevSD_jittered, allRelPrevSDlcpb_jittered, allRelPrevSDLCPb_jittered)
+                              empirical_std=allRelPrevSD_std, 
+                                latent_std=allRelPrevSDLCPb_std, 
+                                smoothLatent_std=allRelPrevSDlcpb_std, 
+                              empirical_FBpop=allRelPrevSD_FBpop, 
+                                latent_FBpop=allRelPrevSDLCPb_FBpop, 
+                                smoothLatent_FBpop=allRelPrevSDlcpb_FBpop, 
+                              empirical_2019=allRelPrevSD_2019, 
+                                latent_2019=allRelPrevSDLCPb_2019, 
+                                smoothLatent_2019=allRelPrevSDlcpb_2019, 
+                              empirical_jittered=allRelPrevSD_jittered, 
+                                latent_jittered=allRelPrevSDLCPb_jittered, 
+                                smoothLatent_jittered=allRelPrevSDlcpb_jittered)
   
   fullRelPrevTabPct = data.frame(areaLevel=areaLevelRelPrev, 
-                                    empiricial_FBpop=100*(allRelPrevPreds_FBpop-allRelPrevPreds_std)/allRelPrevPreds_std, 
-                                      latent_FBpop=100*(allRelPrevPredslcpb_FBpop-allRelPrevPredslcpb_std)/allRelPrevPredslcpb_std, 
-                                      smoothLatent_FBpop=100*(allRelPrevPredsLCPb_FBpop-allRelPrevPredsLCPb_std)/allRelPrevPredsLCPb_std, 
-                                    empiricial_2019=100*(allRelPrevPreds_2019-allRelPrevPreds_std)/allRelPrevPreds_std, 
-                                      latent_2019=100*(allRelPrevPredslcpb_2019-allRelPrevPredslcpb_std)/allRelPrevPredslcpb_std, 
-                                      smoothLatent_2019=100*(allRelPrevPredsLCPb_2019-allRelPrevPredsLCPb_std)/allRelPrevPredsLCPb_std, 
-                                    empiricial_jittered=100*(allRelPrevPreds_jittered-allRelPrevPreds_std)/allRelPrevPreds_std, 
-                                      latent_jittered=100*(allRelPrevPredslcpb_jittered-allRelPrevPredslcpb_std)/allRelPrevPredslcpb_std, 
-                                      smoothLatent_jittered=100*(allRelPrevPredsLCPb_jittered-allRelPrevPredsLCPb_std)/allRelPrevPredsLCPb_std)
+                               empirical_FBpop=100*(allRelPrevPreds_FBpop-allRelPrevPreds_std)/allRelPrevPreds_std, 
+                                 latent_FBpop=100*(allRelPrevPredsLCPb_FBpop-allRelPrevPredsLCPb_std)/allRelPrevPredsLCPb_std, 
+                                 smoothLatent_FBpop=100*(allRelPrevPredslcpb_FBpop-allRelPrevPredslcpb_std)/allRelPrevPredslcpb_std, 
+                               empirical_2019=100*(allRelPrevPreds_2019-allRelPrevPreds_std)/allRelPrevPreds_std, 
+                                 latent_2019=100*(allRelPrevPredsLCPb_2019-allRelPrevPredsLCPb_std)/allRelPrevPredsLCPb_std, 
+                                 smoothLatent_2019=100*(allRelPrevPredslcpb_2019-allRelPrevPredslcpb_std)/allRelPrevPredslcpb_std, 
+                               empirical_jittered=100*(allRelPrevPreds_jittered-allRelPrevPreds_std)/allRelPrevPreds_std, 
+                                 latent_jittered=100*(allRelPrevPredsLCPb_jittered-allRelPrevPredsLCPb_std)/allRelPrevPredsLCPb_std, 
+                                 smoothLatent_jittered=100*(allRelPrevPredslcpb_jittered-allRelPrevPredslcpb_std)/allRelPrevPredslcpb_std)
   
   fullRelPrevTabSDPct = data.frame(areaLevel=areaLevelRelPrev, 
-                                      empiricial_FBpop=100*(allRelPrevSD_FBpop-allRelPrevSD_std)/allRelPrevSD_std, 
-                                        latent_FBpop=100*(allRelPrevSDlcpb_FBpop-allRelPrevSDlcpb_std)/allRelPrevSDlcpb_std, 
-                                        smoothLatent_FBpop=100*(allRelPrevSDLCPb_FBpop-allRelPrevSDLCPb_std)/allRelPrevSDLCPb_std, 
-                                      empiricial_2019=100*(allRelPrevSD_2019-allRelPrevSD_std)/allRelPrevSD_std, 
-                                        latent_2019=100*(allRelPrevSDlcpb_2019-allRelPrevSDlcpb_std)/allRelPrevSDlcpb_std, 
-                                        smoothLatent_2019=100*(allRelPrevSDLCPb_2019-allRelPrevSDLCPb_std)/allRelPrevSDLCPb_std, 
-                                      empiricial_jittered=100*(allRelPrevSD_jittered-allRelPrevSD_std)/allRelPrevSD_std, 
-                                        latent_jittered=100*(allRelPrevSDlcpb_jittered-allRelPrevSDlcpb_std)/allRelPrevSDlcpb_std, 
-                                        smoothLatent_jittered=100*(allRelPrevSDLCPb_jittered-allRelPrevSDLCPb_std)/allRelPrevSDLCPb_std)
+                                 empirical_FBpop=100*(allRelPrevSD_FBpop-allRelPrevSD_std)/allRelPrevSD_std, 
+                                   latent_FBpop=100*(allRelPrevSDLCPb_FBpop-allRelPrevSDLCPb_std)/allRelPrevSDLCPb_std, 
+                                   smoothLatent_FBpop=100*(allRelPrevSDlcpb_FBpop-allRelPrevSDlcpb_std)/allRelPrevSDlcpb_std, 
+                                 empirical_2019=100*(allRelPrevSD_2019-allRelPrevSD_std)/allRelPrevSD_std, 
+                                   latent_2019=100*(allRelPrevSDLCPb_2019-allRelPrevSDLCPb_std)/allRelPrevSDLCPb_std, 
+                                   smoothLatent_2019=100*(allRelPrevSDlcpb_2019-allRelPrevSDlcpb_std)/allRelPrevSDlcpb_std, 
+                                 empirical_jittered=100*(allRelPrevSD_jittered-allRelPrevSD_std)/allRelPrevSD_std, 
+                                   latent_jittered=100*(allRelPrevSDLCPb_jittered-allRelPrevSDLCPb_std)/allRelPrevSDLCPb_std, 
+                                   smoothLatent_jittered=100*(allRelPrevSDlcpb_jittered-allRelPrevSDlcpb_std)/allRelPrevSDlcpb_std)
   
   # Calculate plotting range ----
   fullRangePredsPrevalence = range(as.matrix(fullPrevalenceTab[,-1]), na.rm=TRUE)
@@ -2709,112 +2757,112 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
   
   browser()
   
-  # Empirical model ----
+  ## Empirical model ----
   # FBpop
-  prevConStrat = mean(abs(fullPrevalenceTabPct$empiricial_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
-  prevCon = mean(abs(fullPrevalenceTabPct$empiricial_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency"]))
-  prevCounty = mean(abs(fullPrevalenceTabPct$empiricial_FBpop[fullPrevalenceTabPct$areaLevel == "County"]))
-  prevConStratSD = mean(abs(fullPrevalenceTabSDPct$empiricial_FBpop[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
-  prevConSD = mean(abs(fullPrevalenceTabSDPct$empiricial_FBpop[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
-  prevCountySD = mean(abs(fullPrevalenceTabSDPct$empiricial_FBpop[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevConStrat = mean(abs(fullPrevalenceTabPct$empirical_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevCon = mean(abs(fullPrevalenceTabPct$empirical_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$empirical_FBpop[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = mean(abs(fullPrevalenceTabSDPct$empirical_FBpop[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$empirical_FBpop[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$empirical_FBpop[fullPrevalenceTabSDPct$areaLevel == "County"]))
   prevMeans = cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
                 c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD))
   
-  countConStrat = niceMean(abs(fullCountTabPct$empiricial_FBpop[fullCountTabPct$areaLevel == "Constituency x stratum"]))
-  countCon = mean(abs(fullCountTabPct$empiricial_FBpop[fullCountTabPct$areaLevel == "Constituency"]))
-  countCounty = mean(abs(fullCountTabPct$empiricial_FBpop[fullCountTabPct$areaLevel == "County"]))
-  countConStratSD = niceMean(abs(fullCountTabSDPct$empiricial_FBpop[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
-  countConSD = mean(abs(fullCountTabSDPct$empiricial_FBpop[fullCountTabSDPct$areaLevel == "Constituency"]))
-  countCountySD = mean(abs(fullCountTabSDPct$empiricial_FBpop[fullCountTabSDPct$areaLevel == "County"]))
+  countConStrat = niceMean(abs(fullCountTabPct$empirical_FBpop[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  countCon = mean(abs(fullCountTabPct$empirical_FBpop[fullCountTabPct$areaLevel == "Constituency"]))
+  countCounty = mean(abs(fullCountTabPct$empirical_FBpop[fullCountTabPct$areaLevel == "County"]))
+  countConStratSD = niceMean(abs(fullCountTabSDPct$empirical_FBpop[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  countConSD = mean(abs(fullCountTabSDPct$empirical_FBpop[fullCountTabSDPct$areaLevel == "Constituency"]))
+  countCountySD = mean(abs(fullCountTabSDPct$empirical_FBpop[fullCountTabSDPct$areaLevel == "County"]))
   countMeans = cbind(c("conStrat"=countConStrat, "constituency"=countCon, "county"=countCounty), 
                 c("conStratSD"=countConStratSD, "constituencySD"=countConSD, "countySD"=countCountySD))
   
   relPrevConStrat = NA
-  relPrevCon = niceMean(abs(fullRelPrevTabPct$empiricial_FBpop[fullRelPrevTabPct$areaLevel == "Constituency"]))
-  relPrevCounty = niceMean(abs(fullRelPrevTabPct$empiricial_FBpop[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$empirical_FBpop[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$empirical_FBpop[fullRelPrevTabPct$areaLevel == "County"]))
   relPrevConStratSD = NA
-  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$empiricial_FBpop[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
-  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$empiricial_FBpop[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$empirical_FBpop[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$empirical_FBpop[fullRelPrevTabSDPct$areaLevel == "County"]))
   relPrevMeans = cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
                 c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD))
   
   # 2019
-  prevConStrat = mean(abs(fullPrevalenceTabPct$empiricial_2019[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
-  prevCon = mean(abs(fullPrevalenceTabPct$empiricial_2019[fullPrevalenceTabPct$areaLevel == "Constituency"]))
-  prevCounty = mean(abs(fullPrevalenceTabPct$empiricial_2019[fullPrevalenceTabPct$areaLevel == "County"]))
-  prevConStratSD = mean(abs(fullPrevalenceTabSDPct$empiricial_2019[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
-  prevConSD = mean(abs(fullPrevalenceTabSDPct$empiricial_2019[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
-  prevCountySD = mean(abs(fullPrevalenceTabSDPct$empiricial_2019[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevConStrat = mean(abs(fullPrevalenceTabPct$empirical_2019[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevCon = mean(abs(fullPrevalenceTabPct$empirical_2019[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$empirical_2019[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = mean(abs(fullPrevalenceTabSDPct$empirical_2019[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$empirical_2019[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$empirical_2019[fullPrevalenceTabSDPct$areaLevel == "County"]))
   prevMeans = rbind(prevMeans, 
                     cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
                       c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD)))
   
-  countConStrat = niceMean(abs(fullCountTabPct$empiricial_2019[fullCountTabPct$areaLevel == "Constituency x stratum"]))
-  countCon = mean(abs(fullCountTabPct$empiricial_2019[fullCountTabPct$areaLevel == "Constituency"]))
-  countCounty = mean(abs(fullCountTabPct$empiricial_2019[fullCountTabPct$areaLevel == "County"]))
-  countConStratSD = niceMean(abs(fullCountTabSDPct$empiricial_2019[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
-  countConSD = mean(abs(fullCountTabSDPct$empiricial_2019[fullCountTabSDPct$areaLevel == "Constituency"]))
-  countCountySD = mean(abs(fullCountTabSDPct$empiricial_2019[fullCountTabSDPct$areaLevel == "County"]))
+  countConStrat = niceMean(abs(fullCountTabPct$empirical_2019[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  countCon = mean(abs(fullCountTabPct$empirical_2019[fullCountTabPct$areaLevel == "Constituency"]))
+  countCounty = mean(abs(fullCountTabPct$empirical_2019[fullCountTabPct$areaLevel == "County"]))
+  countConStratSD = niceMean(abs(fullCountTabSDPct$empirical_2019[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  countConSD = mean(abs(fullCountTabSDPct$empirical_2019[fullCountTabSDPct$areaLevel == "Constituency"]))
+  countCountySD = mean(abs(fullCountTabSDPct$empirical_2019[fullCountTabSDPct$areaLevel == "County"]))
   countMeans = rbind(countMeans, 
                      cbind(c("conStrat"=countConStrat, "constituency"=countCon, "county"=countCounty), 
                        c("conStratSD"=countConStratSD, "constituencySD"=countConSD, "countySD"=countCountySD)))
     
   relPrevConStrat = NA
-  relPrevCon = niceMean(abs(fullRelPrevTabPct$empiricial_2019[fullRelPrevTabPct$areaLevel == "Constituency"]))
-  relPrevCounty = niceMean(abs(fullRelPrevTabPct$empiricial_2019[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$empirical_2019[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$empirical_2019[fullRelPrevTabPct$areaLevel == "County"]))
   relPrevConStratSD = NA
-  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$empiricial_2019[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
-  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$empiricial_2019[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$empirical_2019[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$empirical_2019[fullRelPrevTabSDPct$areaLevel == "County"]))
   relPrevMeans = rbind(relPrevMeans, 
                        cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
                          c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD)))
   
   # jittered
-  prevConStrat = niceMean(abs(fullPrevalenceTabPct$empiricial_jittered[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]))
-  prevCon = mean(abs(fullPrevalenceTabPct$empiricial_jittered[fullPrevalenceTabPct$areaLevel == "Constituency"]))
-  prevCounty = mean(abs(fullPrevalenceTabPct$empiricial_jittered[fullPrevalenceTabPct$areaLevel == "County"]))
-  prevConStratSD = niceMean(abs(fullPrevalenceTabSDPct$empiricial_jittered[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]))
-  prevConSD = mean(abs(fullPrevalenceTabSDPct$empiricial_jittered[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
-  prevCountySD = mean(abs(fullPrevalenceTabSDPct$empiricial_jittered[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevConStrat = niceMean(abs(fullPrevalenceTabPct$empirical_jittered[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]))
+  prevCon = mean(abs(fullPrevalenceTabPct$empirical_jittered[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$empirical_jittered[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = niceMean(abs(fullPrevalenceTabSDPct$empirical_jittered[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]))
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$empirical_jittered[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$empirical_jittered[fullPrevalenceTabSDPct$areaLevel == "County"]))
   prevMeans = rbind(prevMeans, 
                 cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
                   c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD)))
   
-  countConStrat = niceMean(abs(fullCountTabPct$empiricial_jittered[fullCountTabPct$areaLevel == "Constituency x stratum"]))
-  countCon = mean(abs(fullCountTabPct$empiricial_jittered[fullCountTabPct$areaLevel == "Constituency"]))
-  countCounty = mean(abs(fullCountTabPct$empiricial_jittered[fullCountTabPct$areaLevel == "County"]))
-  countConStratSD = niceMean(abs(fullCountTabSDPct$empiricial_jittered[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
-  countConSD = mean(abs(fullCountTabSDPct$empiricial_jittered[fullCountTabSDPct$areaLevel == "Constituency"]))
-  countCountySD = mean(abs(fullCountTabSDPct$empiricial_jittered[fullCountTabSDPct$areaLevel == "County"]))
+  countConStrat = niceMean(abs(fullCountTabPct$empirical_jittered[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  countCon = mean(abs(fullCountTabPct$empirical_jittered[fullCountTabPct$areaLevel == "Constituency"]))
+  countCounty = mean(abs(fullCountTabPct$empirical_jittered[fullCountTabPct$areaLevel == "County"]))
+  countConStratSD = niceMean(abs(fullCountTabSDPct$empirical_jittered[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  countConSD = mean(abs(fullCountTabSDPct$empirical_jittered[fullCountTabSDPct$areaLevel == "Constituency"]))
+  countCountySD = mean(abs(fullCountTabSDPct$empirical_jittered[fullCountTabSDPct$areaLevel == "County"]))
   countMeans = rbind(countMeans, 
                  cbind(c("conStrat"=countConStrat, "constituency"=countCon, "county"=countCounty), 
                    c("conStratSD"=countConStratSD, "constituencySD"=countConSD, "countySD"=countCountySD)))
   
   relPrevConStrat = NA
-  relPrevCon = niceMean(abs(fullRelPrevTabPct$empiricial_jittered[fullRelPrevTabPct$areaLevel == "Constituency"]))
-  relPrevCounty = niceMean(abs(fullRelPrevTabPct$empiricial_jittered[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$empirical_jittered[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$empirical_jittered[fullRelPrevTabPct$areaLevel == "County"]))
   relPrevConStratSD = NA
-  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$empiricial_jittered[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
-  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$empiricial_jittered[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$empirical_jittered[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$empirical_jittered[fullRelPrevTabSDPct$areaLevel == "County"]))
   relPrevMeans = rbind(relPrevMeans, 
                    cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
                      c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD)))
   
   # combine into single table
-  tab = cbind(prevMeans[,1], countMeans[,1], relPrevMeans[,1], 
+  tabEmpirical = cbind(prevMeans[,1], countMeans[,1], relPrevMeans[,1], 
               prevMeans[,2], countMeans[,2], relPrevMeans[,2])
-  colnames(tab) = c("Prevalence", "Burden", "Relative prevalence", 
+  colnames(tabEmpirical) = c("Prevalence", "Burden", "Relative prevalence", 
                     "PrevalenceS", "BurdenS", "Relative prevalenceS")
-  row.names(tab) = rep(c("Constituency times stratum", "Constituency", "County"), 3)
-  tab = round(tab, 0)
+  row.names(tabEmpirical) = rep(c("Constituency times stratum", "Constituency", "County"), 3)
+  tabEmpirical = round(tabEmpirical, 0)
   
-  print(xtable(tab, digits=0, 
+  print(xtable(tabEmpirical, digits=0, 
                caption=paste0("Mean percent difference of empirical model posterior ", 
                               "mean and SD under sensitivity analysis scenarios ", 
                               "compared to under the original data."), 
                label=paste0("tab:pctIncreaseSensitivity_empirical")))
   
-  # Latent model ----
+  ## Latent model ----
   # FBpop
   prevConStrat = mean(abs(fullPrevalenceTabPct$latent_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
   prevCon = mean(abs(fullPrevalenceTabPct$latent_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency"]))
@@ -2906,20 +2954,20 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
                              c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD)))
   
   # combine into single table
-  tab = cbind(prevMeans[,1], countMeans[,1], relPrevMeans[,1], 
+  tabLatent = cbind(prevMeans[,1], countMeans[,1], relPrevMeans[,1], 
               prevMeans[,2], countMeans[,2], relPrevMeans[,2])
-  colnames(tab) = c("Prevalence", "Burden", "Relative prevalence", 
+  colnames(tabLatent) = c("Prevalence", "Burden", "Relative prevalence", 
                     "PrevalenceS", "BurdenS", "Relative prevalenceS")
-  row.names(tab) = rep(c("Constituency times stratum", "Constituency", "County"), 3)
-  tab = round(tab, 0)
+  row.names(tabLatent) = rep(c("Constituency times stratum", "Constituency", "County"), 3)
+  tabLatent = round(tabLatent, 0)
   
-  print(xtable(tab, digits=0, 
+  print(xtable(tabLatent, digits=0, 
                caption=paste0("Mean percent difference of latent model posterior ", 
                               "mean and SD under sensitivity analysis scenarios ", 
                               "compared to under the original data."), 
                label=paste0("tab:pctIncreaseSensitivity_latent")))
   
-  # Smooth Latent model ----
+  ## Smooth Latent model ----
   # FBpop
   prevConStrat = mean(abs(fullPrevalenceTabPct$smoothLatent_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
   prevCon = mean(abs(fullPrevalenceTabPct$smoothLatent_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency"]))
@@ -3011,18 +3059,328 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
                              c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD)))
   
   # combine into single table
-  tab = cbind(prevMeans[,1], countMeans[,1], relPrevMeans[,1], 
+  tabSmoothLatent = cbind(prevMeans[,1], countMeans[,1], relPrevMeans[,1], 
               prevMeans[,2], countMeans[,2], relPrevMeans[,2])
-  colnames(tab) = c("Prevalence", "Burden", "Relative prevalence", 
+  colnames(tabSmoothLatent) = c("Prevalence", "Burden", "Relative prevalence", 
                     "PrevalenceS", "BurdenS", "Relative prevalenceS")
-  row.names(tab) = rep(c("Constituency times stratum", "Constituency", "County"), 3)
-  tab = round(tab, 0)
+  row.names(tabSmoothLatent) = rep(c("Constituency times stratum", "Constituency", "County"), 3)
+  tabSmoothLatent = round(tabSmoothLatent, 0)
   
-  print(xtable(tab, digits=0, 
+  print(xtable(tabSmoothLatent, digits=0, 
                caption=paste0("Mean percent difference of smooth latent model posterior ", 
                               "mean and SD under sensitivity analysis scenarios ", 
                               "compared to under the original data."), 
                label=paste0("tab:pctIncreaseSensitivity_smoothLatent")))
+  
+  ## Prevalence ----
+  # FBpop
+  
+  prevConStrat = mean(abs(fullPrevalenceTabPct$empirical_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevCon = mean(abs(fullPrevalenceTabPct$empirical_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$empirical_FBpop[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = mean(abs(fullPrevalenceTabSDPct$empirical_FBpop[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$empirical_FBpop[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$empirical_FBpop[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevMeansEmpirical = cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                             c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD))
+  
+  prevConStrat = mean(abs(fullPrevalenceTabPct$latent_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevCon = mean(abs(fullPrevalenceTabPct$latent_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$latent_FBpop[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = mean(abs(fullPrevalenceTabSDPct$latent_FBpop[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$latent_FBpop[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$latent_FBpop[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevMeansLatent = cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                                c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD))
+  
+  prevConStrat = mean(abs(fullPrevalenceTabPct$smoothLatent_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevCon = mean(abs(fullPrevalenceTabPct$smoothLatent_FBpop[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$smoothLatent_FBpop[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = mean(abs(fullPrevalenceTabSDPct$smoothLatent_FBpop[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$smoothLatent_FBpop[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$smoothLatent_FBpop[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevMeansSmoothLatent = cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                                c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD))
+  
+  tabFB = cbind(prevMeansSmoothLatent, prevMeansLatent[,2], prevMeansEmpirical[,2])
+  
+  prevConStrat = mean(abs(fullPrevalenceTabPct$empirical_2019[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevCon = mean(abs(fullPrevalenceTabPct$empirical_2019[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$empirical_2019[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = mean(abs(fullPrevalenceTabSDPct$empirical_2019[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$empirical_2019[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$empirical_2019[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevMeansEmpirical = cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                             c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD))
+  
+  prevConStrat = mean(abs(fullPrevalenceTabPct$latent_2019[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevCon = mean(abs(fullPrevalenceTabPct$latent_2019[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$latent_2019[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = mean(abs(fullPrevalenceTabSDPct$latent_2019[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$latent_2019[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$latent_2019[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevMeansLatent = cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                          c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD))
+  
+  prevConStrat = mean(abs(fullPrevalenceTabPct$smoothLatent_2019[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevCon = mean(abs(fullPrevalenceTabPct$smoothLatent_2019[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$smoothLatent_2019[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = mean(abs(fullPrevalenceTabSDPct$smoothLatent_2019[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$smoothLatent_2019[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$smoothLatent_2019[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevMeansSmoothLatent = cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                                c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD))
+  
+  tab2019 = cbind(prevMeansSmoothLatent, prevMeansLatent[,2], prevMeansEmpirical[,2])
+  
+  prevConStrat = mean(abs(fullPrevalenceTabPct$empirical_jittered[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevCon = mean(abs(fullPrevalenceTabPct$empirical_jittered[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$empirical_jittered[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = mean(abs(fullPrevalenceTabSDPct$empirical_jittered[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$empirical_jittered[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$empirical_jittered[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevMeansEmpirical = cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                             c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD))
+  
+  prevConStrat = mean(abs(fullPrevalenceTabPct$latent_jittered[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevCon = mean(abs(fullPrevalenceTabPct$latent_jittered[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$latent_jittered[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = mean(abs(fullPrevalenceTabSDPct$latent_jittered[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$latent_jittered[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$latent_jittered[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevMeansLatent = cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                          c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD))
+  
+  prevConStrat = mean(abs(fullPrevalenceTabPct$smoothLatent_jittered[fullPrevalenceTabPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevCon = mean(abs(fullPrevalenceTabPct$smoothLatent_jittered[fullPrevalenceTabPct$areaLevel == "Constituency"]))
+  prevCounty = mean(abs(fullPrevalenceTabPct$smoothLatent_jittered[fullPrevalenceTabPct$areaLevel == "County"]))
+  prevConStratSD = mean(abs(fullPrevalenceTabSDPct$smoothLatent_jittered[fullPrevalenceTabSDPct$areaLevel == "Constituency x stratum"]), na.rm=TRUE)
+  prevConSD = mean(abs(fullPrevalenceTabSDPct$smoothLatent_jittered[fullPrevalenceTabSDPct$areaLevel == "Constituency"]))
+  prevCountySD = mean(abs(fullPrevalenceTabSDPct$smoothLatent_jittered[fullPrevalenceTabSDPct$areaLevel == "County"]))
+  prevMeansSmoothLatent = cbind(c("conStrat"=prevConStrat, "constituency"=prevCon, "county"=prevCounty), 
+                                c("conStratSD"=prevConStratSD, "constituencySD"=prevConSD, "countySD"=prevCountySD))
+  
+  tabJittered = cbind(prevMeansSmoothLatent, prevMeansLatent[,2], prevMeansEmpirical[,2])
+  
+  fullTab = rbind(tabFB, 
+                  tab2019, 
+                  tabJittered)
+  fullTabNames = c("All models", "Smooth latent", "Latent", "Empirical")
+  fullTab = round(fullTab, digits=1)
+  row.names(fullTab) = rep(c("Constituency times stratum", "Constituency", "County"), 3)
+  fullTab = as.data.frame(fullTab)
+  names(fullTab) = fullTabNames
+  
+  xtable(fullTab, label="tab:sensPrevalence", caption=paste0(
+    "Mean absolute percent difference of prevalence posterior mean and SD in sensitivity analysis ", 
+    "scenarios compared to under the original data."
+  ), digits=1)
+  
+  ## Burden ----
+  # FBpop
+  
+  burdConStrat = niceMean(abs(fullCountTabPct$empirical_FBpop[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  burdCon = niceMean(abs(fullCountTabPct$empirical_FBpop[fullCountTabPct$areaLevel == "Constituency"]))
+  burdCounty = niceMean(abs(fullCountTabPct$empirical_FBpop[fullCountTabPct$areaLevel == "County"]))
+  burdConStratSD = niceMean(abs(fullCountTabSDPct$empirical_FBpop[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  burdConSD = niceMean(abs(fullCountTabSDPct$empirical_FBpop[fullCountTabSDPct$areaLevel == "Constituency"]))
+  burdCountySD = niceMean(abs(fullCountTabSDPct$empirical_FBpop[fullCountTabSDPct$areaLevel == "County"]))
+  burdMeansEmpirical = cbind(c("conStrat"=burdConStrat, "constituency"=burdCon, "county"=burdCounty), 
+                             c("conStratSD"=burdConStratSD, "constituencySD"=burdConSD, "countySD"=burdCountySD))
+  
+  burdConStrat = niceMean(abs(fullCountTabPct$latent_FBpop[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  burdCon = niceMean(abs(fullCountTabPct$latent_FBpop[fullCountTabPct$areaLevel == "Constituency"]))
+  burdCounty = niceMean(abs(fullCountTabPct$latent_FBpop[fullCountTabPct$areaLevel == "County"]))
+  burdConStratSD = niceMean(abs(fullCountTabSDPct$latent_FBpop[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  burdConSD = niceMean(abs(fullCountTabSDPct$latent_FBpop[fullCountTabSDPct$areaLevel == "Constituency"]))
+  burdCountySD = niceMean(abs(fullCountTabSDPct$latent_FBpop[fullCountTabSDPct$areaLevel == "County"]))
+  burdMeansLatent = cbind(c("conStrat"=burdConStrat, "constituency"=burdCon, "county"=burdCounty), 
+                          c("conStratSD"=burdConStratSD, "constituencySD"=burdConSD, "countySD"=burdCountySD))
+  
+  burdConStrat = niceMean(abs(fullCountTabPct$smoothLatent_FBpop[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  burdCon = niceMean(abs(fullCountTabPct$smoothLatent_FBpop[fullCountTabPct$areaLevel == "Constituency"]))
+  burdCounty = niceMean(abs(fullCountTabPct$smoothLatent_FBpop[fullCountTabPct$areaLevel == "County"]))
+  burdConStratSD = niceMean(abs(fullCountTabSDPct$smoothLatent_FBpop[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  burdConSD = niceMean(abs(fullCountTabSDPct$smoothLatent_FBpop[fullCountTabSDPct$areaLevel == "Constituency"]))
+  burdCountySD = niceMean(abs(fullCountTabSDPct$smoothLatent_FBpop[fullCountTabSDPct$areaLevel == "County"]))
+  burdMeansSmoothLatent = cbind(c("conStrat"=burdConStrat, "constituency"=burdCon, "county"=burdCounty), 
+                                c("conStratSD"=burdConStratSD, "constituencySD"=burdConSD, "countySD"=burdCountySD))
+  
+  tabFB = cbind(burdMeansSmoothLatent, burdMeansLatent[,2], burdMeansEmpirical[,2])
+  
+  burdConStrat = niceMean(abs(fullCountTabPct$empirical_2019[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  burdCon = niceMean(abs(fullCountTabPct$empirical_2019[fullCountTabPct$areaLevel == "Constituency"]))
+  burdCounty = niceMean(abs(fullCountTabPct$empirical_2019[fullCountTabPct$areaLevel == "County"]))
+  burdConStratSD = niceMean(abs(fullCountTabSDPct$empirical_2019[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  burdConSD = niceMean(abs(fullCountTabSDPct$empirical_2019[fullCountTabSDPct$areaLevel == "Constituency"]))
+  burdCountySD = niceMean(abs(fullCountTabSDPct$empirical_2019[fullCountTabSDPct$areaLevel == "County"]))
+  burdMeansEmpirical = cbind(c("conStrat"=burdConStrat, "constituency"=burdCon, "county"=burdCounty), 
+                             c("conStratSD"=burdConStratSD, "constituencySD"=burdConSD, "countySD"=burdCountySD))
+  
+  burdConStrat = niceMean(abs(fullCountTabPct$latent_2019[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  burdCon = niceMean(abs(fullCountTabPct$latent_2019[fullCountTabPct$areaLevel == "Constituency"]))
+  burdCounty = niceMean(abs(fullCountTabPct$latent_2019[fullCountTabPct$areaLevel == "County"]))
+  burdConStratSD = niceMean(abs(fullCountTabSDPct$latent_2019[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  burdConSD = niceMean(abs(fullCountTabSDPct$latent_2019[fullCountTabSDPct$areaLevel == "Constituency"]))
+  burdCountySD = niceMean(abs(fullCountTabSDPct$latent_2019[fullCountTabSDPct$areaLevel == "County"]))
+  burdMeansLatent = cbind(c("conStrat"=burdConStrat, "constituency"=burdCon, "county"=burdCounty), 
+                          c("conStratSD"=burdConStratSD, "constituencySD"=burdConSD, "countySD"=burdCountySD))
+  
+  burdConStrat = niceMean(abs(fullCountTabPct$smoothLatent_2019[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  burdCon = niceMean(abs(fullCountTabPct$smoothLatent_2019[fullCountTabPct$areaLevel == "Constituency"]))
+  burdCounty = niceMean(abs(fullCountTabPct$smoothLatent_2019[fullCountTabPct$areaLevel == "County"]))
+  burdConStratSD = niceMean(abs(fullCountTabSDPct$smoothLatent_2019[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  burdConSD = niceMean(abs(fullCountTabSDPct$smoothLatent_2019[fullCountTabSDPct$areaLevel == "Constituency"]))
+  burdCountySD = niceMean(abs(fullCountTabSDPct$smoothLatent_2019[fullCountTabSDPct$areaLevel == "County"]))
+  burdMeansSmoothLatent = cbind(c("conStrat"=burdConStrat, "constituency"=burdCon, "county"=burdCounty), 
+                                c("conStratSD"=burdConStratSD, "constituencySD"=burdConSD, "countySD"=burdCountySD))
+  
+  tab2019 = cbind(burdMeansSmoothLatent, burdMeansLatent[,2], burdMeansEmpirical[,2])
+  
+  burdConStrat = niceMean(abs(fullCountTabPct$empirical_jittered[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  burdCon = niceMean(abs(fullCountTabPct$empirical_jittered[fullCountTabPct$areaLevel == "Constituency"]))
+  burdCounty = niceMean(abs(fullCountTabPct$empirical_jittered[fullCountTabPct$areaLevel == "County"]))
+  burdConStratSD = niceMean(abs(fullCountTabSDPct$empirical_jittered[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  burdConSD = niceMean(abs(fullCountTabSDPct$empirical_jittered[fullCountTabSDPct$areaLevel == "Constituency"]))
+  burdCountySD = niceMean(abs(fullCountTabSDPct$empirical_jittered[fullCountTabSDPct$areaLevel == "County"]))
+  burdMeansEmpirical = cbind(c("conStrat"=burdConStrat, "constituency"=burdCon, "county"=burdCounty), 
+                             c("conStratSD"=burdConStratSD, "constituencySD"=burdConSD, "countySD"=burdCountySD))
+  
+  burdConStrat = niceMean(abs(fullCountTabPct$latent_jittered[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  burdCon = niceMean(abs(fullCountTabPct$latent_jittered[fullCountTabPct$areaLevel == "Constituency"]))
+  burdCounty = niceMean(abs(fullCountTabPct$latent_jittered[fullCountTabPct$areaLevel == "County"]))
+  burdConStratSD = niceMean(abs(fullCountTabSDPct$latent_jittered[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  burdConSD = niceMean(abs(fullCountTabSDPct$latent_jittered[fullCountTabSDPct$areaLevel == "Constituency"]))
+  burdCountySD = niceMean(abs(fullCountTabSDPct$latent_jittered[fullCountTabSDPct$areaLevel == "County"]))
+  burdMeansLatent = cbind(c("conStrat"=burdConStrat, "constituency"=burdCon, "county"=burdCounty), 
+                          c("conStratSD"=burdConStratSD, "constituencySD"=burdConSD, "countySD"=burdCountySD))
+  
+  burdConStrat = niceMean(abs(fullCountTabPct$smoothLatent_jittered[fullCountTabPct$areaLevel == "Constituency x stratum"]))
+  burdCon = niceMean(abs(fullCountTabPct$smoothLatent_jittered[fullCountTabPct$areaLevel == "Constituency"]))
+  burdCounty = niceMean(abs(fullCountTabPct$smoothLatent_jittered[fullCountTabPct$areaLevel == "County"]))
+  burdConStratSD = niceMean(abs(fullCountTabSDPct$smoothLatent_jittered[fullCountTabSDPct$areaLevel == "Constituency x stratum"]))
+  burdConSD = niceMean(abs(fullCountTabSDPct$smoothLatent_jittered[fullCountTabSDPct$areaLevel == "Constituency"]))
+  burdCountySD = niceMean(abs(fullCountTabSDPct$smoothLatent_jittered[fullCountTabSDPct$areaLevel == "County"]))
+  burdMeansSmoothLatent = cbind(c("conStrat"=burdConStrat, "constituency"=burdCon, "county"=burdCounty), 
+                                c("conStratSD"=burdConStratSD, "constituencySD"=burdConSD, "countySD"=burdCountySD))
+  
+  tabJittered = cbind(burdMeansSmoothLatent, burdMeansLatent[,2], burdMeansEmpirical[,2])
+  
+  fullTab = rbind(tabFB, 
+                  tab2019, 
+                  tabJittered)
+  fullTabNames = c("All models", "Smooth latent", "Latent", "Empirical")
+  fullTab = round(fullTab, digits=1)
+  row.names(fullTab) = rep(c("Constituency times stratum", "Constituency", "County"), 3)
+  fullTab = as.data.frame(fullTab)
+  names(fullTab) = fullTabNames
+  
+  xtable(fullTab, label="tab:sensBurden", caption=paste0(
+    "Mean absolute percent difference of burden posterior mean and SD in sensitivity analysis ", 
+    "scenarios compared to under the original data."
+  ), digits=1)
+  
+  ## Relative prevalence ----
+  relPrevConStrat = niceMean(abs(fullRelPrevTabPct$empirical_FBpop[fullRelPrevTabPct$areaLevel == "Constituency x stratum"]))
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$empirical_FBpop[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$empirical_FBpop[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevConStratSD = niceMean(abs(fullRelPrevTabSDPct$empirical_FBpop[fullRelPrevTabSDPct$areaLevel == "Constituency x stratum"]))
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$empirical_FBpop[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$empirical_FBpop[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevMeansEmpirical = cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                             c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD))
+  
+  relPrevConStrat = niceMean(abs(fullRelPrevTabPct$latent_FBpop[fullRelPrevTabPct$areaLevel == "Constituency x stratum"]))
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$latent_FBpop[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$latent_FBpop[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevConStratSD = niceMean(abs(fullRelPrevTabSDPct$latent_FBpop[fullRelPrevTabSDPct$areaLevel == "Constituency x stratum"]))
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$latent_FBpop[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$latent_FBpop[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevMeansLatent = cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                          c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD))
+  
+  relPrevConStrat = niceMean(abs(fullRelPrevTabPct$smoothLatent_FBpop[fullRelPrevTabPct$areaLevel == "Constituency x stratum"]))
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$smoothLatent_FBpop[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$smoothLatent_FBpop[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevConStratSD = niceMean(abs(fullRelPrevTabSDPct$smoothLatent_FBpop[fullRelPrevTabSDPct$areaLevel == "Constituency x stratum"]))
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$smoothLatent_FBpop[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$smoothLatent_FBpop[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevMeansSmoothLatent = cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                                c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD))
+  
+  tabFB = cbind(relPrevMeansSmoothLatent, relPrevMeansLatent[,2], relPrevMeansEmpirical[,2])
+  
+  relPrevConStrat = niceMean(abs(fullRelPrevTabPct$empirical_2019[fullRelPrevTabPct$areaLevel == "Constituency x stratum"]))
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$empirical_2019[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$empirical_2019[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevConStratSD = niceMean(abs(fullRelPrevTabSDPct$empirical_2019[fullRelPrevTabSDPct$areaLevel == "Constituency x stratum"]))
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$empirical_2019[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$empirical_2019[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevMeansEmpirical = cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                             c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD))
+  
+  relPrevConStrat = niceMean(abs(fullRelPrevTabPct$latent_2019[fullRelPrevTabPct$areaLevel == "Constituency x stratum"]))
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$latent_2019[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$latent_2019[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevConStratSD = niceMean(abs(fullRelPrevTabSDPct$latent_2019[fullRelPrevTabSDPct$areaLevel == "Constituency x stratum"]))
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$latent_2019[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$latent_2019[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevMeansLatent = cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                          c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD))
+  
+  relPrevConStrat = niceMean(abs(fullRelPrevTabPct$smoothLatent_2019[fullRelPrevTabPct$areaLevel == "Constituency x stratum"]))
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$smoothLatent_2019[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$smoothLatent_2019[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevConStratSD = niceMean(abs(fullRelPrevTabSDPct$smoothLatent_2019[fullRelPrevTabSDPct$areaLevel == "Constituency x stratum"]))
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$smoothLatent_2019[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$smoothLatent_2019[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevMeansSmoothLatent = cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                                c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD))
+  
+  tab2019 = cbind(relPrevMeansSmoothLatent, relPrevMeansLatent[,2], relPrevMeansEmpirical[,2])
+  
+  relPrevConStrat = niceMean(abs(fullRelPrevTabPct$empirical_jittered[fullRelPrevTabPct$areaLevel == "Constituency x stratum"]))
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$empirical_jittered[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$empirical_jittered[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevConStratSD = niceMean(abs(fullRelPrevTabSDPct$empirical_jittered[fullRelPrevTabSDPct$areaLevel == "Constituency x stratum"]))
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$empirical_jittered[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$empirical_jittered[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevMeansEmpirical = cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                             c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD))
+  
+  relPrevConStrat = niceMean(abs(fullRelPrevTabPct$latent_jittered[fullRelPrevTabPct$areaLevel == "Constituency x stratum"]))
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$latent_jittered[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$latent_jittered[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevConStratSD = niceMean(abs(fullRelPrevTabSDPct$latent_jittered[fullRelPrevTabSDPct$areaLevel == "Constituency x stratum"]))
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$latent_jittered[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$latent_jittered[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevMeansLatent = cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                          c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD))
+  
+  relPrevConStrat = niceMean(abs(fullRelPrevTabPct$smoothLatent_jittered[fullRelPrevTabPct$areaLevel == "Constituency x stratum"]))
+  relPrevCon = niceMean(abs(fullRelPrevTabPct$smoothLatent_jittered[fullRelPrevTabPct$areaLevel == "Constituency"]))
+  relPrevCounty = niceMean(abs(fullRelPrevTabPct$smoothLatent_jittered[fullRelPrevTabPct$areaLevel == "County"]))
+  relPrevConStratSD = niceMean(abs(fullRelPrevTabSDPct$smoothLatent_jittered[fullRelPrevTabSDPct$areaLevel == "Constituency x stratum"]))
+  relPrevConSD = niceMean(abs(fullRelPrevTabSDPct$smoothLatent_jittered[fullRelPrevTabSDPct$areaLevel == "Constituency"]))
+  relPrevCountySD = niceMean(abs(fullRelPrevTabSDPct$smoothLatent_jittered[fullRelPrevTabSDPct$areaLevel == "County"]))
+  relPrevMeansSmoothLatent = cbind(c("conStrat"=relPrevConStrat, "constituency"=relPrevCon, "county"=relPrevCounty), 
+                                c("conStratSD"=relPrevConStratSD, "constituencySD"=relPrevConSD, "countySD"=relPrevCountySD))
+  
+  tabJittered = cbind(relPrevMeansSmoothLatent, relPrevMeansLatent[,2], relPrevMeansEmpirical[,2])
+  
+  fullTab = rbind(tabFB, 
+                  tab2019, 
+                  tabJittered)
+  fullTabNames = c("All models", "Smooth latent", "Latent", "Empirical")
+  fullTab = round(fullTab, digits=1)
+  row.names(fullTab) = rep(c("Constituency times stratum", "Constituency", "County"), 3)
+  fullTab = as.data.frame(fullTab)
+  names(fullTab) = fullTabNames
+  
+  xtable(fullTab, label="tab:sensRelPrev", caption=paste0(
+    "Mean absolute percent difference of relative prevalence posterior mean and SD in sensitivity analysis ", 
+    "scenarios compared to under the original data."
+  ), digits=1)
   
   # Adjust full data tables so the names are the same in each
   tabNames = c("areaLevel", "std",
@@ -3353,6 +3711,175 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
     }
   }
   
+}
+
+# plot Meta population density estimates, and the differences with WorldPop
+plotFBpopDensity = function(popGrid=NULL, kmres=1, savePlot=TRUE, 
+                            nx=850, ny=1050, width=800, height=800, kenyaLatRange=c(-4.6, 5), kenyaLonRange=c(33.5, 42.0), 
+                            lonLim=kenyaLonRange, latLim=kenyaLatRange, main="", delta=NULL, mean.neighbor=NULL) {
+  # get prediction locations from population grid
+  if(is.null(popGrid)) {
+    if(kmres == 5) {
+      load("savedOutput/global/popGrid.RData")
+      load("savedOutput/global/kenyaFacePopulationMats.RData")
+    }
+    else {
+      load("savedOutput/global/pop.rda")
+      popFace = raster("data/popData/facebook_2020.tif")
+      if(kmres == 1 && is.null(delta) && is.null(mean.neighbor)) {
+        delta=0.2
+        mean.neighbor=30000
+        # delta=.9
+        # mean.neighbor=100000
+      }
+      popGrid = makePopIntegrationTab(kmRes=kmres, pop=pop, domainPoly=kenyaPoly, 
+                                      eastLim=eastLim, northLim=northLim, 
+                                      mapProjection=SUMMER:::projKenya, poppa=poppaKenya, 
+                                      poppsub=poppsubKenya, stratifyByUrban=TRUE, 
+                                      areaMapDat=adm1, subareaMapDat=adm2, delta=delta, mean.neighbor=mean.neighbor)
+      
+      popGridFace = makePopIntegrationTab(kmRes=kmres, pop=popFace, domainPoly=kenyaPoly, 
+                                      eastLim=eastLim, northLim=northLim, 
+                                      mapProjection=SUMMER:::projKenya, poppa=poppaKenya, 
+                                      poppsub=poppsubKenya, stratifyByUrban=TRUE, 
+                                      areaMapDat=adm1, subareaMapDat=adm2, delta=delta, mean.neighbor=mean.neighbor)
+    }
+    
+  }
+  
+  out = load("savedOutput/global/adminMapData.RData")
+  countyMap = adm1compressed
+  conMap = adm2compressed
+  
+  thisKenyaLatRange = c(-4.6, 4.8) # -5, 5.5
+  thisKenyaLonRange = c(34.2, 41.5) #33.5, 42.0
+  popCols = makeBlueSequentialColors(64)
+  popDiffCols = makeGreenBlueDivergingColors(64, rev=TRUE)
+  
+  browser()
+  
+  # plot FB pop ----
+  if(savePlot) {
+    # png(file=fileName, width=width, height=height)
+    pdf(file="figures/application/sensFBdensityMap.pdf", width=5, height=5)
+    # par(oma=c( 0,0,0,3), mar=c(5.5, 6.1, 3.5, 6))
+    par(mar=c(3, 3.0, 0, 3.1), oma=c(0, 0, 0, 0.9), mgp=c(1.9,.7,0))
+  }
+  plot(popGridFace$lon, popGridFace$lat, xlab="Longitude", ylab="Latitude", main=main, 
+       xlim=thisKenyaLonRange, ylim=thisKenyaLatRange, asp=1, type="n")
+  # quilt.plot(popGridFace$lon, popGridFace$lat, urban, col=c("green", "blue"), nx=850, ny=1050, add.legend = FALSE, 
+  #            xlab="Longitude", ylab="Latitude", main=TeX("Urbanicity"), xlim=lonLim, ylim=latLim, asp=1)
+  
+  tempPopGrid = popGridFace[popGridFace$pop > 10,]
+  popTicks = getLogScaleTicks(tempPopGrid$pop, nint=5)
+  popTickLabels = as.character(popTicks)
+  quilt.plot(tempPopGrid$lon, tempPopGrid$lat, log(tempPopGrid$pop), nx=450, ny=550, add.legend = FALSE, add=TRUE, col=popCols)
+  image.plot(zlim=range(log(tempPopGrid$pop)), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
+             col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=.1), 
+             legend.mar = 0, legend.cex=2, legend.width=3,  smallplot=c(.898,.928,.2,.9))
+  
+  # image.plot(zlim=range(logit(meanRange)), nlevel=length(meanCols), legend.only=TRUE, horizontal=FALSE,
+  #            col=meanCols, add = TRUE, axis.args=list(at=logit(meanTicks), labels=meanTickLabels, cex.axis=2, tck=-.7, hadj=-.1), 
+  #            legend.mar = 0, legend.cex=2, legend.width=3, smallplot= c(.97,1,.1,.9))
+  
+  plotMapDat(mapDat=adm1compressed, lwd=.5)
+  plotMapDat(mapDat=adm2compressed, lwd=.2, border=rgb(.5, .5, .5, .5))
+  if(savePlot) {
+    dev.off()
+  }
+  
+  # plot difference ----
+  if(savePlot) {
+    # png(file=fileName, width=width, height=height)
+    pdf(file="figures/application/sensFBdensityMapDiff.pdf", width=5, height=5)
+    # par(oma=c( 0,0,0,3), mar=c(5.5, 6.1, 3.5, 6))
+    par(mar=c(3, 3.0, 0, 3.1), oma=c(0, 0, 0, 0.9), mgp=c(1.9,.7,0))
+  }
+  plot(popGridFace$lon, popGridFace$lat, xlab="Longitude", ylab="Latitude", main=main, 
+       xlim=thisKenyaLonRange, ylim=thisKenyaLatRange, asp=1, type="n")
+  # quilt.plot(popGridFace$lon, popGridFace$lat, urban, col=c("green", "blue"), nx=850, ny=1050, add.legend = FALSE, 
+  #            xlab="Longitude", ylab="Latitude", main=TeX("Urbanicity"), xlim=lonLim, ylim=latLim, asp=1)
+  
+  tempPopGrid = popGridFace
+  tempPopGrid$pop = popGridFace$pop - popGrid$pop
+  popDiffCols = makeGreenBlueDivergingColors(64, rev=TRUE, valRange=range(tempPopGrid$pop), center=0)
+  # popTicks = getLogScaleTicks(tempPopGrid$pop, nint=5)
+  popTicks = pretty(tempPopGrid$pop, nint=5)
+  popTickLabels = as.character(popTicks)
+  quilt.plot(tempPopGrid$lon, tempPopGrid$lat, tempPopGrid$pop, nx=450, ny=550, add.legend = FALSE, add=TRUE, col=popDiffCols)
+  image.plot(zlim=range(tempPopGrid$pop), nlevel=length(popDiffCols), legend.only=TRUE, horizontal=FALSE,
+             col=popDiffCols, add=TRUE, axis.args=list(at=popTicks, labels=popTickLabels, cex.axis=1, tck=-.7, hadj=.1), 
+             legend.mar = 0, legend.cex=2, legend.width=3,  smallplot=c(.898,.928,.2,.9))
+  
+  # image.plot(zlim=range(logit(meanRange)), nlevel=length(meanCols), legend.only=TRUE, horizontal=FALSE,
+  #            col=meanCols, add = TRUE, axis.args=list(at=logit(meanTicks), labels=meanTickLabels, cex.axis=2, tck=-.7, hadj=-.1), 
+  #            legend.mar = 0, legend.cex=2, legend.width=3, smallplot= c(.97,1,.1,.9))
+  
+  plotMapDat(mapDat=adm1compressed, lwd=.5)
+  plotMapDat(mapDat=adm2compressed, lwd=.2, border=rgb(.5, .5, .5, .5))
+  if(savePlot) {
+    dev.off()
+  }
+  
+  # Plot difference on absolute sqrt scale ----
+  
+  if(savePlot) {
+    # png(file=fileName, width=width, height=height)
+    pdf(file="figures/application/sensFBdensityMapDiff_absSqrt.pdf", width=5, height=5)
+    # par(oma=c( 0,0,0,3), mar=c(5.5, 6.1, 3.5, 6))
+    par(mar=c(3, 3.0, 0, 3.1), oma=c(0, 0, 0, 0.9), mgp=c(1.9,.7,0))
+  }
+  plot(popGridFace$lon, popGridFace$lat, xlab="Longitude", ylab="Latitude", main=main, 
+       xlim=thisKenyaLonRange, ylim=thisKenyaLatRange, asp=1, type="n")
+  # quilt.plot(popGridFace$lon, popGridFace$lat, urban, col=c("green", "blue"), nx=850, ny=1050, add.legend = FALSE, 
+  #            xlab="Longitude", ylab="Latitude", main=TeX("Urbanicity"), xlim=lonLim, ylim=latLim, asp=1)
+  
+  # define color scale transformation
+  scaleFun = function(x) {
+    temp = sqrt(abs(x))
+    temp[x < 0] = -temp[x < 0]
+    temp
+  }
+  inverseScaleFun = function(x) {
+    temp = x^2
+    temp[x < 0] = -temp[x < 0]
+    temp
+  }
+  
+  tempPopGrid = popGridFace
+  tempPopGrid$pop = popGridFace$pop - popGrid$pop
+  scaleRange = range(scaleFun(tempPopGrid$pop))
+  popDiffCols = makeGreenBlueDivergingColors(64, rev=TRUE, valRange=scaleRange, center=0)
+  # popTicks = getLogScaleTicks(tempPopGrid$pop, nint=5)
+  popTicks = sqrtAxis(size=NULL, x=c(0, sqrt(abs(tempPopGrid$pop))), plot=FALSE)
+  popTickLabels = names(popTicks)
+  popTickLabels = popTickLabels[-(popTicks==0)]
+  popTicks = popTicks[-(popTicks==0)]
+  popTicks = c(-popTicks, 0, popTicks)
+  popTickLabels = c(paste("-", popTickLabels, sep=""), "0", popTickLabels)
+  quilt.plot(tempPopGrid$lon, tempPopGrid$lat, scaleFun(tempPopGrid$pop), nx=450, ny=550, add.legend = FALSE, 
+             add=TRUE, col=popDiffCols)
+  image.plot(zlim=range(scaleFun(tempPopGrid$pop)), nlevel=length(popDiffCols), legend.only=TRUE, horizontal=FALSE,
+             col=popDiffCols, add=TRUE, axis.args=list(at=popTicks, labels=popTickLabels, cex.axis=1, tck=-.7, hadj=.1), 
+             legend.mar = 0, legend.cex=2, legend.width=3,  smallplot=c(.898,.928,.2,.9))
+  
+  # image.plot(zlim=range(logit(meanRange)), nlevel=length(meanCols), legend.only=TRUE, horizontal=FALSE,
+  #            col=meanCols, add = TRUE, axis.args=list(at=logit(meanTicks), labels=meanTickLabels, cex.axis=2, tck=-.7, hadj=-.1), 
+  #            legend.mar = 0, legend.cex=2, legend.width=3, smallplot= c(.97,1,.1,.9))
+  
+  plotMapDat(mapDat=adm1compressed, lwd=.5)
+  plotMapDat(mapDat=adm2compressed, lwd=.2, border=rgb(.5, .5, .5, .5))
+  if(savePlot) {
+    dev.off()
+  }
+  
+  # Plot absolute difference on log or sqrt scale ----
+  
+  
+  
+  # Plot both FB pop and difference ----
+  
+  browser()
 }
 
 # for now, just gets the results for Nairobi
