@@ -3715,7 +3715,7 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
 
 # plot Meta population density estimates, and the differences with WorldPop
 plotFBpopDensity = function(popGrid=NULL, kmres=1, savePlot=TRUE, 
-                            nx=850, ny=1050, width=800, height=800, kenyaLatRange=c(-4.6, 5), kenyaLonRange=c(33.5, 42.0), 
+                            nx=NULL, ny=NULL, width=800, height=800, kenyaLatRange=c(-4.6, 5), kenyaLonRange=c(33.5, 42.0), 
                             lonLim=kenyaLonRange, latLim=kenyaLatRange, main="", delta=NULL, mean.neighbor=NULL) {
   # get prediction locations from population grid
   if(is.null(popGrid)) {
@@ -3738,13 +3738,32 @@ plotFBpopDensity = function(popGrid=NULL, kmres=1, savePlot=TRUE,
                                       poppsub=poppsubKenya, stratifyByUrban=TRUE, 
                                       areaMapDat=adm1, subareaMapDat=adm2, delta=delta, mean.neighbor=mean.neighbor)
       
-      popGridFace = makePopIntegrationTab(kmRes=kmres, pop=popFace, domainPoly=kenyaPoly, 
+      popMatKenyaFace = makePopIntegrationTab(kmRes=kmres, pop=popFace, domainPoly=kenyaPoly, 
                                       eastLim=eastLim, northLim=northLim, 
                                       mapProjection=SUMMER:::projKenya, poppa=poppaKenya, 
                                       poppsub=poppsubKenya, stratifyByUrban=TRUE, 
                                       areaMapDat=adm1, subareaMapDat=adm2, delta=delta, mean.neighbor=mean.neighbor)
     }
     
+  }
+  
+  if(is.null(nx)) {
+    if(kmres == 1) {
+      nx = 450
+    } else if(kmres == 5) {
+      nx = 90
+    } else {
+      nx = 90
+    }
+  }
+  if(is.null(ny)) {
+    if(kmres == 1) {
+      ny = 550
+    } else if(kmres == 5) {
+      ny = 110
+    } else {
+      ny = 110
+    }
   }
   
   out = load("savedOutput/global/adminMapData.RData")
@@ -3765,17 +3784,47 @@ plotFBpopDensity = function(popGrid=NULL, kmres=1, savePlot=TRUE,
     # par(oma=c( 0,0,0,3), mar=c(5.5, 6.1, 3.5, 6))
     par(mar=c(3, 3.0, 0, 3.1), oma=c(0, 0, 0, 0.9), mgp=c(1.9,.7,0))
   }
-  plot(popGridFace$lon, popGridFace$lat, xlab="Longitude", ylab="Latitude", main=main, 
+  plot(popMatKenyaFace$lon, popMatKenyaFace$lat, xlab="Longitude", ylab="Latitude", main=main, 
        xlim=thisKenyaLonRange, ylim=thisKenyaLatRange, asp=1, type="n")
-  # quilt.plot(popGridFace$lon, popGridFace$lat, urban, col=c("green", "blue"), nx=850, ny=1050, add.legend = FALSE, 
+  # quilt.plot(popMatKenyaFace$lon, popMatKenyaFace$lat, urban, col=c("green", "blue"), nx=850, ny=1050, add.legend = FALSE, 
   #            xlab="Longitude", ylab="Latitude", main=TeX("Urbanicity"), xlim=lonLim, ylim=latLim, asp=1)
   
-  tempPopGrid = popGridFace[popGridFace$pop > 10,]
+  tempPopGrid = popMatKenyaFace[popMatKenyaFace$pop > 10,]
   popTicks = getLogScaleTicks(tempPopGrid$pop, nint=5)
   popTickLabels = as.character(popTicks)
-  quilt.plot(tempPopGrid$lon, tempPopGrid$lat, log(tempPopGrid$pop), nx=450, ny=550, add.legend = FALSE, add=TRUE, col=popCols)
+  quilt.plot(tempPopGrid$lon, tempPopGrid$lat, log(tempPopGrid$pop), nx=nx, ny=ny, add.legend = FALSE, add=TRUE, col=popCols)
   image.plot(zlim=range(log(tempPopGrid$pop)), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
              col=popCols, add=TRUE, axis.args=list(at=log(popTicks), labels=popTickLabels, cex.axis=1, tck=-.7, hadj=.1), 
+             legend.mar = 0, legend.cex=2, legend.width=3,  smallplot=c(.898,.928,.2,.9))
+  
+  # image.plot(zlim=range(logit(meanRange)), nlevel=length(meanCols), legend.only=TRUE, horizontal=FALSE,
+  #            col=meanCols, add = TRUE, axis.args=list(at=logit(meanTicks), labels=meanTickLabels, cex.axis=2, tck=-.7, hadj=-.1), 
+  #            legend.mar = 0, legend.cex=2, legend.width=3, smallplot= c(.97,1,.1,.9))
+  
+  plotMapDat(mapDat=adm1compressed, lwd=.5)
+  plotMapDat(mapDat=adm2compressed, lwd=.2, border=rgb(.5, .5, .5, .5))
+  if(savePlot) {
+    dev.off()
+  }
+  
+  # plot FB pop on sqrt scale ----
+  if(savePlot) {
+    # png(file=fileName, width=width, height=height)
+    pdf(file="figures/application/sensFBdensityMap_sqrt.pdf", width=5, height=5)
+    # par(oma=c( 0,0,0,3), mar=c(5.5, 6.1, 3.5, 6))
+    par(mar=c(3, 3.0, 0, 3.1), oma=c(0, 0, 0, 0.9), mgp=c(1.9,.7,0))
+  }
+  plot(popMatKenyaFace$lon, popMatKenyaFace$lat, xlab="Longitude", ylab="Latitude", main=main, 
+       xlim=thisKenyaLonRange, ylim=thisKenyaLatRange, asp=1, type="n")
+  # quilt.plot(popMatKenyaFace$lon, popMatKenyaFace$lat, urban, col=c("green", "blue"), nx=850, ny=1050, add.legend = FALSE, 
+  #            xlab="Longitude", ylab="Latitude", main=TeX("Urbanicity"), xlim=lonLim, ylim=latLim, asp=1)
+  
+  tempPopGrid = popMatKenyaFace
+  popTicks = sqrtAxis(side=0, x=tempPopGrid$pop, pretty.n=5, plot=FALSE)
+  popTickLabels = as.character(popTicks)
+  quilt.plot(tempPopGrid$lon, tempPopGrid$lat, sqrt(tempPopGrid$pop), nx=nx, ny=ny, add.legend = FALSE, add=TRUE, col=popCols)
+  image.plot(zlim=range(sqrt(tempPopGrid$pop)), nlevel=length(popCols), legend.only=TRUE, horizontal=FALSE,
+             col=popCols, add=TRUE, axis.args=list(at=popTicks, labels=popTickLabels, cex.axis=1, tck=-.7, hadj=.1), 
              legend.mar = 0, legend.cex=2, legend.width=3,  smallplot=c(.898,.928,.2,.9))
   
   # image.plot(zlim=range(logit(meanRange)), nlevel=length(meanCols), legend.only=TRUE, horizontal=FALSE,
@@ -3795,13 +3844,13 @@ plotFBpopDensity = function(popGrid=NULL, kmres=1, savePlot=TRUE,
     # par(oma=c( 0,0,0,3), mar=c(5.5, 6.1, 3.5, 6))
     par(mar=c(3, 3.0, 0, 3.1), oma=c(0, 0, 0, 0.9), mgp=c(1.9,.7,0))
   }
-  plot(popGridFace$lon, popGridFace$lat, xlab="Longitude", ylab="Latitude", main=main, 
+  plot(popMatKenyaFace$lon, popMatKenyaFace$lat, xlab="Longitude", ylab="Latitude", main=main, 
        xlim=thisKenyaLonRange, ylim=thisKenyaLatRange, asp=1, type="n")
-  # quilt.plot(popGridFace$lon, popGridFace$lat, urban, col=c("green", "blue"), nx=850, ny=1050, add.legend = FALSE, 
+  # quilt.plot(popMatKenyaFace$lon, popMatKenyaFace$lat, urban, col=c("green", "blue"), nx=850, ny=1050, add.legend = FALSE, 
   #            xlab="Longitude", ylab="Latitude", main=TeX("Urbanicity"), xlim=lonLim, ylim=latLim, asp=1)
   
-  tempPopGrid = popGridFace
-  tempPopGrid$pop = popGridFace$pop - popGrid$pop
+  tempPopGrid = popMatKenyaFace
+  tempPopGrid$pop = popMatKenyaFace$pop - popGrid$pop
   popDiffCols = makeGreenBlueDivergingColors(64, rev=TRUE, valRange=range(tempPopGrid$pop), center=0)
   # popTicks = getLogScaleTicks(tempPopGrid$pop, nint=5)
   popTicks = pretty(tempPopGrid$pop, nint=5)
@@ -3829,9 +3878,9 @@ plotFBpopDensity = function(popGrid=NULL, kmres=1, savePlot=TRUE,
     # par(oma=c( 0,0,0,3), mar=c(5.5, 6.1, 3.5, 6))
     par(mar=c(3, 3.0, 0, 3.1), oma=c(0, 0, 0, 0.9), mgp=c(1.9,.7,0))
   }
-  plot(popGridFace$lon, popGridFace$lat, xlab="Longitude", ylab="Latitude", main=main, 
+  plot(popMatKenyaFace$lon, popMatKenyaFace$lat, xlab="Longitude", ylab="Latitude", main=main, 
        xlim=thisKenyaLonRange, ylim=thisKenyaLatRange, asp=1, type="n")
-  # quilt.plot(popGridFace$lon, popGridFace$lat, urban, col=c("green", "blue"), nx=850, ny=1050, add.legend = FALSE, 
+  # quilt.plot(popMatKenyaFace$lon, popMatKenyaFace$lat, urban, col=c("green", "blue"), nx=850, ny=1050, add.legend = FALSE, 
   #            xlab="Longitude", ylab="Latitude", main=TeX("Urbanicity"), xlim=lonLim, ylim=latLim, asp=1)
   
   # define color scale transformation
@@ -3846,12 +3895,12 @@ plotFBpopDensity = function(popGrid=NULL, kmres=1, savePlot=TRUE,
     temp
   }
   
-  tempPopGrid = popGridFace
-  tempPopGrid$pop = popGridFace$pop - popGrid$pop
+  tempPopGrid = popMatKenyaFace
+  tempPopGrid$pop = popMatKenyaFace$pop - popGrid$pop
   scaleRange = range(scaleFun(tempPopGrid$pop))
   popDiffCols = makeGreenBlueDivergingColors(64, rev=TRUE, valRange=scaleRange, center=0)
   # popTicks = getLogScaleTicks(tempPopGrid$pop, nint=5)
-  popTicks = sqrtAxis(size=NULL, x=c(0, sqrt(abs(tempPopGrid$pop))), plot=FALSE)
+  popTicks = sqrtAxis(size=NULL, x=c(0, sqrt(abs(tempPopGrid$pop)), pretty.n=5), plot=FALSE)
   popTickLabels = names(popTicks)
   popTickLabels = popTickLabels[-(popTicks==0)]
   popTicks = popTicks[-(popTicks==0)]
