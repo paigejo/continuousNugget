@@ -3223,7 +3223,7 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
       }
       
       pdf(paste0(figDirectory, "application/sensAllPctDiff", scenario, predictionType, logisticText, coarseText, ".pdf"), width=9, height=9)
-      par(mfrow=c(3,3), oma=c(0, 4, 0, 0))
+      par(mfrow=c(3,3), oma=c(0, 4, 4, 0))
       
       for(modType in c("empirical", "latent", "smooth")) {
         
@@ -3316,7 +3316,18 @@ makeSensitivityPlots = function(logisticApproximation=FALSE, coarse=FALSE, signi
               thisModType = str_to_title(modType)
             }
             adj = which(modType == c("empirical", "latent", "smooth")) / 3 - 1/6
-            mtext(thisModType, side=2, outer=TRUE, line=2, adj=adj)
+            mtext(thisModType, side=2, outer=TRUE, line=2, adj=1-adj)
+          }
+          
+          if((outcome == "burden") && (modType == "empirical")) {
+            if(scenario == "FBpop") {
+              scenarioText = "Meta"
+            } else if(scenario == "2019") {
+              scenarioText = "2019 census"
+            } else if(scenario == "jittered") {
+              scenarioText = "Jittered census"
+            }
+            mtext(scenarioText, side=3, outer=TRUE, line=2, adj=0.5)
           }
           
           # plot(meanEAsConStrat[conStratDat>0], conStratDat[conStratDat>0], col=cols[1], pch=pchs[1], main=mainText, 

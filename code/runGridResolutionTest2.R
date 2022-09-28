@@ -36,12 +36,60 @@ pop@file@name = paste0(tempDirectory, "/worldpop_total_1y_2014_00_00.tif")
 # popMatSimpleNeonatal = adjustPopMat(popMatSimple, poppaTarget=poppsubKenyaNeonatal, adjustBy="subarea")
 easpaSimple = makeDefaultEASPA()
 easpaSimple = easpaSimple[easpaSimple$area == "Nairobi",]
-poppsubSimple = poppsubKenya
-poppsubSimple = poppsubSimple[poppsubSimple$area == "Nairobi",]
 easpa25 = makeDefaultEASPA()
-easpa25$popUrb = 25 * easpa25$EAUrb
-easpa25$popRur = 25 * easpa25$EARur
-easpa25$popTotal = easpa25$popUrb + easpa25$popRur
+easpa25Neonatal = easpa25
+easpa25Neonatal$popUrb = 25 * easpa25Neonatal$EAUrb
+easpa25Neonatal$popRur = 25 * easpa25Neonatal$EARur
+easpa25Neonatal$popTotal = easpa25Neonatal$popUrb + easpa25Neonatal$popRur
+easpa25Neonatal$pctUrb = 100 * easpa25Neonatal$popUrb / easpa25Neonatal$popTotal
+easpa25Neonatal$pctTotal = 100 * easpa25Neonatal$popTotal / sum(easpa25Neonatal$popTotal)
+
+poppsub25 = poppsubKenya
+poppsub25Thresh = poppsubKenyaThresh
+poppsub25Thresh$pctUrb = 100 * poppsub25Thresh$popUrb / poppsub25Thresh$popTotal
+poppsub25Thresh$pctTotal = 100 * poppsub25Thresh$popTotal / sum(poppsub25Thresh$popTotal)
+
+out = meanEAsPerCon2(easpa=easpa25Neonatal, poppsub=poppsubKenya)
+poppsub25Neonatal = poppsubKenya
+poppsub25Neonatal$popUrb = out$meanUrbanEAs*25
+poppsub25Neonatal$popRur = out$meanRuralEAs*25
+poppsub25Neonatal$popTotal = poppsub25Neonatal$popUrb + poppsub25Neonatal$popRur
+poppsub25Neonatal$pctUrb = 100 * poppsub25Neonatal$popUrb / poppsub25Neonatal$popTotal
+poppsub25Neonatal$pctTotal = 100 * poppsub25Neonatal$popTotal / sum(poppsub25Neonatal$popTotal)
+
+out = meanEAsPerCon2(easpa=easpa25Neonatal, poppsub=poppsubKenyaThresh)
+poppsub25NeonatalThresh = poppsubKenyaThresh
+poppsub25NeonatalThresh$popUrb = out$meanUrbanEAs*25
+poppsub25NeonatalThresh$popRur = out$meanRuralEAs*25
+poppsub25NeonatalThresh$popTotal = poppsub25NeonatalThresh$popUrb + poppsub25NeonatalThresh$popRur
+poppsub25NeonatalThresh$pctUrb = 100 * poppsub25NeonatalThresh$popUrb / poppsub25NeonatalThresh$popTotal
+poppsub25NeonatalThresh$pctTotal = 100 * poppsub25NeonatalThresh$popTotal / sum(poppsub25NeonatalThresh$popTotal)
+
+system.time(popMat25 <- makePopIntegrationTab(
+  kmRes=5, pop=pop, domainPoly=kenyaPoly,
+  eastLim=eastLim, northLim=northLim, mapProjection=projKenya,
+  poppa = easpa25, poppsub=poppsub25, 
+  areaMapDat = adm1, subareaMapDat = adm2,
+  areaNameVar = "NAME_1", subareaNameVar="NAME_2"))
+
+system.time(popMat25Thresh <- makePopIntegrationTab(
+  kmRes=5, pop=pop, domainPoly=kenyaPoly,
+  eastLim=eastLim, northLim=northLim, mapProjection=projKenya,
+  poppa = easpa25, poppsub=poppsub25Thresh, 
+  areaMapDat = adm1, subareaMapDat = adm2,
+  areaNameVar = "NAME_1", subareaNameVar="NAME_2"))
+
+popMat25Neonatal = adjustPopMat(popMat25, poppaTarget=poppsub25Neonatal, adjustBy="subarea")
+
+popMat25NeonatalThresh = adjustPopMat(popMat25Thresh, poppaTarget=poppsub25NeonatalThresh, adjustBy="subarea")
+
+save(easpa25, poppsub25, poppsub25Thresh, popMat25, popMat25Thresh, 
+     easpa25Neonatal, poppsub25Neonatal, poppsub25NeonatalThresh, popMat25Neonatal, popMat25NeonatalThresh, file="savedOutput/global/popMats25.RData")
+out = load("savedOutput/global/popMats25.RData")
+easpaSimple = easpa25[easpa25$area == "Nairobi",]
+poppsubSimple = poppsub25Thresh[poppsub25Thresh$area == "Nairobi",]
+easpaNeonatalSimple = easpa25[easpa25$area == "Nairobi",]
+poppsubNeonatalSimple = poppsub25NeonatalThresh[poppsub25NeonatalThresh$area == "Nairobi",]
 
 # Generate grids ----
 # construct integration grids at different resolutions
@@ -72,14 +120,14 @@ if(doSetup) {
     
     thisPopGrid = makePopIntegrationTab(kmRes=resolutions[i], pop=pop, domainPoly=kenyaPoly, 
                                         eastLim=eastLim, northLim=northLim, 
-                                        mapProjection=SUMMER::projKenya, poppa=poppaKenya, 
-                                        poppsub=poppsubKenya, stratifyByUrban=TRUE, 
+                                        mapProjection=SUMMER::projKenya, poppa=easpaSimple, 
+                                        poppsub=poppsub25Thresh, stratifyByUrban=TRUE, 
                                         areaMapDat=adm1, subareaMapDat=adm2, 
                                         mean.neighbor=meanNeighbors[i], 
                                         delta=deltas[i], 
                                         areaPolygonSubsetI=30)
     
-    thisPopGridAdjusted = adjustPopMat(thisPopGrid, poppaTarget=poppsubKenyaNeonatal, adjustBy="subarea")
+    thisPopGridAdjusted = adjustPopMat(thisPopGrid, poppaTarget=poppsubNeonatalSimple, adjustBy="subarea")
     
     popGrids = c(popGrids, list(thisPopGrid))
     popGridsAdjusted = c(popGridsAdjusted, list(thisPopGridAdjusted))
@@ -110,6 +158,7 @@ set.seed(123) # THIS LINE IS NEW, ADDED AFTER GRID RES TEST WAS DONE
 seeds = sample(1:100000, 100, replace=FALSE)
 inlaSeeds = sample(1:100000, 100, replace=FALSE)
 rhos = c(1/27, 1/9, 1/3)
+rhoText = c("1/27", "1/9", "1/3")
 if(doSetup) {
   truths = list()
   dats = list()
@@ -121,16 +170,16 @@ if(doSetup) {
     
     for(i in 1:100) {
       # simulate population over all of Kenya and generate survey from the EAs
-      thisTime = system.time(simDatKenya <- generateSimDataSetsLCPB2(nsim=1, targetPopMat=popMatKenyaNeonatalThresh, 
-                                                                     popMat=popMatKenyaThresh, rho=rho, 
+      thisTime = system.time(simDatKenya <- generateSimDataSetsLCPB2(nsim=1, targetPopMat=popMat25NeonatalThresh, 
+                                                                     popMat=popMat25Thresh, easpa=easpa25Neonatal, 
+                                                                     poppsub=poppsub25Thresh, rho=rho, 
                                                                      doFineScaleRisk=TRUE, doSmoothRisk=TRUE, 
                                                                      gridLevel=FALSE, subareaLevel=TRUE, 
                                                                      fixPopPerEA=25, fixHHPerEA=25, fixPopPerHH=1, 
                                                                      logisticApproximation=FALSE, 
                                                                      dataSaveDirectory="~/git/continuousNugget/savedOutput/simpleExample/", 
                                                                      seed=seeds[i], inla.seed=inlaSeeds[i], 
-                                                                     simPopOnly=FALSE, returnEAinfo=TRUE, 
-                                                                     easpa=easpaKenya, poppsub=poppsubKenyaThresh))
+                                                                     simPopOnly=FALSE, returnEAinfo=TRUE))
       
       simDatKenya$overSampDat = NULL
       simDatKenya$simulatedEAs$eaDat = NULL
@@ -236,7 +285,7 @@ for(k in 1:length(rhos)) {
       thisUDraws = separateUDraws[[j]]
       sigmaEpsilonDraws = spdeFitN$sigmaEpsilonDraws[1:thisNSamples]
       
-      thisAggResultsN = simPopCustom(thisUDraws, sigmaEpsilonDraws, easpaSimple, thisPopMat, 
+      thisAggResultsN = simPopCustom(thisUDraws, sigmaEpsilonDraws, easpaNeonatalSimple, thisPopMat, 
                                      thisPopMatAdjusted, doFineScaleRisk=TRUE, doGriddedRisk=TRUE, 
                                      doSmoothRisk=TRUE, subareaLevel=TRUE, gridLevel=FALSE, 
                                      poppsub=poppsubSimple, min1PerSubarea=TRUE, 
@@ -300,7 +349,7 @@ if(FALSE) {
 
 out = load("savedOutput/simpleExample/gridResolutionTestNairobi_1_100.RData")
 
-# Plot results ----
+# Average results ----
 
 # truePrevalenceConstituencyKenya
 # truePrevalenceCountyKenya
@@ -367,14 +416,14 @@ for(k in 1:length(rhos)) {
     allPredsPrevalence = c(allPredsPrevalence, list(predsPrevalence))
     allPredsGriddedRisk = c(allPredsGriddedRisk, list(predsGriddedRisk))
     
-    lowConstituencySmoothRisk = lapply(residsConstituencySmoothRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
-    lowConstituencyRisk = lapply(residsConstituencyRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
-    lowConstituencyPrevalence = lapply(residsConstituencyPrevalence, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
-    lowConstituencyGriddedRisk = lapply(residsConstituencyGriddedRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1))})})
-    highConstituencySmoothRisk = lapply(residsConstituencySmoothRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9))})})
-    highConstituencyRisk = lapply(residsConstituencyRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9))})})
-    highConstituencyPrevalence = lapply(residsConstituencyPrevalence, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9))})})
-    highConstituencyGriddedRisk = lapply(residsConstituencyGriddedRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9))})})
+    lowConstituencySmoothRisk = lapply(residsConstituencySmoothRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1, .25))})})
+    lowConstituencyRisk = lapply(residsConstituencyRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1, .25))})})
+    lowConstituencyPrevalence = lapply(residsConstituencyPrevalence, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1, .25))})})
+    lowConstituencyGriddedRisk = lapply(residsConstituencyGriddedRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.025, .05, .1, .25))})})
+    highConstituencySmoothRisk = lapply(residsConstituencySmoothRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9, .75))})})
+    highConstituencyRisk = lapply(residsConstituencyRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9, .75))})})
+    highConstituencyPrevalence = lapply(residsConstituencyPrevalence, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9, .75))})})
+    highConstituencyGriddedRisk = lapply(residsConstituencyGriddedRisk, function(mat) {apply(mat, 1, function(x) {quantile(x, probs=c(.975, .95, .9, .75))})})
     
     # CIWidthSmoothRisk = highConstituencySmoothRisk - lowConstituencySmoothRisk
     # CIWidthRisk = highConstituencyRisk - lowConstituencyRisk
@@ -383,22 +432,22 @@ for(k in 1:length(rhos)) {
     CIWidthSmoothRisk = lapply(residsConstituencySmoothRisk, 
                                function(mat) {
                                  apply(mat, 1, function(x) {
-                                   quantile(x, probs=c(.975, .95, .9)) - quantile(x, probs=c(.025, .05, .1))})
+                                   quantile(x, probs=c(.975, .95, .9, .75)) - quantile(x, probs=c(.025, .05, .1, .25))})
                                })
     CIWidthRisk = lapply(residsConstituencyRisk, 
                          function(mat) {
                            apply(mat, 1, function(x) {
-                             quantile(x, probs=c(.975, .95, .9)) - quantile(x, probs=c(.025, .05, .1))})
+                             quantile(x, probs=c(.975, .95, .9, .75)) - quantile(x, probs=c(.025, .05, .1, .25))})
                          })
     CIWidthPrevalence = lapply(residsConstituencyPrevalence, 
                                function(mat) {
                                  apply(mat, 1, function(x) {
-                                   quantile(x, probs=c(.975, .95, .9)) - quantile(x, probs=c(.025, .05, .1))})
+                                   quantile(x, probs=c(.975, .95, .9, .75)) - quantile(x, probs=c(.025, .05, .1, .25))})
                                })
     CIWidthGriddedRisk = lapply(residsConstituencyGriddedRisk, 
                                 function(mat) {
                                   apply(mat, 1, function(x) {
-                                    quantile(x, probs=c(.975, .95, .9)) - quantile(x, probs=c(.025, .05, .1))})
+                                    quantile(x, probs=c(.975, .95, .9, .75)) - quantile(x, probs=c(.025, .05, .1, .25))})
                                 })
     allCIWidthsSmoothRisk = c(allCIWidthsSmoothRisk, list(CIWidthSmoothRisk))
     allCIWidthsRisk = c(allCIWidthsRisk, list(CIWidthRisk))
@@ -418,22 +467,22 @@ for(k in 1:length(rhos)) {
     inCISmoothRisk = lapply(residsConstituencySmoothRisk, 
                             function(mat) {
                               apply(mat, 1, function(x) {
-                                (0 <= quantile(x, probs=c(.975, .95, .9))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
+                                (0 <= quantile(x, probs=c(.975, .95, .9, .75))) & (0 >= quantile(x, probs=c(.025, .05, .1, .25)))})
                             })
     inCIRisk = lapply(residsConstituencyRisk, 
                       function(mat) {
                         apply(mat, 1, function(x) {
-                          (0 <= quantile(x, probs=c(.975, .95, .9))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
+                          (0 <= quantile(x, probs=c(.975, .95, .9, .75))) & (0 >= quantile(x, probs=c(.025, .05, .1, .25)))})
                       })
     inCIPrevalence = lapply(residsConstituencyPrevalence, 
                             function(mat) {
                               apply(mat, 1, function(x) {
-                                (0 <= quantile(x, probs=c(.975, .95, .9))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
+                                (0 <= quantile(x, probs=c(.975, .95, .9, .75))) & (0 >= quantile(x, probs=c(.025, .05, .1, .25)))})
                             })
     inCIGriddedRisk = lapply(residsConstituencyGriddedRisk, 
                              function(mat) {
                                apply(mat, 1, function(x) {
-                                 (0 <= quantile(x, probs=c(.975, .95, .9))) & (0 >= quantile(x, probs=c(.025, .05, .1)))})
+                                 (0 <= quantile(x, probs=c(.975, .95, .9, .75))) & (0 >= quantile(x, probs=c(.025, .05, .1, .25)))})
                              })
     
     # coverageSmoothRisk = colMeans(inCISmoothRisk)
@@ -480,6 +529,10 @@ for(k in 1:length(rhos)) {
   # browser()
   
   ## CI widths
+  allCIWidthsSmoothRisk50 = lapply(allCIWidthsSmoothRisk, function(listOfResolutions) {
+    sapply(listOfResolutions, function(x) {x[4,]})
+  })
+  allCIWidthsSmoothRisk50 = do.call("rbind", allCIWidthsSmoothRisk50)
   allCIWidthsSmoothRisk80 = lapply(allCIWidthsSmoothRisk, function(listOfResolutions) {
     sapply(listOfResolutions, function(x) {x[3,]})
   })
@@ -493,6 +546,10 @@ for(k in 1:length(rhos)) {
   })
   allCIWidthsSmoothRisk95 = do.call("rbind", allCIWidthsSmoothRisk95)
   
+  allCIWidthsRisk50 = lapply(allCIWidthsRisk, function(listOfResolutions) {
+    sapply(listOfResolutions, function(x) {x[4,]})
+  })
+  allCIWidthsRisk50 = do.call("rbind", allCIWidthsRisk50)
   allCIWidthsRisk80 = lapply(allCIWidthsRisk, function(listOfResolutions) {
     sapply(listOfResolutions, function(x) {x[3,]})
   })
@@ -506,6 +563,10 @@ for(k in 1:length(rhos)) {
   })
   allCIWidthsRisk95 = do.call("rbind", allCIWidthsRisk95)
   
+  allCIWidthsPrevalence50 = lapply(allCIWidthsPrevalence, function(listOfResolutions) {
+    sapply(listOfResolutions, function(x) {x[4,]})
+  })
+  allCIWidthsPrevalence50 = do.call("rbind", allCIWidthsPrevalence50)
   allCIWidthsPrevalence80 = lapply(allCIWidthsPrevalence, function(listOfResolutions) {
     sapply(listOfResolutions, function(x) {x[3,]})
   })
@@ -519,6 +580,10 @@ for(k in 1:length(rhos)) {
   })
   allCIWidthsPrevalence95 = do.call("rbind", allCIWidthsPrevalence95)
   
+  allCIWidthsGriddedRisk50 = lapply(allCIWidthsGriddedRisk, function(listOfResolutions) {
+    sapply(listOfResolutions, function(x) {x[4,]})
+  })
+  allCIWidthsGriddedRisk50 = do.call("rbind", allCIWidthsGriddedRisk50)
   allCIWidthsGriddedRisk80 = lapply(allCIWidthsGriddedRisk, function(listOfResolutions) {
     sapply(listOfResolutions, function(x) {x[3,]})
   })
@@ -532,34 +597,101 @@ for(k in 1:length(rhos)) {
   })
   allCIWidthsGriddedRisk95 = do.call("rbind", allCIWidthsGriddedRisk95)
   
+  meanCIWidthsPrevalence50 = colMeans(allCIWidthsPrevalence50)
+  meanCIWidthsPrevalence80 = colMeans(allCIWidthsPrevalence80)
+  meanCIWidthsPrevalence90 = colMeans(allCIWidthsPrevalence90)
+  meanCIWidthsPrevalence95 = colMeans(allCIWidthsPrevalence95)
+  
+  meanCIWidthsRisk50 = colMeans(allCIWidthsRisk50)
+  meanCIWidthsRisk80 = colMeans(allCIWidthsRisk80)
+  meanCIWidthsRisk90 = colMeans(allCIWidthsRisk90)
+  meanCIWidthsRisk95 = colMeans(allCIWidthsRisk95)
+  
+  meanCIWidthsSmoothRisk50 = colMeans(allCIWidthsSmoothRisk50)
+  meanCIWidthsSmoothRisk80 = colMeans(allCIWidthsSmoothRisk80)
+  meanCIWidthsSmoothRisk90 = colMeans(allCIWidthsSmoothRisk90)
+  meanCIWidthsSmoothRisk95 = colMeans(allCIWidthsSmoothRisk95)
+  
+  meanCIWidthsGriddedRisk50 = colMeans(allCIWidthsGriddedRisk50)
+  meanCIWidthsGriddedRisk80 = colMeans(allCIWidthsGriddedRisk80)
+  meanCIWidthsGriddedRisk90 = colMeans(allCIWidthsGriddedRisk90)
+  meanCIWidthsGriddedRisk95 = colMeans(allCIWidthsGriddedRisk95)
+  
   ## coverages
+  allCoveragesSmoothRisk50 = sapply(allCoveragesSmoothRisk, function(x) {x[4,]})
   allCoveragesSmoothRisk80 = sapply(allCoveragesSmoothRisk, function(x) {x[3,]})
   allCoveragesSmoothRisk90 = sapply(allCoveragesSmoothRisk, function(x) {x[2,]})
   allCoveragesSmoothRisk95 = sapply(allCoveragesSmoothRisk, function(x) {x[1,]})
+  meanCoveragesSmoothRisk50 = rowMeans(allCoveragesSmoothRisk50)
   meanCoveragesSmoothRisk80 = rowMeans(allCoveragesSmoothRisk80)
   meanCoveragesSmoothRisk90 = rowMeans(allCoveragesSmoothRisk90)
   meanCoveragesSmoothRisk95 = rowMeans(allCoveragesSmoothRisk95)
   
+  allCoveragesRisk50 = sapply(allCoveragesRisk, function(x) {x[4,]})
   allCoveragesRisk80 = sapply(allCoveragesRisk, function(x) {x[3,]})
   allCoveragesRisk90 = sapply(allCoveragesRisk, function(x) {x[2,]})
   allCoveragesRisk95 = sapply(allCoveragesRisk, function(x) {x[1,]})
+  meanCoveragesRisk50 = rowMeans(allCoveragesRisk50)
   meanCoveragesRisk80 = rowMeans(allCoveragesRisk80)
   meanCoveragesRisk90 = rowMeans(allCoveragesRisk90)
   meanCoveragesRisk95 = rowMeans(allCoveragesRisk95)
   
+  allCoveragesPrevalence50 = sapply(allCoveragesPrevalence, function(x) {x[4,]})
   allCoveragesPrevalence80 = sapply(allCoveragesPrevalence, function(x) {x[3,]})
   allCoveragesPrevalence90 = sapply(allCoveragesPrevalence, function(x) {x[2,]})
   allCoveragesPrevalence95 = sapply(allCoveragesPrevalence, function(x) {x[1,]})
+  meanCoveragesPrevalence50 = rowMeans(allCoveragesPrevalence50)
   meanCoveragesPrevalence80 = rowMeans(allCoveragesPrevalence80)
   meanCoveragesPrevalence90 = rowMeans(allCoveragesPrevalence90)
   meanCoveragesPrevalence95 = rowMeans(allCoveragesPrevalence95)
   
+  allCoveragesGriddedRisk50 = sapply(allCoveragesGriddedRisk, function(x) {x[4,]})
   allCoveragesGriddedRisk80 = sapply(allCoveragesGriddedRisk, function(x) {x[3,]})
   allCoveragesGriddedRisk90 = sapply(allCoveragesGriddedRisk, function(x) {x[2,]})
   allCoveragesGriddedRisk95 = sapply(allCoveragesGriddedRisk, function(x) {x[1,]})
+  meanCoveragesGriddedRisk50 = rowMeans(allCoveragesGriddedRisk50)
   meanCoveragesGriddedRisk80 = rowMeans(allCoveragesGriddedRisk80)
   meanCoveragesGriddedRisk90 = rowMeans(allCoveragesGriddedRisk90)
   meanCoveragesGriddedRisk95 = rowMeans(allCoveragesGriddedRisk95)
+  
+  # Make tables ----
+  
+  tab95 = rbind(round(1000*rbind(meanCIWidthsPrevalence95, 
+                            meanCIWidthsRisk95, 
+                            meanCIWidthsSmoothRisk95, 
+                            meanCIWidthsGriddedRisk95), digits=1), 
+                round(100*rbind(meanCoveragesPrevalence95, 
+                            meanCoveragesRisk95, 
+                            meanCoveragesSmoothRisk95, 
+                            meanCoveragesGriddedRisk95), digits=0))
+  row.names(tab95) = rep(c("Emprical", "Latent", "Smooth Latent", "Gridded"), 2)
+  xtable(tab95, digits=1, label=paste0("tab:gridResTest_", k), caption=paste0(
+    "95% credible interval (CI) widths in neonatals per thousand, and empirical", 
+    " coverages in percent for considered sampling frame models as a function of", 
+    " aggregation grid resolution, with $rho=", rhoText[k], "$."
+  ))
+  
+  tab50 = rbind(round(1000*rbind(meanCIWidthsPrevalence50, 
+                                 meanCIWidthsRisk50, 
+                                 meanCIWidthsSmoothRisk50, 
+                                 meanCIWidthsGriddedRisk50), digits=1), 
+                round(100*rbind(meanCoveragesPrevalence50, 
+                                meanCoveragesRisk50, 
+                                meanCoveragesSmoothRisk50, 
+                                meanCoveragesGriddedRisk50), digits=0))
+  row.names(tab50) = rep(c("Emprical", "Latent", "Smooth Latent", "Gridded"), 2)
+  xtable(tab50, digits=1, label=paste0("tab:gridResTest_", k, "_50"), caption=paste0(
+    "50% credible interval (CI) widths in neonatals per thousand, and empirical", 
+    " coverages in percent for considered sampling frame models as a function of", 
+    " aggregation grid resolution, with $rho=", rhoText[k], "$."
+  ))
+  
+  print(tab95)
+  print(tab50)
+  
+  browser()
+  
+  # Plot results ----
   
   # Plot central predictions versus resolution
   tempRes = resolutions[col(allPredsSmoothRiskMat)]
@@ -579,8 +711,6 @@ for(k in 1:length(rhos)) {
     labs(x="Grid resolution (km)", y="Central Predictions", fill="Model") + 
     theme_classic()
   dev.off()
-  
-  browser()
   
   # Plot and make tables of CI Widths versus resolution and model
   ## 80% CIs
